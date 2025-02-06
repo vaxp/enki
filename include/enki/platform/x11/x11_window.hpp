@@ -41,7 +41,7 @@ private:
     X11PlatformBackend& backend_;
     WindowConfig config_;
 
-    Display*   display_     = nullptr;
+    ::Display* display_     = nullptr;
     ::Window   x11_window_  = 0;
     Colormap   colormap_    = 0;
     EGLDisplay egl_display_ = EGL_NO_DISPLAY;

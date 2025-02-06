@@ -235,10 +235,92 @@ struct Border {
 };
 
 // ============================================================
-// Enums
+// Style Values and Units (Anu Flexbox Dimension Support)
 // ============================================================
 
-/// Flex direction for layout.
+/// @brief Represents a style dimension value (Point/Pixel, Percent, Auto, Undefined).
+struct StyleValue {
+    enum class Unit : uint8_t {
+        Undefined = 0,
+        Point,
+        Percent,
+        Auto
+    };
+
+    Unit  unit  = Unit::Undefined;
+    float value = 0.0f;
+
+    constexpr StyleValue() = default;
+    constexpr StyleValue(float val) : unit(Unit::Point), value(val) {}
+    constexpr StyleValue(Unit u, float val) : unit(u), value(val) {}
+
+    static constexpr StyleValue point(float val) { return {Unit::Point, val}; }
+    static constexpr StyleValue percent(float val) { return {Unit::Percent, val}; }
+    static constexpr StyleValue autoValue() { return {Unit::Auto, 0.0f}; }
+    static constexpr StyleValue undefined() { return {Unit::Undefined, 0.0f}; }
+
+    [[nodiscard]] constexpr bool isDefined() const { return unit != Unit::Undefined; }
+    [[nodiscard]] constexpr bool isPoint() const { return unit == Unit::Point; }
+    [[nodiscard]] constexpr bool isPercent() const { return unit == Unit::Percent; }
+    [[nodiscard]] constexpr bool isAuto() const { return unit == Unit::Auto; }
+
+    constexpr bool operator==(const StyleValue&) const = default;
+};
+
+// Literals for StyleValue
+inline namespace literals {
+    constexpr StyleValue operator""_px(long double val) {
+        return StyleValue::point(static_cast<float>(val));
+    }
+    constexpr StyleValue operator""_px(unsigned long long val) {
+        return StyleValue::point(static_cast<float>(val));
+    }
+    constexpr StyleValue operator""_pct(long double val) {
+        return StyleValue::percent(static_cast<float>(val));
+    }
+    constexpr StyleValue operator""_pct(unsigned long long val) {
+        return StyleValue::percent(static_cast<float>(val));
+    }
+    inline constexpr StyleValue auto_val = StyleValue::autoValue();
+    inline constexpr StyleValue undefined_val = StyleValue::undefined();
+}
+
+/// @brief Style Insets using StyleValue for padding, margin, position.
+struct StyleInsets {
+    StyleValue top;
+    StyleValue right;
+    StyleValue bottom;
+    StyleValue left;
+    StyleValue start;
+    StyleValue end;
+
+    constexpr StyleInsets() = default;
+    constexpr StyleInsets(StyleValue all)
+        : top(all), right(all), bottom(all), left(all) {}
+    constexpr StyleInsets(StyleValue vertical, StyleValue horizontal)
+        : top(vertical), right(horizontal), bottom(vertical), left(horizontal) {}
+    constexpr StyleInsets(StyleValue t, StyleValue r, StyleValue b, StyleValue l)
+        : top(t), right(r), bottom(b), left(l) {}
+    constexpr StyleInsets(StyleValue t, StyleValue r, StyleValue b, StyleValue l, StyleValue s, StyleValue e)
+        : top(t), right(r), bottom(b), left(l), start(s), end(e) {}
+
+    static constexpr StyleInsets all(StyleValue v) { return {v}; }
+    static constexpr StyleInsets symmetric(StyleValue vertical, StyleValue horizontal) {
+        return {vertical, horizontal};
+    }
+    static constexpr StyleInsets only(StyleValue t = {}, StyleValue r = {}, StyleValue b = {}, StyleValue l = {}) {
+        return {t, r, b, l};
+    }
+    static constexpr StyleInsets directional(StyleValue t, StyleValue b, StyleValue s, StyleValue e) {
+        return {t, {}, b, {}, s, e};
+    }
+
+    constexpr bool operator==(const StyleInsets&) const = default;
+};
+
+// ============================================================
+// Enums
+// ============================================================
 
 /// Main axis alignment.
 enum class MainAxisAlign { Start, Center, End, SpaceBetween, SpaceAround, SpaceEvenly };
@@ -252,16 +334,12 @@ enum class MainAxisSize { Min, Max };
 /// Layout axis.
 enum class Axis { Horizontal, Vertical };
 
-/// Positioning type (relative to parent or absolute).
-
 /// Content alignment within a Stack.
 enum class Alignment {
     TopLeft, TopCenter, TopRight,
     CenterLeft, Center, CenterRight,
     BottomLeft, BottomCenter, BottomRight,
 };
-
-/// Edge identifiers for padding/margin.
 
 /// Layout Direction (RTL / LTR)
 enum class LayoutDirection { Inherit, LTR, RTL };
@@ -280,62 +358,90 @@ concept StateType = std::is_copy_constructible_v<T> &&
 template<typename T>
 concept WidgetConcept = std::derived_from<T, Widget>;
 
+// ============================================================
+// Anu Flexbox Enums (Direct 1:1 Mapping)
+// ============================================================
+
+enum class Direction {
+    Inherit = ANUDirectionInherit,
+    LTR     = ANUDirectionLTR,
+    RTL     = ANUDirectionRTL
+};
 
 enum class Justify {
-    Start = ANUJustifyFlexStart,
-    Center = ANUJustifyCenter,
-    End = ANUJustifyFlexEnd,
+    Start        = ANUJustifyFlexStart,
+    Center       = ANUJustifyCenter,
+    End          = ANUJustifyFlexEnd,
     SpaceBetween = ANUJustifySpaceBetween,
-    SpaceAround = ANUJustifySpaceAround,
-    SpaceEvenly = ANUJustifySpaceEvenly
+    SpaceAround  = ANUJustifySpaceAround,
+    SpaceEvenly  = ANUJustifySpaceEvenly
 };
 
 enum class Align {
-    Auto = ANUAlignAuto,
-    Start = ANUAlignFlexStart,
-    Center = ANUAlignCenter,
-    End = ANUAlignFlexEnd,
-    Stretch = ANUAlignStretch,
-    Baseline = ANUAlignBaseline,
+    Auto         = ANUAlignAuto,
+    Start        = ANUAlignFlexStart,
+    Center       = ANUAlignCenter,
+    End          = ANUAlignFlexEnd,
+    Stretch      = ANUAlignStretch,
+    Baseline     = ANUAlignBaseline,
     SpaceBetween = ANUAlignSpaceBetween,
-    SpaceAround = ANUAlignSpaceAround
+    SpaceAround  = ANUAlignSpaceAround,
+    SpaceEvenly  = ANUAlignSpaceEvenly
 };
 
 enum class FlexDirection {
-    Column = ANUFlexDirectionColumn,
+    Column        = ANUFlexDirectionColumn,
     ColumnReverse = ANUFlexDirectionColumnReverse,
-    Row = ANUFlexDirectionRow,
-    RowReverse = ANUFlexDirectionRowReverse
+    Row           = ANUFlexDirectionRow,
+    RowReverse    = ANUFlexDirectionRowReverse
 };
 
 enum class FlexWrap {
-    NoWrap = ANUWrapNoWrap,
-    Wrap = ANUWrapWrap,
+    NoWrap      = ANUWrapNoWrap,
+    Wrap        = ANUWrapWrap,
     WrapReverse = ANUWrapWrapReverse
 };
 
 enum class Edge {
-    Left = ANUEdgeLeft,
-    Top = ANUEdgeTop,
-    Right = ANUEdgeRight,
-    Bottom = ANUEdgeBottom,
-    Start = ANUEdgeStart,
-    End = ANUEdgeEnd,
+    Left       = ANUEdgeLeft,
+    Top        = ANUEdgeTop,
+    Right      = ANUEdgeRight,
+    Bottom     = ANUEdgeBottom,
+    Start      = ANUEdgeStart,
+    End        = ANUEdgeEnd,
     Horizontal = ANUEdgeHorizontal,
-    Vertical = ANUEdgeVertical,
-    All = ANUEdgeAll
+    Vertical   = ANUEdgeVertical,
+    All        = ANUEdgeAll
 };
 
 enum class PositionType {
-    Static = ANUPositionTypeStatic,
+    Static   = ANUPositionTypeStatic,
     Relative = ANUPositionTypeRelative,
     Absolute = ANUPositionTypeAbsolute
 };
 
 enum class Overflow {
     Visible = ANUOverflowVisible,
-    Hidden = ANUOverflowHidden,
-    Scroll = ANUOverflowScroll
+    Hidden  = ANUOverflowHidden,
+    Scroll  = ANUOverflowScroll
+};
+
+enum class Display {
+    Flex     = ANUDisplayFlex,
+    None     = ANUDisplayNone,
+    Contents = ANUDisplayContents
+};
+
+enum class BoxSizing {
+    BorderBox  = ANUBoxSizingBorderBox,
+    ContentBox = ANUBoxSizingContentBox
+};
+
+enum class Gutter {
+    Column = ANUGutterColumn,
+    Row    = ANUGutterRow,
+    All    = ANUGutterAll
 };
 
 }  // namespace enki
+

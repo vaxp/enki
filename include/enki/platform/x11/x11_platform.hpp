@@ -32,7 +32,7 @@ public:
     bool pollEvents();
 
     // ── Display / EGL accessors ──────────────────────────────────
-    [[nodiscard]] Display*    getDisplay()    const { return display_; }
+    [[nodiscard]] ::Display*  getDisplay()    const { return display_; }
     [[nodiscard]] EGLDisplay  getEGLDisplay() const { return egl_display_; }
     [[nodiscard]] EGLConfig   getEGLConfig()  const { return egl_config_; }
     [[nodiscard]] int         getDefaultScreen() const { return default_screen_; }
@@ -50,9 +50,9 @@ public:
     void setClipboardText(const std::string& text);
 
 private:
-    Platform*  owner_          = nullptr;
-    Display*   display_        = nullptr;
-    int        default_screen_ = 0;
+    Platform*   owner_          = nullptr;
+    ::Display*  display_        = nullptr;
+    int         default_screen_ = 0;
     EGLDisplay egl_display_    = EGL_NO_DISPLAY;
     EGLConfig  egl_config_     = nullptr;
     int        egl_major_      = 0;

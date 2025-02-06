@@ -267,6 +267,10 @@ enki_sources = files(
   'src/state/bloc_builder.cpp',
   'src/state/bloc_listener.cpp',
 
+  # Widgets
+  'src/widgets/flexbox.cpp',
+  'src/widgets/container.cpp',
+
   # Animation
   'src/animation/animation_controller.cpp',
   'src/animation/tween.cpp',
