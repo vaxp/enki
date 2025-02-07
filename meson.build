@@ -325,5 +325,7 @@ endif
 # ============================================================
 if get_option('build_examples')
   subdir('examples')
+  subdir('widgets_demo')
 endif
+
 
