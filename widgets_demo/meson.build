@@ -6,3 +6,7 @@ executable('widgets_demo',
   dependencies : demo_deps,
   install : false,
 )
+
+# Sub-demos for specific widgets
+subdir('text_demo')
+

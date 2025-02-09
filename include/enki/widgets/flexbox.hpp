@@ -295,24 +295,48 @@ inline std::shared_ptr<Flexbox> flexbox(std::vector<WidgetPtr> children) {
     return std::make_shared<Flexbox>(std::move(children));
 }
 
+inline std::shared_ptr<Flexbox> flexbox(std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Flexbox>(std::vector<WidgetPtr>(children));
+}
+
 inline std::shared_ptr<Flexbox> flexbox(FlexboxStyle style, std::vector<WidgetPtr> children) {
     return std::make_shared<Flexbox>(std::move(style), std::move(children));
+}
+
+inline std::shared_ptr<Flexbox> flexbox(FlexboxStyle style, std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Flexbox>(std::move(style), std::vector<WidgetPtr>(children));
 }
 
 inline std::shared_ptr<Row> row(std::vector<WidgetPtr> children) {
     return std::make_shared<Row>(std::move(children));
 }
 
+inline std::shared_ptr<Row> row(std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Row>(std::vector<WidgetPtr>(children));
+}
+
 inline std::shared_ptr<Row> row(Justify justify, Align align, std::vector<WidgetPtr> children) {
     return std::make_shared<Row>(justify, align, std::move(children));
+}
+
+inline std::shared_ptr<Row> row(Justify justify, Align align, std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Row>(justify, align, std::vector<WidgetPtr>(children));
 }
 
 inline std::shared_ptr<Column> column(std::vector<WidgetPtr> children) {
     return std::make_shared<Column>(std::move(children));
 }
 
+inline std::shared_ptr<Column> column(std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Column>(std::vector<WidgetPtr>(children));
+}
+
 inline std::shared_ptr<Column> column(Justify justify, Align align, std::vector<WidgetPtr> children) {
     return std::make_shared<Column>(justify, align, std::move(children));
+}
+
+inline std::shared_ptr<Column> column(Justify justify, Align align, std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Column>(justify, align, std::vector<WidgetPtr>(children));
 }
 
 inline std::shared_ptr<FlexItem> flexItem(FlexboxStyle style, WidgetPtr child) {
