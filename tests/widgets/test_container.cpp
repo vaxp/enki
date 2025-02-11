@@ -31,6 +31,12 @@ public:
         return ro;
     }
 
+    void updateRenderObject(BuildContext&, RenderObject& ro) override {
+        ANUNodeStyleSetWidth(ro.anuNode(), w);
+        ANUNodeStyleSetHeight(ro.anuNode(), h);
+        ro.markNeedsLayout();
+    }
+
     std::string_view typeName() const override { return "FixedBox"; }
 };
 
@@ -279,6 +285,65 @@ void test_painting_pipeline() {
 }
 
 // ════════════════════════════════════════════════════════════════
+// Test 8: Property Leakage & Reconciliation Across Updates
+// ════════════════════════════════════════════════════════════════
+
+void test_property_leakage_and_reconciliation() {
+    std::cout << "Testing Property Leakage & Reconciliation Across Updates..." << std::endl;
+
+    // 1. Initial container with explicit width, height, margin, padding, color
+    auto c1 = container({
+        fixedBox(50.0f, 50.0f)
+    });
+    c1->width(300_px)
+      .height(200_px)
+      .margin(StyleInsets::all(25_px))
+      .padding(StyleInsets::all(15_px))
+      .color(0xFFFF0000);
+
+    auto parent = column({ c1 });
+    parent->width(500_px).height(500_px);
+
+    auto el = parent->createElement();
+    el->mount(nullptr, 0);
+    auto* rf = dynamic_cast<RenderFlex*>(el->findRenderObject());
+    rf->layout(500.0f, 500.0f);
+
+    auto* rdb = dynamic_cast<RenderDecoratedBox*>(rf->children()[0]);
+    assert(rdb != nullptr);
+    assert(approxEqual(rdb->size().width, 300.0f));
+    assert(approxEqual(rdb->size().height, 200.0f));
+    assert(approxEqual(rdb->offset().x, 25.0f));
+    assert(approxEqual(rdb->offset().y, 25.0f));
+    assert(rdb->decoration().color == 0xFFFF0000);
+
+    // 2. Update with c2 having NO margin, NO padding, NO fixed size, and different color
+    auto c2 = container({
+        fixedBox(80.0f, 40.0f)
+    });
+    c2->color(0xFF00FF00); // Clean container, defaults should apply
+
+    auto parent2 = column({ c2 });
+    parent2->width(500_px).height(500_px);
+
+    el->update(parent2);
+    rf->layout(500.0f, 500.0f);
+
+    assert(rdb->decoration().color == 0xFF00FF00);
+    // Margin must be reset to 0 (no offset from margin)
+    assert(approxEqual(rdb->offset().x, 0.0f));
+    assert(approxEqual(rdb->offset().y, 0.0f));
+    // Child inside c2 should be at 0, 0 because padding is reset to 0
+    assert(approxEqual(rdb->children()[0]->offset().x, 0.0f));
+    assert(approxEqual(rdb->children()[0]->offset().y, 0.0f));
+    // Child size inside should be 80x40
+    assert(approxEqual(rdb->children()[0]->size().width, 80.0f));
+    assert(approxEqual(rdb->children()[0]->size().height, 40.0f));
+
+    std::cout << "  ✓ Property leakage prevention & reconciliation passed." << std::endl;
+}
+
+// ════════════════════════════════════════════════════════════════
 // Main Test Runner
 // ════════════════════════════════════════════════════════════════
 int main() {
@@ -293,6 +358,7 @@ int main() {
     test_box_decoration();
     test_hit_testing();
     test_painting_pipeline();
+    test_property_leakage_and_reconciliation();
 
     std::cout << "========================================" << std::endl;
     std::cout << "All Container Tests Passed Successfully!" << std::endl;

@@ -224,6 +224,11 @@ void BuildOwner::buildScope(Element* root) {
 StatelessElement::StatelessElement(WidgetPtr widget)
     : Element(std::move(widget)) {}
 
+void StatelessElement::update(WidgetPtr newWidget) {
+    Element::update(std::move(newWidget));
+    rebuild();
+}
+
 void StatelessElement::performRebuild() {
     auto* slw = dynamic_cast<StatelessWidget*>(widget_.get());
     assert(slw && "StatelessElement must be backed by a StatelessWidget");
@@ -427,6 +432,21 @@ void SingleChildRenderObjectElement::unmount() {
     RenderObjectElement::unmount();
 }
 
+void SingleChildRenderObjectElement::update(WidgetPtr newWidget) {
+    RenderObjectElement::update(std::move(newWidget));
+
+    auto* sc_widget = dynamic_cast<SingleChildRenderObjectWidget*>(widget_.get());
+    assert(sc_widget);
+
+    WidgetPtr new_child_widget = sc_widget->child;
+    Element* old_child = child_.get();
+    Element* new_child = updateChild(old_child, std::move(new_child_widget), 0);
+
+    if (new_child != old_child) {
+        child_.reset(new_child);
+    }
+}
+
 void SingleChildRenderObjectElement::performRebuild() {
     auto* sc_widget = dynamic_cast<SingleChildRenderObjectWidget*>(widget_.get());
     assert(sc_widget);
@@ -483,6 +503,15 @@ void MultiChildRenderObjectElement::unmount() {
     }
     children_.clear();
     RenderObjectElement::unmount();
+}
+
+void MultiChildRenderObjectElement::update(WidgetPtr newWidget) {
+    RenderObjectElement::update(std::move(newWidget));
+
+    auto* mc_widget = dynamic_cast<MultiChildRenderObjectWidget*>(widget_.get());
+    assert(mc_widget);
+
+    updateChildren(mc_widget->children);
 }
 
 void MultiChildRenderObjectElement::performRebuild() {
