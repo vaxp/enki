@@ -6,6 +6,7 @@
 #include "enki/core/types.hpp"
 #include "enki/core/result.hpp"
 #include "enki/core/signal.hpp"
+#include "enki/platform/input.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -41,6 +42,9 @@ public:
 
     /// Set the clipboard text (UTF-8).
     void setClipboardText(std::string_view text);
+
+    /// Set the platform mouse cursor shape.
+    void setCursor(SystemCursor cursor);
 
     // --- Signals ---
     /// Signal emitted when the platform requests quit.

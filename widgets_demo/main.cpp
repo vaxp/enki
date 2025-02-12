@@ -115,6 +115,8 @@ public:
         is_pressed_ = false;
         markNeedsPaint();
     }
+
+    SystemCursor cursor() const override { return SystemCursor::Pointer; }
 };
 
 class Clickable : public SingleChildRenderObjectWidget {

@@ -8,6 +8,20 @@
 
 namespace enki {
 
+/// System cursor shapes.
+enum class SystemCursor {
+    Default,
+    Arrow,
+    Pointer,          // Link / Hand
+    Text,             // I-Beam
+    Crosshair,
+    Move,
+    NotAllowed,
+    ResizeHorizontal,
+    ResizeVertical,
+    Wait
+};
+
 /// Mouse button identifiers.
 enum class MouseButton { None = 0, Left = 1, Middle = 2, Right = 3 };
 

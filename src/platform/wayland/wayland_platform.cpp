@@ -34,9 +34,9 @@ static const struct wl_registry_listener registry_listener = {
 // ── Wayland Pointer Listeners ────────────────────────────────────
 
 static void pointer_enter_handler(void* data, wl_pointer* pointer, uint32_t serial,
-                                 wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy) {
+                                  wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy) {
     auto* self = static_cast<WaylandPlatformBackend*>(data);
-    self->handlePointerEnter(surface, sx, sy);
+    self->handlePointerEnter(serial, surface, sx, sy);
 }
 
 static void pointer_leave_handler(void* data, wl_pointer* pointer, uint32_t serial,
@@ -121,16 +121,7 @@ static const struct wl_keyboard_listener keyboard_listener = {
 
 static void seat_capabilities_handler(void* data, wl_seat* seat, uint32_t caps) {
     auto* self = static_cast<WaylandPlatformBackend*>(data);
-
-    if ((caps & WL_SEAT_CAPABILITY_POINTER)) {
-        wl_pointer* pointer = wl_seat_get_pointer(seat);
-        wl_pointer_add_listener(pointer, &pointer_listener, self);
-    }
-
-    if ((caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
-        wl_keyboard* keyboard = wl_seat_get_keyboard(seat);
-        wl_keyboard_add_listener(keyboard, &keyboard_listener, self);
-    }
+    self->handleSeatCapabilities(seat, caps);
 }
 
 static void seat_name_handler(void* data, wl_seat* seat, const char* name) {}
@@ -139,6 +130,28 @@ static const struct wl_seat_listener seat_listener = {
     .capabilities = seat_capabilities_handler,
     .name = seat_name_handler,
 };
+
+void WaylandPlatformBackend::handleSeatCapabilities(wl_seat* seat, uint32_t caps) {
+    if ((caps & WL_SEAT_CAPABILITY_POINTER)) {
+        if (!pointer_) {
+            pointer_ = wl_seat_get_pointer(seat);
+            wl_pointer_add_listener(pointer_, &pointer_listener, this);
+        }
+    } else if (pointer_) {
+        wl_pointer_destroy(pointer_);
+        pointer_ = nullptr;
+    }
+
+    if ((caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
+        if (!keyboard_) {
+            keyboard_ = wl_seat_get_keyboard(seat);
+            wl_keyboard_add_listener(keyboard_, &keyboard_listener, this);
+        }
+    } else if (keyboard_) {
+        wl_keyboard_destroy(keyboard_);
+        keyboard_ = nullptr;
+    }
+}
 
 // ════════════════════════════════════════════════════════════════
 // WaylandPlatformBackend Implementation
@@ -174,6 +187,20 @@ bool WaylandPlatformBackend::init() {
     if (!compositor_) {
         std::cerr << "[ENKI Wayland] Missing required wl_compositor interface\n";
         return false;
+    }
+
+    if (shm_) {
+        const char* theme_name = std::getenv("XCURSOR_THEME");
+        int size = 24;
+        if (const char* size_env = std::getenv("XCURSOR_SIZE")) {
+            int s = std::atoi(size_env);
+            if (s > 0) size = s;
+        }
+        cursor_theme_ = wl_cursor_theme_load(theme_name, size, shm_);
+    }
+
+    if (compositor_) {
+        cursor_surface_ = wl_compositor_create_surface(compositor_);
     }
 
     if (!layer_shell_) {
@@ -228,6 +255,23 @@ void WaylandPlatformBackend::shutdown() {
         eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         eglTerminate(egl_display_);
         egl_display_ = EGL_NO_DISPLAY;
+    }
+
+    if (cursor_surface_) {
+        wl_surface_destroy(cursor_surface_);
+        cursor_surface_ = nullptr;
+    }
+    if (cursor_theme_) {
+        wl_cursor_theme_destroy(cursor_theme_);
+        cursor_theme_ = nullptr;
+    }
+    if (pointer_) {
+        wl_pointer_destroy(pointer_);
+        pointer_ = nullptr;
+    }
+    if (keyboard_) {
+        wl_keyboard_destroy(keyboard_);
+        keyboard_ = nullptr;
     }
 
     if (layer_shell_) {
@@ -323,12 +367,94 @@ void WaylandPlatformBackend::unregisterSurface(LayerSurface* surface) {
     if (surface) surfaces_.erase(surface);
 }
 
+void WaylandPlatformBackend::setCursor(SystemCursor cursor) {
+    if (current_cursor_ == cursor) return;
+    current_cursor_ = cursor;
+    updateWaylandCursor();
+}
+
+void WaylandPlatformBackend::updateWaylandCursor() {
+    if (!pointer_ || !cursor_surface_ || !cursor_theme_ || !pointer_focus_surface_ || last_pointer_serial_ == 0) {
+        return;
+    }
+
+    const char* names[4] = { "default", "left_ptr", nullptr, nullptr };
+    switch (current_cursor_) {
+        case SystemCursor::Pointer:
+            names[0] = "pointer";
+            names[1] = "hand2";
+            names[2] = "hand";
+            break;
+        case SystemCursor::Text:
+            names[0] = "text";
+            names[1] = "xterm";
+            names[2] = "ibeam";
+            break;
+        case SystemCursor::Crosshair:
+            names[0] = "crosshair";
+            break;
+        case SystemCursor::Move:
+            names[0] = "move";
+            names[1] = "grab";
+            break;
+        case SystemCursor::NotAllowed:
+            names[0] = "not-allowed";
+            names[1] = "forbidden";
+            break;
+        case SystemCursor::ResizeHorizontal:
+            names[0] = "ew-resize";
+            names[1] = "h_double_arrow";
+            break;
+        case SystemCursor::ResizeVertical:
+            names[0] = "ns-resize";
+            names[1] = "v_double_arrow";
+            break;
+        case SystemCursor::Wait:
+            names[0] = "wait";
+            names[1] = "watch";
+            break;
+        case SystemCursor::Default:
+        case SystemCursor::Arrow:
+        default:
+            names[0] = "default";
+            names[1] = "left_ptr";
+            names[2] = "arrow";
+            break;
+    }
+
+    wl_cursor* cur = nullptr;
+    for (int i = 0; i < 3 && names[i]; ++i) {
+        cur = wl_cursor_theme_get_cursor(cursor_theme_, names[i]);
+        if (cur) break;
+    }
+    if (!cur) {
+        cur = wl_cursor_theme_get_cursor(cursor_theme_, "left_ptr");
+    }
+    if (!cur) {
+        cur = wl_cursor_theme_get_cursor(cursor_theme_, "default");
+    }
+    if (!cur || cur->image_count == 0) return;
+
+    wl_cursor_image* img = cur->images[0];
+    wl_buffer* buf = wl_cursor_image_get_buffer(img);
+    if (!buf) return;
+
+    wl_pointer_set_cursor(pointer_, last_pointer_serial_, cursor_surface_, img->hotspot_x, img->hotspot_y);
+    wl_surface_attach(cursor_surface_, buf, 0, 0);
+    wl_surface_damage(cursor_surface_, 0, 0, img->width, img->height);
+    wl_surface_commit(cursor_surface_);
+}
+
 // ── Event Forwarding to Enki Platform Signals ──────────────────
 
-void WaylandPlatformBackend::handlePointerEnter(wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy) {
+void WaylandPlatformBackend::handlePointerEnter(uint32_t serial, wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy) {
     pointer_focus_surface_ = surface;
+    last_pointer_serial_ = serial;
     last_px_ = wl_fixed_to_double(sx);
     last_py_ = wl_fixed_to_double(sy);
+
+    updateWaylandCursor();
+
     if (owner_) {
         owner_->onMouseMove().emit(last_px_, last_py_);
     }
