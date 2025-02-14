@@ -168,7 +168,7 @@ inline WidgetPtr button(std::string text, bool active, std::function<void()> onC
 // Reusable UI Card Container Helper
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Container> sectionCard(std::string title, std::string subtitle, WidgetPtr content) {
+inline std::shared_ptr<Container> sectionCard(std::string title, std::string subtitle, WidgetPtr content, Key key = Key::none()) {
     auto titleLabel = label(std::move(title), 14.0f, 0xFFF1F5F9, true);
     auto subLabel = label(std::move(subtitle), 11.0f, 0xFF64748B, false);
 
@@ -178,7 +178,7 @@ inline std::shared_ptr<Container> sectionCard(std::string title, std::string sub
         content
     });
 
-    auto card = container(cardCol);
+    auto card = container(std::move(key), cardCol);
     card->color(0x301E293B)
         .borderRadius(14.0f)
         .border(0x25FFFFFF, 1.0f)
@@ -297,7 +297,7 @@ inline WidgetPtr buildFlexboxTestView() {
         wrapRow
     );
 
-    return column({
+    return column(Key::string("tab_flexbox_root"), {
         row({card1, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card2)}),
         row({card3, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card4)})
     });
@@ -423,7 +423,7 @@ inline WidgetPtr buildContainerTestView() {
         row({aspectChild, paddingOuter})
     );
 
-    return column({
+    return column(Key::string("tab_container_root"), {
         row({card1, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card2)}),
         row({card3, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card4)})
     });
@@ -517,7 +517,7 @@ inline WidgetPtr buildShellShowcaseView() {
         controlCol
     );
 
-    return column({
+    return column(Key::string("tab_shell_root"), {
         dockCard,
         controlCard
     });

@@ -191,8 +191,12 @@ public:
 
     Container() = default;
     explicit Container(WidgetPtr c) : SingleChildRenderObjectWidget(Key::none(), std::move(c)) {}
+    Container(Key k, WidgetPtr c)
+        : SingleChildRenderObjectWidget(std::move(k), std::move(c)) {}
     Container(BoxDecoration dec, WidgetPtr c)
         : SingleChildRenderObjectWidget(Key::none(), std::move(c)), decoration(std::move(dec)) {}
+    Container(Key k, BoxDecoration dec, WidgetPtr c = nullptr)
+        : SingleChildRenderObjectWidget(std::move(k), std::move(c)), decoration(std::move(dec)) {}
     Container(Key k, BoxDecoration dec, FlexboxStyle s, WidgetPtr c)
         : SingleChildRenderObjectWidget(std::move(k), std::move(c)), decoration(std::move(dec)), style(std::move(s)) {}
 
@@ -348,8 +352,16 @@ inline std::shared_ptr<Container> container(WidgetPtr child = nullptr) {
     return std::make_shared<Container>(std::move(child));
 }
 
+inline std::shared_ptr<Container> container(Key key, WidgetPtr child = nullptr) {
+    return std::make_shared<Container>(std::move(key), std::move(child));
+}
+
 inline std::shared_ptr<Container> container(BoxDecoration decoration, WidgetPtr child = nullptr) {
     return std::make_shared<Container>(std::move(decoration), std::move(child));
+}
+
+inline std::shared_ptr<Container> container(Key key, BoxDecoration decoration, WidgetPtr child = nullptr) {
+    return std::make_shared<Container>(std::move(key), std::move(decoration), std::move(child));
 }
 
 inline std::shared_ptr<Container> sizedBox(float width, float height, WidgetPtr child = nullptr) {
