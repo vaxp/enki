@@ -13,9 +13,15 @@
 
 namespace enki {
 
+/// Window display and role mode.
+enum class WindowMode {
+    Normal,      ///< Standard application window (XDG Toplevel on Wayland, Normal window on X11).
+    LayerShell,  ///< Desktop overlay surface (zwlr_layer_shell_v1).
+};
+
 /// Window creation configuration.
 struct WindowConfig {
-    std::string title        = "AetherOS Shell";
+    std::string title        = "ENKI App";
     int         width        = 1280;
     int         height       = 800;
     int         x            = -1; // -1 for centered
@@ -28,6 +34,7 @@ struct WindowConfig {
     int         min_width    = 320;
     int         min_height   = 240;
     bool        vsync        = true;
+    WindowMode  mode         = WindowMode::Normal; ///< Standard window or layer surface overlay.
 };
 
 /// Represents a native window backed by EGL and OpenGL for Skia GPU rendering.

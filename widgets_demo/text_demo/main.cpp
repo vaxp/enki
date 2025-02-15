@@ -51,6 +51,8 @@ public:
         is_pressed_ = false;
         markNeedsPaint();
     }
+
+    SystemCursor cursor() const override { return SystemCursor::Pointer; }
 };
 
 class Clickable : public SingleChildRenderObjectWidget {
@@ -59,12 +61,22 @@ public:
     FlexboxStyle          style;
     std::function<void()> on_click;
 
-    Clickable(BoxDecoration dec, FlexboxStyle s, WidgetPtr child, std::function<void()> onClick)
-        : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
+    Clickable(Key key, BoxDecoration dec, FlexboxStyle s, WidgetPtr child, std::function<void()> onClick)
+        : SingleChildRenderObjectWidget(std::move(key), std::move(child)),
           decoration(std::move(dec)), style(std::move(s)), on_click(std::move(onClick)) {}
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
         return std::make_unique<RenderClickable>(decoration, style, on_click);
+    }
+
+    void updateRenderObject(BuildContext&, RenderObject& ro) override {
+        if (auto* rc = dynamic_cast<RenderClickable*>(&ro)) {
+            rc->setDecoration(decoration);
+            rc->setStyle(style);
+            rc->on_click_ = on_click;
+            rc->markNeedsPaint();
+            rc->markNeedsLayout();
+        }
     }
 
     std::string_view typeName() const override { return "Clickable"; }
@@ -86,12 +98,12 @@ inline WidgetPtr tabButton(std::string labelStr, bool active, std::function<void
     s.padding = StyleInsets::symmetric(8.0f, 18.0f);
     s.margin = StyleInsets::only(0, 10.0f, 0, 0);
 
-    auto btnText = text(std::move(labelStr));
+    auto btnText = text(labelStr);
     btnText->fontSize(13.0f)
            .color(active ? 0xFFFFFFFF : 0xFF94A3B8);
     if (active) btnText->bold();
 
-    return std::make_shared<Clickable>(dec, s, btnText, std::move(onClick));
+    return std::make_shared<Clickable>(Key::string(labelStr), dec, s, btnText, std::move(onClick));
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -99,7 +111,7 @@ inline WidgetPtr tabButton(std::string labelStr, bool active, std::function<void
 // ════════════════════════════════════════════════════════════════
 
 inline std::shared_ptr<Container> typographyCard(std::string titleStr, std::string descStr, WidgetPtr content) {
-    auto titleWidget = text(std::move(titleStr));
+    auto titleWidget = text(titleStr);
     titleWidget->fontSize(15.0f).bold().color(0xFFF1F5F9);
 
     auto descWidget = text(std::move(descStr));
@@ -115,7 +127,7 @@ inline std::shared_ptr<Container> typographyCard(std::string titleStr, std::stri
         content
     });
 
-    auto c = container(cardCol);
+    auto c = container(Key::string("card_" + titleStr), cardCol);
     c->color(0x301E293B)
      .borderRadius(14.0f)
      .border(0x40334155, 1.0f)
@@ -232,7 +244,7 @@ WidgetPtr buildHierarchyView() {
         decCol
     );
 
-    return column({
+    return column(Key::string("tab_hierarchy_view"), {
         scaleCard,
         weightsCard,
         decCard
@@ -330,7 +342,7 @@ WidgetPtr buildRichTextView() {
         multiBox
     );
 
-    return column({
+    return column(Key::string("tab_richtext_view"), {
         codeCard,
         articleCard,
         multiCard
@@ -422,7 +434,7 @@ WidgetPtr buildWrappingView() {
         alignCol
     );
 
-    return column({
+    return column(Key::string("tab_wrapping_view"), {
         wrapCard,
         ellipsisCard,
         alignCard
@@ -560,7 +572,7 @@ WidgetPtr buildShellShowcaseView() {
         statsRow
     );
 
-    return column({
+    return column(Key::string("tab_shell_view"), {
         notifCard,
         mediaCard,
         sysCard
@@ -605,7 +617,7 @@ public:
         titleRow->alignItems(Align::Center);
 
         // 2. Tab Navigation Buttons
-        auto tabs = row({
+        auto tabs = row(Key::string("tabs_navigation_row"), {
             tabButton("🔤 1. Hierarchy & Styles", current_tab_ == 0, [this] {
                 setState([this] { current_tab_ = 0; });
             }),
