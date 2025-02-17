@@ -268,10 +268,14 @@ enki_sources = files(
   'src/state/bloc_builder.cpp',
   'src/state/bloc_listener.cpp',
 
+  # Gestures
+  'src/gestures/recognizer.cpp',
+
   # Widgets
   'src/widgets/flexbox.cpp',
   'src/widgets/container.cpp',
   'src/widgets/text.cpp',
+  'src/widgets/gesture_detector.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',
