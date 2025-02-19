@@ -136,6 +136,7 @@ public:
     /// @param context The paint context with canvas and offset.
     virtual void paint(PaintContext& context) = 0;
 
+    virtual void tick(double /*now*/) {}
     virtual void handlePointerDown(const PointerEvent& e) {}
     virtual void handlePointerUp(const PointerEvent& e) {}
     virtual void handlePointerEnter(const PointerEvent& e) {}
@@ -144,6 +145,9 @@ public:
     virtual void handlePointerScroll(float dx, float dy) {}
     virtual bool handlesScroll() const { return false; }
     virtual SystemCursor cursor() const { return SystemCursor::Default; }
+
+    /// Check if a RenderObject pointer is still allocated and alive in the tree.
+    static bool isAlive(const RenderObject* ro);
 
     /// Mark this render object as needing repaint.
     void markNeedsPaint();

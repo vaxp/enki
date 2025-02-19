@@ -133,6 +133,23 @@ void LongPressGestureRecognizer::handlePointerDown(const PointerEvent& e) {
     down_time_      = (e.timestamp > 0 ? e.timestamp : getCurrentTimeSeconds());
 }
 
+void LongPressGestureRecognizer::tick(double now) {
+    if (!is_down_) return;
+
+    if (!triggered_) {
+        if (now - down_time_ >= duration_threshold) {
+            triggered_ = true;
+            if (on_long_press_start) {
+                LongPressStartDetails details{down_pos_, down_local_pos_, now};
+                on_long_press_start(details);
+            }
+            if (on_long_press) {
+                on_long_press();
+            }
+        }
+    }
+}
+
 void LongPressGestureRecognizer::handlePointerMove(const PointerEvent& e) {
     if (!is_down_) return;
 
@@ -236,7 +253,10 @@ void PanGestureRecognizer::handlePointerMove(const PointerEvent& e) {
     }
 
     if (is_dragging_) {
-        Point delta = {e.localPosition.x - last_local_pos_.x, e.localPosition.y - last_local_pos_.y};
+        Point delta = {
+            static_cast<float>(e.position.x - last_position_.x),
+            static_cast<float>(e.position.y - last_position_.y)
+        };
         recent_velocity_ = {
             static_cast<float>((e.position.x - last_position_.x) / dt),
             static_cast<float>((e.position.y - last_position_.y) / dt)

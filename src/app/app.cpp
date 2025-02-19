@@ -59,12 +59,18 @@ struct App::Impl {
 
     // Pointer state
     std::unordered_set<RenderObject*> hovered_targets;
-    float last_pointer_x = 0.0f;
-    float last_pointer_y = 0.0f;
+    std::vector<RenderObject*>        active_pointer_targets;
+    bool                              is_pointer_down = false;
+    MouseButton                       active_button   = MouseButton::None;
+    float                             last_pointer_x = 0.0f;
+    float                             last_pointer_y = 0.0f;
 
-    // Timing
+    // Timing & Real-time performance metrics
     using Clock = std::chrono::steady_clock;
     Clock::time_point last_frame_time;
+    Clock::time_point last_fps_sample_time;
+    uint32_t          frames_in_sample = 0;
+    FrameStats        stats;
 
     // ── Initialization ──────────────────────────────────────────
 
@@ -120,23 +126,32 @@ struct App::Impl {
         if (!libgl) libgl = dlopen("libGLESv2.so.2", RTLD_LAZY | RTLD_LOCAL);
         if (!libgl) libgl = dlopen("libGLESv2.so", RTLD_LAZY | RTLD_LOCAL);
 
-        auto gl_interface = GrGLMakeAssembledInterface(libgl, [](void* ctx, const char* name) -> GrGLFuncPtr {
-            // First check eglGetProcAddress
-            if (auto proc = eglGetProcAddress(name)) {
-                return reinterpret_cast<GrGLFuncPtr>(proc);
-            }
-            // Second check libGL symbols (for core GL 1.0-1.1 functions like glGetString)
-            if (ctx) {
-                if (auto proc = dlsym(ctx, name)) {
-                    return reinterpret_cast<GrGLFuncPtr>(proc);
+        sk_sp<const GrGLInterface> gl_interface = nullptr;
+
+        if (libgl) {
+            auto proc_loader = [libgl](const char* name) -> GrGLFuncPtr {
+                void* sym = dlsym(libgl, name);
+                if (!sym) {
+                    typedef void* (*GLXGetProcAddressProc)(const char*);
+                    static auto glXGetProcAddress = (GLXGetProcAddressProc)dlsym(libgl, "glXGetProcAddressARB");
+                    if (glXGetProcAddress) sym = glXGetProcAddress(name);
                 }
-            }
-            // Third check global symbols
-            if (auto proc = dlsym(RTLD_DEFAULT, name)) {
-                return reinterpret_cast<GrGLFuncPtr>(proc);
-            }
-            return nullptr;
-        });
+                if (!sym) {
+                    typedef void* (*EGLGetProcAddressProc)(const char*);
+                    static auto eglGetProcAddress = (EGLGetProcAddressProc)dlsym(RTLD_DEFAULT, "eglGetProcAddress");
+                    if (eglGetProcAddress) sym = eglGetProcAddress(name);
+                }
+                return reinterpret_cast<GrGLFuncPtr>(sym);
+            };
+
+            gl_interface = GrGLMakeAssembledInterface(
+                &proc_loader,
+                [](void* ctx, const char* name) -> GrGLFuncPtr {
+                    auto* loader = static_cast<decltype(proc_loader)*>(ctx);
+                    return (*loader)(name);
+                }
+            );
+        }
 
         // Strategy 2: Fallback to Skia Native Interface
         if (!gl_interface) {
@@ -168,6 +183,17 @@ struct App::Impl {
 
     // ── Event Dispatching ───────────────────────────────────────
 
+    void tickPointer() {
+        if (is_pointer_down && !active_pointer_targets.empty()) {
+            double now = std::chrono::duration<double>(Clock::now().time_since_epoch()).count();
+            for (RenderObject* ro : active_pointer_targets) {
+                if (RenderObject::isAlive(ro)) {
+                    ro->tick(now);
+                }
+            }
+        }
+    }
+
     void dispatchPointerMove(float x, float y) {
         last_pointer_x = x;
         last_pointer_y = y;
@@ -176,6 +202,24 @@ struct App::Impl {
         auto* root_ro = root_element->findRenderObject();
         if (!root_ro) return;
 
+        // 1. If pointer is captured (active drag), dispatch move to all active targets
+        if (is_pointer_down && !active_pointer_targets.empty()) {
+            for (RenderObject* ro : active_pointer_targets) {
+                if (RenderObject::isAlive(ro)) {
+                    Rect bounds = ro->globalBounds();
+                    Point localPos = {x - bounds.x, y - bounds.y};
+                    PointerEvent e{
+                        .type          = PointerEvent::Move,
+                        .position      = {x, y},
+                        .localPosition = localPos,
+                        .button        = active_button
+                    };
+                    ro->handlePointerMove(e);
+                }
+            }
+        }
+
+        // 2. Perform hit test for hover and cursor updates
         HitTestResult result;
         root_ro->hitTest(result, {x, y});
 
@@ -183,15 +227,18 @@ struct App::Impl {
         SystemCursor desired_cursor = SystemCursor::Arrow;
 
         for (const auto& entry : result.path()) {
-            if (entry.target) {
+            if (entry.target && RenderObject::isAlive(entry.target)) {
                 current_hovered.insert(entry.target);
-                PointerEvent e{
-                    .type          = PointerEvent::Move,
-                    .position      = {x, y},
-                    .localPosition = entry.localPosition,
-                    .button        = MouseButton::None
-                };
-                entry.target->handlePointerMove(e);
+
+                if (!is_pointer_down) {
+                    PointerEvent e{
+                        .type          = PointerEvent::Move,
+                        .position      = {x, y},
+                        .localPosition = entry.localPosition,
+                        .button        = MouseButton::None
+                    };
+                    entry.target->handlePointerMove(e);
+                }
 
                 if (desired_cursor == SystemCursor::Arrow && entry.target->cursor() != SystemCursor::Default) {
                     desired_cursor = entry.target->cursor();
@@ -201,14 +248,14 @@ struct App::Impl {
 
         // Notify exit for targets no longer hovered
         for (RenderObject* ro : hovered_targets) {
-            if (current_hovered.find(ro) == current_hovered.end()) {
+            if (RenderObject::isAlive(ro) && current_hovered.find(ro) == current_hovered.end()) {
                 ro->handlePointerExit({});
             }
         }
 
         // Notify enter for newly hovered targets
         for (RenderObject* ro : current_hovered) {
-            if (hovered_targets.find(ro) == hovered_targets.end()) {
+            if (RenderObject::isAlive(ro) && hovered_targets.find(ro) == hovered_targets.end()) {
                 ro->handlePointerEnter({});
             }
         }
@@ -229,7 +276,7 @@ struct App::Impl {
         root_ro->hitTest(result, {last_pointer_x, last_pointer_y});
 
         for (const auto& entry : result.path()) {
-            if (entry.target && entry.target->handlesScroll()) {
+            if (entry.target && RenderObject::isAlive(entry.target) && entry.target->handlesScroll()) {
                 entry.target->handlePointerScroll(dx, dy);
                 break;
             }
@@ -237,6 +284,10 @@ struct App::Impl {
     }
 
     void dispatchPointerDown(float x, float y, int btn) {
+        is_pointer_down = true;
+        active_button   = static_cast<MouseButton>(btn);
+        active_pointer_targets.clear();
+
         if (!root_element) return;
         auto* root_ro = root_element->findRenderObject();
         if (!root_ro) return;
@@ -245,12 +296,13 @@ struct App::Impl {
         root_ro->hitTest(result, {x, y});
 
         for (const auto& entry : result.path()) {
-            if (entry.target) {
+            if (entry.target && RenderObject::isAlive(entry.target)) {
+                active_pointer_targets.push_back(entry.target);
                 PointerEvent e{
                     .type          = PointerEvent::Down,
                     .position      = {x, y},
                     .localPosition = entry.localPosition,
-                    .button        = static_cast<MouseButton>(btn)
+                    .button        = active_button
                 };
                 entry.target->handlePointerDown(e);
             }
@@ -258,22 +310,42 @@ struct App::Impl {
     }
 
     void dispatchPointerUp(float x, float y, int btn) {
-        if (!root_element) return;
-        auto* root_ro = root_element->findRenderObject();
-        if (!root_ro) return;
+        is_pointer_down = false;
+        MouseButton released_button = static_cast<MouseButton>(btn);
 
-        HitTestResult result;
-        root_ro->hitTest(result, {x, y});
+        if (!active_pointer_targets.empty()) {
+            for (RenderObject* ro : active_pointer_targets) {
+                if (RenderObject::isAlive(ro)) {
+                    Rect bounds = ro->globalBounds();
+                    Point localPos = {x - bounds.x, y - bounds.y};
+                    PointerEvent e{
+                        .type          = PointerEvent::Up,
+                        .position      = {x, y},
+                        .localPosition = localPos,
+                        .button        = released_button
+                    };
+                    ro->handlePointerUp(e);
+                }
+            }
+            active_pointer_targets.clear();
+        } else {
+            if (!root_element) return;
+            auto* root_ro = root_element->findRenderObject();
+            if (!root_ro) return;
 
-        for (const auto& entry : result.path()) {
-            if (entry.target) {
-                PointerEvent e{
-                    .type          = PointerEvent::Up,
-                    .position      = {x, y},
-                    .localPosition = entry.localPosition,
-                    .button        = static_cast<MouseButton>(btn)
-                };
-                entry.target->handlePointerUp(e);
+            HitTestResult result;
+            root_ro->hitTest(result, {x, y});
+
+            for (const auto& entry : result.path()) {
+                if (entry.target && RenderObject::isAlive(entry.target)) {
+                    PointerEvent e{
+                        .type          = PointerEvent::Up,
+                        .position      = {x, y},
+                        .localPosition = entry.localPosition,
+                        .button        = released_button
+                    };
+                    entry.target->handlePointerUp(e);
+                }
             }
         }
     }
@@ -281,12 +353,15 @@ struct App::Impl {
     // ── Per-frame rendering ─────────────────────────────────────
 
     void renderFrame() {
+        auto frame_start = Clock::now();
+
         auto s = window->getDrawableSize();
         if (s.width <= 0 || s.height <= 0) return;
 
         int w = static_cast<int>(s.width);
         int h = static_cast<int>(s.height);
 
+        // Recreate surface on resize
         if (!cached_surface || cached_w != w || cached_h != h) {
             GrGLFramebufferInfo fbInfo;
             fbInfo.fFBOID  = 0;
@@ -331,10 +406,69 @@ struct App::Impl {
             PaintContext pctx{*canvas, Point{0, 0},
                               Rect{0, 0, s.width, s.height}, 1.0f};
             root_ro->paint(pctx);
+
+            if (config.show_performance_overlay) {
+                drawPerformanceOverlay(*canvas, s);
+            }
         }
+
+        auto cpu_end = Clock::now();
+        stats.cpu_time_ms = std::chrono::duration<double, std::milli>(cpu_end - frame_start).count();
 
         gr_context->flush();
         window->swapBuffers();
+
+        auto frame_end = Clock::now();
+        stats.gpu_time_ms   = std::chrono::duration<double, std::milli>(frame_end - cpu_end).count();
+        stats.frame_time_ms = std::chrono::duration<double, std::milli>(frame_end - frame_start).count();
+        stats.total_frames++;
+        frames_in_sample++;
+
+        auto sample_elapsed = std::chrono::duration<double>(frame_end - last_fps_sample_time).count();
+        if (sample_elapsed >= 0.20) { // Update 5 times per second for smooth real-time reading
+            stats.fps = frames_in_sample / sample_elapsed;
+            frames_in_sample = 0;
+            last_fps_sample_time = frame_end;
+        }
+    }
+
+    void drawPerformanceOverlay(Canvas& canvas, Size s) {
+        float hud_w = 210.0f;
+        float hud_h = 48.0f;
+        float hud_x = s.width - hud_w - 14.0f;
+        float hud_y = 14.0f;
+
+        Paint bg_paint;
+        bg_paint.setColor(0xEE0B0F19);
+        bg_paint.setStyle(PaintStyle::Fill);
+        canvas.drawRRect(Rect{hud_x, hud_y, hud_w, hud_h}, BorderRadius::circular(8.0f), bg_paint);
+
+        Paint border_paint;
+        border_paint.setColor(0x5000E5FF);
+        border_paint.setStyle(PaintStyle::Stroke);
+        border_paint.setStrokeWidth(1.0f);
+        canvas.drawRRect(Rect{hud_x, hud_y, hud_w, hud_h}, BorderRadius::circular(8.0f), border_paint);
+
+        // Status indicator dot
+        Paint dot_paint;
+        dot_paint.setColor((stats.fps >= 55.0) ? 0xFF10B981 : ((stats.fps >= 30.0) ? 0xFFF59E0B : 0xFFEF4444));
+        dot_paint.setStyle(PaintStyle::Fill);
+        canvas.drawCircle(Point{hud_x + 14.0f, hud_y + 16.0f}, 4.0f, dot_paint);
+
+        // FPS Text
+        char fps_buf[64];
+        std::snprintf(fps_buf, sizeof(fps_buf), "%.1f FPS  (%.2f ms)", stats.fps, stats.frame_time_ms);
+        Paint fps_paint;
+        fps_paint.setColor(0xFFFFFFFF);
+        canvas.drawText(fps_buf, Point{hud_x + 25.0f, hud_y + 20.0f}, fps_paint, 12.0f, nullptr, true);
+
+        // CPU / GPU / Frame count line
+        char sub_buf[64];
+        std::snprintf(sub_buf, sizeof(sub_buf), "CPU: %.2fms | GPU: %.2fms | #%lu",
+                      stats.cpu_time_ms, stats.gpu_time_ms, static_cast<unsigned long>(stats.total_frames));
+        Paint sub_paint;
+        sub_paint.setColor(0xFF94A3B8);
+        canvas.drawText(sub_buf, Point{hud_x + 12.0f, hud_y + 37.0f}, sub_paint, 9.0f, nullptr, false);
     }
 
     // ── Frame timing ────────────────────────────────────────────
@@ -385,7 +519,8 @@ Result<std::unique_ptr<App>> App::create(WidgetPtr root_widget, AppConfig config
     if (!impl.initSkia())       return Result<std::unique_ptr<App>>::err(ErrorCode::RenderingError, "Failed to initialize Skia GPU context");
     if (!impl.initWidgetTree()) return Result<std::unique_ptr<App>>::err(ErrorCode::NotInitialized, "Failed to build widget tree");
 
-    impl.last_frame_time = Impl::Clock::now();
+    impl.last_frame_time      = Impl::Clock::now();
+    impl.last_fps_sample_time = impl.last_frame_time;
 
     return Result<std::unique_ptr<App>>::ok(std::move(app));
 }
@@ -400,10 +535,13 @@ int App::run() {
             break;
         }
 
-        // 2. Render the frame
+        // 2. Tick active pointers / gesture timers
+        impl.tickPointer();
+
+        // 3. Render the frame
         impl.renderFrame();
 
-        // 3. Cap to target FPS
+        // 4. Cap to target FPS
         impl.capFrameRate();
     }
 
@@ -411,6 +549,10 @@ int App::run() {
 }
 
 void App::quit() { impl_->quit_requested = true; }
+
+FrameStats App::frameStats() const { return impl_->stats; }
+double App::currentFps() const { return impl_->stats.fps; }
+double App::currentFrameTimeMs() const { return impl_->stats.frame_time_ms; }
 
 const std::string& App::title() const { return impl_->title; }
 

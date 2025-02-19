@@ -214,7 +214,7 @@ WidgetPtr GestureDemoState::buildSidebar() {
     });
 
     auto status_card = container(status_col);
-    status_card->margin(EdgeInsets::only(0, 20.0f, 0, 0))
+    status_card->margin(EdgeInsets::only(20.0f, 0, 0, 0))
                .paddingAll(12.0f)
                .color(0x18FFFFFF)
                .borderRadius(8.0f);
@@ -314,7 +314,8 @@ WidgetPtr GestureDemoState::buildTapsTab() {
             single_tap_count++;
             logEvent("Single Tap detected (Count = " + std::to_string(single_tap_count) + ")");
         });
-    }).cursor(SystemCursor::Pointer);
+    }).cursor(SystemCursor::Pointer)
+      .hitTestBehavior(HitTestBehavior::Opaque);
 
     // 2. Double Tap Card
     auto double_btn_text = text("Double Click Fast! (" + std::to_string(double_tap_count) + ")");
@@ -357,7 +358,8 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         setState([this]() {
             logEvent("Tap 1 received — tap again quickly for double tap!");
         });
-    }).cursor(SystemCursor::Pointer);
+    }).cursor(SystemCursor::Pointer)
+      .hitTestBehavior(HitTestBehavior::Opaque);
 
     // 3. Right Click (Secondary Tap) Card
     auto sec_btn_text = text("Right Click Here (" + std::to_string(secondary_tap_count) + ")");
@@ -396,7 +398,8 @@ WidgetPtr GestureDemoState::buildTapsTab() {
             secondary_tap_count++;
             logEvent("🖱️ Right Click (Secondary Tap) detected (Count = " + std::to_string(secondary_tap_count) + ")");
         });
-    }).cursor(SystemCursor::Pointer);
+    }).cursor(SystemCursor::Pointer)
+      .hitTestBehavior(HitTestBehavior::Opaque);
 
     // 4. Long Press Card
     auto lp_btn_text = text("Hold Down 400ms (" + std::to_string(long_press_count) + ")");
@@ -435,7 +438,8 @@ WidgetPtr GestureDemoState::buildTapsTab() {
             long_press_count++;
             logEvent("⏱️ LONG PRESS activated after 400ms! (Count = " + std::to_string(long_press_count) + ")");
         });
-    }).cursor(SystemCursor::Pointer);
+    }).cursor(SystemCursor::Pointer)
+      .hitTestBehavior(HitTestBehavior::Opaque);
 
     // Event History Panel
     std::vector<WidgetPtr> log_widgets;
@@ -532,9 +536,9 @@ WidgetPtr GestureDemoState::buildPanTab() {
     });
 
     auto drag_box = container(drag_content);
-    drag_box->width(300.0f)
+    drag_box->width(320.0f)
             .paddingAll(16.0f)
-            .margin(EdgeInsets::only(card_offset_x, card_offset_y, 0, 0))
+            .margin(EdgeInsets::fromLTRB(card_offset_x, card_offset_y, 0.0f, 0.0f))
             .color(is_dragging_card ? Style::primary : Style::bg_card_hover)
             .borderRadius(14.0f)
             .border(is_dragging_card ? Style::secondary : Style::primary_light, is_dragging_card ? 2.0f : 1.0f)
@@ -548,8 +552,8 @@ WidgetPtr GestureDemoState::buildPanTab() {
         });
     }).onPanUpdate([this](const DragUpdateDetails& d) {
         setState([this, d]() {
-            card_offset_x = std::clamp(card_offset_x + d.delta.x, -20.0f, 380.0f);
-            card_offset_y = std::clamp(card_offset_y + d.delta.y, -10.0f, 150.0f);
+            card_offset_x = std::clamp(card_offset_x + d.delta.x, 0.0f, 380.0f);
+            card_offset_y = std::clamp(card_offset_y + d.delta.y, 0.0f, 100.0f);
         });
     }).onPanEnd([this](const DragEndDetails& d) {
         setState([this, d]() {
@@ -563,53 +567,57 @@ WidgetPtr GestureDemoState::buildPanTab() {
       .hitTestBehavior(HitTestBehavior::Opaque);
 
     auto canvas_container = container(drag_gd);
-    canvas_container->height(240.0f)
-                    .paddingAll(16.0f)
+    canvas_container->height(200.0f)
+                    .paddingAll(14.0f)
                     .color(Style::bg_card)
                     .borderRadius(14.0f)
                     .border(Style::border_subtle, 1.0f);
 
     // 2. Interactive Horizontal Slider
-    float slider_width = 320.0f;
-    float thumb_pos_x  = slider_value * slider_width;
+    float total_slider_w = 680.0f;
+    float thumb_w        = 22.0f;
+    float max_travel     = total_slider_w - thumb_w;
+    float fill_w         = std::clamp(slider_value * max_travel, 0.0f, max_travel);
+    float remaining_w    = std::max(0.0f, max_travel - fill_w);
 
-    auto slider_fill = container();
-    slider_fill->width(thumb_pos_x)
-               .height(8.0f)
-               .color(Style::primary)
-               .borderRadius(4.0f);
+    auto fill_bar = container();
+    fill_bar->width(fill_w)
+            .height(8.0f)
+            .color(Style::primary)
+            .borderRadius(4.0f);
 
-    auto slider_track = container(slider_fill);
-    slider_track->width(slider_width)
-                .height(8.0f)
-                .color(Style::bg_input)
-                .borderRadius(4.0f);
+    auto thumb_elem = container();
+    thumb_elem->width(thumb_w)
+              .height(22.0f)
+              .color(Style::secondary)
+              .borderRadius(11.0f)
+              .shadow(0x8000E5FF, {0, 2}, 8.0f);
 
-    auto slider_thumb = container();
-    slider_thumb->width(22.0f)
-                .height(22.0f)
-                .margin(EdgeInsets::only(std::max(0.0f, thumb_pos_x - 11.0f), 0, 0, 0))
-                .color(Style::secondary)
-                .borderRadius(11.0f)
-                .shadow(0x8000E5FF, {0, 2}, 6.0f);
+    auto remaining_bar = container();
+    remaining_bar->width(remaining_w)
+                 .height(8.0f)
+                 .color(Style::bg_input)
+                 .borderRadius(4.0f);
 
-    auto slider_composite = container(column({
-        slider_track,
-        sizedBox(0, -15.0f), // overlap thumb
-        slider_thumb,
-    }));
-    slider_composite->width(slider_width)
-                    .height(34.0f);
+    auto slider_row = row(Justify::Start, Align::Center, {
+        fill_bar,
+        thumb_elem,
+        remaining_bar,
+    });
 
-    auto slider_gd = gestureDetector(Key::string("custom_slider_gd"), slider_composite);
-    slider_gd->onPanUpdate([this, slider_width](const DragUpdateDetails& d) {
-        setState([this, d, slider_width]() {
-            slider_value = std::clamp(slider_value + (d.delta.x / slider_width), 0.0f, 1.0f);
+    auto slider_hit_area = container(slider_row);
+    slider_hit_area->width(total_slider_w)
+                   .height(36.0f);
+
+    auto slider_gd = gestureDetector(Key::string("custom_slider_gd"), slider_hit_area);
+    slider_gd->onPanUpdate([this, total_slider_w](const DragUpdateDetails& d) {
+        setState([this, d, total_slider_w]() {
+            slider_value = std::clamp(slider_value + (d.delta.x / total_slider_w), 0.0f, 1.0f);
             logEvent("Slider value updated: " + std::to_string(static_cast<int>(slider_value * 100)) + "%");
         });
-    }).onTapDown([this, slider_width](const TapDownDetails& d) {
-        setState([this, d, slider_width]() {
-            slider_value = std::clamp(d.local_position.x / slider_width, 0.0f, 1.0f);
+    }).onTapDown([this, total_slider_w](const TapDownDetails& d) {
+        setState([this, d, total_slider_w]() {
+            slider_value = std::clamp(d.local_position.x / total_slider_w, 0.0f, 1.0f);
             logEvent("Slider tapped: " + std::to_string(static_cast<int>(slider_value * 100)) + "%");
         });
     }).cursor(SystemCursor::Pointer)
@@ -633,7 +641,7 @@ WidgetPtr GestureDemoState::buildPanTab() {
         slider_header,
         sizedBox(0, 6.0f),
         slider_desc,
-        sizedBox(0, 16.0f),
+        sizedBox(0, 14.0f),
         slider_gd,
     }));
     slider_card->paddingAll(18.0f)
@@ -658,7 +666,8 @@ WidgetPtr GestureDemoState::buildPanTab() {
             card_offset_y = 0.0f;
             logEvent("Draggable card position reset to center");
         });
-    }).cursor(SystemCursor::Pointer);
+    }).cursor(SystemCursor::Pointer)
+      .hitTestBehavior(HitTestBehavior::Opaque);
 
     return column({
         canvas_container,
@@ -908,10 +917,13 @@ WidgetPtr GestureDemoState::build(BuildContext&) {
 
 int main(int argc, char** argv) {
     AppConfig config;
-    config.title       = "ENKI — GestureDetector & Interaction Suite";
-    config.width       = 1080;
-    config.height      = 740;
-    config.window_mode = WindowMode::Normal; // Standard desktop window
+    config.title                    = "ENKI — GestureDetector & Interaction Suite";
+    config.width                    = 1080;
+    config.height                   = 740;
+    config.window_mode              = WindowMode::Normal; // Standard desktop window
+    config.vsync                    = false;              // Disable VSync blocking
+    config.target_fps               = 0;                  // 0 = Uncapped max speed
+    config.show_performance_overlay = true;               // Display real-time FPS & Frame Time HUD
 
     return runApp(std::make_shared<GestureDemoApp>(), config);
 }

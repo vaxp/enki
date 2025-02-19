@@ -36,6 +36,10 @@ bool RenderGestureDetector::hitTest(HitTestResult& result, Point localPoint) {
     return false;
 }
 
+void RenderGestureDetector::tick(double now) {
+    long_press_recognizer.tick(now);
+}
+
 void RenderGestureDetector::handlePointerDown(const PointerEvent& e) {
     tap_recognizer.handlePointerDown(e);
     long_press_recognizer.handlePointerDown(e);
@@ -65,10 +69,6 @@ void RenderGestureDetector::handlePointerEnter(const PointerEvent& e) {
 }
 
 void RenderGestureDetector::handlePointerExit(const PointerEvent& e) {
-    tap_recognizer.handlePointerCancel();
-    long_press_recognizer.handlePointerCancel();
-    pan_recognizer.handlePointerCancel();
-
     if (on_hover_exit) {
         on_hover_exit(e);
     }
