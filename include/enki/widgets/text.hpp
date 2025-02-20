@@ -206,12 +206,28 @@ public:
     ~RenderParagraph() override;
 
     void setTextSpan(std::shared_ptr<InlineSpan> span);
+    void setText(std::string data,
+                 TextStyle style,
+                 TextAlign align = TextAlign::Start,
+                 TextDirection dir = TextDirection::LTR,
+                 TextOverflow overflow = TextOverflow::Clip,
+                 std::optional<size_t> maxLines = std::nullopt,
+                 bool softWrap = true);
+
     void setDefaultStyle(TextStyle style);
     void setTextAlign(TextAlign align);
     void setTextDirection(TextDirection dir);
     void setOverflow(TextOverflow overflow);
     void setMaxLines(std::optional<size_t> maxLines);
     void setSoftWrap(bool softWrap);
+
+    [[nodiscard]] const std::string& getTextData() const { return text_data_; }
+    [[nodiscard]] const TextStyle& getDefaultStyle() const { return default_style_; }
+    [[nodiscard]] TextAlign getTextAlign() const { return text_align_; }
+    [[nodiscard]] TextDirection getTextDirection() const { return text_direction_; }
+    [[nodiscard]] TextOverflow getOverflow() const { return overflow_; }
+    [[nodiscard]] const std::optional<size_t>& getMaxLines() const { return max_lines_; }
+    [[nodiscard]] bool getSoftWrap() const { return soft_wrap_; }
 
     void paint(PaintContext& ctx) override;
 
@@ -222,6 +238,7 @@ private:
     void rebuildParagraph();
     void layoutParagraph(float availableWidth);
 
+    std::string                 text_data_;
     std::shared_ptr<InlineSpan> span_;
     TextStyle                   default_style_;
     TextAlign                   text_align_;

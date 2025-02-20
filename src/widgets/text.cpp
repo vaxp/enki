@@ -278,6 +278,52 @@ RenderParagraph::~RenderParagraph() {
     ANUNodeSetContext(anuNode(), nullptr);
 }
 
+void RenderParagraph::setText(std::string data,
+                              TextStyle style,
+                              TextAlign align,
+                              TextDirection dir,
+                              TextOverflow overflow,
+                              std::optional<size_t> maxLines,
+                              bool softWrap) {
+    if (text_data_ == data &&
+        default_style_ == style &&
+        text_align_ == align &&
+        text_direction_ == dir &&
+        overflow_ == overflow &&
+        max_lines_ == maxLines &&
+        soft_wrap_ == softWrap) {
+        return; // Fast path: zero allocation, zero shaping, zero flexbox dirtying
+    }
+
+    bool layout_changed = (text_data_ != data ||
+                           default_style_.font_size != style.font_size ||
+                           default_style_.font_weight != style.font_weight ||
+                           default_style_.font_family != style.font_family ||
+                           default_style_.letter_spacing != style.letter_spacing ||
+                           default_style_.height != style.height ||
+                           text_direction_ != dir ||
+                           max_lines_ != maxLines ||
+                           soft_wrap_ != softWrap);
+
+    text_data_ = std::move(data);
+    default_style_ = std::move(style);
+    text_align_ = align;
+    text_direction_ = dir;
+    overflow_ = overflow;
+    max_lines_ = maxLines;
+    soft_wrap_ = softWrap;
+
+    span_ = std::make_shared<TextSpan>(text_data_, default_style_);
+    rebuildParagraph();
+
+    if (layout_changed) {
+        ANUNodeMarkDirty(anuNode());
+        markNeedsLayout();
+    } else {
+        markNeedsPaint();
+    }
+}
+
 void RenderParagraph::setTextSpan(std::shared_ptr<InlineSpan> span) {
     span_ = std::move(span);
     rebuildParagraph();
@@ -403,7 +449,7 @@ void RenderParagraph::paint(PaintContext& ctx) {
 
 std::unique_ptr<RenderObject> Text::createRenderObject(BuildContext&) {
     auto span = std::make_shared<TextSpan>(data, style);
-    return std::make_unique<RenderParagraph>(
+    auto rp = std::make_unique<RenderParagraph>(
         span,
         style,
         text_align,
@@ -412,18 +458,13 @@ std::unique_ptr<RenderObject> Text::createRenderObject(BuildContext&) {
         max_lines,
         soft_wrap
     );
+    rp->setText(data, style, text_align, text_direction, overflow, max_lines, soft_wrap);
+    return rp;
 }
 
 void Text::updateRenderObject(BuildContext&, RenderObject& renderObject) {
     if (auto* rp = dynamic_cast<RenderParagraph*>(&renderObject)) {
-        auto span = std::make_shared<TextSpan>(data, style);
-        rp->setTextSpan(span);
-        rp->setDefaultStyle(style);
-        rp->setTextAlign(text_align);
-        rp->setTextDirection(text_direction);
-        rp->setOverflow(overflow);
-        rp->setMaxLines(max_lines);
-        rp->setSoftWrap(soft_wrap);
+        rp->setText(data, style, text_align, text_direction, overflow, max_lines, soft_wrap);
     }
 }
 

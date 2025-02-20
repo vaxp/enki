@@ -107,6 +107,7 @@ struct GradientConfig {
         g.stops = stops;
         return g;
     }
+    bool operator==(const GradientConfig&) const = default;
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -149,6 +150,8 @@ struct BoxDecoration {
         d.border = border;
         return d;
     }
+
+    bool operator==(const BoxDecoration&) const = default;
 };
 
 // ════════════════════════════════════════════════════════════════
