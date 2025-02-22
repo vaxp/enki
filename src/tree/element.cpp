@@ -369,8 +369,6 @@ void RenderObjectElement::update(WidgetPtr newWidget) {
 
     BuildContext ctx(this);
     row_widget->updateRenderObject(ctx, *render_object_);
-    render_object_->markNeedsLayout();
-    render_object_->markNeedsPaint();
 }
 
 RenderObject* RenderObjectElement::findRenderObject() {
