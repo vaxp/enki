@@ -400,7 +400,9 @@ struct App::Impl {
         // Layout + Paint
         auto* root_ro = root_element->findRenderObject();
         if (root_ro) {
-            root_ro->layout(s.width, s.height);
+            if (root_ro->needsLayout()) {
+                root_ro->layout(s.width, s.height);
+            }
 
             auto canvas = createCanvasWrapper(sk_canvas);
             PaintContext pctx{*canvas, Point{0, 0},
@@ -416,10 +418,13 @@ struct App::Impl {
         stats.cpu_time_ms = std::chrono::duration<double, std::milli>(cpu_end - frame_start).count();
 
         gr_context->flush();
-        window->swapBuffers();
+        auto gpu_end = Clock::now();
+        stats.gpu_render_ms = std::chrono::duration<double, std::milli>(gpu_end - cpu_end).count();
 
+        window->swapBuffers();
         auto frame_end = Clock::now();
-        stats.gpu_time_ms   = std::chrono::duration<double, std::milli>(frame_end - cpu_end).count();
+        stats.swap_time_ms  = std::chrono::duration<double, std::milli>(frame_end - gpu_end).count();
+        stats.gpu_time_ms   = stats.gpu_render_ms + stats.swap_time_ms;
         stats.frame_time_ms = std::chrono::duration<double, std::milli>(frame_end - frame_start).count();
         stats.total_frames++;
         frames_in_sample++;
@@ -433,7 +438,7 @@ struct App::Impl {
     }
 
     void drawPerformanceOverlay(Canvas& canvas, Size s) {
-        float hud_w = 210.0f;
+        float hud_w = 270.0f;
         float hud_h = 48.0f;
         float hud_x = s.width - hud_w - 14.0f;
         float hud_y = 14.0f;
@@ -462,10 +467,10 @@ struct App::Impl {
         fps_paint.setColor(0xFFFFFFFF);
         canvas.drawText(fps_buf, Point{hud_x + 25.0f, hud_y + 20.0f}, fps_paint, 12.0f, nullptr, true);
 
-        // CPU / GPU / Frame count line
-        char sub_buf[64];
-        std::snprintf(sub_buf, sizeof(sub_buf), "CPU: %.2fms | GPU: %.2fms | #%lu",
-                      stats.cpu_time_ms, stats.gpu_time_ms, static_cast<unsigned long>(stats.total_frames));
+        // Detailed Breakdown: CPU vs Pure GPU vs Wayland Swap
+        char sub_buf[96];
+        std::snprintf(sub_buf, sizeof(sub_buf), "CPU: %.2fms | GPU: %.2fms | Swap: %.2fms",
+                      stats.cpu_time_ms, stats.gpu_render_ms, stats.swap_time_ms);
         Paint sub_paint;
         sub_paint.setColor(0xFF94A3B8);
         canvas.drawText(sub_buf, Point{hud_x + 12.0f, hud_y + 37.0f}, sub_paint, 9.0f, nullptr, false);
