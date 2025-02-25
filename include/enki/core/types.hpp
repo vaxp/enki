@@ -344,6 +344,20 @@ enum class Alignment {
     BottomLeft, BottomCenter, BottomRight,
 };
 
+/// How non-positioned children in a Stack are sized.
+enum class StackFit {
+    Loose,       ///< Children are sized naturally within incoming constraints.
+    Expand,      ///< Children expand to fill the entire stack bounds.
+    Passthrough  ///< Incoming constraints are passed directly to children.
+};
+
+/// How content overflowing its bounds is clipped.
+enum class Clip {
+    None,        ///< No clipping; content is allowed to overflow.
+    HardEdge,    ///< Clips with sharp edge (fastest, no anti-aliasing).
+    AntiAlias    ///< Clips with anti-aliased edges.
+};
+
 /// Layout Direction (RTL / LTR)
 enum class LayoutDirection { Inherit, LTR, RTL };
 

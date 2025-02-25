@@ -92,6 +92,9 @@ test('test_gestures',
   ),
 )
 
-
-
-
+test('test_stack',
+  executable('test_stack',
+    'widgets/test_stack.cpp',
+    dependencies : test_deps,
+  ),
+)
