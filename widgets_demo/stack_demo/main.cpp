@@ -500,7 +500,7 @@ int main(int argc, char** argv) {
     AppConfig config;
     config.title                    = "ENKI — Stack & Positioned Showcase";
     config.width                    = 1060;
-    config.height                   = 700;
+    config.height                   = 450;
     config.window_mode              = WindowMode::Normal;
     config.vsync                    = false;
     config.target_fps               = 0;

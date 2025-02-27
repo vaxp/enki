@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
     AppConfig config;
     config.title                    = "ENKI — Extreme Performance Benchmark (Zero-Blur)";
     config.width                    = 1080;
-    config.height                   = 740;
+    config.height                   = 620;
     config.window_mode              = WindowMode::Normal;
     config.vsync                    = false; // Uncapped
     config.target_fps               = 0;     // Maximum rate

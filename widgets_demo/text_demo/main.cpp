@@ -680,7 +680,7 @@ int main() {
     AppConfig config;
     config.title       = "Enki Engine — Typography & SkParagraph Demo";
     config.width       = 1080;
-    config.height      = 940;
+    config.height      = 680;
     config.resizable   = true;
     config.vsync       = false;
     config.target_fps  = 0; // Uncapped max speed

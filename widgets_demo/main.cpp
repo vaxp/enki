@@ -606,7 +606,7 @@ int main() {
     AppConfig config;
     config.title       = "Enki Engine — Visual Widget Test Suite & Shell Demo";
     config.width       = 1060;
-    config.height      = 920;
+    config.height      = 650;
     config.resizable   = true;
     config.vsync       = true;
     config.clear_color = 0xFF0B0F19;
