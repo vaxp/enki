@@ -247,6 +247,30 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "Column"; }
 };
 
+class Wrap : public Flexbox {
+public:
+    Wrap() {
+        style.flex_direction = FlexDirection::Row;
+        style.flex_wrap = FlexWrap::Wrap;
+    }
+    explicit Wrap(std::vector<WidgetPtr> children) : Flexbox(std::move(children)) {
+        style.flex_direction = FlexDirection::Row;
+        style.flex_wrap = FlexWrap::Wrap;
+    }
+    Wrap(Justify justify, Align align, std::vector<WidgetPtr> children)
+        : Flexbox(std::move(children)) {
+        style.flex_direction = FlexDirection::Row;
+        style.flex_wrap = FlexWrap::Wrap;
+        style.justify_content = justify;
+        style.align_items = align;
+    }
+    Wrap(Key k, std::vector<WidgetPtr> children) : Flexbox(std::move(k), {}, std::move(children)) {
+        style.flex_direction = FlexDirection::Row;
+        style.flex_wrap = FlexWrap::Wrap;
+    }
+    [[nodiscard]] std::string_view typeName() const override { return "Wrap"; }
+};
+
 // ════════════════════════════════════════════════════════════════
 // FlexItem — Single child flex modifier
 // ════════════════════════════════════════════════════════════════
@@ -353,6 +377,22 @@ inline std::shared_ptr<Column> column(Justify justify, Align align, std::vector<
 
 inline std::shared_ptr<Column> column(Justify justify, Align align, std::initializer_list<WidgetPtr> children) {
     return std::make_shared<Column>(justify, align, std::vector<WidgetPtr>(children));
+}
+
+inline std::shared_ptr<Wrap> wrap(std::vector<WidgetPtr> children) {
+    return std::make_shared<Wrap>(std::move(children));
+}
+
+inline std::shared_ptr<Wrap> wrap(std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Wrap>(std::vector<WidgetPtr>(children));
+}
+
+inline std::shared_ptr<Wrap> wrap(Key key, std::vector<WidgetPtr> children) {
+    return std::make_shared<Wrap>(std::move(key), std::move(children));
+}
+
+inline std::shared_ptr<Wrap> wrap(Justify justify, Align align, std::vector<WidgetPtr> children) {
+    return std::make_shared<Wrap>(justify, align, std::move(children));
 }
 
 inline std::shared_ptr<FlexItem> flexItem(FlexboxStyle style, WidgetPtr child) {

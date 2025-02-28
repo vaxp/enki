@@ -98,3 +98,10 @@ test('test_stack',
     dependencies : test_deps,
   ),
 )
+
+test('test_image',
+  executable('test_image',
+    'widgets/test_image.cpp',
+    dependencies : test_deps,
+  ),
+)

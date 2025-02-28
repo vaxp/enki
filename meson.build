@@ -277,6 +277,7 @@ enki_sources = files(
   'src/widgets/text.cpp',
   'src/widgets/gesture_detector.cpp',
   'src/widgets/stack.cpp',
+  'src/widgets/image.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',

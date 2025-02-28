@@ -12,4 +12,5 @@ subdir('text_demo')
 subdir('gesture_demo')
 subdir('benchmark_demo')
 subdir('stack_demo')
+subdir('image_demo')
 

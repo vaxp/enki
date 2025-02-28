@@ -215,6 +215,12 @@ struct BorderRadius {
     static constexpr BorderRadius circular(float radius) {
         return BorderRadius(radius);
     }
+    static constexpr BorderRadius all(float radius) {
+        return BorderRadius(radius);
+    }
+    static constexpr BorderRadius only(float tl = 0.0f, float tr = 0.0f, float br = 0.0f, float bl = 0.0f) {
+        return BorderRadius(tl, tr, br, bl);
+    }
     static constexpr BorderRadius zero() { return {}; }
 
     [[nodiscard]] constexpr bool isUniform() const {
@@ -356,6 +362,31 @@ enum class Clip {
     None,        ///< No clipping; content is allowed to overflow.
     HardEdge,    ///< Clips with sharp edge (fastest, no anti-aliasing).
     AntiAlias    ///< Clips with anti-aliased edges.
+};
+
+/// Shape of a box (Rectangle or Circle).
+enum class BoxShape {
+    Rectangle,
+    Circle
+};
+
+/// How an image or content is scaled to fit its destination box.
+enum class BoxFit {
+    Fill,        ///< Fill target box completely without preserving aspect ratio.
+    Contain,     ///< Scale source proportionally to fit completely inside target box (letterbox).
+    Cover,       ///< Scale source proportionally to cover entire target box (crop excess).
+    FitWidth,    ///< Scale source to match target width (height follows aspect ratio).
+    FitHeight,   ///< Scale source to match target height (width follows aspect ratio).
+    None,        ///< Center source in target box at 1:1 original scale.
+    ScaleDown    ///< Like Contain if source exceeds target box; otherwise like None.
+};
+
+/// How an image is repeated if smaller than its destination box.
+enum class ImageRepeat {
+    NoRepeat,    ///< Draw image once.
+    Repeat,      ///< Repeat in both X and Y axes.
+    RepeatX,     ///< Repeat only horizontally.
+    RepeatY      ///< Repeat only vertically.
 };
 
 /// Layout Direction (RTL / LTR)

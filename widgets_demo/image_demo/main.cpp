@@ -1,0 +1,482 @@
+/// @file main.cpp
+/// @brief ENKI Image Engine & BoxFit Interactive Showcase Demo
+///
+/// Features demonstrated:
+///   1. Realtime BoxFit Mode Switcher (Cover, Contain, Fill, FitWidth, FitHeight, None, ScaleDown).
+///   2. Multi-asset Gallery loading real PNG assets from disk (0.png, 1.png, 2.png, 12.png, vaxp.png).
+///   3. Circular Clipping (BoxShape::Circle) for Profile Avatars with Status Badges.
+///   4. Smooth Rounded Corners with dynamic BorderRadius.
+///   5. Live Color Tinting with BlendMode and Opacity.
+///   6. Responsive Image Gallery Grid.
+
+#include "enki/app/app.hpp"
+#include "enki/state/state.hpp"
+#include "enki/widgets/container.hpp"
+#include "enki/widgets/flexbox.hpp"
+#include "enki/widgets/text.hpp"
+#include "enki/widgets/gesture_detector.hpp"
+#include "enki/widgets/stack.hpp"
+#include "enki/widgets/image.hpp"
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+
+using namespace enki;
+
+// ════════════════════════════════════════════════════════════════
+// Design System & Palette
+// ════════════════════════════════════════════════════════════════
+
+namespace Style {
+    constexpr Color bg_dark       = 0xFF0A0E1A;
+    constexpr Color bg_card       = 0xFF141B2D;
+    constexpr Color bg_card_light = 0xFF1E293B;
+    constexpr Color border_subtle = 0x3038BDF8;
+    constexpr Color border_bright = 0x9038BDF8;
+    constexpr Color primary       = 0xFF6366F1;
+    constexpr Color primary_light = 0xFF818CF8;
+    constexpr Color cyan_neon     = 0xFF00E5FF;
+    constexpr Color purple_neon   = 0xFFC084FC;
+    constexpr Color emerald       = 0xFF10B981;
+    constexpr Color rose          = 0xFFF43F5E;
+    constexpr Color amber         = 0xFFF59E0B;
+    constexpr Color text_white    = 0xFFFFFFFF;
+    constexpr Color text_muted    = 0xFF94A3B8;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Image Demo State & App
+// ════════════════════════════════════════════════════════════════
+
+class ImageDemoApp : public StatefulWidget {
+public:
+    std::string_view typeName() const override { return "ImageDemoApp"; }
+    std::unique_ptr<State> createState() override;
+};
+
+class ImageDemoState : public State {
+public:
+    BoxFit current_fit = BoxFit::Cover;
+    std::string current_image = "assets/0.png";
+    BoxShape current_shape = BoxShape::Rectangle;
+    float current_radius = 20.0f;
+    float current_opacity = 1.0f;
+    bool enable_tint = false;
+    Color tint_color = 0x5500E5FF; // Soft cyan tint
+
+    // Asset list
+    const std::vector<std::string> assets = {
+        "assets/0.png",
+        "assets/1.png",
+        "assets/2.png",
+        "assets/12.png",
+        "assets/vaxp.png"
+    };
+
+    WidgetPtr build(BuildContext& context) override {
+        WidgetPtr header = buildHeader();
+        WidgetPtr ctrl = buildControlPanel();
+        WidgetPtr hero = buildHeroPreviewCard();
+        WidgetPtr gall = buildGalleryAndAvatarsPanel();
+
+        auto body_row = row(std::vector<WidgetPtr>{
+            ctrl,
+            sizedBox(14.0f, 0),
+            hero,
+            sizedBox(14.0f, 0),
+            gall
+        });
+        body_row->alignItems(Align::Start);
+
+        auto content = container(column(std::vector<WidgetPtr>{
+            header,
+            sizedBox(0, 14.0f),
+            body_row
+        }));
+        content->padding(EdgeInsets::all(18.0f))
+               .color(Style::bg_dark)
+               .size(1080.0f, 660.0f);
+
+        return content;
+    }
+
+private:
+    // ── 1. Top Header ──────────────────────────────────────────
+
+    WidgetPtr buildHeader() {
+        auto title_t = text("ENKI ⚡ Image Engine & BoxFit Showcase");
+        title_t->fontSize(22.0f)
+                .bold()
+                .color(Style::text_white);
+
+        auto subtitle_t = text("Hardware-Accelerated Skia Pipeline • Zero-Copy ImageCache • Realtime Geometric Clipping");
+        subtitle_t->fontSize(12.0f)
+                   .color(Style::text_muted);
+
+        WidgetPtr badge1 = buildBadge("Skia GL Pipeline", Style::cyan_neon);
+        WidgetPtr badge2 = buildBadge("Thread-safe LRU Cache", Style::primary_light);
+        WidgetPtr badge3 = buildBadge("Instant BoxFit Math", Style::emerald);
+
+        auto badges_row = row(std::vector<WidgetPtr>{
+            badge1,
+            sizedBox(8.0f, 0),
+            badge2,
+            sizedBox(8.0f, 0),
+            badge3
+        });
+
+        WidgetPtr title_col = column(std::vector<WidgetPtr>{
+            title_t,
+            sizedBox(0, 4.0f),
+            subtitle_t
+        });
+
+        auto header_row = row(std::vector<WidgetPtr>{
+            title_col,
+            badges_row
+        });
+        header_row->justifyContent(Justify::SpaceBetween)
+                  .alignItems(Align::Center);
+
+        auto header_box = container(header_row);
+        header_box->padding(EdgeInsets::symmetric(14.0f, 18.0f))
+                  .borderRadius(14.0f)
+                  .color(Style::bg_card)
+                  .border(Style::border_subtle, 1.0f);
+
+        return header_box;
+    }
+
+    WidgetPtr buildBadge(const std::string& label, Color color) {
+        auto t = text(label);
+        t->fontSize(11.0f).color(color).bold();
+
+        auto b = container(t);
+        b->padding(EdgeInsets::symmetric(4.0f, 10.0f))
+         .borderRadius(20.0f)
+         .color(0x20000000 | (color & 0x00FFFFFF))
+         .border(color, 1.0f);
+        return b;
+    }
+
+    // ── 2. Left Control Panel ──────────────────────────────────
+
+    WidgetPtr buildControlPanel() {
+        auto title = text("⚙️ BoxFit Switcher");
+        title->fontSize(14.0f).bold().color(Style::text_white);
+
+        std::vector<WidgetPtr> fit_buttons;
+        fit_buttons.push_back(title);
+        fit_buttons.push_back(sizedBox(0, 10.0f));
+
+        const std::vector<std::pair<BoxFit, std::string>> fits = {
+            {BoxFit::Cover, "Cover (Fill & Crop)"},
+            {BoxFit::Contain, "Contain (Letterbox)"},
+            {BoxFit::Fill, "Fill (Stretch XY)"},
+            {BoxFit::FitWidth, "FitWidth (Span X)"},
+            {BoxFit::FitHeight, "FitHeight (Span Y)"},
+            {BoxFit::None, "None (1:1 Native)"},
+            {BoxFit::ScaleDown, "ScaleDown (Smart)"}
+        };
+
+        for (const auto& [fit_mode, label] : fits) {
+            bool active = (current_fit == fit_mode);
+            auto btn = buildInteractiveButton(label, active, [this, fit_mode]() {
+                setState([this, fit_mode]() {
+                    current_fit = fit_mode;
+                });
+            });
+            fit_buttons.push_back(btn);
+            fit_buttons.push_back(sizedBox(0, 6.0f));
+        }
+
+        fit_buttons.push_back(sizedBox(0, 8.0f));
+        auto img_title = text("🖼️ Source Asset");
+        img_title->fontSize(14.0f).bold().color(Style::text_white);
+        fit_buttons.push_back(img_title);
+        fit_buttons.push_back(sizedBox(0, 8.0f));
+
+        // Asset selector wrap layout
+        std::vector<WidgetPtr> asset_btns;
+        for (size_t i = 0; i < assets.size(); ++i) {
+            bool active = (current_image == assets[i]);
+            std::string short_name = "Img " + std::to_string(i + 1);
+            if (assets[i].find("vaxp") != std::string::npos) short_name = "Logo";
+
+            auto t = text(short_name);
+            t->fontSize(11.0f).color(active ? Style::text_white : Style::text_muted).bold();
+
+            auto b = container(t);
+            b->padding(EdgeInsets::symmetric(6.0f, 10.0f))
+             .borderRadius(8.0f)
+             .color(active ? Style::primary : Style::bg_card_light)
+             .border(active ? Style::cyan_neon : Style::border_subtle, 1.0f);
+
+            auto gd = gestureDetector(b);
+            gd->onTap([this, idx = i]() {
+                setState([this, idx]() {
+                    current_image = assets[idx];
+                });
+            });
+            asset_btns.push_back(gd);
+        }
+
+        auto asset_wrap = wrap(asset_btns);
+        asset_wrap->rowGap(StyleValue::point(6.0f))
+                  .columnGap(StyleValue::point(6.0f));
+        fit_buttons.push_back(asset_wrap);
+
+        auto panel = container(column(fit_buttons));
+        panel->padding(EdgeInsets::all(14.0f))
+             .borderRadius(14.0f)
+             .color(Style::bg_card)
+             .border(Style::border_subtle, 1.0f)
+             .size(240.0f, 540.0f);
+        return panel;
+    }
+
+    WidgetPtr buildInteractiveButton(const std::string& label, bool active, std::function<void()> onClick) {
+        auto t = text(label);
+        t->fontSize(12.0f)
+         .color(active ? Style::text_white : Style::text_muted)
+         .bold();
+
+        auto btn = container(t);
+        btn->padding(EdgeInsets::symmetric(8.0f, 12.0f))
+           .borderRadius(8.0f)
+           .color(active ? Style::primary : Style::bg_card_light)
+           .border(active ? Style::cyan_neon : Style::border_subtle, 1.0f);
+
+        auto gd = gestureDetector(btn);
+        gd->onTap(std::move(onClick));
+        return gd;
+    }
+
+    // ── 3. Center Hero Preview Card ────────────────────────────
+
+    WidgetPtr buildHeroPreviewCard() {
+        auto img = imageAsset(current_image);
+        img->fit(current_fit)
+           .alignment(Alignment::Center)
+           .shape(current_shape)
+           .borderRadius(current_radius)
+           .opacity(current_opacity);
+
+        if (enable_tint) {
+            img->tint(tint_color, BlendMode::SrcIn);
+        }
+
+        auto img_holder = container(img);
+        img_holder->size(452.0f, 320.0f)
+                  .color(0xFF0F1422)
+                  .borderRadius(current_radius)
+                  .border(Style::border_bright, 1.5f);
+
+        std::string fit_str = "Cover";
+        if (current_fit == BoxFit::Contain) fit_str = "Contain";
+        else if (current_fit == BoxFit::Fill) fit_str = "Fill";
+        else if (current_fit == BoxFit::FitWidth) fit_str = "FitWidth";
+        else if (current_fit == BoxFit::FitHeight) fit_str = "FitHeight";
+        else if (current_fit == BoxFit::None) fit_str = "None (1:1)";
+        else if (current_fit == BoxFit::ScaleDown) fit_str = "ScaleDown";
+
+        WidgetPtr fit_chip = buildBadge("Mode: " + fit_str, Style::cyan_neon);
+        WidgetPtr asset_chip = buildBadge(current_image, Style::primary_light);
+
+        auto chips_row = row(std::vector<WidgetPtr>{fit_chip, sizedBox(8.0f, 0), asset_chip});
+
+        WidgetPtr shape_rect_btn = buildInteractiveButton("Rectangle", current_shape == BoxShape::Rectangle, [this]() {
+            setState([this]() {
+                current_shape = BoxShape::Rectangle;
+                current_radius = 20.0f;
+            });
+        });
+
+        WidgetPtr shape_circle_btn = buildInteractiveButton("Circle Clip", current_shape == BoxShape::Circle, [this]() {
+            setState([this]() {
+                current_shape = BoxShape::Circle;
+            });
+        });
+
+        WidgetPtr tint_toggle_btn = buildInteractiveButton(enable_tint ? "Tint: ON" : "Tint: OFF", enable_tint, [this]() {
+            setState([this]() {
+                enable_tint = !enable_tint;
+            });
+        });
+
+        WidgetPtr opacity_toggle_btn = buildInteractiveButton(current_opacity < 1.0f ? "Alpha: 60%" : "Alpha: 100%", current_opacity < 1.0f, [this]() {
+            setState([this]() {
+                current_opacity = (current_opacity < 1.0f) ? 1.0f : 0.60f;
+            });
+        });
+
+        auto toggles_row = row(std::vector<WidgetPtr>{
+            shape_rect_btn,
+            sizedBox(6.0f, 0),
+            shape_circle_btn,
+            sizedBox(6.0f, 0),
+            tint_toggle_btn,
+            sizedBox(6.0f, 0),
+            opacity_toggle_btn
+        });
+
+        auto card = container(column(std::vector<WidgetPtr>{
+            chips_row,
+            sizedBox(0, 10.0f),
+            img_holder,
+            sizedBox(0, 14.0f),
+            toggles_row
+        }));
+
+        card->padding(EdgeInsets::all(14.0f))
+            .borderRadius(14.0f)
+            .color(Style::bg_card)
+            .border(Style::border_subtle, 1.0f)
+            .size(480.0f, 540.0f);
+
+        return card;
+    }
+
+    // ── 4. Right Panel: Avatars & Gallery Grid ─────────────────
+
+    WidgetPtr buildGalleryAndAvatarsPanel() {
+        auto title1 = text("👤 Circular Avatars (Stack)");
+        title1->fontSize(13.0f).bold().color(Style::text_white);
+
+        auto avatar1 = imageAsset("assets/1.png");
+        avatar1->size(52.0f, 52.0f).circle().fit(BoxFit::Cover);
+        auto avatar1_box = container(avatar1);
+        avatar1_box->borderRadius(26.0f).border(Style::primary_light, 2.0f);
+
+        auto online_dot = container();
+        online_dot->size(12.0f, 12.0f)
+                  .borderRadius(6.0f)
+                  .color(Style::emerald)
+                  .border(0xFF0A0E1A, 2.0f);
+
+        auto pos_dot = positioned(online_dot);
+        pos_dot->bottom(0.0f).right(0.0f);
+
+        auto av1_stack = stack(std::vector<WidgetPtr>{
+            positioned(avatar1_box),
+            pos_dot
+        });
+        av1_stack->width(52.0f).height(52.0f);
+
+        auto avatar2 = imageAsset("assets/2.png");
+        avatar2->size(52.0f, 52.0f).circle().fit(BoxFit::Cover);
+        auto avatar2_box = container(avatar2);
+        avatar2_box->borderRadius(26.0f).border(Style::purple_neon, 2.0f);
+
+        auto avatar3 = imageAsset("assets/12.png");
+        avatar3->size(52.0f, 52.0f).circle().fit(BoxFit::Cover);
+        auto avatar3_box = container(avatar3);
+        avatar3_box->borderRadius(26.0f).border(Style::cyan_neon, 2.0f);
+
+        WidgetPtr w_av1 = av1_stack;
+        WidgetPtr w_av2 = avatar2_box;
+        WidgetPtr w_av3 = avatar3_box;
+
+        auto avatars_row = row(std::vector<WidgetPtr>{
+            w_av1,
+            sizedBox(12.0f, 0),
+            w_av2,
+            sizedBox(12.0f, 0),
+            w_av3
+        });
+
+        auto title2 = text("🎨 Multi-Asset Responsive Grid");
+        title2->fontSize(13.0f).bold().color(Style::text_white);
+
+        WidgetPtr card1 = buildGalleryCard("assets/1.png", "Neon Cyber", Style::cyan_neon);
+        WidgetPtr card2 = buildGalleryCard("assets/2.png", "Cosmic Core", Style::purple_neon);
+        WidgetPtr card3 = buildGalleryCard("assets/3.png", "Digital Void", Style::amber);
+        WidgetPtr card4 = buildGalleryCard("assets/12.png", "Aura Engine", Style::emerald);
+
+        auto grid_row1 = row(std::vector<WidgetPtr>{card1, sizedBox(10.0f, 0), card2});
+        auto grid_row2 = row(std::vector<WidgetPtr>{card3, sizedBox(10.0f, 0), card4});
+
+        WidgetPtr w_title1 = title1;
+        WidgetPtr w_title2 = title2;
+        WidgetPtr w_avatars_row = avatars_row;
+        WidgetPtr w_grid1 = grid_row1;
+        WidgetPtr w_grid2 = grid_row2;
+
+        auto panel = container(column(std::vector<WidgetPtr>{
+            w_title1,
+            sizedBox(0, 10.0f),
+            w_avatars_row,
+            sizedBox(0, 18.0f),
+            w_title2,
+            sizedBox(0, 10.0f),
+            w_grid1,
+            sizedBox(0, 8.0f),
+            w_grid2
+        }));
+
+        panel->padding(EdgeInsets::all(14.0f))
+             .borderRadius(14.0f)
+             .color(Style::bg_card)
+             .border(Style::border_subtle, 1.0f)
+             .size(290.0f, 540.0f);
+
+        return panel;
+    }
+
+    WidgetPtr buildGalleryCard(const std::string& asset_path, const std::string& label, Color accent) {
+        auto img = imageAsset(asset_path);
+        img->size(114.0f, 68.0f)
+           .fit(BoxFit::Cover)
+           .borderRadius(8.0f);
+
+        auto t = text(label);
+        t->fontSize(10.0f).bold().color(Style::text_white);
+
+        WidgetPtr w_img = img;
+        WidgetPtr w_t = t;
+
+        auto card = container(column(std::vector<WidgetPtr>{
+            w_img,
+            sizedBox(0, 4.0f),
+            w_t
+        }));
+
+        card->padding(EdgeInsets::all(6.0f))
+            .borderRadius(10.0f)
+            .color(Style::bg_card_light)
+            .border(accent, 1.0f)
+            .size(126.0f, 106.0f);
+
+        auto gd = gestureDetector(card);
+        gd->onTap([this, asset_path]() {
+            setState([this, asset_path]() {
+                current_image = asset_path;
+            });
+        });
+        return gd;
+    }
+};
+
+std::unique_ptr<State> ImageDemoApp::createState() {
+    return std::make_unique<ImageDemoState>();
+}
+
+// ════════════════════════════════════════════════════════════════
+// Main Entrypoint
+// ════════════════════════════════════════════════════════════════
+
+int main(int argc, char** argv) {
+    AppConfig config;
+    config.title                    = "ENKI — Image & BoxFit Interactive Showcase";
+    config.width                    = 1080;
+    config.height                   = 660;
+    config.window_mode              = WindowMode::Normal;
+    config.vsync                    = false;
+    config.target_fps               = 0;
+    config.show_performance_overlay = true;
+    config.clear_color              = Style::bg_dark;
+
+    return runApp(std::make_shared<ImageDemoApp>(), config);
+}
