@@ -109,13 +109,57 @@ void Platform::unregisterWindow(Window* w) {
     if (impl_->x11) impl_->x11->unregisterWindow(w);
 }
 
-// ── Clipboard ────────────────────────────────────────────────────
-void Platform::setClipboardText(std::string_view text) {
-    impl_->clipboard_buffer = std::string(text);
-    if (impl_->x11) impl_->x11->setClipboardText(impl_->clipboard_buffer);
-    // Wayland clipboard via wl_data_device — future
+// ── Clipboard Subsystem ──────────────────────────────────────
+void Platform::setClipboardText(std::string_view text, ClipboardType type) {
+    ClipboardData data;
+    data.setText(text);
+    setClipboardData(data, type);
 }
-std::string Platform::getClipboardText() const { return impl_->clipboard_buffer; }
+
+std::string Platform::getClipboardText(ClipboardType type) const {
+    if (impl_->wayland) return impl_->wayland->getClipboardData(type).getText();
+    if (impl_->x11)     return impl_->x11->getClipboardText(type);
+    return impl_->clipboard_buffer;
+}
+
+void Platform::setClipboardData(const ClipboardData& data, ClipboardType type) {
+    impl_->clipboard_buffer = data.getText();
+    if (impl_->wayland) impl_->wayland->setClipboardData(data, type);
+    if (impl_->x11)     impl_->x11->setClipboardData(data, type);
+}
+
+ClipboardData Platform::getClipboardData(ClipboardType type) const {
+    if (impl_->wayland) return impl_->wayland->getClipboardData(type);
+    if (impl_->x11)     return impl_->x11->getClipboardData(type);
+    ClipboardData cd;
+    cd.setText(impl_->clipboard_buffer);
+    return cd;
+}
+
+std::vector<uint8_t> Platform::getClipboardDataForMime(std::string_view mime_type, ClipboardType type) const {
+    if (impl_->wayland) return impl_->wayland->getClipboardDataForMime(mime_type, type);
+    if (impl_->x11)     return impl_->x11->getClipboardDataForMime(mime_type, type);
+    return {};
+}
+
+std::vector<std::string> Platform::getClipboardFormats(ClipboardType type) const {
+    if (impl_->wayland) return impl_->wayland->getClipboardFormats(type);
+    if (impl_->x11)     return impl_->x11->getClipboardFormats(type);
+    return { std::string(mime::TextPlainUtf8) };
+}
+
+bool Platform::hasClipboardFormat(std::string_view mime_type, ClipboardType type) const {
+    if (impl_->wayland) return impl_->wayland->hasClipboardFormat(mime_type, type);
+    if (impl_->x11)     return impl_->x11->hasClipboardFormat(mime_type, type);
+    return mime_type == mime::TextPlainUtf8 || mime_type == mime::TextPlain;
+}
+
+// ── Drag & Drop Subsystem ────────────────────────────────────
+bool Platform::startDrag(const DragData& data, DragAction actions) {
+    if (impl_->wayland) return impl_->wayland->startDrag(data, actions);
+    if (impl_->x11)     return impl_->x11->startDrag(data, actions);
+    return false;
+}
 
 // ── Cursor ───────────────────────────────────────────────────────
 void Platform::setCursor(SystemCursor cursor) {

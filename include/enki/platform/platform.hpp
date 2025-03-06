@@ -7,9 +7,12 @@
 #include "enki/core/result.hpp"
 #include "enki/core/signal.hpp"
 #include "enki/platform/input.hpp"
+#include "enki/platform/clipboard.hpp"
+#include "enki/platform/dnd.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace enki {
 
@@ -37,11 +40,33 @@ public:
     /// Get high-resolution time in seconds since initialization.
     [[nodiscard]] double getTime() const;
 
+    // ── Clipboard Subsystem ──────────────────────────────────────
+
     /// Get the clipboard text (UTF-8).
-    [[nodiscard]] std::string getClipboardText() const;
+    [[nodiscard]] std::string getClipboardText(ClipboardType type = ClipboardType::Clipboard) const;
 
     /// Set the clipboard text (UTF-8).
-    void setClipboardText(std::string_view text);
+    void setClipboardText(std::string_view text, ClipboardType type = ClipboardType::Clipboard);
+
+    /// Set multi-format clipboard data.
+    void setClipboardData(const ClipboardData& data, ClipboardType type = ClipboardType::Clipboard);
+
+    /// Get full multi-format clipboard data.
+    [[nodiscard]] ClipboardData getClipboardData(ClipboardType type = ClipboardType::Clipboard) const;
+
+    /// Get raw clipboard data for a specific MIME format.
+    [[nodiscard]] std::vector<uint8_t> getClipboardDataForMime(std::string_view mime_type, ClipboardType type = ClipboardType::Clipboard) const;
+
+    /// List all available MIME formats currently on the clipboard.
+    [[nodiscard]] std::vector<std::string> getClipboardFormats(ClipboardType type = ClipboardType::Clipboard) const;
+
+    /// Check if the clipboard contains data in the specified MIME format.
+    [[nodiscard]] bool hasClipboardFormat(std::string_view mime_type, ClipboardType type = ClipboardType::Clipboard) const;
+
+    // ── Drag & Drop Subsystem ────────────────────────────────────
+
+    /// Start a Drag and Drop operation from Enki to external windows.
+    bool startDrag(const DragData& data, DragAction actions = DragAction::Copy);
 
     /// Set the platform mouse cursor shape.
     void setCursor(SystemCursor cursor);
@@ -71,6 +96,21 @@ public:
     /// Signal emitted on key up. Args: keycode, modifiers.
     Signal<int, int>& onKeyUp() { return on_key_up_; }
 
+    /// Signal emitted when clipboard selection changes.
+    Signal<ClipboardType>& onClipboardChanged() { return on_clipboard_changed_; }
+
+    /// Signal emitted when a drag operation enters a window.
+    Signal<DragEnterEvent&>& onDragEnter() { return on_drag_enter_; }
+
+    /// Signal emitted as a drag moves across a window.
+    Signal<DragMotionEvent&>& onDragMotion() { return on_drag_motion_; }
+
+    /// Signal emitted when a drag leaves a window.
+    Signal<DragLeaveEvent&>& onDragLeave() { return on_drag_leave_; }
+
+    /// Signal emitted when data is dropped on a window.
+    Signal<DropEvent&>& onDrop() { return on_drop_; }
+
     /// Access native display handles
     void* getNativeDisplay() const;
     void* getEGLDisplay() const;
@@ -98,6 +138,12 @@ private:
     Signal<std::string_view>  on_text_input_;
     Signal<int, int>          on_key_down_;
     Signal<int, int>          on_key_up_;
+
+    Signal<ClipboardType>     on_clipboard_changed_;
+    Signal<DragEnterEvent&>   on_drag_enter_;
+    Signal<DragMotionEvent&>  on_drag_motion_;
+    Signal<DragLeaveEvent&>   on_drag_leave_;
+    Signal<DropEvent&>        on_drop_;
 };
 
 }  // namespace enki

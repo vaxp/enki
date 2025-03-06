@@ -10,6 +10,7 @@
 #include <poll.h>
 #include <iostream>
 #include <cstring>
+#include <sstream>
 
 namespace enki::wayland {
 
@@ -131,6 +132,184 @@ static const struct wl_seat_listener seat_listener = {
     .name = seat_name_handler,
 };
 
+// ── Wayland Data Offer Wrapper (implements DataOffer) ─────────────
+
+class WaylandDataOfferWrapper : public DataOffer {
+public:
+    WaylandDataOfferWrapper(wl_display* display, wl_data_offer* offer, std::vector<std::string> mimes)
+        : display_(display), offer_(offer), mimes_(std::move(mimes)) {}
+
+    [[nodiscard]] bool hasFormat(std::string_view mime_type) const override {
+        for (const auto& m : mimes_) {
+            if (m == mime_type) return true;
+        }
+        return false;
+    }
+
+    [[nodiscard]] std::vector<std::string> formats() const override {
+        return mimes_;
+    }
+
+    [[nodiscard]] std::string readText() override {
+        for (const auto& m : {mime::TextPlainUtf8, mime::TextPlain, mime::TextUtf8, mime::TextString}) {
+            if (hasFormat(m)) {
+                auto data = readData(m);
+                return std::string(data.begin(), data.end());
+            }
+        }
+        return {};
+    }
+
+    [[nodiscard]] std::vector<std::string> readUris() override {
+        auto raw = readData(mime::TextUriList);
+        if (raw.empty()) return {};
+        std::string content(raw.begin(), raw.end());
+        std::istringstream stream(content);
+        std::string line;
+        std::vector<std::string> uris;
+        while (std::getline(stream, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            if (!line.empty() && line.front() != '#') {
+                uris.push_back(line);
+            }
+        }
+        return uris;
+    }
+
+    [[nodiscard]] std::vector<uint8_t> readData(std::string_view mime_type) override {
+        if (!offer_ || !display_) return {};
+        int fds[2];
+        if (pipe2(fds, O_CLOEXEC) != 0) return {};
+
+        wl_data_offer_receive(offer_, std::string(mime_type).c_str(), fds[1]);
+        close(fds[1]);
+        wl_display_flush(display_);
+
+        std::vector<uint8_t> result;
+        char buffer[4096];
+        ssize_t bytes_read = 0;
+        while ((bytes_read = read(fds[0], buffer, sizeof(buffer))) > 0) {
+            result.insert(result.end(), buffer, buffer + bytes_read);
+        }
+        close(fds[0]);
+        return result;
+    }
+
+private:
+    wl_display*    display_ = nullptr;
+    wl_data_offer* offer_   = nullptr;
+    std::vector<std::string> mimes_;
+};
+
+// ── Wayland Data Offer Listeners ──────────────────────────────────
+
+static void data_offer_offer_handler(void* data, wl_data_offer* /*offer*/, const char* mime_type) {
+    auto* ctx = static_cast<WaylandPlatformBackend::WaylandOfferContext*>(data);
+    if (ctx && mime_type) {
+        ctx->mime_types.emplace_back(mime_type);
+    }
+}
+
+static void data_offer_source_actions_handler(void* data, wl_data_offer* /*offer*/, uint32_t source_actions) {
+    auto* ctx = static_cast<WaylandPlatformBackend::WaylandOfferContext*>(data);
+    if (ctx) ctx->source_actions = source_actions;
+}
+
+static void data_offer_action_handler(void* data, wl_data_offer* /*offer*/, uint32_t dnd_action) {
+    auto* ctx = static_cast<WaylandPlatformBackend::WaylandOfferContext*>(data);
+    if (ctx) ctx->dnd_action = dnd_action;
+}
+
+static const struct wl_data_offer_listener data_offer_listener = {
+    .offer = data_offer_offer_handler,
+    .source_actions = data_offer_source_actions_handler,
+    .action = data_offer_action_handler,
+};
+
+// ── Wayland Data Source Listeners ─────────────────────────────────
+
+static void data_source_target_handler(void* /*data*/, wl_data_source* /*source*/, const char* /*mime_type*/) {}
+
+static void data_source_send_handler(void* data, wl_data_source* /*source*/, const char* mime_type, int32_t fd) {
+    auto* active_src = static_cast<WaylandPlatformBackend::ActiveDataSource*>(data);
+    if (active_src && mime_type) {
+        auto raw = active_src->data.getRaw(mime_type);
+        if (raw.empty() && active_src->data.hasText()) {
+            std::string t = active_src->data.getText();
+            raw.assign(t.begin(), t.end());
+        }
+        if (!raw.empty()) {
+            size_t total = 0;
+            while (total < raw.size()) {
+                ssize_t written = write(fd, raw.data() + total, raw.size() - total);
+                if (written <= 0) break;
+                total += written;
+            }
+        }
+    }
+    close(fd);
+}
+
+static void data_source_cancelled_handler(void* /*data*/, wl_data_source* source) {
+    wl_data_source_destroy(source);
+}
+
+static void data_source_dnd_drop_performed_handler(void* /*data*/, wl_data_source* /*source*/) {}
+static void data_source_dnd_finished_handler(void* /*data*/, wl_data_source* /*source*/) {}
+static void data_source_action_handler(void* /*data*/, wl_data_source* /*source*/, uint32_t /*dnd_action*/) {}
+
+static const struct wl_data_source_listener data_source_listener = {
+    .target = data_source_target_handler,
+    .send = data_source_send_handler,
+    .cancelled = data_source_cancelled_handler,
+    .dnd_drop_performed = data_source_dnd_drop_performed_handler,
+    .dnd_finished = data_source_dnd_finished_handler,
+    .action = data_source_action_handler,
+};
+
+// ── Wayland Data Device Listeners ─────────────────────────────────
+
+static void data_device_data_offer_handler(void* data, wl_data_device* /*data_device*/, wl_data_offer* offer) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleDataOffer(offer);
+}
+
+static void data_device_enter_handler(void* data, wl_data_device* /*data_device*/, uint32_t serial,
+                                      wl_surface* surface, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleDataDeviceEnter(serial, surface, x, y, offer);
+}
+
+static void data_device_leave_handler(void* data, wl_data_device* /*data_device*/) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleDataDeviceLeave();
+}
+
+static void data_device_motion_handler(void* data, wl_data_device* /*data_device*/, uint32_t time,
+                                       wl_fixed_t x, wl_fixed_t y) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleDataDeviceMotion(time, x, y);
+}
+
+static void data_device_drop_handler(void* data, wl_data_device* /*data_device*/) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleDataDeviceDrop();
+}
+
+static void data_device_selection_handler(void* data, wl_data_device* /*data_device*/, wl_data_offer* offer) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleDataDeviceSelection(offer);
+}
+
+static const struct wl_data_device_listener data_device_listener = {
+    .data_offer = data_device_data_offer_handler,
+    .enter = data_device_enter_handler,
+    .leave = data_device_leave_handler,
+    .motion = data_device_motion_handler,
+    .drop = data_device_drop_handler,
+    .selection = data_device_selection_handler,
+};
+
 void WaylandPlatformBackend::handleSeatCapabilities(wl_seat* seat, uint32_t caps) {
     if ((caps & WL_SEAT_CAPABILITY_POINTER)) {
         if (!pointer_) {
@@ -150,6 +329,11 @@ void WaylandPlatformBackend::handleSeatCapabilities(wl_seat* seat, uint32_t caps
     } else if (keyboard_) {
         wl_keyboard_destroy(keyboard_);
         keyboard_ = nullptr;
+    }
+
+    if (data_device_manager_ && seat_ && !data_device_) {
+        data_device_ = wl_data_device_manager_get_data_device(data_device_manager_, seat_);
+        wl_data_device_add_listener(data_device_, &data_device_listener, this);
     }
 }
 
@@ -251,6 +435,23 @@ bool WaylandPlatformBackend::init() {
 }
 
 void WaylandPlatformBackend::shutdown() {
+    if (outgoing_selection_source_) {
+        wl_data_source_destroy(outgoing_selection_source_->source);
+        outgoing_selection_source_.reset();
+    }
+    if (outgoing_dnd_source_) {
+        wl_data_source_destroy(outgoing_dnd_source_->source);
+        outgoing_dnd_source_.reset();
+    }
+    if (data_device_) {
+        wl_data_device_destroy(data_device_);
+        data_device_ = nullptr;
+    }
+    if (data_device_manager_) {
+        wl_data_device_manager_destroy(data_device_manager_);
+        data_device_manager_ = nullptr;
+    }
+
     if (egl_display_ != EGL_NO_DISPLAY) {
         eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         eglTerminate(egl_display_);
@@ -320,6 +521,17 @@ void WaylandPlatformBackend::handleGlobal(uint32_t name, const char* interface, 
         seat_ = static_cast<wl_seat*>(
             wl_registry_bind(registry_, name, &wl_seat_interface, std::min<uint32_t>(version, 5)));
         wl_seat_add_listener(seat_, &seat_listener, this);
+        if (data_device_manager_ && !data_device_) {
+            data_device_ = wl_data_device_manager_get_data_device(data_device_manager_, seat_);
+            wl_data_device_add_listener(data_device_, &data_device_listener, this);
+        }
+    } else if (std::strcmp(interface, wl_data_device_manager_interface.name) == 0) {
+        data_device_manager_ = static_cast<wl_data_device_manager*>(
+            wl_registry_bind(registry_, name, &wl_data_device_manager_interface, std::min<uint32_t>(version, 3)));
+        if (seat_ && !data_device_) {
+            data_device_ = wl_data_device_manager_get_data_device(data_device_manager_, seat_);
+            wl_data_device_add_listener(data_device_, &data_device_listener, this);
+        }
     } else if (std::strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
         layer_shell_ = static_cast<zwlr_layer_shell_v1*>(
             wl_registry_bind(registry_, name, &zwlr_layer_shell_v1_interface, std::min<uint32_t>(version, 4)));
@@ -557,6 +769,224 @@ void WaylandPlatformBackend::handleModifiers(uint32_t mods_depressed, uint32_t m
     if (xkb_state_mod_name_is_active(xkb_state_, XKB_MOD_NAME_CTRL,  XKB_STATE_MODS_EFFECTIVE)) active_modifiers_ |= 2;
     if (xkb_state_mod_name_is_active(xkb_state_, XKB_MOD_NAME_ALT,   XKB_STATE_MODS_EFFECTIVE)) active_modifiers_ |= 4;
     if (xkb_state_mod_name_is_active(xkb_state_, XKB_MOD_NAME_LOGO,  XKB_STATE_MODS_EFFECTIVE)) active_modifiers_ |= 8;
+}
+
+// ── Wayland Data Device, Clipboard & DnD Subsystem ───────────────
+
+void WaylandPlatformBackend::handleDataOffer(wl_data_offer* offer) {
+    if (!offer) return;
+    auto ctx = std::make_shared<WaylandOfferContext>();
+    ctx->offer = offer;
+    active_offers_[offer] = ctx;
+    wl_data_offer_add_listener(offer, &data_offer_listener, ctx.get());
+}
+
+void WaylandPlatformBackend::handleDataDeviceEnter(uint32_t serial, wl_surface* /*surface*/, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer) {
+    last_dnd_serial_ = serial;
+    if (offer && active_offers_.find(offer) != active_offers_.end()) {
+        current_dnd_offer_ = active_offers_[offer];
+        wl_data_offer_set_actions(offer,
+                                  WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY | WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE,
+                                  WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY);
+        for (const auto& mime : current_dnd_offer_->mime_types) {
+            wl_data_offer_accept(offer, serial, mime.c_str());
+            break;
+        }
+    }
+
+    if (owner_) {
+        DragEnterEvent ev;
+        ev.position = Point{static_cast<float>(wl_fixed_to_double(x)), static_cast<float>(wl_fixed_to_double(y))};
+        if (current_dnd_offer_) {
+            ev.mime_types = current_dnd_offer_->mime_types;
+        }
+        ev.suggested_action = DragAction::Copy;
+        owner_->onDragEnter().emit(ev);
+    }
+}
+
+void WaylandPlatformBackend::handleDataDeviceLeave() {
+    current_dnd_offer_.reset();
+    if (owner_) {
+        DragLeaveEvent ev;
+        owner_->onDragLeave().emit(ev);
+    }
+}
+
+void WaylandPlatformBackend::handleDataDeviceMotion(uint32_t /*time*/, wl_fixed_t x, wl_fixed_t y) {
+    if (owner_) {
+        DragMotionEvent ev;
+        ev.position = Point{static_cast<float>(wl_fixed_to_double(x)), static_cast<float>(wl_fixed_to_double(y))};
+        ev.suggested_action = DragAction::Copy;
+        owner_->onDragMotion().emit(ev);
+    }
+}
+
+void WaylandPlatformBackend::handleDataDeviceDrop() {
+    if (owner_ && current_dnd_offer_) {
+        DropEvent ev;
+        ev.position = Point{last_px_, last_py_};
+        ev.action = DragAction::Copy;
+        ev.data = std::make_shared<WaylandDataOfferWrapper>(display_, current_dnd_offer_->offer, current_dnd_offer_->mime_types);
+        owner_->onDrop().emit(ev);
+
+        if (current_dnd_offer_->offer) {
+            wl_data_offer_finish(current_dnd_offer_->offer);
+        }
+    }
+    current_dnd_offer_.reset();
+}
+
+void WaylandPlatformBackend::handleDataDeviceSelection(wl_data_offer* offer) {
+    if (offer && active_offers_.find(offer) != active_offers_.end()) {
+        current_selection_offer_ = active_offers_[offer];
+    } else {
+        current_selection_offer_.reset();
+    }
+    if (owner_) {
+        owner_->onClipboardChanged().emit(ClipboardType::Clipboard);
+    }
+}
+
+void WaylandPlatformBackend::setClipboardData(const ClipboardData& data, ClipboardType type) {
+    if (type == ClipboardType::Primary) {
+        local_primary_ = data;
+        return;
+    }
+
+    local_clipboard_ = data;
+
+    if (!data_device_manager_ || !data_device_) return;
+
+    if (outgoing_selection_source_) {
+        wl_data_source_destroy(outgoing_selection_source_->source);
+        outgoing_selection_source_.reset();
+    }
+
+    auto src_obj = wl_data_device_manager_create_data_source(data_device_manager_);
+    if (!src_obj) return;
+
+    outgoing_selection_source_ = std::make_unique<ActiveDataSource>();
+    outgoing_selection_source_->source = src_obj;
+    outgoing_selection_source_->data = data;
+
+    wl_data_source_add_listener(src_obj, &data_source_listener, outgoing_selection_source_.get());
+
+    for (const auto& mime : data.formats()) {
+        wl_data_source_offer(src_obj, mime.c_str());
+    }
+
+    uint32_t serial = last_pointer_serial_ ? last_pointer_serial_ : last_keyboard_serial_;
+    wl_data_device_set_selection(data_device_, src_obj, serial);
+    wl_display_flush(display_);
+}
+
+ClipboardData WaylandPlatformBackend::getClipboardData(ClipboardType type) const {
+    if (type == ClipboardType::Primary) {
+        return local_primary_;
+    }
+
+    if (current_selection_offer_ && display_) {
+        ClipboardData result;
+        for (const auto& mime : current_selection_offer_->mime_types) {
+            auto raw = const_cast<WaylandPlatformBackend*>(this)->getClipboardDataForMime(mime, type);
+            if (!raw.empty()) {
+                result.setRaw(mime, raw);
+            }
+        }
+        if (!result.empty()) return result;
+    }
+    return local_clipboard_;
+}
+
+std::vector<uint8_t> WaylandPlatformBackend::getClipboardDataForMime(std::string_view mime_type, ClipboardType type) const {
+    if (type == ClipboardType::Primary) {
+        return local_primary_.getRaw(mime_type);
+    }
+
+    if (current_selection_offer_ && current_selection_offer_->offer && display_) {
+        bool format_supported = false;
+        for (const auto& m : current_selection_offer_->mime_types) {
+            if (m == mime_type) {
+                format_supported = true;
+                break;
+            }
+        }
+        if (format_supported) {
+            int fds[2];
+            if (pipe2(fds, O_CLOEXEC) == 0) {
+                wl_data_offer_receive(current_selection_offer_->offer, std::string(mime_type).c_str(), fds[1]);
+                close(fds[1]);
+                wl_display_flush(display_);
+
+                std::vector<uint8_t> result;
+                char buffer[4096];
+                ssize_t bytes_read = 0;
+                while ((bytes_read = read(fds[0], buffer, sizeof(buffer))) > 0) {
+                    result.insert(result.end(), buffer, buffer + bytes_read);
+                }
+                close(fds[0]);
+                return result;
+            }
+        }
+    }
+    return local_clipboard_.getRaw(mime_type);
+}
+
+std::vector<std::string> WaylandPlatformBackend::getClipboardFormats(ClipboardType type) const {
+    if (type == ClipboardType::Primary) {
+        return local_primary_.formats();
+    }
+    if (current_selection_offer_ && !current_selection_offer_->mime_types.empty()) {
+        return current_selection_offer_->mime_types;
+    }
+    return local_clipboard_.formats();
+}
+
+bool WaylandPlatformBackend::hasClipboardFormat(std::string_view mime_type, ClipboardType type) const {
+    if (type == ClipboardType::Primary) {
+        return local_primary_.hasFormat(mime_type);
+    }
+    if (current_selection_offer_) {
+        for (const auto& m : current_selection_offer_->mime_types) {
+            if (m == mime_type) return true;
+        }
+    }
+    return local_clipboard_.hasFormat(mime_type);
+}
+
+bool WaylandPlatformBackend::startDrag(const DragData& data, DragAction actions) {
+    if (!data_device_manager_ || !data_device_ || !pointer_focus_surface_) {
+        return false;
+    }
+
+    if (outgoing_dnd_source_) {
+        wl_data_source_destroy(outgoing_dnd_source_->source);
+        outgoing_dnd_source_.reset();
+    }
+
+    auto src_obj = wl_data_device_manager_create_data_source(data_device_manager_);
+    if (!src_obj) return false;
+
+    outgoing_dnd_source_ = std::make_unique<ActiveDataSource>();
+    outgoing_dnd_source_->source = src_obj;
+    outgoing_dnd_source_->data = data.payload;
+
+    wl_data_source_add_listener(src_obj, &data_source_listener, outgoing_dnd_source_.get());
+
+    for (const auto& mime : data.payload.formats()) {
+        wl_data_source_offer(src_obj, mime.c_str());
+    }
+
+    uint32_t wl_actions = 0;
+    if (hasDragAction(actions, DragAction::Copy)) wl_actions |= WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY;
+    if (hasDragAction(actions, DragAction::Move)) wl_actions |= WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE;
+    wl_data_source_set_actions(src_obj, wl_actions);
+
+    uint32_t serial = last_pointer_serial_ ? last_pointer_serial_ : last_keyboard_serial_;
+    wl_data_device_start_drag(data_device_, src_obj, pointer_focus_surface_, nullptr /* icon */, serial);
+    wl_display_flush(display_);
+    return true;
 }
 
 } // namespace enki::wayland

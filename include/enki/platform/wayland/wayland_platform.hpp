@@ -63,6 +63,16 @@ public:
     void setCursor(SystemCursor cursor);
     void updateWaylandCursor();
 
+    // Clipboard Subsystem
+    void setClipboardData(const ClipboardData& data, ClipboardType type);
+    [[nodiscard]] ClipboardData getClipboardData(ClipboardType type) const;
+    [[nodiscard]] std::vector<uint8_t> getClipboardDataForMime(std::string_view mime_type, ClipboardType type) const;
+    [[nodiscard]] std::vector<std::string> getClipboardFormats(ClipboardType type) const;
+    [[nodiscard]] bool hasClipboardFormat(std::string_view mime_type, ClipboardType type) const;
+
+    // Drag and Drop Subsystem
+    bool startDrag(const DragData& data, DragAction actions);
+
     // Internal registry & seat listeners
     void handleGlobal(uint32_t name, const char* interface, uint32_t version);
     void handleGlobalRemove(uint32_t name);
@@ -80,25 +90,52 @@ public:
     void handleKey(uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
     void handleModifiers(uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
 
+    // Data device callbacks
+    void handleDataOffer(wl_data_offer* offer);
+    void handleDataDeviceEnter(uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer);
+    void handleDataDeviceLeave();
+    void handleDataDeviceMotion(uint32_t time, wl_fixed_t x, wl_fixed_t y);
+    void handleDataDeviceDrop();
+    void handleDataDeviceSelection(wl_data_offer* offer);
+
+    uint32_t getLastPointerSerial() const { return last_pointer_serial_; }
+    uint32_t getLastKeyboardSerial() const { return last_keyboard_serial_; }
+
+    // Wayland Data Transfer Structs
+    struct WaylandOfferContext {
+        wl_data_offer* offer = nullptr;
+        std::vector<std::string> mime_types;
+        uint32_t source_actions = 0;
+        uint32_t dnd_action = 0;
+    };
+
+    struct ActiveDataSource {
+        wl_data_source* source = nullptr;
+        ClipboardData   data;
+    };
+
 private:
     Platform* owner_ = nullptr;
 
-    wl_display*          display_        = nullptr;
-    wl_registry*         registry_       = nullptr;
-    wl_compositor*       compositor_     = nullptr;
-    wl_subcompositor*    subcompositor_  = nullptr;
-    wl_shm*              shm_            = nullptr;
-    wl_seat*             seat_           = nullptr;
-    wl_pointer*          pointer_        = nullptr;
-    wl_keyboard*         keyboard_       = nullptr;
-    wl_touch*            touch_          = nullptr;
-    zwlr_layer_shell_v1* layer_shell_    = nullptr;
-    xdg_wm_base*         xdg_wm_base_    = nullptr;
+    wl_display*             display_             = nullptr;
+    wl_registry*            registry_            = nullptr;
+    wl_compositor*          compositor_          = nullptr;
+    wl_subcompositor*       subcompositor_       = nullptr;
+    wl_shm*                 shm_                 = nullptr;
+    wl_seat*                seat_                = nullptr;
+    wl_pointer*             pointer_             = nullptr;
+    wl_keyboard*            keyboard_            = nullptr;
+    wl_touch*               touch_               = nullptr;
+    zwlr_layer_shell_v1*    layer_shell_         = nullptr;
+    xdg_wm_base*            xdg_wm_base_         = nullptr;
+    wl_data_device_manager* data_device_manager_ = nullptr;
+    wl_data_device*         data_device_         = nullptr;
 
     // Wayland cursor support
     wl_cursor_theme*     cursor_theme_   = nullptr;
     wl_surface*          cursor_surface_ = nullptr;
     uint32_t             last_pointer_serial_ = 0;
+    uint32_t             last_keyboard_serial_ = 0;
     SystemCursor         current_cursor_ = SystemCursor::Arrow;
 
     std::vector<WaylandOutput> outputs_;
@@ -120,6 +157,20 @@ private:
     wl_surface* pointer_focus_surface_ = nullptr;
     float last_px_ = 0.0f;
     float last_py_ = 0.0f;
+
+    // Active Clipboard and DnD state
+    std::unordered_map<wl_data_offer*, std::shared_ptr<WaylandOfferContext>> active_offers_;
+    std::shared_ptr<WaylandOfferContext> current_selection_offer_;
+    std::shared_ptr<WaylandOfferContext> current_dnd_offer_;
+    uint32_t last_dnd_serial_ = 0;
+
+    // Outgoing Data Source
+    std::unique_ptr<ActiveDataSource> outgoing_selection_source_;
+    std::unique_ptr<ActiveDataSource> outgoing_dnd_source_;
+
+    // Local fallback clipboard buffer
+    ClipboardData local_clipboard_;
+    ClipboardData local_primary_;
 };
 
 } // namespace enki::wayland

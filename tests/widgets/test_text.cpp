@@ -338,7 +338,7 @@ void test_text_render_snapshot_png() {
     // Save PNG snapshot
     SkPixmap pixmap;
     if (skSurface->peekPixels(&pixmap)) {
-        std::string path = "/home/x/.gemini/antigravity-ide/brain/9865a220-888a-4ad1-ad9d-7b8587d5a03f/text_demo_snapshot.png";
+        std::string path = "/tmp/text_demo_snapshot.png";
         SkFILEWStream stream(path.c_str());
         SkPngEncoder::Options opts;
         bool ok = SkPngEncoder::Encode(&stream, pixmap, opts);
