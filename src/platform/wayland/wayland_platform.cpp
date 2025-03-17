@@ -310,6 +310,134 @@ static const struct wl_data_device_listener data_device_listener = {
     .selection = data_device_selection_handler,
 };
 
+// ── Wayland Toplevel Implementation ───────────────────────────────
+
+class WaylandPlatformBackend::WaylandToplevel : public ToplevelWindow {
+public:
+    WaylandToplevel(zwlr_foreign_toplevel_handle_v1* handle, wl_seat* seat)
+        : handle_(handle), seat_(seat) {}
+
+    ~WaylandToplevel() override {
+        if (handle_) {
+            zwlr_foreign_toplevel_handle_v1_destroy(handle_);
+            handle_ = nullptr;
+        }
+    }
+
+    [[nodiscard]] uint64_t id() const override { return reinterpret_cast<uint64_t>(handle_); }
+    [[nodiscard]] std::string title() const override { return title_; }
+    [[nodiscard]] std::string appId() const override { return app_id_; }
+    [[nodiscard]] WindowState state() const override { return state_; }
+
+    void setTitle(std::string t) { title_ = std::move(t); }
+    void setAppId(std::string a) { app_id_ = std::move(a); }
+    void setState(WindowState s) { state_ = s; }
+
+    void activate() override {
+        if (handle_ && seat_) {
+            zwlr_foreign_toplevel_handle_v1_activate(handle_, seat_);
+        }
+    }
+
+    void setMinimized(bool min) override {
+        if (!handle_) return;
+        if (min) {
+            zwlr_foreign_toplevel_handle_v1_set_minimized(handle_);
+        } else {
+            zwlr_foreign_toplevel_handle_v1_unset_minimized(handle_);
+        }
+    }
+
+    void setMaximized(bool max) override {
+        if (!handle_) return;
+        if (max) {
+            zwlr_foreign_toplevel_handle_v1_set_maximized(handle_);
+        } else {
+            zwlr_foreign_toplevel_handle_v1_unset_maximized(handle_);
+        }
+    }
+
+    void setFullscreen(bool full) override {
+        if (!handle_) return;
+        if (full) {
+            zwlr_foreign_toplevel_handle_v1_set_fullscreen(handle_, nullptr);
+        } else {
+            zwlr_foreign_toplevel_handle_v1_unset_fullscreen(handle_);
+        }
+    }
+
+    void close() override {
+        if (handle_) {
+            zwlr_foreign_toplevel_handle_v1_close(handle_);
+        }
+    }
+
+    [[nodiscard]] zwlr_foreign_toplevel_handle_v1* getHandle() const { return handle_; }
+    void detachHandle() { handle_ = nullptr; }
+
+private:
+    zwlr_foreign_toplevel_handle_v1* handle_ = nullptr;
+    wl_seat* seat_ = nullptr;
+    std::string title_;
+    std::string app_id_;
+    WindowState state_ = WindowState::Normal;
+};
+
+// ── Foreign Toplevel Listeners ────────────────────────────────────
+
+static void toplevel_handle_title(void* data, zwlr_foreign_toplevel_handle_v1* handle, const char* title) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleToplevelTitle(handle, title);
+}
+
+static void toplevel_handle_app_id(void* data, zwlr_foreign_toplevel_handle_v1* handle, const char* app_id) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleToplevelAppId(handle, app_id);
+}
+
+static void toplevel_handle_output_enter(void* /*data*/, zwlr_foreign_toplevel_handle_v1* /*handle*/, wl_output* /*output*/) {}
+static void toplevel_handle_output_leave(void* /*data*/, zwlr_foreign_toplevel_handle_v1* /*handle*/, wl_output* /*output*/) {}
+
+static void toplevel_handle_state(void* data, zwlr_foreign_toplevel_handle_v1* handle, wl_array* state) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleToplevelState(handle, state);
+}
+
+static void toplevel_handle_done(void* data, zwlr_foreign_toplevel_handle_v1* handle) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleToplevelDone(handle);
+}
+
+static void toplevel_handle_closed(void* data, zwlr_foreign_toplevel_handle_v1* handle) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleToplevelClosed(handle);
+}
+
+static void toplevel_handle_parent(void* /*data*/, zwlr_foreign_toplevel_handle_v1* /*handle*/, zwlr_foreign_toplevel_handle_v1* /*parent*/) {}
+
+static const struct zwlr_foreign_toplevel_handle_v1_listener toplevel_handle_listener = {
+    .title = toplevel_handle_title,
+    .app_id = toplevel_handle_app_id,
+    .output_enter = toplevel_handle_output_enter,
+    .output_leave = toplevel_handle_output_leave,
+    .state = toplevel_handle_state,
+    .done = toplevel_handle_done,
+    .closed = toplevel_handle_closed,
+    .parent = toplevel_handle_parent,
+};
+
+static void toplevel_manager_toplevel(void* data, zwlr_foreign_toplevel_manager_v1* /*manager*/, zwlr_foreign_toplevel_handle_v1* handle) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    self->handleToplevelHandle(handle);
+}
+
+static void toplevel_manager_finished(void* /*data*/, zwlr_foreign_toplevel_manager_v1* /*manager*/) {}
+
+static const struct zwlr_foreign_toplevel_manager_v1_listener toplevel_manager_listener = {
+    .toplevel = toplevel_manager_toplevel,
+    .finished = toplevel_manager_finished,
+};
+
 void WaylandPlatformBackend::handleSeatCapabilities(wl_seat* seat, uint32_t caps) {
     if ((caps & WL_SEAT_CAPABILITY_POINTER)) {
         if (!pointer_) {
@@ -479,6 +607,15 @@ void WaylandPlatformBackend::shutdown() {
         zwlr_layer_shell_v1_destroy(layer_shell_);
         layer_shell_ = nullptr;
     }
+    if (toplevel_manager_) {
+        zwlr_foreign_toplevel_manager_v1_stop(toplevel_manager_);
+        zwlr_foreign_toplevel_manager_v1_destroy(toplevel_manager_);
+        toplevel_manager_ = nullptr;
+    }
+    toplevels_.clear();
+    toplevel_map_.clear();
+    active_toplevel_.reset();
+
     if (xdg_wm_base_) {
         xdg_wm_base_destroy(xdg_wm_base_);
         xdg_wm_base_ = nullptr;
@@ -535,6 +672,10 @@ void WaylandPlatformBackend::handleGlobal(uint32_t name, const char* interface, 
     } else if (std::strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
         layer_shell_ = static_cast<zwlr_layer_shell_v1*>(
             wl_registry_bind(registry_, name, &zwlr_layer_shell_v1_interface, std::min<uint32_t>(version, 4)));
+    } else if (std::strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name) == 0) {
+        toplevel_manager_ = static_cast<zwlr_foreign_toplevel_manager_v1*>(
+            wl_registry_bind(registry_, name, &zwlr_foreign_toplevel_manager_v1_interface, std::min<uint32_t>(version, 3)));
+        zwlr_foreign_toplevel_manager_v1_add_listener(toplevel_manager_, &toplevel_manager_listener, this);
     } else if (std::strcmp(interface, xdg_wm_base_interface.name) == 0) {
         xdg_wm_base_ = static_cast<xdg_wm_base*>(
             wl_registry_bind(registry_, name, &xdg_wm_base_interface, std::min<uint32_t>(version, 3)));
@@ -987,6 +1128,117 @@ bool WaylandPlatformBackend::startDrag(const DragData& data, DragAction actions)
     wl_data_device_start_drag(data_device_, src_obj, pointer_focus_surface_, nullptr /* icon */, serial);
     wl_display_flush(display_);
     return true;
+}
+
+// ── Foreign Toplevel Subsystem Implementation ─────────────────────
+
+std::vector<std::shared_ptr<ToplevelWindow>> WaylandPlatformBackend::getToplevels() const {
+    std::vector<std::shared_ptr<ToplevelWindow>> result;
+    result.reserve(toplevels_.size());
+    for (const auto& tl : toplevels_) {
+        result.push_back(tl);
+    }
+    return result;
+}
+
+std::shared_ptr<ToplevelWindow> WaylandPlatformBackend::getActiveToplevel() const {
+    return active_toplevel_;
+}
+
+void WaylandPlatformBackend::handleToplevelHandle(zwlr_foreign_toplevel_handle_v1* handle) {
+    if (!handle) return;
+    auto tl = std::make_shared<WaylandToplevel>(handle, seat_);
+    toplevel_map_[handle] = tl;
+    toplevels_.push_back(tl);
+    zwlr_foreign_toplevel_handle_v1_add_listener(handle, &toplevel_handle_listener, this);
+}
+
+void WaylandPlatformBackend::handleToplevelTitle(zwlr_foreign_toplevel_handle_v1* handle, const char* title) {
+    auto it = toplevel_map_.find(handle);
+    if (it != toplevel_map_.end()) {
+        it->second->setTitle(title ? title : "");
+        if (owner_) {
+            owner_->onToplevelTitleChanged().emit(it->second, it->second->title());
+        }
+    }
+}
+
+void WaylandPlatformBackend::handleToplevelAppId(zwlr_foreign_toplevel_handle_v1* handle, const char* app_id) {
+    auto it = toplevel_map_.find(handle);
+    if (it != toplevel_map_.end()) {
+        it->second->setAppId(app_id ? app_id : "");
+        if (owner_) {
+            owner_->onToplevelAppIdChanged().emit(it->second, it->second->appId());
+        }
+    }
+}
+
+void WaylandPlatformBackend::handleToplevelState(zwlr_foreign_toplevel_handle_v1* handle, wl_array* state) {
+    auto it = toplevel_map_.find(handle);
+    if (it != toplevel_map_.end()) {
+        WindowState s = WindowState::Normal;
+        if (state && state->data && state->size >= sizeof(uint32_t)) {
+            const auto* entries = static_cast<const uint32_t*>(state->data);
+            size_t count = state->size / sizeof(uint32_t);
+            for (size_t i = 0; i < count; ++i) {
+                uint32_t entry = entries[i];
+                if (entry == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_MAXIMIZED) {
+                    s |= WindowState::Maximized;
+                } else if (entry == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_MINIMIZED) {
+                    s |= WindowState::Minimized;
+                } else if (entry == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_ACTIVATED) {
+                    s |= WindowState::Activated;
+                } else if (entry == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_FULLSCREEN) {
+                    s |= WindowState::Fullscreen;
+                }
+            }
+        }
+        it->second->setState(s);
+        if (hasWindowState(s, WindowState::Activated)) {
+            active_toplevel_ = it->second;
+            if (owner_) {
+                owner_->onActiveToplevelChanged().emit(it->second);
+            }
+        } else if (active_toplevel_ == it->second) {
+            active_toplevel_.reset();
+        }
+        if (owner_) {
+            owner_->onToplevelStateChanged().emit(it->second, s);
+        }
+    }
+}
+
+void WaylandPlatformBackend::handleToplevelDone(zwlr_foreign_toplevel_handle_v1* handle) {
+    auto it = toplevel_map_.find(handle);
+    if (it != toplevel_map_.end()) {
+        if (owner_) {
+            owner_->onToplevelCreated().emit(it->second);
+        }
+    }
+}
+
+void WaylandPlatformBackend::handleToplevelClosed(zwlr_foreign_toplevel_handle_v1* handle) {
+    auto it = toplevel_map_.find(handle);
+    if (it != toplevel_map_.end()) {
+        auto tl = it->second;
+        tl->detachHandle();
+        if (active_toplevel_ == tl) {
+            active_toplevel_.reset();
+            if (owner_) {
+                owner_->onActiveToplevelChanged().emit(nullptr);
+            }
+        }
+        for (auto v_it = toplevels_.begin(); v_it != toplevels_.end(); ++v_it) {
+            if (*v_it == tl) {
+                toplevels_.erase(v_it);
+                break;
+            }
+        }
+        toplevel_map_.erase(it);
+        if (owner_) {
+            owner_->onToplevelClosed().emit(tl);
+        }
+    }
 }
 
 } // namespace enki::wayland

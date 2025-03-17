@@ -141,6 +141,19 @@ bool X11PlatformBackend::init() {
     atom_clipboard_        = XInternAtom(display_, "CLIPBOARD",        False);
     atom_primary_          = XInternAtom(display_, "PRIMARY",          False);
     atom_enki_sel_prop_    = XInternAtom(display_, "ENKI_SELECTION",   False);
+    atom_wm_class_         = XInternAtom(display_, "WM_CLASS",         False);
+
+    // EWMH atoms
+    atom_net_client_list_        = XInternAtom(display_, "_NET_CLIENT_LIST",         False);
+    atom_net_active_window_      = XInternAtom(display_, "_NET_ACTIVE_WINDOW",       False);
+    atom_net_close_window_       = XInternAtom(display_, "_NET_CLOSE_WINDOW",        False);
+    atom_net_wm_name_            = XInternAtom(display_, "_NET_WM_NAME",             False);
+    atom_net_wm_state_           = XInternAtom(display_, "_NET_WM_STATE",            False);
+    atom_net_wm_state_max_vert_  = XInternAtom(display_, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+    atom_net_wm_state_max_horz_  = XInternAtom(display_, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+    atom_net_wm_state_hidden_    = XInternAtom(display_, "_NET_WM_STATE_HIDDEN",     False);
+    atom_net_wm_state_fullscreen_= XInternAtom(display_, "_NET_WM_STATE_FULLSCREEN", False);
+    atom_net_wm_state_focused_   = XInternAtom(display_, "_NET_WM_STATE_FOCUSED",    False);
 
     // XDnD atoms
     atom_xdnd_aware_       = XInternAtom(display_, "XdndAware",        False);
@@ -157,6 +170,10 @@ bool X11PlatformBackend::init() {
     atom_xdnd_action_link_ = XInternAtom(display_, "XdndActionLink",   False);
     atom_xdnd_action_ask_  = XInternAtom(display_, "XdndActionAsk",    False);
     atom_xdnd_action_priv_ = XInternAtom(display_, "XdndActionPrivate",False);
+
+    // Monitor Root window for EWMH updates
+    ::Window root = RootWindow(display_, default_screen_);
+    XSelectInput(display_, root, PropertyChangeMask | SubstructureNotifyMask);
 
     // 3. Init EGL
     egl_display_ = eglGetDisplay((EGLNativeDisplayType)display_);
@@ -193,10 +210,19 @@ bool X11PlatformBackend::init() {
             return false;
         }
     }
+
+    // Initial EWMH scan
+    refreshClientList();
+    refreshActiveWindow();
+
     return true;
 }
 
 void X11PlatformBackend::shutdown() {
+    toplevels_.clear();
+    toplevel_map_.clear();
+    active_toplevel_.reset();
+
     if (egl_display_ != EGL_NO_DISPLAY) {
         eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         eglTerminate(egl_display_);
@@ -239,6 +265,14 @@ bool X11PlatformBackend::pollEvents() {
 
         case SelectionClear:
             handleSelectionClear(xev.xselectionclear);
+            break;
+
+        case PropertyNotify:
+            handlePropertyNotify(xev.xproperty);
+            break;
+
+        case DestroyNotify:
+            refreshClientList();
             break;
 
         case MotionNotify:
@@ -718,6 +752,327 @@ void X11PlatformBackend::setCursor(SystemCursor cursor) {
     }
     XFreeCursor(display_, xcursor);
     XFlush(display_);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Foreign Toplevel / EWMH Subsystem Implementation
+// ════════════════════════════════════════════════════════════════
+
+class X11PlatformBackend::X11Toplevel : public ToplevelWindow {
+public:
+    X11Toplevel(::Display* display, ::Window xid, X11PlatformBackend* backend, Platform* owner)
+        : display_(display), xid_(xid), backend_(backend), owner_(owner) {
+        if (display_ && xid_ != None) {
+            // Select PropertyChangeMask on client window to receive title / state changes
+            XSelectInput(display_, xid_, PropertyChangeMask | StructureNotifyMask);
+        }
+        updateProperties();
+    }
+
+    ~X11Toplevel() override = default;
+
+    [[nodiscard]] uint64_t id() const override { return static_cast<uint64_t>(xid_); }
+    [[nodiscard]] std::string title() const override { return title_; }
+    [[nodiscard]] std::string appId() const override { return app_id_; }
+    [[nodiscard]] WindowState state() const override { return state_; }
+
+    void setTitle(std::string t) { title_ = std::move(t); }
+    void setAppId(std::string a) { app_id_ = std::move(a); }
+    void setState(WindowState s) { state_ = s; }
+
+    void activate() override {
+        if (!display_ || xid_ == None) return;
+        XEvent ev{};
+        ev.xclient.type = ClientMessage;
+        ev.xclient.window = xid_;
+        ev.xclient.message_type = backend_->getAtomNetActiveWindow();
+        ev.xclient.format = 32;
+        ev.xclient.data.l[0] = 1; // 1 = application
+        ev.xclient.data.l[1] = CurrentTime;
+        ev.xclient.data.l[2] = 0;
+        ::Window root = RootWindow(display_, DefaultScreen(display_));
+        XSendEvent(display_, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+        XFlush(display_);
+    }
+
+    void setMinimized(bool min) override {
+        if (!display_ || xid_ == None) return;
+        if (min) {
+            XIconifyWindow(display_, xid_, DefaultScreen(display_));
+        } else {
+            XMapWindow(display_, xid_);
+            activate();
+        }
+        XFlush(display_);
+    }
+
+    void setMaximized(bool max) override {
+        if (!display_ || xid_ == None) return;
+        XEvent ev{};
+        ev.xclient.type = ClientMessage;
+        ev.xclient.window = xid_;
+        ev.xclient.message_type = backend_->getAtomNetWmState();
+        ev.xclient.format = 32;
+        ev.xclient.data.l[0] = max ? 1 : 0; // 1 = _NET_WM_STATE_ADD, 0 = _NET_WM_STATE_REMOVE
+        ev.xclient.data.l[1] = (long)backend_->getAtomNetWmStateMaxVert();
+        ev.xclient.data.l[2] = (long)backend_->getAtomNetWmStateMaxHorz();
+        ev.xclient.data.l[3] = 1;
+        ::Window root = RootWindow(display_, DefaultScreen(display_));
+        XSendEvent(display_, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+        XFlush(display_);
+    }
+
+    void setFullscreen(bool full) override {
+        if (!display_ || xid_ == None) return;
+        XEvent ev{};
+        ev.xclient.type = ClientMessage;
+        ev.xclient.window = xid_;
+        ev.xclient.message_type = backend_->getAtomNetWmState();
+        ev.xclient.format = 32;
+        ev.xclient.data.l[0] = full ? 1 : 0;
+        ev.xclient.data.l[1] = (long)backend_->getAtomNetWmStateFullscreen();
+        ev.xclient.data.l[2] = 0;
+        ev.xclient.data.l[3] = 1;
+        ::Window root = RootWindow(display_, DefaultScreen(display_));
+        XSendEvent(display_, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+        XFlush(display_);
+    }
+
+    void close() override {
+        if (!display_ || xid_ == None) return;
+        XEvent ev{};
+        ev.xclient.type = ClientMessage;
+        ev.xclient.window = xid_;
+        ev.xclient.message_type = backend_->getAtomNetCloseWindow();
+        ev.xclient.format = 32;
+        ev.xclient.data.l[0] = CurrentTime;
+        ev.xclient.data.l[1] = 1;
+        ::Window root = RootWindow(display_, DefaultScreen(display_));
+        XSendEvent(display_, root, False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+        XFlush(display_);
+    }
+
+    [[nodiscard]] ::Window getXid() const { return xid_; }
+
+    void updateProperties() {
+        if (!display_ || xid_ == None) return;
+
+        // 1. Title
+        std::string new_title;
+        Atom actual_type = None;
+        int actual_format = 0;
+        unsigned long nitems = 0, bytes_after = 0;
+        unsigned char* prop_data = nullptr;
+
+        if (XGetWindowProperty(display_, xid_, backend_->getAtomNetWmName(),
+                               0, 1024, False, backend_->getAtomUtf8String(),
+                               &actual_type, &actual_format, &nitems, &bytes_after,
+                               &prop_data) == Success && prop_data && nitems > 0) {
+            new_title.assign(reinterpret_cast<char*>(prop_data), nitems);
+            XFree(prop_data);
+            prop_data = nullptr;
+        } else {
+            char* wm_name = nullptr;
+            if (XFetchName(display_, xid_, &wm_name) > 0 && wm_name) {
+                new_title = wm_name;
+                XFree(wm_name);
+            }
+        }
+
+        if (new_title != title_) {
+            title_ = new_title;
+            if (owner_) owner_->onToplevelTitleChanged().emit(shared_from_this(), title_);
+        }
+
+        // 2. App ID / WM_CLASS
+        XClassHint class_hint;
+        if (XGetClassHint(display_, xid_, &class_hint) != 0) {
+            std::string new_app_id;
+            if (class_hint.res_class) {
+                new_app_id = class_hint.res_class;
+                XFree(class_hint.res_class);
+            }
+            if (class_hint.res_name) {
+                if (new_app_id.empty()) new_app_id = class_hint.res_name;
+                XFree(class_hint.res_name);
+            }
+            if (new_app_id != app_id_) {
+                app_id_ = new_app_id;
+                if (owner_) owner_->onToplevelAppIdChanged().emit(shared_from_this(), app_id_);
+            }
+        }
+
+        // 3. States (_NET_WM_STATE)
+        WindowState new_state = WindowState::Normal;
+        if (XGetWindowProperty(display_, xid_, backend_->getAtomNetWmState(),
+                               0, 64, False, XA_ATOM,
+                               &actual_type, &actual_format, &nitems, &bytes_after,
+                               &prop_data) == Success && prop_data && nitems > 0) {
+            auto* atoms = reinterpret_cast<Atom*>(prop_data);
+            for (unsigned long i = 0; i < nitems; ++i) {
+                if (atoms[i] == backend_->getAtomNetWmStateMaxVert() || atoms[i] == backend_->getAtomNetWmStateMaxHorz()) {
+                    new_state |= WindowState::Maximized;
+                } else if (atoms[i] == backend_->getAtomNetWmStateHidden()) {
+                    new_state |= WindowState::Minimized;
+                } else if (atoms[i] == backend_->getAtomNetWmStateFullscreen()) {
+                    new_state |= WindowState::Fullscreen;
+                }
+            }
+            XFree(prop_data);
+        }
+
+        if (backend_->getActiveToplevel() && backend_->getActiveToplevel()->id() == static_cast<uint64_t>(xid_)) {
+            new_state |= WindowState::Activated;
+        }
+
+        if (new_state != state_) {
+            state_ = new_state;
+            if (owner_) owner_->onToplevelStateChanged().emit(shared_from_this(), state_);
+        }
+    }
+
+private:
+    ::Display* display_ = nullptr;
+    ::Window xid_ = None;
+    X11PlatformBackend* backend_ = nullptr;
+    Platform* owner_ = nullptr;
+    std::string title_;
+    std::string app_id_;
+    WindowState state_ = WindowState::Normal;
+};
+
+std::vector<std::shared_ptr<ToplevelWindow>> X11PlatformBackend::getToplevels() const {
+    std::vector<std::shared_ptr<ToplevelWindow>> result;
+    result.reserve(toplevels_.size());
+    for (const auto& tl : toplevels_) {
+        result.push_back(tl);
+    }
+    return result;
+}
+
+std::shared_ptr<ToplevelWindow> X11PlatformBackend::getActiveToplevel() const {
+    return active_toplevel_;
+}
+
+void X11PlatformBackend::refreshClientList() {
+    if (!display_) return;
+
+    ::Window root = RootWindow(display_, default_screen_);
+    Atom actual_type = None;
+    int actual_format = 0;
+    unsigned long nitems = 0, bytes_after = 0;
+    unsigned char* prop_data = nullptr;
+
+    if (XGetWindowProperty(display_, root, atom_net_client_list_,
+                           0, 1024, False, XA_WINDOW,
+                           &actual_type, &actual_format, &nitems, &bytes_after,
+                           &prop_data) != Success || !prop_data) {
+        return;
+    }
+
+    auto* xids = reinterpret_cast<::Window*>(prop_data);
+    std::unordered_set<::Window> current_set(xids, xids + nitems);
+    std::vector<std::shared_ptr<X11Toplevel>> new_list;
+
+    // Detect removed windows
+    for (auto it = toplevel_map_.begin(); it != toplevel_map_.end();) {
+        if (current_set.find(it->first) == current_set.end()) {
+            auto removed = it->second;
+            if (active_toplevel_ == removed) {
+                active_toplevel_.reset();
+                if (owner_) owner_->onActiveToplevelChanged().emit(nullptr);
+            }
+            it = toplevel_map_.erase(it);
+            if (owner_) owner_->onToplevelClosed().emit(removed);
+        } else {
+            ++it;
+        }
+    }
+
+    // Detect new and existing windows
+    for (unsigned long i = 0; i < nitems; ++i) {
+        ::Window xid = xids[i];
+        auto it = toplevel_map_.find(xid);
+        if (it != toplevel_map_.end()) {
+            new_list.push_back(it->second);
+        } else {
+            auto tl = std::make_shared<X11Toplevel>(display_, xid, this, owner_);
+            toplevel_map_[xid] = tl;
+            new_list.push_back(tl);
+            if (owner_) owner_->onToplevelCreated().emit(tl);
+        }
+    }
+
+    toplevels_ = std::move(new_list);
+    XFree(prop_data);
+}
+
+void X11PlatformBackend::refreshActiveWindow() {
+    if (!display_) return;
+
+    ::Window root = RootWindow(display_, default_screen_);
+    Atom actual_type = None;
+    int actual_format = 0;
+    unsigned long nitems = 0, bytes_after = 0;
+    unsigned char* prop_data = nullptr;
+
+    if (XGetWindowProperty(display_, root, atom_net_active_window_,
+                           0, 1, False, XA_WINDOW,
+                           &actual_type, &actual_format, &nitems, &bytes_after,
+                           &prop_data) != Success || !prop_data) {
+        return;
+    }
+
+    ::Window active_xid = None;
+    if (nitems > 0) {
+        active_xid = *reinterpret_cast<::Window*>(prop_data);
+    }
+    XFree(prop_data);
+
+    std::shared_ptr<X11Toplevel> new_active;
+    auto it = toplevel_map_.find(active_xid);
+    if (it != toplevel_map_.end()) {
+        new_active = it->second;
+    }
+
+    if (new_active != active_toplevel_) {
+        if (active_toplevel_) {
+            WindowState s = active_toplevel_->state();
+            s = static_cast<WindowState>(static_cast<uint32_t>(s) & ~static_cast<uint32_t>(WindowState::Activated));
+            active_toplevel_->setState(s);
+            if (owner_) owner_->onToplevelStateChanged().emit(active_toplevel_, s);
+        }
+
+        active_toplevel_ = new_active;
+
+        if (active_toplevel_) {
+            WindowState s = active_toplevel_->state() | WindowState::Activated;
+            active_toplevel_->setState(s);
+            if (owner_) owner_->onToplevelStateChanged().emit(active_toplevel_, s);
+        }
+
+        if (owner_) {
+            owner_->onActiveToplevelChanged().emit(active_toplevel_);
+        }
+    }
+}
+
+void X11PlatformBackend::handlePropertyNotify(const XPropertyEvent& prop) {
+    if (!display_) return;
+
+    ::Window root = RootWindow(display_, default_screen_);
+    if (prop.window == root) {
+        if (prop.atom == atom_net_client_list_) {
+            refreshClientList();
+        } else if (prop.atom == atom_net_active_window_) {
+            refreshActiveWindow();
+        }
+    } else {
+        auto it = toplevel_map_.find(prop.window);
+        if (it != toplevel_map_.end()) {
+            it->second->updateProperties();
+        }
+    }
 }
 
 } // namespace enki::x11

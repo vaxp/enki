@@ -161,6 +161,19 @@ bool Platform::startDrag(const DragData& data, DragAction actions) {
     return false;
 }
 
+// ── Foreign Toplevel Subsystem ───────────────────────────────
+std::vector<std::shared_ptr<ToplevelWindow>> Platform::getToplevels() const {
+    if (impl_->wayland) return impl_->wayland->getToplevels();
+    if (impl_->x11)     return impl_->x11->getToplevels();
+    return {};
+}
+
+std::shared_ptr<ToplevelWindow> Platform::getActiveToplevel() const {
+    if (impl_->wayland) return impl_->wayland->getActiveToplevel();
+    if (impl_->x11)     return impl_->x11->getActiveToplevel();
+    return nullptr;
+}
+
 // ── Cursor ───────────────────────────────────────────────────────
 void Platform::setCursor(SystemCursor cursor) {
     if (impl_->wayland) impl_->wayland->setCursor(cursor);

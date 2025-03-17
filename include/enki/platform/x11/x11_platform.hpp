@@ -59,15 +59,33 @@ public:
     // ── Drag and Drop Subsystem ──────────────────────────────────
     bool startDrag(const DragData& data, DragAction actions);
 
+    // ── Foreign Toplevel / EWMH Subsystem ───────────────────────
+    [[nodiscard]] std::vector<std::shared_ptr<ToplevelWindow>> getToplevels() const;
+    [[nodiscard]] std::shared_ptr<ToplevelWindow> getActiveToplevel() const;
+    void refreshClientList();
+    void refreshActiveWindow();
+
+    // Atoms getters for EWMH
+    [[nodiscard]] Atom getAtomNetActiveWindow() const { return atom_net_active_window_; }
+    [[nodiscard]] Atom getAtomNetCloseWindow()  const { return atom_net_close_window_; }
+    [[nodiscard]] Atom getAtomNetWmState()      const { return atom_net_wm_state_; }
+    [[nodiscard]] Atom getAtomNetWmStateMaxVert() const { return atom_net_wm_state_max_vert_; }
+    [[nodiscard]] Atom getAtomNetWmStateMaxHorz() const { return atom_net_wm_state_max_horz_; }
+    [[nodiscard]] Atom getAtomNetWmStateHidden()  const { return atom_net_wm_state_hidden_; }
+    [[nodiscard]] Atom getAtomNetWmStateFullscreen() const { return atom_net_wm_state_fullscreen_; }
+    [[nodiscard]] Atom getAtomNetWmName() const { return atom_net_wm_name_; }
+    [[nodiscard]] Atom getAtomWmClass() const { return atom_wm_class_; }
+
     void setCursor(SystemCursor cursor);
 
-    // Internal XDnD handlers
+    // Internal XDnD & EWMH handlers
     void handleSelectionRequest(const XSelectionRequestEvent& req);
     void handleSelectionClear(const XSelectionClearEvent& clr);
     void handleXdndEnter(const XClientMessageEvent& cme);
     void handleXdndPosition(const XClientMessageEvent& cme);
     void handleXdndLeave(const XClientMessageEvent& cme);
     void handleXdndDrop(const XClientMessageEvent& cme);
+    void handlePropertyNotify(const XPropertyEvent& prop);
 
 private:
     Platform*   owner_          = nullptr;
@@ -88,6 +106,19 @@ private:
     Atom atom_clipboard_        = None;
     Atom atom_primary_          = None;
     Atom atom_enki_sel_prop_    = None;
+    Atom atom_wm_class_         = None;
+
+    // EWMH Atoms
+    Atom atom_net_client_list_        = None;
+    Atom atom_net_active_window_      = None;
+    Atom atom_net_close_window_       = None;
+    Atom atom_net_wm_name_            = None;
+    Atom atom_net_wm_state_           = None;
+    Atom atom_net_wm_state_max_vert_  = None;
+    Atom atom_net_wm_state_max_horz_  = None;
+    Atom atom_net_wm_state_hidden_    = None;
+    Atom atom_net_wm_state_fullscreen_= None;
+    Atom atom_net_wm_state_focused_   = None;
 
     // XDnD Atoms
     Atom atom_xdnd_aware_       = None;
@@ -119,6 +150,12 @@ private:
 
     // Outgoing Drag state
     DragData outgoing_drag_data_;
+
+    // Foreign Toplevel State
+    class X11Toplevel;
+    std::vector<std::shared_ptr<X11Toplevel>> toplevels_;
+    std::unordered_map<::Window, std::shared_ptr<X11Toplevel>> toplevel_map_;
+    std::shared_ptr<X11Toplevel> active_toplevel_;
 };
 
 } // namespace enki::x11

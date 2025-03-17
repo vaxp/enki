@@ -9,6 +9,7 @@
 #include "enki/platform/input.hpp"
 #include "enki/platform/clipboard.hpp"
 #include "enki/platform/dnd.hpp"
+#include "enki/platform/toplevel.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -111,6 +112,31 @@ public:
     /// Signal emitted when data is dropped on a window.
     Signal<DropEvent&>& onDrop() { return on_drop_; }
 
+    // ── Foreign Toplevel / Window Management ─────────────────────
+    /// List all currently opened external application windows.
+    [[nodiscard]] std::vector<std::shared_ptr<ToplevelWindow>> getToplevels() const;
+
+    /// Get the currently focused / active external window (if any).
+    [[nodiscard]] std::shared_ptr<ToplevelWindow> getActiveToplevel() const;
+
+    /// Emitted when a new application window is opened.
+    Signal<std::shared_ptr<ToplevelWindow>>& onToplevelCreated() { return on_toplevel_created_; }
+
+    /// Emitted when an application window is closed.
+    Signal<std::shared_ptr<ToplevelWindow>>& onToplevelClosed() { return on_toplevel_closed_; }
+
+    /// Emitted when an application window's title changes.
+    Signal<std::shared_ptr<ToplevelWindow>, std::string>& onToplevelTitleChanged() { return on_toplevel_title_changed_; }
+
+    /// Emitted when an application window's app-id / class changes.
+    Signal<std::shared_ptr<ToplevelWindow>, std::string>& onToplevelAppIdChanged() { return on_toplevel_app_id_changed_; }
+
+    /// Emitted when an application window's state changes (maximized, minimized, etc.).
+    Signal<std::shared_ptr<ToplevelWindow>, WindowState>& onToplevelStateChanged() { return on_toplevel_state_changed_; }
+
+    /// Emitted when keyboard / active focus shifts to a new window.
+    Signal<std::shared_ptr<ToplevelWindow>>& onActiveToplevelChanged() { return on_active_toplevel_changed_; }
+
     /// Access native display handles
     void* getNativeDisplay() const;
     void* getEGLDisplay() const;
@@ -144,6 +170,13 @@ private:
     Signal<DragMotionEvent&>  on_drag_motion_;
     Signal<DragLeaveEvent&>   on_drag_leave_;
     Signal<DropEvent&>        on_drop_;
+
+    Signal<std::shared_ptr<ToplevelWindow>>               on_toplevel_created_;
+    Signal<std::shared_ptr<ToplevelWindow>>               on_toplevel_closed_;
+    Signal<std::shared_ptr<ToplevelWindow>, std::string>  on_toplevel_title_changed_;
+    Signal<std::shared_ptr<ToplevelWindow>, std::string>  on_toplevel_app_id_changed_;
+    Signal<std::shared_ptr<ToplevelWindow>, WindowState>  on_toplevel_state_changed_;
+    Signal<std::shared_ptr<ToplevelWindow>>               on_active_toplevel_changed_;
 };
 
 }  // namespace enki
