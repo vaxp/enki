@@ -10,6 +10,8 @@
 #include "enki/platform/clipboard.hpp"
 #include "enki/platform/dnd.hpp"
 #include "enki/platform/toplevel.hpp"
+#include "enki/platform/output.hpp"
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -58,25 +60,42 @@ public:
     /// Get raw clipboard data for a specific MIME format.
     [[nodiscard]] std::vector<uint8_t> getClipboardDataForMime(std::string_view mime_type, ClipboardType type = ClipboardType::Clipboard) const;
 
+    /// Offer clipboard data with a lazy provider callback.
+    /// The callback receives the requested MIME type and returns its raw bytes.
+    using ClipboardDataProvider = std::function<std::vector<uint8_t>(std::string_view)>;
+    void offerClipboard(std::vector<std::string> mime_types, ClipboardDataProvider provider, ClipboardType type = ClipboardType::Clipboard);
+
+    /// Clear clipboard contents.
+    void clearClipboard(ClipboardType type = ClipboardType::Clipboard);
+
     /// List all available MIME formats currently on the clipboard.
     [[nodiscard]] std::vector<std::string> getClipboardFormats(ClipboardType type = ClipboardType::Clipboard) const;
 
     /// Check if the clipboard contains data in the specified MIME format.
     [[nodiscard]] bool hasClipboardFormat(std::string_view mime_type, ClipboardType type = ClipboardType::Clipboard) const;
 
-    // ── Drag & Drop Subsystem ────────────────────────────────────
+    // ── Drag and Drop Subsystem ──────────────────────────────────
 
-    /// Start a Drag and Drop operation from Enki to external windows.
+    /// Start a drag operation originating from an enki window.
     bool startDrag(const DragData& data, DragAction actions = DragAction::Copy);
 
-    /// Set the platform mouse cursor shape.
+    /// Cancel any active drag operation.
+    void cancelDrag();
+
+    /// Check if a drag operation is currently active.
+    [[nodiscard]] bool isDragging() const;
+
+    // ── System Cursor ────────────────────────────────────────────
+
+    /// Change the active system cursor.
     void setCursor(SystemCursor cursor);
 
-    // --- Signals ---
-    /// Signal emitted when the platform requests quit.
+    // ── Signals ──────────────────────────────────────────────────
+
+    /// Signal emitted when the application should quit.
     Signal<>& onQuit() { return on_quit_; }
 
-    /// Signal emitted on mouse button press. Args: x, y, button (1=left, 2=middle, 3=right).
+    /// Signal emitted on mouse button press. Args: x, y, button.
     Signal<float, float, int>& onMouseDown() { return on_mouse_down_; }
 
     /// Signal emitted on mouse button release. Args: x, y, button.
@@ -137,6 +156,25 @@ public:
     /// Emitted when keyboard / active focus shifts to a new window.
     Signal<std::shared_ptr<ToplevelWindow>>& onActiveToplevelChanged() { return on_active_toplevel_changed_; }
 
+    // ── Outputs & Monitors ───────────────────────────────────────
+    /// List all connected display outputs / monitors.
+    [[nodiscard]] std::vector<std::shared_ptr<Output>> getOutputs() const;
+
+    /// Find a specific output by its connector name (e.g. "eDP-1", "HDMI-A-1", "DP-2").
+    [[nodiscard]] std::shared_ptr<Output> getOutputByName(std::string_view name) const;
+
+    /// Get the primary/default output monitor.
+    [[nodiscard]] std::shared_ptr<Output> getPrimaryOutput() const;
+
+    /// Emitted when a monitor is connected.
+    Signal<std::shared_ptr<Output>>& onOutputAdded() { return on_output_added_; }
+
+    /// Emitted when a monitor is disconnected.
+    Signal<std::shared_ptr<Output>>& onOutputRemoved() { return on_output_removed_; }
+
+    /// Emitted when monitor geometry, mode, or scale changes.
+    Signal<std::shared_ptr<Output>>& onOutputChanged() { return on_output_changed_; }
+
     /// Access native display handles
     void* getNativeDisplay() const;
     void* getEGLDisplay() const;
@@ -177,6 +215,10 @@ private:
     Signal<std::shared_ptr<ToplevelWindow>, std::string>  on_toplevel_app_id_changed_;
     Signal<std::shared_ptr<ToplevelWindow>, WindowState>  on_toplevel_state_changed_;
     Signal<std::shared_ptr<ToplevelWindow>>               on_active_toplevel_changed_;
+
+    Signal<std::shared_ptr<Output>>                       on_output_added_;
+    Signal<std::shared_ptr<Output>>                       on_output_removed_;
+    Signal<std::shared_ptr<Output>>                       on_output_changed_;
 };
 
 }  // namespace enki

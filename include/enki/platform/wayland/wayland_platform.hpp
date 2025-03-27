@@ -19,25 +19,19 @@ extern "C" {
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 }
 
+#include "enki/platform/output.hpp"
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include <memory>
 #include <string>
 
 namespace enki::wayland {
 
-struct WaylandOutput {
-    wl_output* output = nullptr;
-    uint32_t   id     = 0;
-    int32_t    x      = 0;
-    int32_t    y      = 0;
-    int32_t    width  = 0;
-    int32_t    height = 0;
-    int32_t    scale  = 1;
-    std::string name;
-};
+class WaylandOutput;
 
 class WaylandPlatformBackend {
 public:
@@ -52,10 +46,17 @@ public:
     [[nodiscard]] wl_compositor* getCompositor() const { return compositor_; }
     [[nodiscard]] zwlr_layer_shell_v1* getLayerShell() const { return layer_shell_; }
     [[nodiscard]] xdg_wm_base* getXdgWmBase() const { return xdg_wm_base_; }
+    [[nodiscard]] zxdg_output_manager_v1* getXdgOutputManager() const { return xdg_output_manager_; }
     [[nodiscard]] wl_seat* getSeat() const { return seat_; }
     [[nodiscard]] EGLDisplay getEGLDisplay() const { return egl_display_; }
     [[nodiscard]] EGLConfig getEGLConfig() const { return egl_config_; }
-    [[nodiscard]] const std::vector<WaylandOutput>& getOutputs() const { return outputs_; }
+    [[nodiscard]] Platform* getOwner() const { return owner_; }
+
+    // Output / Monitor Management
+    [[nodiscard]] std::vector<std::shared_ptr<Output>> getOutputs() const;
+    [[nodiscard]] std::shared_ptr<Output> getOutputByName(std::string_view name) const;
+    [[nodiscard]] std::shared_ptr<Output> getPrimaryOutput() const;
+    [[nodiscard]] std::shared_ptr<WaylandOutput> findOutputByPtr(const WaylandOutput* ptr) const;
 
     void registerSurface(LayerSurface* surface);
     void unregisterSurface(LayerSurface* surface);
@@ -144,6 +145,7 @@ private:
     wl_data_device_manager*             data_device_manager_ = nullptr;
     wl_data_device*                     data_device_         = nullptr;
     zwlr_foreign_toplevel_manager_v1*   toplevel_manager_    = nullptr;
+    zxdg_output_manager_v1*             xdg_output_manager_  = nullptr;
 
     // Wayland cursor support
     wl_cursor_theme*     cursor_theme_   = nullptr;
@@ -152,7 +154,8 @@ private:
     uint32_t             last_keyboard_serial_ = 0;
     SystemCursor         current_cursor_ = SystemCursor::Arrow;
 
-    std::vector<WaylandOutput> outputs_;
+    std::vector<std::shared_ptr<WaylandOutput>> outputs_;
+    std::unordered_map<wl_output*, std::shared_ptr<WaylandOutput>> output_map_;
     std::unordered_set<LayerSurface*> surfaces_;
 
     // XKB Keymap

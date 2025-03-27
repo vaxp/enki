@@ -8,6 +8,7 @@
 #include "enki/core/result.hpp"
 #include "enki/core/signal.hpp"
 #include "enki/platform/platform.hpp"
+#include "enki/platform/output.hpp"
 #include <string>
 #include <memory>
 #include <cstdint>
@@ -80,16 +81,17 @@ struct SurfaceMargin {
 
 /// Configuration for creating a desktop Layer Surface
 struct LayerSurfaceConfig {
-    std::string   namespace_id   = "enki-shell";
-    ShellLayer    layer          = ShellLayer::Top;
-    ShellAnchor   anchor         = ShellAnchor::TopAll;
-    int32_t       width          = 0;   ///< 0 means span entire anchor width
-    int32_t       height         = 34;  ///< Desired height in pixels
-    int32_t       exclusive_zone = 0;   ///< Pixels reserved to prevent normal windows from overlapping (-1 ignore, 0 none, >0 reserved)
-    SurfaceMargin margin;
-    KeyboardMode  keyboard_mode  = KeyboardMode::None;
-    bool          transparent    = true;
-    bool          vsync          = true;
+    std::string             namespace_id   = "enki-shell";
+    ShellLayer              layer          = ShellLayer::Top;
+    ShellAnchor             anchor         = ShellAnchor::TopAll;
+    int32_t                 width          = 0;   ///< 0 means span entire anchor width
+    int32_t                 height         = 34;  ///< Desired height in pixels
+    int32_t                 exclusive_zone = 0;   ///< Pixels reserved to prevent normal windows from overlapping (-1 ignore, 0 none, >0 reserved)
+    SurfaceMargin           margin;
+    KeyboardMode            keyboard_mode  = KeyboardMode::None;
+    bool                    transparent    = true;
+    bool                    vsync          = true;
+    std::shared_ptr<Output> target_output  = nullptr; ///< Specific monitor to display on (nullptr = default/focused)
 };
 
 /// Represents a Wayland Layer Shell surface (or fallback X11 Dock/Strut Window)

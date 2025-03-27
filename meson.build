@@ -27,6 +27,7 @@ add_project_arguments(
 # Native Linux Dependencies (Zero SDL)
 # ============================================================
 x11_dep    = dependency('x11',     required : true)
+xrandr_dep = dependency('xrandr',  required : false)
 egl_dep    = dependency('egl',     required : true)
 gl_dep     = dependency('gl',      required : true)
 thread_dep = dependency('threads')
@@ -48,6 +49,9 @@ enki_compile_args = ['-DENKI_HAS_ANU=1']
 if wayland_client_dep.found()
   enki_compile_args += '-DENKI_HAS_WAYLAND=1'
 endif
+if xrandr_dep.found()
+  enki_compile_args += '-DENKI_HAS_XRANDR=1'
+endif
 
 add_project_arguments(enki_compile_args, language : 'cpp')
 
@@ -59,7 +63,7 @@ if wayland_scanner.found() and wayland_client_dep.found()
   proto_c_sources = []
   proto_h_sources = []
 
-  foreach proto : ['wlr-layer-shell-unstable-v1', 'xdg-shell', 'wlr-foreign-toplevel-management-unstable-v1']
+  foreach proto : ['wlr-layer-shell-unstable-v1', 'xdg-shell', 'wlr-foreign-toplevel-management-unstable-v1', 'xdg-output-unstable-v1']
     xml = 'protocols' / proto + '.xml'
 
     hdr = custom_target(proto + '-client-header',
@@ -147,6 +151,9 @@ endif
 # ============================================================
 enki_deps = [thread_dep, x11_dep, egl_dep, gl_dep]
 
+if xrandr_dep.found()
+  enki_deps += [xrandr_dep]
+endif
 if wayland_client_dep.found()
   enki_deps += [wayland_client_dep]
 endif

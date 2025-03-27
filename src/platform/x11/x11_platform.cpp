@@ -6,6 +6,9 @@
 
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#if defined(ENKI_HAS_XRANDR)
+#include <X11/extensions/Xrandr.h>
+#endif
 #include <GL/gl.h>
 #include <unistd.h>
 #include <iostream>
@@ -215,10 +218,22 @@ bool X11PlatformBackend::init() {
     refreshClientList();
     refreshActiveWindow();
 
+#if defined(ENKI_HAS_XRANDR)
+    if (XRRQueryExtension(display_, &xrandr_event_base_, &xrandr_error_base_)) {
+        has_xrandr_ = true;
+        ::Window root = RootWindow(display_, default_screen_);
+        XRRSelectInput(display_, root, RRScreenChangeNotifyMask | RROutputChangeNotifyMask | RRCrtcChangeNotifyMask);
+    }
+#endif
+    updateOutputs();
+
     return true;
 }
 
 void X11PlatformBackend::shutdown() {
+    // Clear outputs without calling virtual methods — X11Output defined later in TU
+    outputs_.clear();
+
     toplevels_.clear();
     toplevel_map_.clear();
     active_toplevel_.reset();
@@ -240,6 +255,17 @@ bool X11PlatformBackend::pollEvents() {
     while (XPending(display_) > 0) {
         XEvent xev;
         XNextEvent(display_, &xev);
+
+#if defined(ENKI_HAS_XRANDR)
+        if (has_xrandr_) {
+            if (xev.type == xrandr_event_base_ + RRScreenChangeNotify ||
+                xev.type == xrandr_event_base_ + RRNotify) {
+                XRRUpdateConfiguration(&xev);
+                updateOutputs();
+                continue;
+            }
+        }
+#endif
 
         switch (xev.type) {
 
@@ -1073,6 +1099,270 @@ void X11PlatformBackend::handlePropertyNotify(const XPropertyEvent& prop) {
             it->second->updateProperties();
         }
     }
+}
+
+// ── X11 Output Implementation & EDID Parser ──────────────────────
+
+class X11PlatformBackend::X11Output : public Output {
+public:
+    X11PlatformBackend* backend_ = nullptr;
+    uint32_t id_ = 0;
+#if defined(ENKI_HAS_XRANDR)
+    RROutput rr_output_ = 0;
+#else
+    unsigned long rr_output_ = 0;
+#endif
+
+    std::string name_;
+    std::string make_;
+    std::string model_;
+    std::string description_;
+
+    Rect geometry_{0, 0, 0, 0};
+    int32_t phys_w_mm_ = 0;
+    int32_t phys_h_mm_ = 0;
+    int32_t scale_ = 1;
+    OutputTransform transform_ = OutputTransform::Normal;
+    OutputSubpixel subpixel_ = OutputSubpixel::Unknown;
+
+    std::vector<OutputMode> modes_;
+    OutputMode current_mode_;
+    bool is_primary_ = false;
+
+    X11Output(X11PlatformBackend* backend, uint32_t id, unsigned long rr_output)
+        : backend_(backend), id_(id), rr_output_(rr_output) {}
+
+    [[nodiscard]] uint32_t id() const noexcept override { return id_; }
+    [[nodiscard]] const std::string& name() const noexcept override { return name_; }
+    [[nodiscard]] const std::string& make() const noexcept override { return make_; }
+    [[nodiscard]] const std::string& model() const noexcept override { return model_; }
+    [[nodiscard]] const std::string& description() const noexcept override { return description_; }
+
+    [[nodiscard]] Rect geometry() const noexcept override { return geometry_; }
+    [[nodiscard]] Rect logicalGeometry() const noexcept override { return geometry_; }
+    [[nodiscard]] int32_t physicalWidthMm() const noexcept override { return phys_w_mm_; }
+    [[nodiscard]] int32_t physicalHeightMm() const noexcept override { return phys_h_mm_; }
+    [[nodiscard]] int32_t scaleFactor() const noexcept override { return scale_; }
+    [[nodiscard]] double fractionalScale() const noexcept override { return static_cast<double>(scale_); }
+    [[nodiscard]] OutputTransform transform() const noexcept override { return transform_; }
+    [[nodiscard]] OutputSubpixel subpixel() const noexcept override { return subpixel_; }
+    [[nodiscard]] const std::vector<OutputMode>& modes() const noexcept override { return modes_; }
+    [[nodiscard]] const OutputMode& currentMode() const noexcept override { return current_mode_; }
+    [[nodiscard]] bool isPrimary() const noexcept override { return is_primary_; }
+    [[nodiscard]] void* nativeHandle() const noexcept override { return reinterpret_cast<void*>(static_cast<uintptr_t>(rr_output_)); }
+};
+
+#if defined(ENKI_HAS_XRANDR)
+static void parseEDID(const uint8_t* edid, size_t length, std::string& make, std::string& model) {
+    if (!edid || length < 128) return;
+
+    // Bytes 8-9: Manufacturer ID (3 letters, 5 bits each)
+    uint16_t mfg_id = (static_cast<uint16_t>(edid[8]) << 8) | edid[9];
+    char c1 = '@' + ((mfg_id >> 10) & 0x1F);
+    char c2 = '@' + ((mfg_id >> 5) & 0x1F);
+    char c3 = '@' + (mfg_id & 0x1F);
+    if (c1 >= 'A' && c1 <= 'Z' && c2 >= 'A' && c2 <= 'Z' && c3 >= 'A' && c3 <= 'Z') {
+        make = {c1, c2, c3};
+    }
+
+    // Four 18-byte detailed timing / descriptor blocks at offsets 54, 72, 90, 108
+    for (int block = 0; block < 4; ++block) {
+        const uint8_t* desc = edid + 54 + block * 18;
+        if (desc[0] == 0 && desc[1] == 0 && desc[2] == 0) {
+            uint8_t type = desc[3];
+            if (type == 0xFC) { // Monitor Name
+                std::string name_str;
+                for (int i = 5; i < 18; ++i) {
+                    if (desc[i] == 0x0A || desc[i] == 0x00) break;
+                    if (desc[i] >= 32 && desc[i] <= 126) {
+                        name_str.push_back(static_cast<char>(desc[i]));
+                    }
+                }
+                while (!name_str.empty() && name_str.back() == ' ') name_str.pop_back();
+                if (!name_str.empty()) {
+                    model = name_str;
+                }
+            }
+        }
+    }
+}
+#endif
+
+void X11PlatformBackend::updateOutputs() {
+#if defined(ENKI_HAS_XRANDR)
+    if (!has_xrandr_ || !display_) return;
+
+    ::Window root = RootWindow(display_, default_screen_);
+    XRRScreenResources* res = XRRGetScreenResourcesCurrent(display_, root);
+    if (!res) {
+        res = XRRGetScreenResources(display_, root);
+    }
+    if (!res) return;
+
+    RROutput primary_rr = XRRGetOutputPrimary(display_, root);
+    Atom edid_atom = XInternAtom(display_, "EDID", True);
+
+    std::vector<std::shared_ptr<X11Output>> current_active_outputs;
+
+    for (int i = 0; i < res->noutput; ++i) {
+        RROutput rr_out = res->outputs[i];
+        XRROutputInfo* info = XRRGetOutputInfo(display_, res, rr_out);
+        if (!info) continue;
+
+        if (info->connection == RR_Connected && info->crtc != None) {
+            XRRCrtcInfo* crtc = XRRGetCrtcInfo(display_, res, info->crtc);
+            if (crtc) {
+                std::shared_ptr<X11Output> out = nullptr;
+                for (auto& existing : outputs_) {
+                    if (existing->rr_output_ == rr_out) {
+                        out = existing;
+                        break;
+                    }
+                }
+                bool is_new = false;
+                if (!out) {
+                    out = std::make_shared<X11Output>(this, static_cast<uint32_t>(rr_out), rr_out);
+                    is_new = true;
+                }
+
+                out->name_ = info->name ? info->name : ("Screen-" + std::to_string(i));
+                out->phys_w_mm_ = static_cast<int32_t>(info->mm_width);
+                out->phys_h_mm_ = static_cast<int32_t>(info->mm_height);
+                // XRROutputInfo does not expose subpixel order — leave as Unknown
+                out->is_primary_ = (rr_out == primary_rr) || (info->crtc == res->crtcs[0] && primary_rr == None);
+
+                out->geometry_ = Rect{static_cast<float>(crtc->x), static_cast<float>(crtc->y),
+                                      static_cast<float>(crtc->width), static_cast<float>(crtc->height)};
+
+                switch (crtc->rotation) {
+                    case RR_Rotate_90:  out->transform_ = OutputTransform::Rotated90; break;
+                    case RR_Rotate_180: out->transform_ = OutputTransform::Rotated180; break;
+                    case RR_Rotate_270: out->transform_ = OutputTransform::Rotated270; break;
+                    case RR_Reflect_X:  out->transform_ = OutputTransform::Flipped; break;
+                    case RR_Reflect_Y:  out->transform_ = OutputTransform::Flipped180; break;
+                    default:            out->transform_ = OutputTransform::Normal; break;
+                }
+
+                out->modes_.clear();
+                for (int m = 0; m < info->nmode; ++m) {
+                    RRMode mode_id = info->modes[m];
+                    for (int rm = 0; rm < res->nmode; ++rm) {
+                        if (res->modes[rm].id == mode_id) {
+                            const auto& xmode = res->modes[rm];
+                            OutputMode mode;
+                            mode.width = static_cast<int32_t>(xmode.width);
+                            mode.height = static_cast<int32_t>(xmode.height);
+                            if (xmode.hTotal && xmode.vTotal) {
+                                double hz = static_cast<double>(xmode.dotClock) / (static_cast<double>(xmode.hTotal) * static_cast<double>(xmode.vTotal));
+                                mode.refresh_rate_mHz = static_cast<int32_t>(hz * 1000.0 + 0.5);
+                            }
+                            mode.is_current = (mode_id == crtc->mode);
+                            mode.is_preferred = (m == 0 || (m < info->npreferred));
+                            out->modes_.push_back(mode);
+                            if (mode.is_current) {
+                                out->current_mode_ = mode;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (edid_atom != None) {
+                    Atom actual_type;
+                    int actual_format;
+                    unsigned long nitems = 0, bytes_after = 0;
+                    unsigned char* prop = nullptr;
+                    if (XRRGetOutputProperty(display_, rr_out, edid_atom, 0, 128, False, False,
+                                             AnyPropertyType, &actual_type, &actual_format,
+                                             &nitems, &bytes_after, &prop) == Success && prop) {
+                        parseEDID(prop, nitems, out->make_, out->model_);
+                        XFree(prop);
+                    }
+                }
+
+                std::string desc = out->make_;
+                if (!out->model_.empty()) {
+                    if (!desc.empty()) desc += " ";
+                    desc += out->model_;
+                }
+                if (!out->name_.empty()) {
+                    if (!desc.empty()) desc += " (" + out->name_ + ")";
+                    else desc = out->name_;
+                }
+                out->description_ = desc;
+
+                current_active_outputs.push_back(out);
+
+                if (is_new) {
+                    if (owner_) owner_->onOutputAdded().emit(out);
+                } else {
+                    out->onGeometryChanged().emit();
+                    out->onModeChanged().emit();
+                    if (owner_) owner_->onOutputChanged().emit(out);
+                }
+
+                XRRFreeCrtcInfo(crtc);
+            }
+        }
+        XRRFreeOutputInfo(info);
+    }
+
+    for (auto it = outputs_.begin(); it != outputs_.end(); ++it) {
+        bool still_present = false;
+        for (const auto& act : current_active_outputs) {
+            if (act->rr_output_ == (*it)->rr_output_) {
+                still_present = true;
+                break;
+            }
+        }
+        if (!still_present) {
+            auto out = *it;
+            out->onRemoved().emit();
+            if (owner_) owner_->onOutputRemoved().emit(out);
+        }
+    }
+
+    outputs_ = std::move(current_active_outputs);
+    XRRFreeScreenResources(res);
+#else
+    if (outputs_.empty() && display_) {
+        auto out = std::make_shared<X11Output>(this, 0, 0);
+        out->name_ = "Default";
+        out->description_ = "X11 Display";
+        int w = DisplayWidth(display_, default_screen_);
+        int h = DisplayHeight(display_, default_screen_);
+        out->geometry_ = Rect{0, 0, static_cast<float>(w), static_cast<float>(h)};
+        out->current_mode_ = OutputMode{w, h, 60000, true, true};
+        out->modes_.push_back(out->current_mode_);
+        out->is_primary_ = true;
+        outputs_.push_back(out);
+        if (owner_) owner_->onOutputAdded().emit(out);
+    }
+#endif
+}
+
+std::vector<std::shared_ptr<Output>> X11PlatformBackend::getOutputs() const {
+    std::vector<std::shared_ptr<Output>> res;
+    res.reserve(outputs_.size());
+    for (const auto& o : outputs_) {
+        res.push_back(o);
+    }
+    return res;
+}
+
+std::shared_ptr<Output> X11PlatformBackend::getOutputByName(std::string_view name) const {
+    for (const auto& o : outputs_) {
+        if (o->name() == name) return o;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Output> X11PlatformBackend::getPrimaryOutput() const {
+    for (const auto& o : outputs_) {
+        if (o->isPrimary()) return o;
+    }
+    if (!outputs_.empty()) return outputs_.front();
+    return nullptr;
 }
 
 } // namespace enki::x11

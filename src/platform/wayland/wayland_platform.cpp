@@ -616,6 +616,13 @@ void WaylandPlatformBackend::shutdown() {
     toplevel_map_.clear();
     active_toplevel_.reset();
 
+    if (xdg_output_manager_) {
+        zxdg_output_manager_v1_destroy(xdg_output_manager_);
+        xdg_output_manager_ = nullptr;
+    }
+    output_map_.clear();
+    outputs_.clear();
+
     if (xdg_wm_base_) {
         xdg_wm_base_destroy(xdg_wm_base_);
         xdg_wm_base_ = nullptr;
@@ -633,6 +640,229 @@ void WaylandPlatformBackend::shutdown() {
         display_ = nullptr;
     }
 }
+
+// ── Wayland Output Implementation & Listeners ────────────────────
+
+class WaylandOutput : public Output {
+public:
+    WaylandPlatformBackend* backend_ = nullptr;
+    uint32_t                id_      = 0;
+    wl_output*              output_  = nullptr;
+    zxdg_output_v1*         xdg_output_ = nullptr;
+
+    std::string name_;
+    std::string make_;
+    std::string model_;
+    std::string description_;
+
+    int32_t phys_x_ = 0;
+    int32_t phys_y_ = 0;
+    int32_t phys_w_mm_ = 0;
+    int32_t phys_h_mm_ = 0;
+
+    int32_t logic_x_ = 0;
+    int32_t logic_y_ = 0;
+    int32_t logic_w_ = 0;
+    int32_t logic_h_ = 0;
+
+    int32_t scale_ = 1;
+    OutputTransform transform_ = OutputTransform::Normal;
+    OutputSubpixel subpixel_ = OutputSubpixel::Unknown;
+
+    std::vector<OutputMode> modes_;
+    OutputMode current_mode_;
+    bool is_primary_ = false;
+    bool announced_ = false;
+
+    WaylandOutput(WaylandPlatformBackend* backend, uint32_t id, wl_output* output)
+        : backend_(backend), id_(id), output_(output) {}
+
+    ~WaylandOutput() override {
+        if (xdg_output_) {
+            zxdg_output_v1_destroy(xdg_output_);
+            xdg_output_ = nullptr;
+        }
+        if (output_) {
+            wl_output_destroy(output_);
+            output_ = nullptr;
+        }
+    }
+
+    [[nodiscard]] uint32_t id() const noexcept override { return id_; }
+    [[nodiscard]] const std::string& name() const noexcept override { return name_; }
+    [[nodiscard]] const std::string& make() const noexcept override { return make_; }
+    [[nodiscard]] const std::string& model() const noexcept override { return model_; }
+    [[nodiscard]] const std::string& description() const noexcept override { return description_; }
+
+    [[nodiscard]] Rect geometry() const noexcept override {
+        return Rect{static_cast<float>(phys_x_), static_cast<float>(phys_y_),
+                    static_cast<float>(current_mode_.width), static_cast<float>(current_mode_.height)};
+    }
+
+    [[nodiscard]] Rect logicalGeometry() const noexcept override {
+        if (logic_w_ > 0 && logic_h_ > 0) {
+            return Rect{static_cast<float>(logic_x_), static_cast<float>(logic_y_),
+                        static_cast<float>(logic_w_), static_cast<float>(logic_h_)};
+        }
+        float w = current_mode_.width > 0 ? static_cast<float>(current_mode_.width) / (scale_ > 0 ? scale_ : 1) : 0.0f;
+        float h = current_mode_.height > 0 ? static_cast<float>(current_mode_.height) / (scale_ > 0 ? scale_ : 1) : 0.0f;
+        return Rect{static_cast<float>(phys_x_), static_cast<float>(phys_y_), w, h};
+    }
+
+    [[nodiscard]] int32_t physicalWidthMm() const noexcept override { return phys_w_mm_; }
+    [[nodiscard]] int32_t physicalHeightMm() const noexcept override { return phys_h_mm_; }
+    [[nodiscard]] int32_t scaleFactor() const noexcept override { return scale_; }
+    [[nodiscard]] double fractionalScale() const noexcept override {
+        if (logic_w_ > 0 && current_mode_.width > 0) {
+            return static_cast<double>(current_mode_.width) / logic_w_;
+        }
+        return static_cast<double>(scale_);
+    }
+    [[nodiscard]] OutputTransform transform() const noexcept override { return transform_; }
+    [[nodiscard]] OutputSubpixel subpixel() const noexcept override { return subpixel_; }
+    [[nodiscard]] const std::vector<OutputMode>& modes() const noexcept override { return modes_; }
+    [[nodiscard]] const OutputMode& currentMode() const noexcept override { return current_mode_; }
+    [[nodiscard]] bool isPrimary() const noexcept override { return is_primary_; }
+    [[nodiscard]] void* nativeHandle() const noexcept override { return output_; }
+};
+
+static void output_geometry_handler(void* data, struct wl_output* /*wl_output*/,
+                                    int32_t x, int32_t y,
+                                    int32_t physical_width, int32_t physical_height,
+                                    int32_t subpixel,
+                                    const char* make, const char* model,
+                                    int32_t transform) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    out->phys_x_ = x;
+    out->phys_y_ = y;
+    out->phys_w_mm_ = physical_width;
+    out->phys_h_mm_ = physical_height;
+    out->subpixel_ = static_cast<OutputSubpixel>(subpixel);
+    if (make) out->make_ = make;
+    if (model) out->model_ = model;
+    out->transform_ = static_cast<OutputTransform>(transform);
+}
+
+static void output_mode_handler(void* data, struct wl_output* /*wl_output*/,
+                                uint32_t flags, int32_t width, int32_t height, int32_t refresh) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    OutputMode mode;
+    mode.width = width;
+    mode.height = height;
+    mode.refresh_rate_mHz = refresh;
+    mode.is_current = (flags & WL_OUTPUT_MODE_CURRENT) != 0;
+    mode.is_preferred = (flags & WL_OUTPUT_MODE_PREFERRED) != 0;
+
+    bool found = false;
+    for (auto& m : out->modes_) {
+        if (m.width == width && m.height == height && m.refresh_rate_mHz == refresh) {
+            m.is_current = mode.is_current;
+            m.is_preferred = mode.is_preferred;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        out->modes_.push_back(mode);
+    }
+    if (mode.is_current) {
+        out->current_mode_ = mode;
+    }
+}
+
+static void output_done_handler(void* data, struct wl_output* /*wl_output*/) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    if (out->description_.empty()) {
+        std::string desc = out->make_;
+        if (!out->model_.empty()) {
+            if (!desc.empty()) desc += " ";
+            desc += out->model_;
+        }
+        if (!out->name_.empty()) {
+            if (!desc.empty()) desc += " (" + out->name_ + ")";
+            else desc = out->name_;
+        }
+        out->description_ = desc;
+    }
+    if (!out->announced_) {
+        out->announced_ = true;
+        if (out->backend_ && out->backend_->getOwner()) {
+            auto ptr = out->backend_->findOutputByPtr(out);
+            if (ptr) {
+                out->backend_->getOwner()->onOutputAdded().emit(ptr);
+            }
+        }
+    } else {
+        out->onGeometryChanged().emit();
+        out->onModeChanged().emit();
+        if (out->backend_ && out->backend_->getOwner()) {
+            auto ptr = out->backend_->findOutputByPtr(out);
+            if (ptr) {
+                out->backend_->getOwner()->onOutputChanged().emit(ptr);
+            }
+        }
+    }
+}
+
+static void output_scale_handler(void* data, struct wl_output* /*wl_output*/, int32_t factor) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    out->scale_ = factor;
+    out->onScaleChanged().emit();
+}
+
+static void output_name_handler(void* data, struct wl_output* /*wl_output*/, const char* name) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    if (name) out->name_ = name;
+}
+
+static void output_description_handler(void* data, struct wl_output* /*wl_output*/, const char* description) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    if (description) out->description_ = description;
+}
+
+static const struct wl_output_listener wayland_output_listener = {
+    .geometry = output_geometry_handler,
+    .mode = output_mode_handler,
+    .done = output_done_handler,
+    .scale = output_scale_handler,
+    .name = output_name_handler,
+    .description = output_description_handler,
+};
+
+static void xdg_output_logical_position_handler(void* data, struct zxdg_output_v1* /*zxdg_output_v1*/, int32_t x, int32_t y) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    out->logic_x_ = x;
+    out->logic_y_ = y;
+}
+
+static void xdg_output_logical_size_handler(void* data, struct zxdg_output_v1* /*zxdg_output_v1*/, int32_t width, int32_t height) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    out->logic_w_ = width;
+    out->logic_h_ = height;
+}
+
+static void xdg_output_done_handler(void* data, struct zxdg_output_v1* /*zxdg_output_v1*/) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    out->onGeometryChanged().emit();
+}
+
+static void xdg_output_name_handler(void* data, struct zxdg_output_v1* /*zxdg_output_v1*/, const char* name) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    if (name && out->name_.empty()) out->name_ = name;
+}
+
+static void xdg_output_description_handler(void* data, struct zxdg_output_v1* /*zxdg_output_v1*/, const char* description) {
+    auto* out = static_cast<WaylandOutput*>(data);
+    if (description && out->description_.empty()) out->description_ = description;
+}
+
+static const struct zxdg_output_v1_listener wayland_xdg_output_listener = {
+    .logical_position = xdg_output_logical_position_handler,
+    .logical_size = xdg_output_logical_size_handler,
+    .done = xdg_output_done_handler,
+    .name = xdg_output_name_handler,
+    .description = xdg_output_description_handler,
+};
 
 // ── XDG Shell Base Listener (Ping/Pong) ───────────────────────────
 
@@ -680,21 +910,70 @@ void WaylandPlatformBackend::handleGlobal(uint32_t name, const char* interface, 
         xdg_wm_base_ = static_cast<xdg_wm_base*>(
             wl_registry_bind(registry_, name, &xdg_wm_base_interface, std::min<uint32_t>(version, 3)));
         xdg_wm_base_add_listener(xdg_wm_base_, &wm_base_listener, this);
+    } else if (std::strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+        xdg_output_manager_ = static_cast<zxdg_output_manager_v1*>(
+            wl_registry_bind(registry_, name, &zxdg_output_manager_v1_interface, std::min<uint32_t>(version, 3)));
+        for (auto& out : outputs_) {
+            if (out->output_ && !out->xdg_output_) {
+                out->xdg_output_ = zxdg_output_manager_v1_get_xdg_output(xdg_output_manager_, out->output_);
+                zxdg_output_v1_add_listener(out->xdg_output_, &wayland_xdg_output_listener, out.get());
+            }
+        }
     } else if (std::strcmp(interface, wl_output_interface.name) == 0) {
         auto* output = static_cast<wl_output*>(
-            wl_registry_bind(registry_, name, &wl_output_interface, std::min<uint32_t>(version, 3)));
-        outputs_.push_back(WaylandOutput{output, name, 0, 0, 0, 0, 1, ""});
+            wl_registry_bind(registry_, name, &wl_output_interface, std::min<uint32_t>(version, 4)));
+        auto out = std::make_shared<WaylandOutput>(this, name, output);
+        wl_output_add_listener(output, &wayland_output_listener, out.get());
+        if (xdg_output_manager_) {
+            out->xdg_output_ = zxdg_output_manager_v1_get_xdg_output(xdg_output_manager_, output);
+            zxdg_output_v1_add_listener(out->xdg_output_, &wayland_xdg_output_listener, out.get());
+        }
+        outputs_.push_back(out);
+        output_map_[output] = out;
     }
 }
 
 void WaylandPlatformBackend::handleGlobalRemove(uint32_t name) {
     for (auto it = outputs_.begin(); it != outputs_.end(); ++it) {
-        if (it->id == name) {
-            wl_output_destroy(it->output);
+        if ((*it)->id() == name) {
+            auto out = *it;
+            out->onRemoved().emit();
+            if (owner_) {
+                owner_->onOutputRemoved().emit(out);
+            }
+            output_map_.erase(out->output_);
             outputs_.erase(it);
             break;
         }
     }
+}
+
+std::vector<std::shared_ptr<Output>> WaylandPlatformBackend::getOutputs() const {
+    std::vector<std::shared_ptr<Output>> res;
+    res.reserve(outputs_.size());
+    for (const auto& o : outputs_) {
+        res.push_back(o);
+    }
+    return res;
+}
+
+std::shared_ptr<Output> WaylandPlatformBackend::getOutputByName(std::string_view name) const {
+    for (const auto& o : outputs_) {
+        if (o->name() == name) return o;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Output> WaylandPlatformBackend::getPrimaryOutput() const {
+    if (outputs_.empty()) return nullptr;
+    return outputs_.front();
+}
+
+std::shared_ptr<WaylandOutput> WaylandPlatformBackend::findOutputByPtr(const WaylandOutput* ptr) const {
+    for (const auto& o : outputs_) {
+        if (o.get() == ptr) return o;
+    }
+    return nullptr;
 }
 
 bool WaylandPlatformBackend::pollEvents() {
