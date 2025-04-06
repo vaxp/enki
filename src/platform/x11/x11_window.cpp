@@ -70,11 +70,17 @@ bool X11Window::init(const WindowConfig& cfg) {
     swa.event_mask   = ExposureMask | StructureNotifyMask | ButtonPressMask |
                        ButtonReleaseMask | PointerMotionMask | KeyPressMask |
                        KeyReleaseMask | FocusChangeMask;
+    unsigned long valuemask = CWColormap | CWBorderPixel | CWBackPixel | CWEventMask;
+
+    if (cfg.override_redirect) {
+        swa.override_redirect = True;
+        valuemask |= CWOverrideRedirect;
+    }
 
     x11_window_ = XCreateWindow(display_, root, pos_x, pos_y,
                                  current_width_, current_height_,
                                  0, depth, InputOutput, visual,
-                                 CWColormap | CWBorderPixel | CWBackPixel | CWEventMask, &swa);
+                                 valuemask, &swa);
     if (!x11_window_) {
         std::cerr << "[ENKI X11Window] XCreateWindow failed\n";
         return false;
@@ -115,8 +121,9 @@ bool X11Window::init(const WindowConfig& cfg) {
         return false;
     }
 
-    // EGL context — prefer OpenGL 3.3 core, fallback GLES2, then default
-    {
+    // Use shared master EGL context from backend
+    egl_context_ = backend_.getEGLContext();
+    if (egl_context_ == EGL_NO_CONTEXT) {
         const EGLint core_attrs[] = {
             EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 3,
             EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
@@ -144,10 +151,6 @@ bool X11Window::init(const WindowConfig& cfg) {
 
 void X11Window::destroy() {
     if (egl_display_ != EGL_NO_DISPLAY) {
-        if (egl_context_ != EGL_NO_CONTEXT) {
-            eglDestroyContext(egl_display_, egl_context_);
-            egl_context_ = EGL_NO_CONTEXT;
-        }
         if (egl_surface_ != EGL_NO_SURFACE) {
             eglDestroySurface(egl_display_, egl_surface_);
             egl_surface_ = EGL_NO_SURFACE;

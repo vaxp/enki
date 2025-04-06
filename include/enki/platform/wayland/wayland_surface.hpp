@@ -31,6 +31,7 @@ public:
 
     void makeCurrent() override;
     void swapBuffers() override;
+    void* getNativeHandle() const override { return (void*)wl_surface_; }
     void* getEGLSurface() const override { return (void*)egl_surface_; }
     void* getEGLContext() const override { return (void*)egl_context_; }
 

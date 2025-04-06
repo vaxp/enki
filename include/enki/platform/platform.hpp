@@ -107,6 +107,12 @@ public:
     /// Signal emitted on mouse scroll. Args: dx, dy.
     Signal<float, float>& onScroll() { return on_scroll_; }
 
+    /// Targeted mouse signals with specific native window handle (nullptr for global)
+    Signal<void*, float, float, int>& onTargetedMouseDown() { return on_targeted_mouse_down_; }
+    Signal<void*, float, float, int>& onTargetedMouseUp()   { return on_targeted_mouse_up_; }
+    Signal<void*, float, float>&      onTargetedMouseMove() { return on_targeted_mouse_move_; }
+    Signal<void*, float, float>&      onTargetedScroll()    { return on_targeted_scroll_; }
+
     /// Signal emitted on text input (UTF-8 string).
     Signal<std::string_view>& onTextInput() { return on_text_input_; }
 
@@ -179,6 +185,7 @@ public:
     void* getNativeDisplay() const;
     void* getEGLDisplay() const;
     void* getEGLConfig() const;
+    void* getEGLContext() const;
     void* getWaylandBackend() const;
     void* getX11Backend() const;
     [[nodiscard]] bool isWayland() const;
@@ -194,14 +201,18 @@ private:
     Platform();
     std::unique_ptr<Impl> impl_;
 
-    Signal<>                  on_quit_;
-    Signal<float, float, int> on_mouse_down_;
-    Signal<float, float, int> on_mouse_up_;
-    Signal<float, float>      on_mouse_move_;
-    Signal<float, float>      on_scroll_;
-    Signal<std::string_view>  on_text_input_;
-    Signal<int, int>          on_key_down_;
-    Signal<int, int>          on_key_up_;
+    Signal<>                        on_quit_;
+    Signal<float, float, int>       on_mouse_down_;
+    Signal<float, float, int>       on_mouse_up_;
+    Signal<float, float>            on_mouse_move_;
+    Signal<float, float>            on_scroll_;
+    Signal<void*, float, float, int> on_targeted_mouse_down_;
+    Signal<void*, float, float, int> on_targeted_mouse_up_;
+    Signal<void*, float, float>      on_targeted_mouse_move_;
+    Signal<void*, float, float>      on_targeted_scroll_;
+    Signal<std::string_view>        on_text_input_;
+    Signal<int, int>                on_key_down_;
+    Signal<int, int>                on_key_up_;
 
     Signal<ClipboardType>     on_clipboard_changed_;
     Signal<DragEnterEvent&>   on_drag_enter_;

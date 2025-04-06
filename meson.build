@@ -290,6 +290,11 @@ enki_sources = files(
   'src/animation/animation_controller.cpp',
   'src/animation/tween.cpp',
   'src/animation/curves.cpp',
+
+  # Desktop Shell Subsystem
+  'src/shell/surface_host.cpp',
+  'src/shell/shell_app.cpp',
+  'src/shell/native_popup.cpp',
 ) + platform_sources
 
 anu_lib = static_library('anucore',
