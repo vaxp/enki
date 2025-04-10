@@ -231,6 +231,27 @@ SurfaceHost* ShellApp::addWindow(WindowConfig config, WidgetPtr root_widget) {
     return ptr;
 }
 
+SurfaceHost* ShellApp::addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget) {
+    config.mode = WindowMode::Popup;
+    config.parent_window = parent ? parent->getWindow() : nullptr;
+    config.parent_layer = parent ? parent->getLayerSurface() : nullptr;
+    // Layer surfaces handles popup internally via wl_surface for now or we fallback to absolute.
+    
+    auto win_res = Window::create(*impl_->platform, config);
+    if (!win_res.isOk()) {
+        std::cerr << "[ENKI ShellApp] Failed to create Popup Window: "
+                  << win_res.error().message << "\n";
+        return nullptr;
+    }
+
+    auto host = std::make_unique<SurfaceHost>(std::move(win_res.value()), std::move(root_widget));
+    SurfaceHost* ptr = host.get();
+
+    impl_->ensureSkiaContext(ptr);
+    impl_->surfaces.push_back(std::move(host));
+    return ptr;
+}
+
 void ShellApp::removeSurface(SurfaceHost* host) {
     if (!host) return;
     auto it = std::find_if(impl_->surfaces.begin(), impl_->surfaces.end(),
@@ -287,6 +308,15 @@ GrDirectContext* ShellApp::grContext() {
 
 size_t ShellApp::surfaceCount() const {
     return impl_->surfaces.size();
+}
+
+SurfaceHost* ShellApp::findSurfaceByOwner(const BuildOwner* owner) const {
+    for (auto& s : impl_->surfaces) {
+        if (s->getRootElement() && s->getRootElement()->owner() == owner) {
+            return s.get();
+        }
+    }
+    return nullptr;
 }
 
 } // namespace enki

@@ -17,6 +17,7 @@ namespace enki {
 enum class WindowMode {
     Normal,      ///< Standard application window (XDG Toplevel on Wayland, Normal window on X11).
     LayerShell,  ///< Desktop overlay surface (zwlr_layer_shell_v1).
+    Popup,       ///< Child popup window (xdg_popup on Wayland, transient override-redirect on X11).
 };
 
 /// Window creation configuration.
@@ -36,6 +37,8 @@ struct WindowConfig {
     int         min_height   = 240;
     bool        vsync        = true;
     WindowMode  mode         = WindowMode::Normal; ///< Standard window or layer surface overlay.
+    class Window* parent_window = nullptr; ///< Parent window if mode == Popup
+    class LayerSurface* parent_layer = nullptr; ///< Parent layer surface if mode == Popup
 };
 
 /// Represents a native window backed by EGL and OpenGL for Skia GPU rendering.
@@ -88,6 +91,12 @@ public:
 
     /// Get the EGL Context handle.
     void* getEGLContext() const;
+
+    /// Get the internal backend window object (e.g. WaylandWindow*).
+    void* getBackendWindow() const;
+
+    /// Get the internal backend layer object (e.g. WaylandLayerSurface*).
+    void* getBackendLayer() const;
 
     // --- Signals ---
     Signal<int, int>& onResize() { return on_resize_; }

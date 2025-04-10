@@ -34,11 +34,13 @@ public:
     [[nodiscard]] void* getEGLSurface()   const { return (void*)egl_surface_; }
     [[nodiscard]] void* getEGLContext()   const { return (void*)egl_context_; }
     [[nodiscard]] wl_surface* getWlSurface() const { return wl_surface_; }
+    [[nodiscard]] xdg_surface* getXdgSurface() const { return xdg_surface_; }
     [[nodiscard]] xdg_toplevel* getXdgToplevel() const { return xdg_toplevel_; }
 
     // XDG Shell Protocol Callbacks
     void handleSurfaceConfigure(uint32_t serial);
     void handleToplevelConfigure(int32_t width, int32_t height, wl_array* states);
+    void handlePopupConfigure(int32_t x, int32_t y, int32_t width, int32_t height);
     void handleClose();
 
     // Signals
@@ -53,6 +55,7 @@ private:
     wl_surface*             wl_surface_    = nullptr;
     xdg_surface*            xdg_surface_   = nullptr;
     xdg_toplevel*           xdg_toplevel_  = nullptr;
+    xdg_popup*              xdg_popup_     = nullptr;
     wl_egl_window*          egl_window_    = nullptr;
 
     EGLDisplay              egl_display_   = EGL_NO_DISPLAY;

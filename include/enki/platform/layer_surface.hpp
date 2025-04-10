@@ -117,6 +117,7 @@ public:
     virtual void* getNativeHandle() const = 0;
     virtual void* getEGLSurface() const = 0;
     virtual void* getEGLContext() const = 0;
+    virtual void* getBackendLayer() const { return nullptr; }
 
     Signal<int, int>& onResize() { return on_resize_; }
     Signal<>&         onClose()  { return on_close_; }

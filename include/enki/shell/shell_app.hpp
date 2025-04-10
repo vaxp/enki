@@ -38,7 +38,10 @@ public:
     /// Add a standard window surface
     SurfaceHost* addWindow(WindowConfig config, WidgetPtr root_widget);
 
-    /// Remove an existing surface host
+    /// Create and manage a new popup surface (xdg_popup in Wayland).
+    SurfaceHost* addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget);
+
+    /// Remove and destroy an active surface. host
     void removeSurface(SurfaceHost* host);
 
     /// Run the unified multi-surface event and render loop
@@ -50,7 +53,11 @@ public:
     /// Accessors
     [[nodiscard]] Platform&        platform();
     [[nodiscard]] GrDirectContext* grContext();
-    [[nodiscard]] size_t           surfaceCount() const;
+    /// Get the total number of managed surfaces.
+    [[nodiscard]] size_t surfaceCount() const;
+
+    /// Find the SurfaceHost that owns the given BuildOwner.
+    [[nodiscard]] SurfaceHost* findSurfaceByOwner(const BuildOwner* owner) const;
 
 private:
     ShellApp();
