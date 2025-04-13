@@ -107,7 +107,12 @@ static void keyboard_modifiers_handler(void* data, wl_keyboard* keyboard, uint32
     self->handleModifiers(mods_depressed, mods_latched, mods_locked, group);
 }
 
-static void keyboard_repeat_info_handler(void* data, wl_keyboard* keyboard, int32_t rate, int32_t delay) {}
+static void keyboard_repeat_info_handler(void* data, wl_keyboard* keyboard, int32_t rate, int32_t delay) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    if (self) {
+        self->setKeyRepeatInfo(rate, delay);
+    }
+}
 
 static const struct wl_keyboard_listener keyboard_listener = {
     .keymap = keyboard_keymap_handler,
@@ -1017,6 +1022,24 @@ bool WaylandPlatformBackend::pollEvents() {
     }
 
     wl_display_dispatch_pending(display_);
+    
+    // 3. Process Key Repeat
+    if (repeating_key_ != 0 && repeat_rate_ > 0 && xkb_state_ && owner_) {
+        double current_time = owner_->getTime();
+        if (current_time >= repeat_next_fire_time_) {
+            xkb_keysym_t sym = xkb_state_key_get_one_sym(xkb_state_, repeating_keycode_);
+            owner_->onKeyDown().emit(static_cast<int>(sym), active_modifiers_);
+            
+            char utf8_buf[64];
+            int len = xkb_state_key_get_utf8(xkb_state_, repeating_keycode_, utf8_buf, sizeof(utf8_buf));
+            if (len > 0) {
+                owner_->onTextInput().emit(std::string(utf8_buf, len));
+            }
+            
+            repeat_next_fire_time_ = current_time + (1.0 / repeat_rate_);
+        }
+    }
+
     return true;
 }
 
@@ -1188,6 +1211,11 @@ void WaylandPlatformBackend::handleKeymap(uint32_t format, int fd, uint32_t size
     }
 }
 
+void WaylandPlatformBackend::setKeyRepeatInfo(int32_t rate, int32_t delay) {
+    repeat_rate_ = rate;
+    repeat_delay_ = delay;
+}
+
 void WaylandPlatformBackend::handleKey(uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
     if (!xkb_state_ || !owner_) return;
 
@@ -1202,8 +1230,19 @@ void WaylandPlatformBackend::handleKey(uint32_t serial, uint32_t time, uint32_t 
         if (len > 0) {
             owner_->onTextInput().emit(std::string(utf8_buf, len));
         }
+        
+        // Start repeat
+        if (repeat_rate_ > 0 && xkb_keymap_key_repeats(xkb_keymap_, keycode)) {
+            repeating_key_ = key;
+            repeating_keycode_ = keycode;
+            repeat_next_fire_time_ = owner_->getTime() + (repeat_delay_ / 1000.0);
+        }
     } else {
         owner_->onKeyUp().emit(static_cast<int>(sym), active_modifiers_);
+        if (repeating_key_ == key) {
+            repeating_key_ = 0;
+            repeating_keycode_ = 0;
+        }
     }
 }
 

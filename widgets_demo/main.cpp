@@ -5,6 +5,7 @@
 #include "enki/app/app.hpp"
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/container.hpp"
+#include "enki/widgets/text_field.hpp"
 #include "enki/state/state.hpp"
 #include "enki/rendering/canvas.hpp"
 #include <iostream>
@@ -58,6 +59,8 @@ public:
         ANUNodeStyleSetHeight(ro->anuNode(), font_size * 1.3f);
         return ro;
     }
+
+
 
     void updateRenderObject(BuildContext&, RenderObject& ro) override {
         if (auto* rl = dynamic_cast<RenderLabel*>(&ro)) {
@@ -528,8 +531,14 @@ inline WidgetPtr buildShellShowcaseView() {
 // ════════════════════════════════════════════════════════════════
 
 class DemoState : public State {
+    int current_tab_ = 3; // Default to TextField Tab for demo
+    std::shared_ptr<TextFieldController> text_ctrl_;
+
 public:
-    int current_tab_ = 0; // 0: Flexbox, 1: Container, 2: Shell
+    void initState() override {
+        State::initState();
+        text_ctrl_ = std::make_shared<TextFieldController>("");
+    }
 
     WidgetPtr build(BuildContext& ctx) override {
         // 1. Header Bar
@@ -560,6 +569,9 @@ public:
             }),
             button("🖥️ 3. Real-World Desktop Shell", current_tab_ == 2, [this] {
                 setState([this] { current_tab_ = 2; });
+            }),
+            button("📝 4. Interactive TextField", current_tab_ == 3, [this] {
+                setState([this] { current_tab_ = 3; });
             })
         });
 
@@ -569,8 +581,28 @@ public:
             bodyContent = buildFlexboxTestView();
         } else if (current_tab_ == 1) {
             bodyContent = buildContainerTestView();
-        } else {
+        } else if (current_tab_ == 2) {
             bodyContent = buildShellShowcaseView();
+        } else {
+            // TextField Demo Tab
+            TextFieldOptions opt;
+            opt.style.font_size = 18.0f;
+            opt.style.color = 0xFFFFFFFF;
+            opt.hint_text = "Type here (Supports Arabic, UTF-8, Key Repeat)...";
+            opt.cursor_color = 0xFF3B82F6;
+            opt.selection_color = 0x503B82F6;
+            opt.auto_focus = true;
+            
+            auto tf = std::make_shared<TextField>(text_ctrl_, opt);
+            
+            auto tf_box = container(tf);
+            tf_box->color(0xFF1E293B)
+                  .border(0xFF334155, 1.0f)
+                  .borderRadius(8.0f)
+                  .paddingAll(12.0f)
+                  .width(600_px);
+                  
+            bodyContent = sectionCard("Interactive TextField", "Test typing, backspace, and arrow keys with repeat support.", tf_box);
         }
 
         // Main App Layout
