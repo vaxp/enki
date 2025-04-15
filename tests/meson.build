@@ -99,6 +99,13 @@ test('test_flexbox',
   ),
 )
 
+test('test_button',
+  executable('test_button',
+    'widgets/test_button.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 test('test_container',
   executable('test_container',
     'widgets/test_container.cpp',
