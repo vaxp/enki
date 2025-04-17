@@ -251,10 +251,10 @@ public:
     void initState() override {
         State::initState();
         
-        hover_anim.setDuration(std::chrono::milliseconds(150));
+        hover_anim.setDuration(std::chrono::milliseconds(200));
         hover_anim.addListener([this] { setState([]{}); });
 
-        press_anim.setDuration(std::chrono::milliseconds(100));
+        press_anim.setDuration(std::chrono::milliseconds(250));
         press_anim.addListener([this] { setState([]{}); });
 
         auto* btn = static_cast<const Button*>(this->widget());
@@ -283,9 +283,9 @@ public:
 
     void updateRipples() {
         for (auto it = ripples.begin(); it != ripples.end();) {
-            it->state.radius += (it->target_radius - it->state.radius) * 0.15f;
+            it->state.radius += (it->target_radius - it->state.radius) * 0.08f;
             if (it->state.radius > it->target_radius * 0.95f) {
-                it->state.alpha -= 0.05f;
+                it->state.alpha -= 0.03f;
             }
             if (it->state.alpha <= 0.0f) {
                 it = ripples.erase(it);
