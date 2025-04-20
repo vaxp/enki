@@ -14,4 +14,4 @@ subdir('benchmark_demo')
 subdir('stack_demo')
 subdir('image_demo')
 subdir('button_demo')
-
+subdir('avatar_demo')

@@ -282,6 +282,7 @@ enki_sources = files(
   'src/widgets/flexbox.cpp',
   'src/widgets/container.cpp',
   'src/widgets/button.cpp',
+  'src/widgets/avatar.cpp',
   'src/widgets/text.cpp',
   'src/widgets/text_field.cpp',
   'src/widgets/gesture_detector.cpp',
