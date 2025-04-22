@@ -83,21 +83,24 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] Drawer
 - [ ] Sidebar
 
-## 6. Overlay / Popup (approx. 10)
-*(Leveraging the core Popup infrastructure)*
+## 6. Native Popups (approx. 6)
+*(Leveraging the core NativePopup infrastructure for true separate windows)*
 - [ ] Popup
 - [ ] Menu
 - [ ] ContextMenu
 - [ ] DropdownMenu
+- [ ] Tooltip
+- [ ] Popover
+
+## 7. Overlays (approx. 5)
+*(Rendered within the app's main window using a Stack or Overlay manager)*
 - [ ] Dialog
 - [ ] AlertDialog
 - [ ] BottomSheet
-- [ ] Tooltip
-- [ ] Popover
 - [ ] Modal
 - [ ] Toast / Snackbar
 
-## 7. Feedback (approx. 6)
+## 8. Feedback (approx. 6)
 - [ ] ProgressBar
 - [ ] ProgressRing
 - [ ] Spinner
@@ -106,7 +109,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] Notification
 - [ ] LoadingOverlay
 
-## 8. Gestures / Interaction (approx. 8)
+## 9. Gestures / Interaction (approx. 8)
 - [x] GestureDetector
 - [ ] Draggable
 - [ ] DragTarget
@@ -117,7 +120,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] Focus
 - [ ] FocusScope
 
-## 9. Advanced / Data UI (approx. 10)
+## 10. Advanced / Data UI (approx. 10)
 - [ ] Tree
 - [ ] Table
 - [ ] DataGrid
@@ -129,7 +132,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] SplitView
 - [ ] ResizablePanel
 
-## 10. Desktop / Shell Widgets (approx. 15–20)
+## 11. Desktop / Shell Widgets (approx. 15–20)
 *(These distinguish ENKI from frameworks like Flutter by providing native high-level shell primitives)*
 - [ ] Panel
 - [ ] Dock
