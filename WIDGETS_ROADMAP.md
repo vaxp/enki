@@ -7,14 +7,14 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Column
 - [x] Stack
 - [x] Container
-- [ ] SizedBox
+- [x] SizedBox
 - [ ] Expanded
 - [ ] Flexible
-- [ ] Padding
+- [x] Padding
 - [x] Align
 - [x] Center
 - [x] Positioned
-- [ ] Wrap
+- [x] Wrap
 - [ ] Spacer
 - [ ] AspectRatio
 - [ ] ConstrainedBox
@@ -60,7 +60,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] DirectoryPicker (Crucial for ENKI Desktop)
 
 ## 4. Scrolling / Lists (approx. 10)
-- [ ] ScrollView
+- [x] ScrollView
 - [ ] ListView
 - [ ] GridView
 - [ ] ListTile
@@ -68,7 +68,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] TreeView (Crucial for ENKI Desktop)
 - [ ] Table
 - [ ] DataTable (Crucial for ENKI Desktop)
-- [ ] Scrollbar
+- [x] Scrollbar
 - [ ] ReorderableList
 
 ## 5. Navigation (approx. 8–10)
