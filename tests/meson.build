@@ -164,3 +164,9 @@ test('test_scroll_view',
   ),
 )
 
+test('test_icon',
+  executable('test_icon',
+    'widgets/test_icon.cpp',
+    dependencies : test_deps,
+  ),
+)
