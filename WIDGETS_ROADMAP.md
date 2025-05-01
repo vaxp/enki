@@ -27,7 +27,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Image
 - [x] Avatar
 - [ ] Badge
-- [ ] Divider
+- [x] Divider
 - [ ] VerticalDivider
 - [ ] Card
 - [ ] Chip
@@ -42,7 +42,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] TextArea
 - [ ] PasswordField
 - [ ] NumberField
-- [ ] Checkbox
+- [x] Checkbox
 - [ ] Radio
 - [ ] Switch
 - [ ] Slider

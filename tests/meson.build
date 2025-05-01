@@ -170,3 +170,17 @@ test('test_icon',
     dependencies : test_deps,
   ),
 )
+
+test('test_divider',
+  executable('test_divider',
+    'widgets/test_divider.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_checkbox',
+  executable('test_checkbox',
+    'widgets/test_checkbox.cpp',
+    dependencies : test_deps,
+  ),
+)
