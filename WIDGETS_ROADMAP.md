@@ -43,8 +43,8 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] PasswordField
 - [ ] NumberField
 - [x] Checkbox
-- [ ] Radio
-- [ ] Switch
+- [x] Radio
+- [x] Switch
 - [ ] Slider
 - [ ] RangeSlider
 - [ ] Dropdown
