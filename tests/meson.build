@@ -198,3 +198,17 @@ test('test_radio',
     dependencies : test_deps,
   ),
 )
+
+test('test_card',
+  executable('test_card',
+    'widgets/test_card.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_badge',
+  executable('test_badge',
+    'widgets/test_badge.cpp',
+    dependencies : test_deps,
+  ),
+)

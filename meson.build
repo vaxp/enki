@@ -294,6 +294,8 @@ enki_sources = files(
   'src/widgets/checkbox.cpp',
   'src/widgets/switch.cpp',
   'src/widgets/radio.cpp',
+  'src/widgets/card.cpp',
+  'src/widgets/badge.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',
