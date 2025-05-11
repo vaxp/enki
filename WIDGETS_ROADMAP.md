@@ -45,8 +45,8 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Checkbox
 - [x] Radio
 - [x] Switch
-- [ ] Slider
-- [ ] RangeSlider
+- [x] Slider
+- [x] RangeSlider
 - [ ] Dropdown
 - [ ] ComboBox
 - [ ] DatePicker
