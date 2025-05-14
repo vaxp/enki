@@ -98,11 +98,18 @@ public:
 
     void handlePointerMove(const PointerEvent& e) override {
         pan_recognizer_.handlePointerMove(e);
-        
-        bool hover = (e.localPosition.x >= 0 && e.localPosition.x <= size_.width &&
-                      e.localPosition.y >= 0 && e.localPosition.y <= size_.height);
-        if (hover != is_hovered_) {
-            is_hovered_ = hover;
+    }
+
+    void handlePointerEnter(const PointerEvent& e) override {
+        if (!is_hovered_) {
+            is_hovered_ = true;
+            markNeedsPaint();
+        }
+    }
+
+    void handlePointerExit(const PointerEvent& e) override {
+        if (is_hovered_) {
+            is_hovered_ = false;
             markNeedsPaint();
         }
     }

@@ -177,6 +177,13 @@ public:
         }
     }
 
+    void handlePointerExit(const PointerEvent& e) override {
+        if (hovered_thumb_ != Thumb::None) {
+            hovered_thumb_ = Thumb::None;
+            markNeedsPaint();
+        }
+    }
+
     void handlePointerUp(const PointerEvent& e) override {
         pan_recognizer_.handlePointerUp(e);
     }
