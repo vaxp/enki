@@ -240,3 +240,10 @@ test('test_range_slider',
     dependencies : test_deps,
   ),
 )
+
+test('test_richtext',
+  executable('test_richtext',
+    'test_richtext.cpp',
+    dependencies : test_deps,
+  ),
+)

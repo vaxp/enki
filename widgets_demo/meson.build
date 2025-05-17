@@ -27,3 +27,5 @@ subdir('icon_button_demo')
 subdir('fab_demo')
 subdir('slider_demo')
 subdir('rangeslider_demo')
+
+subdir('richtext_demo')

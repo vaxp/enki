@@ -161,6 +161,9 @@ struct TextStyle {
 // Spans for RichText
 // ════════════════════════════════════════════════════════════════
 
+using TextSpanCallback = std::function<void()>;
+using TextSpanHoverCallback = std::function<void(bool is_hovered)>;
+
 class ParagraphBuilderContext;
 
 /// @brief Abstract base class for an inline text span.
@@ -171,16 +174,22 @@ public:
 };
 
 /// @brief An immutable text span with its own style and optional nested children spans.
-class TextSpan : public InlineSpan {
+class TextSpan : public InlineSpan, public std::enable_shared_from_this<TextSpan> {
 public:
     std::string text;
     std::optional<TextStyle> style;
     std::vector<std::shared_ptr<InlineSpan>> children;
+    
+    TextSpanCallback on_click;
+    TextSpanHoverCallback on_hover;
 
     TextSpan(std::string text = "",
              std::optional<TextStyle> style = std::nullopt,
              std::vector<std::shared_ptr<InlineSpan>> children = {})
         : text(std::move(text)), style(std::move(style)), children(std::move(children)) {}
+
+    TextSpan& onClick(TextSpanCallback cb) { on_click = std::move(cb); return *this; }
+    TextSpan& onHover(TextSpanHoverCallback cb) { on_hover = std::move(cb); return *this; }
 
     void build(ParagraphBuilderContext& builder, const TextStyle& inheritedStyle) const override;
 };
@@ -235,6 +244,13 @@ public:
     static ANUSize measureText(ANUNodeConstRef node, float width, ANUMeasureMode widthMode, float height, ANUMeasureMode heightMode);
 
     void rebuildParagraph();
+
+    bool hitTestSelf(Point localPoint) const override;
+    void handlePointerDown(const PointerEvent& e) override;
+    void handlePointerMove(const PointerEvent& e) override;
+    void handlePointerUp(const PointerEvent& e) override;
+    void handlePointerExit(const PointerEvent& e) override;
+    SystemCursor cursor() const override;
 
 protected:
     void layoutParagraph(float availableWidth);
