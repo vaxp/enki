@@ -27,5 +27,13 @@ subdir('icon_button_demo')
 subdir('fab_demo')
 subdir('slider_demo')
 subdir('rangeslider_demo')
-
 subdir('richtext_demo')
+
+# ── Scrolling / Lists Widgets ──────────────────────────────────
+subdir('list_tile_demo')
+subdir('list_view_demo')
+subdir('grid_tile_demo')
+subdir('grid_view_demo')
+subdir('tree_view_demo')
+subdir('table_demo')
+subdir('data_table_demo')

@@ -302,6 +302,15 @@ enki_sources = files(
   'src/widgets/slider.cpp',
   'src/widgets/range_slider.cpp',
 
+  # Scrolling / Lists Widgets
+  'src/widgets/list_tile.cpp',
+  'src/widgets/list_view.cpp',
+  'src/widgets/grid_tile.cpp',
+  'src/widgets/grid_view.cpp',
+  'src/widgets/tree_view.cpp',
+  'src/widgets/table.cpp',
+  'src/widgets/data_table.cpp',
+
   # Animation
   'src/animation/animation_controller.cpp',
   'src/animation/tween.cpp',

@@ -291,6 +291,7 @@ public:
     explicit StatelessElement(WidgetPtr widget);
 
     void update(WidgetPtr newWidget) override;
+    void unmount() override;
     void performRebuild() override;
     void visitChildren(const std::function<void(Element&)>& visitor) override;
 

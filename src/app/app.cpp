@@ -377,6 +377,13 @@ struct App::Impl {
 
             cached_w = w;
             cached_h = h;
+
+            // Force layout recalculation when window dimensions change
+            if (root_element) {
+                if (auto* root_ro = root_element->findRenderObject()) {
+                    root_ro->markNeedsLayout();
+                }
+            }
         }
 
         if (!cached_surface) return;

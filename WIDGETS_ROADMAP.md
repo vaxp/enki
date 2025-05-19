@@ -61,13 +61,13 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 
 ## 4. Scrolling / Lists (approx. 10)
 - [x] ScrollView
-- [ ] ListView
-- [ ] GridView
-- [ ] ListTile
-- [ ] GridTile
-- [ ] TreeView (Crucial for ENKI Desktop)
-- [ ] Table
-- [ ] DataTable (Crucial for ENKI Desktop)
+- [x] ListView
+- [x] GridView
+- [x] ListTile
+- [x] GridTile
+- [x] TreeView (Crucial for ENKI Desktop)
+- [x] Table
+- [x] DataTable (Crucial for ENKI Desktop)
 - [x] Scrollbar
 - [ ] ReorderableList
 
