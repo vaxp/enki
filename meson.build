@@ -311,6 +311,15 @@ enki_sources = files(
   'src/widgets/table.cpp',
   'src/widgets/data_table.cpp',
 
+  # Navigation Widgets
+  'src/widgets/tab_bar.cpp',
+  'src/widgets/navigation_bar.cpp',
+  'src/widgets/navigation_rail.cpp',
+  'src/widgets/breadcrumb.cpp',
+  'src/widgets/sidebar.cpp',
+  'src/widgets/drawer.cpp',
+  'src/widgets/navigator.cpp',
+
   # Animation
   'src/animation/animation_controller.cpp',
   'src/animation/tween.cpp',

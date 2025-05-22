@@ -37,3 +37,12 @@ subdir('grid_view_demo')
 subdir('tree_view_demo')
 subdir('table_demo')
 subdir('data_table_demo')
+
+# ── Navigation Widgets ─────────────────────────────────────────
+subdir('tab_bar_demo')
+subdir('navigation_bar_demo')
+subdir('navigation_rail_demo')
+subdir('breadcrumb_demo')
+subdir('sidebar_demo')
+subdir('drawer_demo')
+subdir('navigator_demo')

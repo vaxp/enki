@@ -34,6 +34,7 @@ struct IconData {
     }
 
     bool isSvg() const { return !svg_path.empty(); }
+    bool empty() const { return codepoint == 0 && svg_path.empty(); }
     
     bool operator==(const IconData& other) const {
         return codepoint == other.codepoint && 

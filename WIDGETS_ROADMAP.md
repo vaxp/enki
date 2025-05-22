@@ -72,16 +72,16 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] ReorderableList
 
 ## 5. Navigation (approx. 8–10)
-- [ ] Navigator
-- [ ] Route
-- [ ] Page
-- [ ] TabBar
-- [ ] TabView
-- [ ] NavigationRail
-- [ ] NavigationBar
-- [ ] Breadcrumb
-- [ ] Drawer
-- [ ] Sidebar
+- [x] Navigator
+- [x] Route
+- [x] Page
+- [x] TabBar
+- [x] TabView
+- [x] NavigationRail
+- [x] NavigationBar
+- [x] Breadcrumb
+- [x] Drawer
+- [x] Sidebar
 
 ## 6. Native Popups (approx. 6)
 *(Leveraging the core NativePopup infrastructure for true separate windows)*
@@ -114,9 +114,9 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] Draggable
 - [ ] DragTarget
 - [ ] Dismissible
-- [ ] LongPress
-- [ ] HoverRegion
-- [ ] MouseRegion
+- [x] LongPress
+- [x] HoverRegion
+- [x] MouseRegion
 - [ ] Focus
 - [ ] FocusScope
 
