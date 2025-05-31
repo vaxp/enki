@@ -2,6 +2,7 @@
 /// @brief ENKI App lifecycle implementation with Native Platform (Zero SDL).
 
 #include "enki/app/app.hpp"
+#include "enki/shell/surface_host.hpp"
 #include "enki/tree/element.hpp"
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
@@ -56,6 +57,9 @@ struct App::Impl {
 
     // Loop control
     bool quit_requested = false;
+
+    // Multi-surface / Popups owned by App
+    std::vector<std::unique_ptr<SurfaceHost>> surfaces;
 
     // Pointer state
     std::unordered_set<RenderObject*> hovered_targets;
@@ -511,12 +515,71 @@ struct App::Impl {
 // App — public API
 // ════════════════════════════════════════════════════════════════
 
-App::App() : impl_(std::make_unique<Impl>()) {}
+static App* s_app_instance = nullptr;
+
+App::App() : impl_(std::make_unique<Impl>()) {
+    s_app_instance = this;
+}
 
 App::~App() {
+    if (s_app_instance == this) {
+        s_app_instance = nullptr;
+    }
     if (impl_->root_element) {
         impl_->root_element->unmount();
     }
+}
+
+App* App::instance() {
+    return s_app_instance;
+}
+
+SurfaceHost* App::addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget) {
+    config.mode = WindowMode::Popup;
+    config.parent_window = parent ? parent->getWindow() : impl_->window.get();
+    config.parent_layer = parent ? parent->getLayerSurface() : nullptr;
+
+    auto win_res = Window::create(*impl_->platform, config);
+    if (!win_res.isOk()) {
+        std::cerr << "[ENKI App] Failed to create Popup Window: " << win_res.error().message << "\n";
+        return nullptr;
+    }
+
+    auto host = std::make_unique<SurfaceHost>(std::move(win_res.value()), std::move(root_widget));
+    SurfaceHost* ptr = host.get();
+    impl_->surfaces.push_back(std::move(host));
+    return ptr;
+}
+
+SurfaceHost* App::addWindow(WindowConfig config, WidgetPtr root_widget) {
+    auto win_res = Window::create(*impl_->platform, config);
+    if (!win_res.isOk()) {
+        std::cerr << "[ENKI App] Failed to create Window: " << win_res.error().message << "\n";
+        return nullptr;
+    }
+
+    auto host = std::make_unique<SurfaceHost>(std::move(win_res.value()), std::move(root_widget));
+    SurfaceHost* ptr = host.get();
+    impl_->surfaces.push_back(std::move(host));
+    return ptr;
+}
+
+void App::removeSurface(SurfaceHost* host) {
+    if (!host) return;
+    auto it = std::find_if(impl_->surfaces.begin(), impl_->surfaces.end(),
+                           [host](const std::unique_ptr<SurfaceHost>& h) { return h.get() == host; });
+    if (it != impl_->surfaces.end()) {
+        impl_->surfaces.erase(it);
+    }
+}
+
+SurfaceHost* App::findSurfaceByOwner(const BuildOwner* owner) const {
+    for (auto& s : impl_->surfaces) {
+        if (s->getRootElement() && s->getRootElement()->owner() == owner) {
+            return s.get();
+        }
+    }
+    return nullptr;
 }
 
 Result<std::unique_ptr<App>> App::create(WidgetPtr root_widget, AppConfig config) {
@@ -550,10 +613,21 @@ int App::run() {
         // 2. Tick active pointers / gesture timers
         impl.tickPointer();
 
-        // 3. Render the frame
+        // 3. Render main frame
         impl.renderFrame();
 
-        // 4. Cap to target FPS
+        // 4. Update and render all active popup and secondary surfaces
+        for (size_t i = 0; i < impl.surfaces.size(); ++i) {
+            auto& host = impl.surfaces[i];
+            if (!host) continue;
+
+            host->rebuild();
+            host->layout();
+            host->paint(impl.gr_context.get(), 0x00000000);
+            host->swapBuffers();
+        }
+
+        // 5. Cap to target FPS
         impl.capFrameRate();
     }
 

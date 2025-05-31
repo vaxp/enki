@@ -28,6 +28,7 @@ subdir('fab_demo')
 subdir('slider_demo')
 subdir('rangeslider_demo')
 subdir('richtext_demo')
+subdir('tooltip_demo')
 
 # ── Scrolling / Lists Widgets ──────────────────────────────────
 subdir('list_tile_demo')

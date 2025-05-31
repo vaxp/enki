@@ -296,6 +296,7 @@ enki_sources = files(
   'src/widgets/radio.cpp',
   'src/widgets/card.cpp',
   'src/widgets/badge.cpp',
+  'src/widgets/tooltip.cpp',
 
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',
