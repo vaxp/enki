@@ -55,6 +55,12 @@ struct ShellApp::Impl {
         platform->onTargetedMouseDown().connect([this](void* handle, float x, float y, int btn) {
             MouseButton mb = (btn == 1) ? MouseButton::Left : (btn == 3 ? MouseButton::Right : MouseButton::Middle);
             SurfaceHost* target = findSurfaceForHandle(handle);
+
+            // Auto-dismiss popup surfaces if click is outside popup
+            if (!target && surfaces.size() > 1) {
+                surfaces.resize(1); // Keep main surface only
+            }
+
             if (!target && !surfaces.empty()) target = surfaces.back().get();
             if (target) {
                 active_pointer_host = target;
