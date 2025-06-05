@@ -89,7 +89,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] ContextMenu
 - [ ] DropdownMenu
 - [x] Tooltip
-- [ ] Popover
+- [x] Popover
 
 ## 7. Overlays (approx. 5)
 *(Rendered within the app's main window using a Stack or Overlay manager)*
