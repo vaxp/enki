@@ -70,6 +70,10 @@ public:
     Window*       getWindow() const { return window_.get(); }
     Element*      getRootElement() const { return root_element_.get(); }
 
+    /// Auto-dismiss status for popups
+    void setAutoDismiss(bool dismiss) { auto_dismiss_ = dismiss; }
+    [[nodiscard]] bool isAutoDismiss() const { return auto_dismiss_; }
+
     /// Signals
     Signal<>& onClose() { return on_close_; }
 
@@ -95,6 +99,7 @@ private:
     MouseButton                       active_button_   = MouseButton::None;
     float                             last_pointer_x_  = 0.0f;
     float                             last_pointer_y_  = 0.0f;
+    bool                              auto_dismiss_    = true;
 
     Signal<> on_close_;
 };

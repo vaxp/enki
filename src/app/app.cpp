@@ -119,9 +119,15 @@ struct App::Impl {
             MouseButton mb = (btn == 1) ? MouseButton::Left : (btn == 3 ? MouseButton::Right : MouseButton::Middle);
             SurfaceHost* popup_target = findSurfaceForHandle(handle);
 
-            // Auto-dismiss check: if click is outside active popups, dismiss all active popups!
+            // Auto-dismiss check: if click is outside active popups, dismiss auto-dismiss popups!
             if (!popup_target && !surfaces.empty()) {
-                surfaces.clear();
+                for (auto it = surfaces.begin(); it != surfaces.end(); ) {
+                    if ((*it)->isAutoDismiss()) {
+                        it = surfaces.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
             }
 
             if (popup_target) {
@@ -165,7 +171,13 @@ struct App::Impl {
         // Connect fallback global input signals
         platform->onMouseDown().connect([this](float x, float y, int btn) {
             if (!active_popup_host && !surfaces.empty()) {
-                surfaces.clear();
+                for (auto it = surfaces.begin(); it != surfaces.end(); ) {
+                    if ((*it)->isAutoDismiss()) {
+                        it = surfaces.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
             }
             if (!active_popup_host) {
                 dispatchPointerDown(x, y, btn);
