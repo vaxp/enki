@@ -33,7 +33,6 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Button
 - [x] IconButton
 - [x] FloatingActionButton
-- [x] Tooltip
 - [ ] Placeholder
 
 ## 3. Input / Forms (approx. 15–20)
@@ -55,8 +54,6 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] FormField
 - [ ] Autocomplete
 - [ ] SearchField
-- [ ] FilePicker (Crucial for ENKI Desktop)
-- [ ] DirectoryPicker (Crucial for ENKI Desktop)
 
 ## 4. Scrolling / Lists (approx. 10)
 - [x] ScrollView
@@ -84,16 +81,16 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 
 ## 6. Native Popups (approx. 6)
 *(Leveraging the core NativePopup infrastructure for true separate windows)*
-- [ ] Popup
-- [ ] Menu
+- [x] Popup
+- [x] Menu
 - [x] ContextMenu
-- [ ] DropdownMenu
 - [x] Tooltip
 - [x] Popover
 - [x] FilePicker
 
 ## 7. Overlays (approx. 5)
 *(Rendered within the app's main window using a Stack or Overlay manager)*
+- [ ] DropdownMenu
 - [ ] Dialog
 - [ ] AlertDialog
 - [ ] BottomSheet

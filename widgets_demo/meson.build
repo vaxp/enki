@@ -32,6 +32,8 @@ subdir('tooltip_demo')
 subdir('context_menu_demo')
 subdir('popover_demo')
 subdir('file_picker_demo')
+subdir('popup_demo')
+subdir('menu_demo')
 
 # ── Scrolling / Lists Widgets ──────────────────────────────────
 subdir('list_tile_demo')
