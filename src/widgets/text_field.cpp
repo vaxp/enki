@@ -244,8 +244,8 @@ public:
         const int KEY_RIGHT     = 0xff53;
         const int KEY_RETURN    = 0xff0d;
         
-        bool shift = mods & 1; // Shift mod
-        bool ctrl = mods & 4;  // Ctrl mod
+        bool shift = (mods & 1) != 0; // Shift mod
+        bool ctrl = (mods & 2) != 0 || (mods & 4) != 0;  // Ctrl mod (Wayland bit 2 / X11 bit 4)
         
         bool changed = false;
         
@@ -291,16 +291,16 @@ public:
             setState([]{}); // Needs paint
         } else if (key == KEY_RETURN) { // Enter (Return)
             if (tf->options.on_submitted) tf->options.on_submitted(controller_->text);
-        } else if (ctrl && (key == 0x61 || key == 0x41)) { // Ctrl+A (a or A)
+        } else if (ctrl && (key == 0x61 || key == 0x41 || key == 0x01)) { // Ctrl+A (a or A)
             controller_->selectAll();
             setState([]{});
-        } else if (ctrl && (key == 0x63 || key == 0x43)) { // Ctrl+C
+        } else if (ctrl && (key == 0x63 || key == 0x43 || key == 0x03)) { // Ctrl+C
             if (controller_->hasSelection()) {
                 size_t start = std::min(controller_->selection_start, controller_->selection_end);
                 size_t end = std::max(controller_->selection_start, controller_->selection_end);
                 Platform::instance()->setClipboardText(controller_->text.substr(start, end - start));
             }
-        } else if (ctrl && (key == 0x76 || key == 0x56) && !tf->options.read_only) { // Ctrl+V
+        } else if (ctrl && (key == 0x76 || key == 0x56 || key == 0x16) && !tf->options.read_only) { // Ctrl+V
             std::string paste = Platform::instance()->getClipboardText();
             if (!paste.empty()) {
                 if (controller_->hasSelection()) deleteSelection();
@@ -309,7 +309,7 @@ public:
                 controller_->clearSelection();
                 changed = true;
             }
-        } else if (ctrl && (key == 0x78 || key == 0x58) && !tf->options.read_only) { // Ctrl+X
+        } else if (ctrl && (key == 0x78 || key == 0x58 || key == 0x18) && !tf->options.read_only) { // Ctrl+X
             if (controller_->hasSelection()) {
                 size_t start = std::min(controller_->selection_start, controller_->selection_end);
                 size_t end = std::max(controller_->selection_start, controller_->selection_end);
