@@ -37,6 +37,7 @@ subdir('menu_demo')
 subdir('text_area_demo')
 subdir('number_field_demo')
 subdir('search_field_demo')
+subdir('password_field_demo')
 
 # ── Scrolling / Lists Widgets ──────────────────────────────────
 subdir('list_tile_demo')

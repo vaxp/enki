@@ -38,7 +38,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 ## 3. Input / Forms (approx. 15–20)
 - [x] TextField
 - [x] TextArea
-- [ ] PasswordField
+- [x] PasswordField
 - [x] NumberField
 - [x] Checkbox
 - [x] Radio
