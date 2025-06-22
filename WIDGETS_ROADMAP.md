@@ -118,9 +118,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] FocusScope
 
 ## 10. Advanced / Data UI (approx. 10)
-- [ ] Tree
-- [ ] Table
-- [ ] DataGrid
+- [x] DataGrid
 - [ ] Timeline
 - [ ] Calendar
 - [ ] Carousel
@@ -129,22 +127,3 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] SplitView
 - [ ] ResizablePanel
 
-## 11. Desktop / Shell Widgets (approx. 15–20)
-*(These distinguish ENKI from frameworks like Flutter by providing native high-level shell primitives)*
-- [ ] Panel
-- [ ] Dock
-- [ ] Taskbar
-- [ ] AppLauncher
-- [ ] WindowSwitcher
-- [ ] WorkspaceSwitcher
-- [ ] SystemTray
-- [ ] StatusBar
-- [ ] NotificationCenter
-- [ ] QuickSettings
-- [ ] DesktopMenu
-- [ ] ApplicationMenu
-- [ ] WindowDecoration
-- [ ] WindowControlButtons
-- [ ] LockScreen
-- [ ] ScreenEdge
-- [ ] WorkspaceIndicator
