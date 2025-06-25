@@ -119,7 +119,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 
 ## 10. Advanced / Data UI (approx. 10)
 - [x] DataGrid
-- [ ] Timeline
+- [x] Timeline
 - [ ] Calendar
 - [ ] Carousel
 - [ ] Accordion
