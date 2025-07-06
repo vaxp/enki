@@ -45,7 +45,6 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Switch
 - [x] Slider
 - [x] RangeSlider
-- [ ] Dropdown
 - [ ] ComboBox
 - [ ] DatePicker
 - [ ] TimePicker
@@ -93,7 +92,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] DropdownMenu
 - [x] Dialog
 - [x] BottomSheet
-- [ ] Snackbar
+- [x] Snackbar
 
 ## 8. Feedback (approx. 6)
 - [x] ProgressBar
