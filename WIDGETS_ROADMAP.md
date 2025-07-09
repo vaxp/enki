@@ -98,7 +98,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] ProgressBar
 - [x] ProgressRing
 - [x] Spinner
-- [ ] Notification
+- [x] Notification
 - [ ] LoadingOverlay
 
 ## 9. Gestures / Interaction (approx. 8)
