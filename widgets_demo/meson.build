@@ -55,6 +55,7 @@ subdir('table_demo')
 subdir('data_table_demo')
 subdir('data_grid_demo')
 subdir('timeline_demo')
+subdir('accordion_demo')
 
 # ── Navigation Widgets ─────────────────────────────────────────
 subdir('tab_bar_demo')
