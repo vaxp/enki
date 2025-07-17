@@ -333,6 +333,7 @@ enki_sources = files(
   'src/widgets/timeline.cpp',
   'src/widgets/accordion.cpp',
   'src/widgets/split_view.cpp',
+  'src/widgets/carousel.cpp',
 
   # Navigation Widgets
   'src/widgets/tab_bar.cpp',
