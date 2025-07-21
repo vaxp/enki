@@ -335,6 +335,7 @@ enki_sources = files(
   'src/widgets/accordion.cpp',
   'src/widgets/split_view.cpp',
   'src/widgets/carousel.cpp',
+  'src/widgets/calendar.cpp',
 
   # Navigation Widgets
   'src/widgets/tab_bar.cpp',

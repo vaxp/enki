@@ -59,6 +59,7 @@ subdir('timeline_demo')
 subdir('accordion_demo')
 subdir('split_view_demo')
 subdir('carousel_demo')
+subdir('calendar_demo')
 
 # ── Navigation Widgets ─────────────────────────────────────────
 subdir('tab_bar_demo')
