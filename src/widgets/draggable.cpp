@@ -1,0 +1,227 @@
+/// @file draggable.cpp
+/// @brief Implementation of Draggable and DragTarget widgets for ENKI Framework.
+
+#include "enki/widgets/draggable.hpp"
+#include "enki/widgets/gesture_detector.hpp"
+#include "enki/widgets/container.hpp"
+#include "enki/state/state.hpp"
+#include "enki/tree/build_context.hpp"
+
+#include <iostream>
+
+namespace enki {
+
+// ════════════════════════════════════════════════════════════════
+// RenderDragTarget
+// ════════════════════════════════════════════════════════════════
+
+class RenderDragTarget : public RenderBox {
+public:
+    std::string accepted_tag;
+    std::function<bool(const std::any&)> on_will_accept;
+    std::function<void(const std::any&)> on_accept;
+    std::function<void()> on_leave;
+    std::function<void(bool)> on_hover_changed;
+    bool is_hovered = false;
+
+    RenderDragTarget() {
+        DragManager::instance().registerTarget(this);
+    }
+
+    ~RenderDragTarget() override {
+        DragManager::instance().unregisterTarget(this);
+    }
+
+    void paint(PaintContext& context) override {
+        for (auto* child : children_) {
+            if (child) child->paint(context);
+        }
+    }
+};
+
+class DragTargetRenderWidget : public SingleChildRenderObjectWidget {
+public:
+    std::string accepted_tag;
+    std::function<bool(const std::any&)> on_will_accept;
+    std::function<void(const std::any&)> on_accept;
+    std::function<void()> on_leave;
+    std::function<void(bool)> on_hover_changed;
+
+    DragTargetRenderWidget(WidgetPtr child, std::string tag,
+                           std::function<bool(const std::any&)> will_acc,
+                           std::function<void(const std::any&)> acc,
+                           std::function<void()> leave,
+                           std::function<void(bool)> h_changed)
+        : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
+          accepted_tag(std::move(tag)), on_will_accept(std::move(will_acc)),
+          on_accept(std::move(acc)), on_leave(std::move(leave)),
+          on_hover_changed(std::move(h_changed)) {}
+
+    [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
+        auto r = std::make_unique<RenderDragTarget>();
+        r->accepted_tag = accepted_tag;
+        r->on_will_accept = on_will_accept;
+        r->on_accept = on_accept;
+        r->on_leave = on_leave;
+        r->on_hover_changed = on_hover_changed;
+        return r;
+    }
+
+    void updateRenderObject(BuildContext&, RenderObject& ro) override {
+        auto& r = static_cast<RenderDragTarget&>(ro);
+        r.accepted_tag = accepted_tag;
+        r.on_will_accept = on_will_accept;
+        r.on_accept = on_accept;
+        r.on_leave = on_leave;
+        r.on_hover_changed = on_hover_changed;
+    }
+
+    [[nodiscard]] std::string_view typeName() const override { return "DragTargetRenderWidget"; }
+};
+
+// ════════════════════════════════════════════════════════════════
+// DragManager Implementation
+// ════════════════════════════════════════════════════════════════
+
+void DragManager::startDrag(std::string tag, std::any data, WidgetPtr feedback, Point start_pos) {
+    session.is_active = true;
+    session.tag = std::move(tag);
+    session.data = std::move(data);
+    session.feedback = std::move(feedback);
+    session.current_pointer = start_pos;
+    if (on_drag_state_changed) on_drag_state_changed();
+}
+
+void DragManager::updatePointer(Point p) {
+    if (!session.is_active) return;
+    session.current_pointer = p;
+
+    for (auto* t : targets) {
+        Rect gb = t->globalBounds();
+        bool contains = gb.contains(p);
+        bool tag_matches = t->accepted_tag.empty() || t->accepted_tag == session.tag;
+        bool accepts = tag_matches && (!t->on_will_accept || t->on_will_accept(session.data));
+
+        if (contains && accepts) {
+            if (!t->is_hovered) {
+                t->is_hovered = true;
+                if (t->on_hover_changed) t->on_hover_changed(true);
+            }
+        } else {
+            if (t->is_hovered) {
+                t->is_hovered = false;
+                if (t->on_leave) t->on_leave();
+                if (t->on_hover_changed) t->on_hover_changed(false);
+            }
+        }
+    }
+
+    if (on_drag_state_changed) on_drag_state_changed();
+}
+
+void DragManager::endDrag() {
+    if (!session.is_active) return;
+
+    for (auto* t : targets) {
+        if (t->is_hovered) {
+            if (t->on_accept) t->on_accept(session.data);
+            t->is_hovered = false;
+            if (t->on_hover_changed) t->on_hover_changed(false);
+        }
+    }
+
+    session.is_active = false;
+    session.feedback = nullptr;
+    if (on_drag_state_changed) on_drag_state_changed();
+}
+
+// ════════════════════════════════════════════════════════════════
+// Draggable State
+// ════════════════════════════════════════════════════════════════
+
+class DraggableState : public State {
+private:
+    bool is_dragging_ = false;
+
+public:
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const Draggable*>(widget());
+
+        WidgetPtr display_child;
+        if (is_dragging_) {
+            if (w->child_when_dragging) {
+                display_child = w->child_when_dragging;
+            } else {
+                auto placeholder = container(w->child);
+                placeholder->color(0x33334155).borderRadius(8.0f);
+                display_child = placeholder;
+            }
+        } else {
+            display_child = w->child;
+        }
+
+        auto gd = std::make_shared<GestureDetector>(display_child);
+        gd->cursor_type = SystemCursor::Move;
+
+        gd->on_pan_start = [this, w](const DragStartDetails& d) {
+            is_dragging_ = true;
+            DragManager::instance().startDrag(w->tag, w->data, w->feedback ? w->feedback : w->child, d.global_position);
+            if (w->on_drag_started) w->on_drag_started();
+            setState([] {});
+        };
+
+        gd->on_pan_update = [](const DragUpdateDetails& d) {
+            DragManager::instance().updatePointer(d.global_position);
+        };
+
+        gd->on_pan_end = [this, w](const DragEndDetails&) {
+            is_dragging_ = false;
+            DragManager::instance().endDrag();
+            if (w->on_drag_end) w->on_drag_end();
+            setState([] {});
+        };
+
+        return gd;
+    }
+};
+
+std::unique_ptr<State> Draggable::createState() {
+    return std::make_unique<DraggableState>();
+}
+
+// ════════════════════════════════════════════════════════════════
+// DragTarget State
+// ════════════════════════════════════════════════════════════════
+
+class DragTargetState : public State {
+private:
+    bool is_hovered_ = false;
+
+public:
+    WidgetPtr build(BuildContext& context) override {
+        auto* w = static_cast<const DragTarget*>(widget());
+
+        WidgetPtr target_content;
+        if (w->builder) {
+            target_content = w->builder(context, is_hovered_, DragManager::instance().session.data);
+        } else {
+            target_content = container();
+        }
+
+        auto target_widget = std::make_shared<DragTargetRenderWidget>(
+            target_content, w->accepted_tag, w->on_will_accept, w->on_accept, w->on_leave,
+            [this](bool h) {
+                is_hovered_ = h;
+                setState([] {});
+            }
+        );
+
+        return target_widget;
+    }
+};
+
+std::unique_ptr<State> DragTarget::createState() {
+    return std::make_unique<DragTargetState>();
+}
+
+} // namespace enki
