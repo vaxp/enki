@@ -293,6 +293,7 @@ enki_sources = files(
   'src/widgets/date_picker.cpp',
   'src/widgets/time_picker.cpp',
   'src/widgets/color_picker.cpp',
+  'src/widgets/placeholder.cpp',
   'src/widgets/gesture_detector.cpp',
   'src/widgets/draggable.cpp',
   'src/widgets/dismissible.cpp',

@@ -33,7 +33,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Button
 - [x] IconButton
 - [x] FloatingActionButton
-- [ ] Placeholder
+- [x] Placeholder
 
 ## 3. Input / Forms (approx. 15–20)
 - [x] TextField
