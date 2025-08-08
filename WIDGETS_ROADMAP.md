@@ -29,7 +29,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Divider
 - [ ] VerticalDivider
 - [x] Card
-- [ ] Chip
+- [x] Chip
 - [x] Button
 - [x] IconButton
 - [x] FloatingActionButton
