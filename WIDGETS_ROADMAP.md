@@ -49,8 +49,8 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] DatePicker
 - [x] TimePicker
 - [x] ColorPicker
-- [ ] Form
-- [ ] FormField
+- [x] Form
+- [x] FormField
 - [ ] Autocomplete
 - [x] SearchField
 
