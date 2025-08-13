@@ -1,7 +1,5 @@
 # ENKI Engine — Widgets Roadmap
 
-This document serves as a comprehensive roadmap for the ~120 widgets planned for the ENKI Framework, grouped by category.
-
 ## 1. Layout (approx. 15)
 - [x] Row
 - [x] Column
@@ -19,6 +17,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] AspectRatio
 - [x] ConstrainedBox
 - [x] FractionallySizedBox
+
 ## 2. Basic UI (approx. 15)
 - [x] Text
 - [x] RichText
@@ -27,7 +26,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Avatar
 - [x] Badge
 - [x] Divider
-- [ ] VerticalDivider
+- [x] VerticalDivider
 - [x] Card
 - [x] Chip
 - [x] Button
