@@ -69,6 +69,17 @@ public:
 
 // ════════════════════════════════════════════════════════════════
 // Drawer Widget
+struct DrawerProps {
+    Key key = Key::none();
+    WidgetPtr child;         ///< Content inside the drawer panel
+    WidgetPtr body;          ///< Background body content
+    bool initial_open = false;
+    DrawerOptions options;
+    std::function<void()> on_close;
+    std::function<void()> on_open;
+    std::shared_ptr<DrawerController> controller;
+};
+
 // ════════════════════════════════════════════════════════════════
 
 class Drawer : public StatefulWidget {
@@ -111,6 +122,18 @@ inline std::shared_ptr<Drawer> drawer(WidgetPtr drawer_content, WidgetPtr body,
                                       DrawerOptions options = {}) {
     return std::make_shared<Drawer>(std::move(drawer_content), std::move(body),
                                    std::move(options));
+}
+
+inline std::shared_ptr<Drawer> drawer(DrawerProps props) {
+    auto d = std::make_shared<Drawer>(std::move(props.child), std::move(props.body), std::move(props.options));
+    d->key = props.key;
+    d->initial_open = props.initial_open;
+    d->on_close = std::move(props.on_close);
+    d->on_open = std::move(props.on_open);
+    if (props.controller) {
+        d->setController(props.controller);
+    }
+    return d;
 }
 
 } // namespace enki

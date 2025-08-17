@@ -135,6 +135,12 @@ struct MenuEntry {
         : label(std::move(label)), items(std::move(items)), enabled(enabled) {}
 };
 
+struct MenuBarProps {
+    Key key = Key::none();
+    std::vector<MenuEntry> entries;
+    MenuOptions options;
+};
+
 // ════════════════════════════════════════════════════════════════
 // MenuBar Widget
 // ════════════════════════════════════════════════════════════════
@@ -155,6 +161,19 @@ inline WidgetPtr menuBar(std::vector<MenuEntry> entries, MenuOptions options = M
     return std::make_shared<MenuBar>(std::move(entries), std::move(options));
 }
 
+inline WidgetPtr menuBar(MenuBarProps props) {
+    auto mb = std::make_shared<MenuBar>(std::move(props.entries), std::move(props.options));
+    mb->key = props.key;
+    return mb;
+}
+
+struct MenuProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    std::vector<MenuItem> items;
+    MenuOptions options;
+};
+
 // ════════════════════════════════════════════════════════════════
 // Standalone / Anchor Menu Widget
 // ════════════════════════════════════════════════════════════════
@@ -174,6 +193,12 @@ public:
 
 inline WidgetPtr menu(WidgetPtr child, std::vector<MenuItem> items, MenuOptions options = MenuOptions()) {
     return std::make_shared<Menu>(std::move(child), std::move(items), std::move(options));
+}
+
+inline WidgetPtr menu(MenuProps props) {
+    auto m = std::make_shared<Menu>(std::move(props.child), std::move(props.items), std::move(props.options));
+    m->key = props.key;
+    return m;
 }
 
 } // namespace enki

@@ -77,17 +77,9 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
     std::vector<WidgetPtr> stack_children;
     size_t count = std::min(avatars.size(), max_avatars);
     float current_left = 0.0f;
-    
-    // We want the first avatar to be on top? 
-    // In Stack, last child is painted on top. 
-    // Standard avatar groups usually have first avatar on bottom, or first avatar on top.
-    // If first avatar is on top, we must render it last.
-    // Wait, let's just reverse the iteration so the first one (index 0) is added last.
-    
     float total_width = 0.0f;
     
     for (size_t i = 0; i < count; ++i) {
-        // Find radius of this avatar
         float diameter = 48.0f; // Default diameter
         if (auto av = std::dynamic_pointer_cast<Avatar>(avatars[i])) {
             diameter = av->options.radius * 2.0f;
@@ -97,11 +89,10 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
         else total_width += (diameter + spacing);
     }
     
-    // Add "+X" if there are more avatars
     size_t extra = avatars.size() - count;
     WidgetPtr extra_widget = nullptr;
     if (extra > 0) {
-        AvatarOptions opt;
+        AvatarProps opt;
         opt.background_color = 0xFF1E293B; // Dark gray
         opt.initials = "+" + std::to_string(extra);
         opt.border_width = 2.0f;
@@ -113,11 +104,6 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
         extra_widget = extra_av;
         total_width += (opt.radius * 2.0f + spacing);
     }
-
-    // Build the stack, adding items in reverse so the first one is painted on top (added last)
-    // Actually, usually the first avatar is on the left.
-    // Left offset: i * (diameter + spacing)
-    // If we add it last, it's drawn on top.
     
     std::vector<std::pair<float, WidgetPtr>> positioned_items;
     
@@ -143,8 +129,6 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
     }
 
     auto s = stack(stack_children);
-    // The stack size depends on its contents, but absolute positioning inside stack doesn't size the stack inherently in ENKI unless configured.
-    // We wrap it in a container with exact size.
     float max_d = 48.0f;
     if (auto av = std::dynamic_pointer_cast<Avatar>(avatars[0])) {
         max_d = av->options.radius * 2.0f;

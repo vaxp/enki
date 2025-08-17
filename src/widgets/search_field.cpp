@@ -74,7 +74,7 @@ static std::vector<std::pair<size_t, size_t>> findMatchRanges(std::string_view t
 class RenderSearchFieldBox : public RenderBox {
 public:
     std::shared_ptr<SearchFieldController> controller;
-    SearchFieldOptions options;
+    SearchFieldProps props;
     bool is_focused = false;
     bool is_hovered = false;
     bool show_cursor = false;
@@ -88,12 +88,12 @@ public:
     std::unique_ptr<skia::textlayout::Paragraph> icon_paragraph_;
     std::unique_ptr<skia::textlayout::Paragraph> badge_paragraph_;
 
-    RenderSearchFieldBox(std::shared_ptr<SearchFieldController> ctrl, SearchFieldOptions opt)
-        : controller(std::move(ctrl)), options(std::move(opt)) {
+    RenderSearchFieldBox(std::shared_ptr<SearchFieldController> ctrl, SearchFieldProps opt)
+        : controller(std::move(ctrl)), props(std::move(opt)) {
         
         float h = 42.0f;
-        if (options.size == SearchFieldSize::Small) h = 34.0f;
-        else if (options.size == SearchFieldSize::Large) h = 52.0f;
+        if (props.size == SearchFieldSize::Small) h = 34.0f;
+        else if (props.size == SearchFieldSize::Large) h = 52.0f;
 
         FlexboxStyle st;
         st.height = StyleValue::point(h);
@@ -104,19 +104,19 @@ public:
         auto fc = getSearchFieldFontCollection();
         if (!fc) return;
 
-        float font_sz = options.style.font_size > 0 ? options.style.font_size : 14.0f;
-        if (options.size == SearchFieldSize::Small && options.style.font_size <= 0) font_sz = 12.5f;
-        if (options.size == SearchFieldSize::Large && options.style.font_size <= 0) font_sz = 16.0f;
+        float font_sz = props.style.font_size > 0 ? props.style.font_size : 14.0f;
+        if (props.size == SearchFieldSize::Small && props.style.font_size <= 0) font_sz = 12.5f;
+        if (props.size == SearchFieldSize::Large && props.style.font_size <= 0) font_sz = 16.0f;
 
         skia::textlayout::ParagraphStyle p_style;
         p_style.setTextAlign(skia::textlayout::TextAlign::kLeft);
 
         // 1. Search Icon
-        if (options.show_search_icon) {
+        if (props.show_search_icon) {
             auto b_icon = skia::textlayout::ParagraphBuilder::make(p_style, fc);
             skia::textlayout::TextStyle t_ic;
             t_ic.setFontSize(font_sz * 1.1f);
-            t_ic.setColor(static_cast<SkColor>(options.icon_color));
+            t_ic.setColor(static_cast<SkColor>(props.icon_color));
             b_icon->pushStyle(t_ic);
             b_icon->addText("🔍", 4);
             icon_paragraph_ = b_icon->Build();
@@ -130,18 +130,18 @@ public:
         skia::textlayout::TextStyle t_main;
         t_main.setFontSize(font_sz);
 
-        if (!options.style.font_family.empty()) {
-            std::vector<SkString> font_fams = {SkString(options.style.font_family.c_str())};
+        if (!props.style.font_family.empty()) {
+            std::vector<SkString> font_fams = {SkString(props.style.font_family.c_str())};
             t_main.setFontFamilies(font_fams);
         }
 
         const std::string& q = controller->getQuery();
         if (q.empty() && !is_focused) {
-            t_main.setColor(static_cast<SkColor>(options.placeholder_color));
+            t_main.setColor(static_cast<SkColor>(props.placeholder_color));
             b_main->pushStyle(t_main);
-            b_main->addText(options.placeholder.c_str(), options.placeholder.length());
+            b_main->addText(props.placeholder.c_str(), props.placeholder.length());
         } else {
-            t_main.setColor(static_cast<SkColor>(options.style.color != 0 ? options.style.color : 0xFFF1F5F9));
+            t_main.setColor(static_cast<SkColor>(props.style.color != 0 ? props.style.color : 0xFFF1F5F9));
             b_main->pushStyle(t_main);
             b_main->addText(q.c_str(), q.length());
         }
@@ -149,13 +149,13 @@ public:
         text_paragraph_->layout(size_.width > 0 ? size_.width : 300.0f);
 
         // 3. Shortcut Badge
-        if (options.show_shortcut_badge && !options.shortcut_hint.empty() && q.empty() && !is_focused) {
+        if (props.show_shortcut_badge && !props.shortcut_hint.empty() && q.empty() && !is_focused) {
             auto b_badge = skia::textlayout::ParagraphBuilder::make(p_style, fc);
             skia::textlayout::TextStyle t_bg;
             t_bg.setFontSize(11.0f);
-            t_bg.setColor(static_cast<SkColor>(options.badge_text_color));
+            t_bg.setColor(static_cast<SkColor>(props.badge_text_color));
             b_badge->pushStyle(t_bg);
-            b_badge->addText(options.shortcut_hint.c_str(), options.shortcut_hint.length());
+            b_badge->addText(props.shortcut_hint.c_str(), props.shortcut_hint.length());
             badge_paragraph_ = b_badge->Build();
             badge_paragraph_->layout(80.0f);
         } else {
@@ -169,8 +169,8 @@ public:
 
         layoutParagraphs();
 
-        float radius = options.border_radius;
-        if (options.variant == SearchFieldVariant::Pill) {
+        float radius = props.border_radius;
+        if (props.variant == SearchFieldVariant::Pill) {
             radius = size_.height * 0.5f;
         }
 
@@ -181,10 +181,10 @@ public:
         // 1. Draw Field Background
         SkPaint bg_paint;
         bg_paint.setAntiAlias(true);
-        if (options.variant == SearchFieldVariant::Outlined) {
+        if (props.variant == SearchFieldVariant::Outlined) {
             bg_paint.setColor(0x00000000);
         } else {
-            bg_paint.setColor(options.background_color);
+            bg_paint.setColor(props.background_color);
         }
         sk_canvas->drawRRect(rrect, bg_paint);
 
@@ -193,7 +193,7 @@ public:
         sk_canvas->clipRRect(rrect, true);
 
         // 2. Draw Search Icon
-        float content_x = ctx.offset.x + options.padding.left;
+        float content_x = ctx.offset.x + props.padding.left;
         float cy = ctx.offset.y + size_.height * 0.5f;
 
         if (icon_paragraph_) {
@@ -216,7 +216,7 @@ public:
                     skia::textlayout::RectWidthStyle::kTight);
 
                 SkPaint sel_paint;
-                sel_paint.setColor(static_cast<SkColor>(options.selection_color));
+                sel_paint.setColor(static_cast<SkColor>(props.selection_color));
                 sk_canvas->save();
                 sk_canvas->translate(content_x, text_y);
                 for (const auto& r : rects) {
@@ -228,7 +228,7 @@ public:
             text_paragraph_->paint(sk_canvas, content_x, text_y);
 
             // Draw Blinking Caret
-            if (is_focused && show_cursor && !options.read_only && selection_start == selection_end) {
+            if (is_focused && show_cursor && !props.read_only && selection_start == selection_end) {
                 float c_x = 0;
                 float c_h = text_paragraph_->getHeight();
                 if (cursor_pos > 0) {
@@ -239,16 +239,16 @@ public:
                     }
                 }
                 SkPaint cur_paint;
-                cur_paint.setColor(static_cast<SkColor>(options.cursor_color));
+                cur_paint.setColor(static_cast<SkColor>(props.cursor_color));
                 sk_canvas->drawRect(SkRect::MakeXYWH(content_x + c_x, text_y, 2.0f, c_h), cur_paint);
             }
         }
 
         // 4. Draw Trailing Items (Clear Button / Loading Spinner / Shortcut Badge)
-        float trail_right = ctx.offset.x + size_.width - options.padding.right;
+        float trail_right = ctx.offset.x + size_.width - props.padding.right;
 
         // Clear Button [ ✕ ]
-        if (options.show_clear_button && !q.empty() && !options.read_only) {
+        if (props.show_clear_button && !q.empty() && !props.read_only) {
             float btn_r = 10.0f;
             float btn_cx = trail_right - btn_r;
             float btn_cy = cy;
@@ -281,7 +281,7 @@ public:
             sp_paint.setAntiAlias(true);
             sp_paint.setStyle(SkPaint::kStroke_Style);
             sp_paint.setStrokeWidth(2.0f);
-            sp_paint.setColor(options.focus_border_color);
+            sp_paint.setColor(props.focus_border_color);
 
             SkRect sp_rect = SkRect::MakeXYWH(sp_cx - sp_r, sp_cy - sp_r, sp_r * 2.0f, sp_r * 2.0f);
             sk_canvas->drawArc(sp_rect, spinner_angle, 270.0f, false, sp_paint);
@@ -300,7 +300,7 @@ public:
             b_rrect.setRectXY(SkRect::MakeXYWH(b_x, b_y, b_w, b_h), 4.0f, 4.0f);
             SkPaint b_bg;
             b_bg.setAntiAlias(true);
-            b_bg.setColor(options.badge_bg_color);
+            b_bg.setColor(props.badge_bg_color);
             sk_canvas->drawRRect(b_rrect, b_bg);
 
             badge_paragraph_->paint(sk_canvas, b_x + 5.0f, b_y + 2.0f);
@@ -313,7 +313,7 @@ public:
         border_paint.setAntiAlias(true);
         border_paint.setStyle(SkPaint::kStroke_Style);
         border_paint.setStrokeWidth(is_focused ? 1.5f : 1.0f);
-        border_paint.setColor(is_focused ? options.focus_border_color : (is_hovered ? 0xFF475569 : options.border_color));
+        border_paint.setColor(is_focused ? props.focus_border_color : (is_hovered ? 0xFF475569 : props.border_color));
         sk_canvas->drawRRect(rrect, border_paint);
     }
 
@@ -323,9 +323,9 @@ public:
     }
 
     bool isHitClearButton(float local_x, float local_y) const {
-        if (!options.show_clear_button || controller->getQuery().empty()) return false;
+        if (!props.show_clear_button || controller->getQuery().empty()) return false;
         float btn_r = 12.0f;
-        float btn_cx = size_.width - options.padding.right - 10.0f;
+        float btn_cx = size_.width - props.padding.right - 10.0f;
         float btn_cy = size_.height * 0.5f;
         float dx = local_x - btn_cx;
         float dy = local_y - btn_cy;
@@ -336,7 +336,7 @@ public:
         layoutParagraphs();
         if (!text_paragraph_) return 0;
 
-        float content_x = options.padding.left;
+        float content_x = props.padding.left;
         if (icon_paragraph_) content_x += icon_paragraph_->getMaxIntrinsicWidth() + 8.0f;
 
         float target_x = std::max(0.0f, local_x - content_x);
@@ -357,7 +357,7 @@ static RenderSearchFieldBox* findSearchFieldBox(RenderObject* ro) {
 class RenderSearchFieldWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<SearchFieldController> controller;
-    SearchFieldOptions options;
+    SearchFieldProps props;
     bool is_focused;
     bool is_hovered;
     bool show_cursor;
@@ -367,16 +367,16 @@ public:
     bool hovered_clear;
     float spinner_angle;
 
-    RenderSearchFieldWidget(std::shared_ptr<SearchFieldController> ctrl, SearchFieldOptions opt,
+    RenderSearchFieldWidget(std::shared_ptr<SearchFieldController> ctrl, SearchFieldProps opt,
                             bool focused, bool hovered, bool cursor, size_t cur_pos,
                             size_t sel_s, size_t sel_e, bool h_clr, float spin_ang)
         : SingleChildRenderObjectWidget(Key::none()), controller(std::move(ctrl)),
-          options(std::move(opt)), is_focused(focused), is_hovered(hovered),
+          props(std::move(opt)), is_focused(focused), is_hovered(hovered),
           show_cursor(cursor), cursor_pos(cur_pos), selection_start(sel_s),
           selection_end(sel_e), hovered_clear(h_clr), spinner_angle(spin_ang) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
-        auto ro = std::make_unique<RenderSearchFieldBox>(controller, options);
+        auto ro = std::make_unique<RenderSearchFieldBox>(controller, props);
         ro->is_focused = is_focused;
         ro->is_hovered = is_hovered;
         ro->show_cursor = show_cursor;
@@ -391,7 +391,7 @@ public:
     void updateRenderObject(BuildContext&, RenderObject& renderObject) override {
         if (auto* ro = dynamic_cast<RenderSearchFieldBox*>(&renderObject)) {
             ro->controller = controller;
-            ro->options = options;
+            ro->props = props;
             ro->is_focused = is_focused;
             ro->is_hovered = is_hovered;
             ro->show_cursor = show_cursor;
@@ -480,13 +480,13 @@ private:
         if (Platform::instance()) last_input_time_ = Platform::instance()->getTime();
         debounce_pending_ = true;
 
-        if (sf->options.on_changed) {
-            sf->options.on_changed(controller_->getQuery());
+        if (sf->props.on_changed) {
+            sf->props.on_changed(controller_->getQuery());
         }
 
         // Live suggestions fetch
-        if (sf->options.suggestions_provider) {
-            controller_->setSuggestions(sf->options.suggestions_provider(controller_->getQuery()));
+        if (sf->props.suggestions_provider) {
+            controller_->setSuggestions(sf->props.suggestions_provider(controller_->getQuery()));
         }
 
         setState([] {});
@@ -547,11 +547,11 @@ private:
                 cursor_pos_ = item.title.length();
                 selection_start_ = cursor_pos_;
                 selection_end_ = cursor_pos_;
-                if (sf->options.on_suggestion_selected) sf->options.on_suggestion_selected(item);
-                if (sf->options.on_submitted) sf->options.on_submitted(item.title);
+                if (sf->props.on_suggestion_selected) sf->props.on_suggestion_selected(item);
+                if (sf->props.on_submitted) sf->props.on_submitted(item.title);
             } else {
                 controller_->addRecentSearch(controller_->getQuery());
-                if (sf->options.on_submitted) sf->options.on_submitted(controller_->getQuery());
+                if (sf->props.on_submitted) sf->props.on_submitted(controller_->getQuery());
             }
             setState([] {});
         } else if (key == KEY_TAB && !suggestions.empty()) {
@@ -570,7 +570,7 @@ private:
             selection_start_ = 0;
             selection_end_ = 0;
             unfocus();
-        } else if ((key == KEY_BACKSPACE || key == 0x08 || key == 0x7f) && !sf->options.read_only) {
+        } else if ((key == KEY_BACKSPACE || key == 0x08 || key == 0x7f) && !sf->props.read_only) {
             if (selection_start_ != selection_end_) {
                 deleteSelection();
             } else if (cursor_pos_ > 0) {
@@ -582,7 +582,7 @@ private:
                 selection_end_ = cursor_pos_;
             }
             triggerQueryUpdate();
-        } else if ((key == KEY_DELETE || key == 0xff9f) && !sf->options.read_only) {
+        } else if ((key == KEY_DELETE || key == 0xff9f) && !sf->props.read_only) {
             if (selection_start_ != selection_end_) {
                 deleteSelection();
             } else if (cursor_pos_ < controller_->getQuery().length()) {
@@ -646,7 +646,7 @@ private:
                 Platform::instance()->setClipboardData(data);
                 Platform::instance()->setClipboardText(sub);
             }
-        } else if (is_ctrl_x && !sf->options.read_only && selection_start_ != selection_end_) {
+        } else if (is_ctrl_x && !sf->props.read_only && selection_start_ != selection_end_) {
             size_t s = std::min(selection_start_, selection_end_);
             size_t e = std::max(selection_start_, selection_end_);
             std::string sub = controller_->getQuery().substr(s, e - s);
@@ -658,7 +658,7 @@ private:
             }
             deleteSelection();
             triggerQueryUpdate();
-        } else if (is_ctrl_v && !sf->options.read_only) {
+        } else if (is_ctrl_v && !sf->props.read_only) {
             if (Platform::instance()) {
                 std::string paste = Platform::instance()->getClipboardText();
                 if (!paste.empty()) {
@@ -679,12 +679,12 @@ public:
     void initState() override {
         State::initState();
         auto* sf = static_cast<const SearchField*>(widget());
-        controller_ = sf->controller;
+        controller_ = sf->props.controller;
         cursor_pos_ = controller_->getQuery().length();
         selection_start_ = cursor_pos_;
         selection_end_ = cursor_pos_;
 
-        is_focused_ = sf->options.auto_focus;
+        is_focused_ = sf->props.auto_focus;
         if (is_focused_) {
             g_focused_searchfield = this;
         }
@@ -693,7 +693,7 @@ public:
             text_input_conn_ = Platform::instance()->onTextInput().connect([this](std::string_view text) {
                 if (g_focused_searchfield != this || !is_focused_) return;
                 auto* current_sf = static_cast<const SearchField*>(widget());
-                if (!current_sf || current_sf->options.read_only) return;
+                if (!current_sf || current_sf->props.read_only) return;
 
                 // Ignore control characters
                 if (!text.empty() && text.length() == 1) {
@@ -723,7 +723,7 @@ public:
                 if (auto* ro = context().element()->findRenderObject()) {
                     Rect b = ro->globalBounds();
                     auto* current_sf = static_cast<const SearchField*>(widget());
-                    bool has_sug = current_sf && current_sf->options.show_suggestions &&
+                    bool has_sug = current_sf && current_sf->props.show_suggestions &&
                         (!controller_->getSuggestions().empty() || (!controller_->getRecentSearches().empty() && controller_->getQuery().empty()));
                     float extra_h = has_sug ? 300.0f : 0.0f;
                     if (gx < b.x || gx > (b.x + b.width) || gy < b.y || gy > (b.y + b.height + extra_h)) {
@@ -737,7 +737,7 @@ public:
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
         auto* sf = static_cast<const SearchField*>(widget());
-        controller_ = sf->controller;
+        controller_ = sf->props.controller;
     }
 
     void dispose() override {
@@ -756,10 +756,10 @@ public:
         // Process Debounce Timer
         if (debounce_pending_ && Platform::instance()) {
             double cur = Platform::instance()->getTime();
-            if (cur - last_input_time_ >= (sf->options.debounce_ms / 1000.0)) {
+            if (cur - last_input_time_ >= (sf->props.debounce_ms / 1000.0)) {
                 debounce_pending_ = false;
-                if (sf->options.on_search) {
-                    sf->options.on_search(controller_->getQuery());
+                if (sf->props.on_search) {
+                    sf->props.on_search(controller_->getQuery());
                 }
             }
         }
@@ -780,7 +780,7 @@ public:
         }
 
         auto search_box = std::make_shared<RenderSearchFieldWidget>(
-            controller_, sf->options, is_focused_, is_hovered_, show_cursor_,
+            controller_, sf->props, is_focused_, is_hovered_, show_cursor_,
             cursor_pos_, selection_start_, selection_end_, hovered_clear_, spinner_angle_
         );
 
@@ -831,7 +831,7 @@ public:
         const auto& suggestions = controller_->getSuggestions();
         const auto& recent = controller_->getRecentSearches();
 
-        bool has_suggestions = sf->options.show_suggestions && is_focused_ && (!suggestions.empty() || (!recent.empty() && controller_->getQuery().empty()));
+        bool has_suggestions = sf->props.show_suggestions && is_focused_ && (!suggestions.empty() || (!recent.empty() && controller_->getQuery().empty()));
 
         if (!has_suggestions) {
             return detector;
@@ -842,7 +842,7 @@ public:
         // 1. Suggestions List
         if (!suggestions.empty()) {
             std::string last_cat = "";
-            int limit = std::min(static_cast<int>(suggestions.size()), sf->options.max_visible_suggestions);
+            int limit = std::min(static_cast<int>(suggestions.size()), sf->props.max_visible_suggestions);
 
             for (int i = 0; i < limit; ++i) {
                 const auto& item = suggestions[i];
@@ -863,7 +863,7 @@ public:
                 ic->fontSize(13.5f);
 
                 auto t = text(item.title);
-                t->fontSize(13.0f).bold().color(is_active ? sf->options.focus_border_color : 0xFFF1F5F9);
+                t->fontSize(13.0f).bold().color(is_active ? sf->props.focus_border_color : 0xFFF1F5F9);
 
                 std::vector<WidgetPtr> row_content = {ic, t};
 
@@ -893,7 +893,7 @@ public:
                 }
 
                 auto item_box = container(row_widget);
-                item_box->color(is_active ? sf->options.item_hover_color : 0x00000000)
+                item_box->color(is_active ? sf->props.item_hover_color : 0x00000000)
                         .borderRadius(6.0f)
                         .paddingSymmetric(6.0f, 10.0f);
 
@@ -906,8 +906,8 @@ public:
                     cursor_pos_ = item.title.length();
                     selection_start_ = cursor_pos_;
                     selection_end_ = cursor_pos_;
-                    if (sf->options.on_suggestion_selected) sf->options.on_suggestion_selected(item);
-                    if (sf->options.on_submitted) sf->options.on_submitted(item.title);
+                    if (sf->props.on_suggestion_selected) sf->props.on_suggestion_selected(item);
+                    if (sf->props.on_submitted) sf->props.on_submitted(item.title);
                     setState([] {});
                 };
 
@@ -951,7 +951,7 @@ public:
                     selection_start_ = cursor_pos_;
                     selection_end_ = cursor_pos_;
                     triggerQueryUpdate();
-                    if (sf->options.on_submitted) sf->options.on_submitted(r_query);
+                    if (sf->props.on_submitted) sf->props.on_submitted(r_query);
                 };
 
                 r_det->child = r_box;
@@ -963,9 +963,9 @@ public:
         pop_col->gap(StyleValue::point(2.0f));
 
         auto popup_container = container(pop_col);
-        popup_container->color(sf->options.popup_bg_color)
-                       .borderRadius(sf->options.border_radius)
-                       .border(sf->options.border_color, 1.0f)
+        popup_container->color(sf->props.popup_bg_color)
+                       .borderRadius(sf->props.border_radius)
+                       .border(sf->props.border_color, 1.0f)
                        .paddingAll(6.0f);
 
         std::vector<WidgetPtr> combined_items = {detector, popup_container};

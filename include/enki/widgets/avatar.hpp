@@ -27,7 +27,8 @@ namespace enki {
 // Avatar Options
 // ════════════════════════════════════════════════════════════════
 
-struct AvatarOptions {
+struct AvatarProps {
+    Key                  key                = Key::none();
     float                radius             = 24.0f;
     Color                background_color   = 0xFF38BDF8; // Default blue
     Color                text_color         = 0xFFFFFFFF; // Default white
@@ -57,12 +58,13 @@ struct AvatarOptions {
 
 class Avatar : public StatelessWidget {
 public:
-    AvatarOptions options;
+    AvatarProps options;
 
-    Avatar(AvatarOptions opt = AvatarOptions()) : options(std::move(opt)) {}
-    explicit Avatar(std::string initials, AvatarOptions opt = AvatarOptions()) : options(std::move(opt)) {
+    Avatar(AvatarProps opt = AvatarProps()) : options(std::move(opt)) {}
+    explicit Avatar(std::string initials, AvatarProps opt = AvatarProps()) : options(std::move(opt)) {
         options.initials = std::move(initials);
     }
+    Avatar(Key k, AvatarProps opt) : StatelessWidget(std::move(k)), options(std::move(opt)) {}
     
     [[nodiscard]] std::string_view typeName() const override { return "Avatar"; }
     WidgetPtr build(BuildContext& ctx) override;
@@ -72,6 +74,13 @@ public:
 // AvatarGroup Widget
 // ════════════════════════════════════════════════════════════════
 
+struct AvatarGroupProps {
+    Key key = Key::none();
+    std::vector<WidgetPtr> avatars;
+    float                  spacing = -10.0f; // Negative spacing makes them overlap
+    size_t                 max_avatars = 4;
+};
+
 class AvatarGroup : public StatelessWidget {
 public:
     std::vector<WidgetPtr> avatars;
@@ -80,6 +89,9 @@ public:
     
     AvatarGroup(std::vector<WidgetPtr> avatars, float spacing = -12.0f, size_t max_avatars = 4)
         : avatars(std::move(avatars)), spacing(spacing), max_avatars(max_avatars) {}
+    
+    AvatarGroup(Key k, std::vector<WidgetPtr> avatars, float spacing, size_t max_avatars)
+        : StatelessWidget(std::move(k)), avatars(std::move(avatars)), spacing(spacing), max_avatars(max_avatars) {}
 
     [[nodiscard]] std::string_view typeName() const override { return "AvatarGroup"; }
     WidgetPtr build(BuildContext& ctx) override;
@@ -89,16 +101,25 @@ public:
 // Fluent Factories
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Avatar> avatar(AvatarOptions options = AvatarOptions()) {
-    return std::make_shared<Avatar>(std::move(options));
+inline std::shared_ptr<Avatar> avatar(AvatarProps options = AvatarProps()) {
+    return std::make_shared<Avatar>(options.key, std::move(options));
 }
 
-inline std::shared_ptr<Avatar> avatar(std::string initials, AvatarOptions options = AvatarOptions()) {
-    return std::make_shared<Avatar>(std::move(initials), std::move(options));
+inline std::shared_ptr<Avatar> avatar(std::string initials, AvatarProps options = AvatarProps()) {
+    options.initials = std::move(initials);
+    return std::make_shared<Avatar>(options.key, std::move(options));
 }
 
 inline std::shared_ptr<AvatarGroup> avatarGroup(std::vector<WidgetPtr> avatars, float spacing = -12.0f, size_t max = 4) {
     return std::make_shared<AvatarGroup>(std::move(avatars), spacing, max);
+}
+
+inline std::shared_ptr<AvatarGroup> avatarGroup(std::initializer_list<WidgetPtr> avatars, float spacing = -12.0f, size_t max = 4) {
+    return std::make_shared<AvatarGroup>(std::vector<WidgetPtr>(avatars), spacing, max);
+}
+
+inline std::shared_ptr<AvatarGroup> avatarGroup(AvatarGroupProps props) {
+    return std::make_shared<AvatarGroup>(std::move(props.key), std::move(props.avatars), props.spacing, props.max_avatars);
 }
 
 } // namespace enki

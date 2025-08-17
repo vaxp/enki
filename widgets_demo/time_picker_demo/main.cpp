@@ -52,7 +52,7 @@ public:
         auto lbl_fno = text("Flight Number & Carrier:");
         lbl_fno->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        TextFieldOptions fno_opts;
+        TextFieldProps fno_opts;
         fno_opts.hint_text = "Enter flight...";
         auto fno_field = std::make_shared<TextField>(flight_no_ctrl_, fno_opts);
         auto fno_box = container(fno_field);
@@ -61,7 +61,7 @@ public:
         auto lbl_time = text("Departure Time (12-Hour Dropdown):");
         lbl_time->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        TimePickerOptions pop_opts;
+        TimePickerProps pop_opts;
         pop_opts.mode = TimePickerMode::InputPopup;
         pop_opts.format = TimeFormat::TwelveHour;
         pop_opts.initial_time = flight_time_;
@@ -73,12 +73,13 @@ public:
 
         auto pop_picker = timePicker(pop_opts);
 
-        std::vector<WidgetPtr> left_items = {
-            form_title,
-            lbl_fno, fno_box,
-            lbl_time, pop_picker
-        };
-        auto left_col = column(left_items);
+        std::vector<WidgetPtr> root_children;
+        root_children.push_back(form_title);
+        root_children.push_back(lbl_fno);
+        root_children.push_back(fno_box);
+        root_children.push_back(lbl_time);
+        root_children.push_back(pop_picker);
+        auto left_col = column(root_children);
         left_col->gap(StyleValue::point(10.0f));
 
         auto left_card = container(left_col);
@@ -92,7 +93,7 @@ public:
         auto sched_title = text("⚙️ Automated Server Backup (24h Military + Sec)");
         sched_title->fontSize(15.0f).bold().color(0xFF10B981);
 
-        TimePickerOptions inline_opts;
+        TimePickerProps inline_opts;
         inline_opts.mode = TimePickerMode::Inline;
         inline_opts.format = TimeFormat::TwentyFourHour;
         inline_opts.show_seconds = true;

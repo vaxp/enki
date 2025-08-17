@@ -35,7 +35,9 @@ struct BreadcrumbItem {
 // BreadcrumbOptions
 // ════════════════════════════════════════════════════════════════
 
-struct BreadcrumbOptions {
+struct BreadcrumbProps {
+    Key key = Key::none();
+    std::vector<BreadcrumbItem> items;
     Color active_color      = 0xFFF1F5F9;   ///< Last (current) item color
     Color inactive_color    = 0xFF64748B;   ///< Ancestor items color
     Color hover_color       = 0xFF818CF8;   ///< Hover color on clickable items
@@ -48,7 +50,6 @@ struct BreadcrumbOptions {
     float separator_spacing = 8.0f;
     bool  bold_active       = true;
 
-    constexpr bool operator==(const BreadcrumbOptions&) const = default;
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -59,11 +60,13 @@ struct BreadcrumbOptions {
 class Breadcrumb : public StatelessWidget {
 public:
     std::vector<BreadcrumbItem> items;
-    BreadcrumbOptions            options;
+    BreadcrumbProps            options;
 
     Breadcrumb() = default;
-    explicit Breadcrumb(std::vector<BreadcrumbItem> items, BreadcrumbOptions opt = {})
+    explicit Breadcrumb(std::vector<BreadcrumbItem> items, BreadcrumbProps opt = {})
         : items(std::move(items)), options(std::move(opt)) {}
+    
+    Breadcrumb(Key k, BreadcrumbProps opt) : StatelessWidget(std::move(k)), items(std::move(opt.items)), options(std::move(opt)) {}
 
     // Fluent API
     Breadcrumb& activeColor(Color c)     { options.active_color = c;   return *this; }
@@ -81,8 +84,12 @@ public:
 
 inline std::shared_ptr<Breadcrumb> breadcrumb(
         std::vector<BreadcrumbItem> items,
-        BreadcrumbOptions options = {}) {
+        BreadcrumbProps options = {}) {
     return std::make_shared<Breadcrumb>(std::move(items), std::move(options));
+}
+
+inline std::shared_ptr<Breadcrumb> breadcrumb(BreadcrumbProps props) {
+    return std::make_shared<Breadcrumb>(std::move(props.key), std::move(props));
 }
 
 } // namespace enki

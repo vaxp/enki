@@ -120,84 +120,69 @@ struct SliverGridDelegateMaxExtent : public GridDelegate {
 ///   ->crossAxisSpacing(12)
 ///   ->mainAxisSpacing(12);
 /// @endcode
-class GridView : public StatefulWidget {
-public:
-    // ── Build mode A: static items ─────────────────────────────
+struct GridViewProps {
+    Key key = Key::none();
     std::vector<WidgetPtr> items;
-
-    // ── Build mode B: lazy builder ─────────────────────────────
     int item_count = 0;
     std::function<WidgetPtr(int index)> item_builder;
 
-    // ── Grid delegate (sizing strategy) ────────────────────────
-    /// Defaults to a 2-column fixed-count grid.
-    SliverGridDelegateFixedCount fixed_delegate  = SliverGridDelegateFixedCount(2);
-    SliverGridDelegateMaxExtent  max_delegate;
-    bool use_max_extent_delegate = false;  ///< Switch to max-extent mode.
+    SliverGridDelegateFixedCount fixed_delegate = SliverGridDelegateFixedCount(2);
+    SliverGridDelegateMaxExtent max_delegate;
+    bool use_max_extent_delegate = false;
 
-    // ── Scroll ─────────────────────────────────────────────────
-    Axis          direction    = Axis::Vertical;
+    Axis direction = Axis::Vertical;
     ScrollPhysics scroll_physics = ScrollPhysics::Clamped;
-    float         scroll_speed = 50.0f;
+    float scroll_speed = 50.0f;
 
-    // ── Layout ─────────────────────────────────────────────────
     EdgeInsets list_padding = EdgeInsets{};
-    bool       shrink_wrap  = false;
-    bool       reverse       = false;
-    bool       primary       = true;
+    bool shrink_wrap = false;
+    bool reverse = false;
+    bool primary = true;
+};
 
-    // ─────────────────────────────────────────────────────────
+class GridView : public StatefulWidget {
+public:
+    GridViewProps props;
+
     GridView() = default;
-
-    /// Static grid — fixed column count.
-    GridView(int cross_axis_count, std::vector<WidgetPtr> items)
-        : items(std::move(items)) {
-        fixed_delegate.cross_axis_count = cross_axis_count;
-    }
-
-    /// Builder grid — fixed column count.
-    GridView(int cross_axis_count, int count, std::function<WidgetPtr(int)> builder)
-        : item_count(count), item_builder(std::move(builder)) {
-        fixed_delegate.cross_axis_count = cross_axis_count;
-    }
+    explicit GridView(GridViewProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder API ─────────────────────────────────────
 
-    /// Switch to max-extent delegate mode.
     GridView& maxExtent(float max) {
-        max_delegate.max_cross_axis_extent = max;
-        use_max_extent_delegate = true;
+        props.max_delegate.max_cross_axis_extent = max;
+        props.use_max_extent_delegate = true;
         return *this;
     }
 
-    GridView& crossAxisCount(int n)    { fixed_delegate.cross_axis_count = n; return *this; }
+    GridView& crossAxisCount(int n)    { props.fixed_delegate.cross_axis_count = n; return *this; }
     GridView& crossAxisSpacing(float s) {
-        fixed_delegate.cross_axis_spacing = s;
-        max_delegate.cross_axis_spacing = s;
+        props.fixed_delegate.cross_axis_spacing = s;
+        props.max_delegate.cross_axis_spacing = s;
         return *this;
     }
     GridView& mainAxisSpacing(float s) {
-        fixed_delegate.main_axis_spacing = s;
-        max_delegate.main_axis_spacing = s;
+        props.fixed_delegate.main_axis_spacing = s;
+        props.max_delegate.main_axis_spacing = s;
         return *this;
     }
     GridView& childAspectRatio(float r) {
-        fixed_delegate.child_aspect_ratio = r;
-        max_delegate.child_aspect_ratio = r;
+        props.fixed_delegate.child_aspect_ratio = r;
+        props.max_delegate.child_aspect_ratio = r;
         return *this;
     }
     GridView& mainAxisExtent(float e) {
-        fixed_delegate.main_axis_extent = e;
-        max_delegate.main_axis_extent = e;
+        props.fixed_delegate.main_axis_extent = e;
+        props.max_delegate.main_axis_extent = e;
         return *this;
     }
 
-    GridView& padding(EdgeInsets p)    { this->list_padding = p; return *this; }
-    GridView& paddingAll(float p)      { this->list_padding = EdgeInsets::all(p); return *this; }
-    GridView& horizontal()             { direction = Axis::Horizontal; return *this; }
-    GridView& shrinkWrap(bool s = true){ shrink_wrap = s; return *this; }
-    GridView& physics(ScrollPhysics p) { this->scroll_physics = p; return *this; }
-    GridView& scrollSpeed(float s)     { scroll_speed = s; return *this; }
+    GridView& padding(EdgeInsets p)    { props.list_padding = p; return *this; }
+    GridView& paddingAll(float p)      { props.list_padding = EdgeInsets::all(p); return *this; }
+    GridView& horizontal()             { props.direction = Axis::Horizontal; return *this; }
+    GridView& shrinkWrap(bool s = true){ props.shrink_wrap = s; return *this; }
+    GridView& physics(ScrollPhysics p) { props.scroll_physics = p; return *this; }
+    GridView& scrollSpeed(float s)     { props.scroll_speed = s; return *this; }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "GridView"; }
@@ -207,35 +192,46 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+inline std::shared_ptr<GridView> gridView(GridViewProps props = {}) {
+    return std::make_shared<GridView>(std::move(props));
+}
+
 /// GridView with fixed column count — static items.
 inline std::shared_ptr<GridView> gridView(int crossAxisCount, std::vector<WidgetPtr> items) {
-    return std::make_shared<GridView>(crossAxisCount, std::move(items));
+    GridViewProps props;
+    props.fixed_delegate.cross_axis_count = crossAxisCount;
+    props.items = std::move(items);
+    return std::make_shared<GridView>(std::move(props));
 }
 
 /// GridView with fixed column count — lazy builder.
 inline std::shared_ptr<GridView> gridView(int crossAxisCount, int count,
                                            std::function<WidgetPtr(int)> builder) {
-    return std::make_shared<GridView>(crossAxisCount, count, std::move(builder));
+    GridViewProps props;
+    props.fixed_delegate.cross_axis_count = crossAxisCount;
+    props.item_count = count;
+    props.item_builder = std::move(builder);
+    return std::make_shared<GridView>(std::move(props));
 }
 
 /// GridView with max-extent delegate — responsive, auto-columns — lazy builder.
 inline std::shared_ptr<GridView> gridViewExtent(float maxExtent, int count,
                                                  std::function<WidgetPtr(int)> builder) {
-    auto gv = std::make_shared<GridView>();
-    gv->item_count    = count;
-    gv->item_builder  = std::move(builder);
-    gv->max_delegate.max_cross_axis_extent = maxExtent;
-    gv->use_max_extent_delegate = true;
-    return gv;
+    GridViewProps props;
+    props.item_count = count;
+    props.item_builder = std::move(builder);
+    props.max_delegate.max_cross_axis_extent = maxExtent;
+    props.use_max_extent_delegate = true;
+    return std::make_shared<GridView>(std::move(props));
 }
 
 /// GridView with max-extent delegate — static items.
 inline std::shared_ptr<GridView> gridViewExtent(float maxExtent, std::vector<WidgetPtr> items) {
-    auto gv = std::make_shared<GridView>();
-    gv->items = std::move(items);
-    gv->max_delegate.max_cross_axis_extent = maxExtent;
-    gv->use_max_extent_delegate = true;
-    return gv;
+    GridViewProps props;
+    props.items = std::move(items);
+    props.max_delegate.max_cross_axis_extent = maxExtent;
+    props.use_max_extent_delegate = true;
+    return std::make_shared<GridView>(std::move(props));
 }
 
 } // namespace enki

@@ -9,7 +9,12 @@
 
 namespace enki {
 
-struct IconButtonOptions {
+struct IconButtonProps {
+    Key key = Key::none();
+    WidgetPtr icon = nullptr;
+    ButtonCallback on_pressed = nullptr;
+    bool disabled = false;
+
     Color normal_color = 0x00000000; // Transparent by default
     Color hover_color = 0x1A000000;  // Light gray on hover
     Color pressed_color = 0x33000000; // Darker gray on press
@@ -26,11 +31,14 @@ class IconButton : public StatelessWidget {
 public:
     WidgetPtr icon;
     ButtonCallback on_pressed;
-    IconButtonOptions options;
+    IconButtonProps options;
     bool disabled;
 
-    IconButton(WidgetPtr icon, ButtonCallback on_pressed = nullptr, IconButtonOptions options = IconButtonOptions(), bool disabled = false)
+    IconButton(WidgetPtr icon, ButtonCallback on_pressed = nullptr, IconButtonProps options = IconButtonProps(), bool disabled = false)
         : icon(std::move(icon)), on_pressed(std::move(on_pressed)), options(std::move(options)), disabled(disabled) {}
+        
+    IconButton(Key key, WidgetPtr icon, ButtonCallback on_pressed, IconButtonProps options, bool disabled)
+        : StatelessWidget(std::move(key)), icon(std::move(icon)), on_pressed(std::move(on_pressed)), options(std::move(options)), disabled(disabled) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& context) override;
     [[nodiscard]] std::string_view typeName() const override { return "IconButton"; }
@@ -42,8 +50,18 @@ public:
     IconButton* paddingAll(float p) { options.padding = EdgeInsets::all(p); return this; }
 };
 
-inline std::shared_ptr<IconButton> iconButton(WidgetPtr icon, ButtonCallback on_pressed = nullptr, IconButtonOptions options = IconButtonOptions()) {
+inline std::shared_ptr<IconButton> iconButton(WidgetPtr icon, ButtonCallback on_pressed = nullptr, IconButtonProps options = IconButtonProps()) {
     return std::make_shared<IconButton>(std::move(icon), std::move(on_pressed), std::move(options), on_pressed == nullptr);
+}
+
+inline std::shared_ptr<IconButton> iconButton(IconButtonProps props) {
+    bool is_disabled = props.disabled || props.on_pressed == nullptr;
+    return std::make_shared<IconButton>(std::move(props.key), std::move(props.icon), std::move(props.on_pressed), std::move(props), is_disabled);
+}
+
+inline std::shared_ptr<IconButton> iconButton(IconButtonProps props, WidgetPtr icon) {
+    props.icon = std::move(icon);
+    return iconButton(std::move(props));
 }
 
 } // namespace enki

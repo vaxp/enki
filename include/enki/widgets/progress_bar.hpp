@@ -15,7 +15,10 @@
 namespace enki {
 
 /// Options for configuring a ProgressBar
-struct ProgressBarOptions {
+struct ProgressBarProps {
+    Key key = Key::none();
+    float value = 0.0f; // 0.0f to 1.0f
+
     float height = 8.0f;
     float border_radius = 4.0f;
     
@@ -39,18 +42,25 @@ struct ProgressBarOptions {
 class ProgressBar : public StatefulWidget {
 public:
     float value; // 0.0f to 1.0f
-    ProgressBarOptions options;
+    ProgressBarProps options;
 
-    explicit ProgressBar(float value = 0.0f, ProgressBarOptions options = ProgressBarOptions())
+    explicit ProgressBar(float value = 0.0f, ProgressBarProps options = ProgressBarProps())
         : value(value), options(std::move(options)) {}
+
+    explicit ProgressBar(Key key, float value, ProgressBarProps options)
+        : StatefulWidget(std::move(key)), value(value), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ProgressBar"; }
 };
 
 /// Helper function to construct a ProgressBar widget
-inline WidgetPtr progressBar(float value = 0.0f, ProgressBarOptions options = ProgressBarOptions()) {
+inline std::shared_ptr<ProgressBar> progressBar(float value = 0.0f, ProgressBarProps options = ProgressBarProps()) {
     return std::make_shared<ProgressBar>(value, std::move(options));
+}
+
+inline std::shared_ptr<ProgressBar> progressBar(ProgressBarProps props) {
+    return std::make_shared<ProgressBar>(std::move(props.key), props.value, std::move(props));
 }
 
 } // namespace enki

@@ -106,155 +106,175 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        // Main Header
-        auto title = text("Advanced Timeline & Process Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        return container({
+            .color = 0xFF0B1120,
+            .padding = StyleInsets::all(16.0f),
+            .flex_grow = 1.0f,
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(14.0f),
+                .children = {
+                    column({
+                        .align_items = Align::Center,
+                        .children = {
+                            text("Advanced Timeline & Process Suite", {
+                                .color = 0xFFFFFFFF,
+                                .font_size = 22.0f,
+                                .font_weight = FontWeight::Bold
+                            }),
+                            text("Horizontal CI/CD steppers, vertical alternate milestone changelogs, and real-time logistics tracking", {
+                                .color = 0xFF94A3B8,
+                                .font_size = 13.0f
+                            })
+                        }
+                    }),
+                    
+                    container({
+                        .color = 0xFF1E293B,
+                        .border_radius = BorderRadius::circular(10.0f),
+                        .border = Border(0xFF334155, 1.0f),
+                        .width = StyleValue::point(1220.0f),
+                        .padding = StyleInsets::all(16.0f),
+                        .child = column({
+                            .gap = StyleValue::point(10.0f),
+                            .children = {
+                                row({
+                                    .justify_content = Justify::SpaceBetween,
+                                    .align_items = Align::Center,
+                                    .children = {
+                                        text("1. CI/CD Deployment Pipeline (Horizontal Interactive Stepper)", {
+                                            .color = 0xFF38BDF8,
+                                            .font_size = 14.0f,
+                                            .font_weight = FontWeight::Bold
+                                        }),
+                                        row({
+                                            .align_items = Align::Center,
+                                            .gap = StyleValue::point(8.0f),
+                                            .children = {
+                                                button({
+                                                    .child = text("⏮ Previous Step"),
+                                                    .on_pressed = [this] {
+                                                        pipeline_ctrl_->prevStep();
+                                                        hud_msg_ = "Active Step: #" + std::to_string(pipeline_ctrl_->getActiveStep() + 1);
+                                                        setState([] {});
+                                                    }
+                                                }),
+                                                button({
+                                                    .child = text("Next Step ➔"),
+                                                    .on_pressed = [this] {
+                                                        pipeline_ctrl_->nextStep();
+                                                        hud_msg_ = "Active Step: #" + std::to_string(pipeline_ctrl_->getActiveStep() + 1);
+                                                        setState([] {});
+                                                    }
+                                                })
+                                            }
+                                        })
+                                    }
+                                }),
+                                timeline({
+                                    .controller = pipeline_ctrl_,
+                                    .orientation = TimelineOrientation::Horizontal,
+                                    .node_size = 28.0f,
+                                    .card_width = 190.0f,
+                                    .is_stepper = true,
+                                    .on_step_changed = [this](int step) {
+                                        hud_msg_ = "Switched to Pipeline Step #" + std::to_string(step + 1);
+                                        setState([] {});
+                                    }
+                                })
+                            }
+                        })
+                    }),
 
-        auto sub = text("Horizontal CI/CD steppers, vertical alternate milestone changelogs, and real-time logistics tracking");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+                    row({
+                        .justify_content = Justify::Center,
+                        .gap = StyleValue::point(20.0f),
+                        .children = {
+                            container({
+                                .color = 0xFF1E293B,
+                                .border_radius = BorderRadius::circular(10.0f),
+                                .border = Border(0xFF334155, 1.0f),
+                                .width = StyleValue::point(600.0f),
+                                .padding = StyleInsets::all(16.0f),
+                                .child = column({
+                                    .gap = StyleValue::point(10.0f),
+                                    .children = {
+                                        text("2. Release Milestones & Changelog (Vertical Alternate Zig-Zag)", {
+                                            .color = 0xFF10B981,
+                                            .font_size = 14.0f,
+                                            .font_weight = FontWeight::Bold
+                                        }),
+                                        text("Click on any milestone card to expand or collapse detailed changelog notes.", {
+                                            .color = 0xFF94A3B8,
+                                            .font_size = 12.0f
+                                        }),
+                                        timeline({
+                                            .controller = milestone_ctrl_,
+                                            .orientation = TimelineOrientation::Vertical,
+                                            .alignment = TimelineAlignment::Alternate,
+                                            .node_size = 26.0f,
+                                            .card_width = 250.0f,
+                                            .on_item_expanded = [this](const std::string& id, bool exp) {
+                                                hud_msg_ = "Toggled milestone " + id + (exp ? " (Expanded details)" : " (Collapsed)");
+                                                setState([] {});
+                                            }
+                                        })
+                                    }
+                                })
+                            }),
+                            container({
+                                .color = 0xFF1E293B,
+                                .border_radius = BorderRadius::circular(10.0f),
+                                .border = Border(0xFF334155, 1.0f),
+                                .width = StyleValue::point(600.0f),
+                                .padding = StyleInsets::all(16.0f),
+                                .child = column({
+                                    .gap = StyleValue::point(10.0f),
+                                    .children = {
+                                        text("3. Real-Time Shipment Tracking (Vertical Start Aligned)", {
+                                            .color = 0xFFF59E0B,
+                                            .font_size = 14.0f,
+                                            .font_weight = FontWeight::Bold
+                                        }),
+                                        text("Live delivery status with custom transport icons and status colors.", {
+                                            .color = 0xFF94A3B8,
+                                            .font_size = 12.0f
+                                        }),
+                                        timeline({
+                                            .controller = logistics_ctrl_,
+                                            .orientation = TimelineOrientation::Vertical,
+                                            .alignment = TimelineAlignment::Start,
+                                            .node_size = 26.0f,
+                                            .item_spacing = 14.0f,
+                                            .on_item_tap = [this](const TimelineItem& it) {
+                                                hud_msg_ = "Selected Logistics Event: " + it.title;
+                                                setState([] {});
+                                            }
+                                        })
+                                    }
+                                })
+                            })
+                        }
+                    }),
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center);
-
-        // ── 1. Horizontal CI/CD Stepper Card ──────────────────────────
-        TimelineOptions pipe_opts;
-        pipe_opts.orientation = TimelineOrientation::Horizontal;
-        pipe_opts.is_stepper = true;
-        pipe_opts.node_size = 28.0f;
-        pipe_opts.card_width = 190.0f;
-        pipe_opts.on_step_changed = [this](int step) {
-            hud_msg_ = "Switched to Pipeline Step #" + std::to_string(step + 1);
-            setState([] {});
-        };
-
-        auto pipe_widget = timeline(pipeline_ctrl_, pipe_opts);
-
-        auto pipe_title = text("1. CI/CD Deployment Pipeline (Horizontal Interactive Stepper)");
-        pipe_title->fontSize(14.0f).bold().color(0xFF38BDF8);
-
-        auto btn_prev = button(text("⏮ Previous Step"), [this] {
-            pipeline_ctrl_->prevStep();
-            hud_msg_ = "Active Step: #" + std::to_string(pipeline_ctrl_->getActiveStep() + 1);
-            setState([] {});
+                    container({
+                        .color = 0xFF1E293B,
+                        .border_radius = BorderRadius::circular(6.0f),
+                        .border = Border(0xFF334155, 1.0f),
+                        .width = StyleValue::point(1220.0f),
+                        .padding = StyleInsets::symmetric(6.0f, 12.0f),
+                        .child = row({
+                            .children = {
+                                text("💡 " + hud_msg_, {
+                                    .color = 0xFF38BDF8,
+                                    .font_size = 12.0f
+                                })
+                            }
+                        })
+                    })
+                }
+            })
         });
-
-        auto btn_next = button(text("Next Step ➔"), [this] {
-            pipeline_ctrl_->nextStep();
-            hud_msg_ = "Active Step: #" + std::to_string(pipeline_ctrl_->getActiveStep() + 1);
-            setState([] {});
-        });
-
-        std::vector<WidgetPtr> pipe_btn_items = {btn_prev, btn_next};
-        auto pipe_btn_row = row(pipe_btn_items);
-        pipe_btn_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
-
-        std::vector<WidgetPtr> pipe_hdr_items = {pipe_title, pipe_btn_row};
-        auto pipe_hdr_row = row(pipe_hdr_items);
-        pipe_hdr_row->justifyContent(Justify::SpaceBetween).alignItems(Align::Center);
-
-        std::vector<WidgetPtr> c1_items = {pipe_hdr_row, pipe_widget};
-        auto c1_col = column(c1_items);
-        c1_col->gap(StyleValue::point(10.0f));
-
-        auto card1 = container(c1_col);
-        card1->color(0xFF1E293B)
-             .borderRadius(10.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(16.0f)
-             .width(1220.0f);
-
-        // ── 2. Vertical Alternate Milestone Changelog Card ────────────
-        TimelineOptions mile_opts;
-        mile_opts.orientation = TimelineOrientation::Vertical;
-        mile_opts.alignment = TimelineAlignment::Alternate;
-        mile_opts.node_size = 26.0f;
-        mile_opts.card_width = 250.0f;
-        mile_opts.on_item_expanded = [this](const std::string& id, bool exp) {
-            hud_msg_ = "Toggled milestone " + id + (exp ? " (Expanded details)" : " (Collapsed)");
-            setState([] {});
-        };
-
-        auto mile_widget = timeline(milestone_ctrl_, mile_opts);
-
-        auto c2_title = text("2. Release Milestones & Changelog (Vertical Alternate Zig-Zag)");
-        c2_title->fontSize(14.0f).bold().color(0xFF10B981);
-
-        auto c2_sub = text("Click on any milestone card to expand or collapse detailed changelog notes.");
-        c2_sub->fontSize(12.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> c2_items = {c2_title, c2_sub, mile_widget};
-        auto c2_col = column(c2_items);
-        c2_col->gap(StyleValue::point(10.0f));
-
-        auto card2 = container(c2_col);
-        card2->color(0xFF1E293B)
-             .borderRadius(10.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(16.0f)
-             .width(600.0f);
-
-        // ── 3. Vertical Standard Logistics Tracking Card ──────────────
-        TimelineOptions log_opts;
-        log_opts.orientation = TimelineOrientation::Vertical;
-        log_opts.alignment = TimelineAlignment::Start;
-        log_opts.node_size = 26.0f;
-        log_opts.item_spacing = 14.0f;
-        log_opts.on_item_tap = [this](const TimelineItem& it) {
-            hud_msg_ = "Selected Logistics Event: " + it.title;
-            setState([] {});
-        };
-
-        auto log_widget = timeline(logistics_ctrl_, log_opts);
-
-        auto c3_title = text("3. Real-Time Shipment Tracking (Vertical Start Aligned)");
-        c3_title->fontSize(14.0f).bold().color(0xFFF59E0B);
-
-        auto c3_sub = text("Live delivery status with custom transport icons and status colors.");
-        c3_sub->fontSize(12.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> c3_items = {c3_title, c3_sub, log_widget};
-        auto c3_col = column(c3_items);
-        c3_col->gap(StyleValue::point(10.0f));
-
-        auto card3 = container(c3_col);
-        card3->color(0xFF1E293B)
-             .borderRadius(10.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(16.0f)
-             .width(600.0f);
-
-        // Bottom Row: Card2 & Card3
-        std::vector<WidgetPtr> bot_items = {card2, card3};
-        auto bot_row = row(bot_items);
-        bot_row->gap(StyleValue::point(20.0f))
-               .justifyContent(Justify::Center);
-
-        // HUD / Status
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.0f).color(0xFF38BDF8);
-
-        std::vector<WidgetPtr> hud_items = {hud_txt};
-        auto hud_row = row(hud_items);
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(6.0f, 12.0f)
-               .width(1220.0f);
-
-        // Main Page Stack
-        std::vector<WidgetPtr> page_items = {title_col, card1, bot_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(14.0f))
-                .alignItems(Align::Center);
-
-        auto app_root = container(page_col);
-        app_root->color(0xFF0B1120)
-                .paddingAll(16.0f)
-                .flexGrow(1.0f);
-
-        return app_root;
     }
 };
 

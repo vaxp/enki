@@ -27,31 +27,49 @@ public:
             setState([this, val]{ switch1_ = val; });
         });
         auto text1 = std::make_shared<Text>("Off by default", TextStyle{.color = 0xFFCCCCCC});
-        auto row1 = row({sw1, text1});
+        std::vector<WidgetPtr> r1_items;
+        r1_items.push_back(sw1);
+        r1_items.push_back(text1);
+        auto row1 = row(r1_items);
         row1->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
 
         auto sw2 = toggleSwitch(switch2_, [this](bool val){
             setState([this, val]{ switch2_ = val; });
         });
         auto text2 = std::make_shared<Text>("On by default", TextStyle{.color = 0xFFCCCCCC});
-        auto row2 = row({sw2, text2});
+        std::vector<WidgetPtr> r2_items;
+        r2_items.push_back(sw2);
+        r2_items.push_back(text2);
+        auto row2 = row(r2_items);
         row2->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
         
-        SwitchOptions disabled_opt;
+        SwitchProps disabled_opt;
         disabled_opt.disabled = true;
         auto sw3 = toggleSwitch(false, nullptr, disabled_opt);
         auto text3 = std::make_shared<Text>("Disabled Switch (Off)", TextStyle{.color = 0xFF888888});
-        auto row3 = row({sw3, text3});
+        std::vector<WidgetPtr> r3_items;
+        r3_items.push_back(sw3);
+        r3_items.push_back(text3);
+        auto row3 = row(r3_items);
         row3->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
         
-        SwitchOptions disabled_opt_on;
+        SwitchProps disabled_opt_on;
         disabled_opt_on.disabled = true;
         auto sw4 = toggleSwitch(true, nullptr, disabled_opt_on);
         auto text4 = std::make_shared<Text>("Disabled Switch (On)", TextStyle{.color = 0xFF888888});
-        auto row4 = row({sw4, text4});
+        std::vector<WidgetPtr> r4_items;
+        r4_items.push_back(sw4);
+        r4_items.push_back(text4);
+        auto row4 = row(r4_items);
         row4->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
 
-        auto col = column({title, row1, row2, row3, row4});
+        std::vector<WidgetPtr> col_items;
+        col_items.push_back(title);
+        col_items.push_back(row1);
+        col_items.push_back(row2);
+        col_items.push_back(row3);
+        col_items.push_back(row4);
+        auto col = column(col_items);
         col->gap(StyleValue::point(24.0f));
         col->padding(StyleInsets::all(32.0f));
 

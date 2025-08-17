@@ -65,10 +65,10 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const Calendar*>(widget());
-        view_year_ = w->options.initial_date.year;
-        view_month_ = w->options.initial_date.month;
-        selected_date_ = w->options.initial_date;
-        all_events_ = w->events;
+        view_year_ = w->props.initial_date.year;
+        view_month_ = w->props.initial_date.month;
+        selected_date_ = w->props.initial_date;
+        all_events_ = w->props.events;
 
         wireController();
     }
@@ -76,42 +76,42 @@ public:
     void didUpdateWidget(const Widget& old) override {
         State::didUpdateWidget(old);
         auto* w = static_cast<const Calendar*>(widget());
-        all_events_ = w->events;
+        all_events_ = w->props.events;
         wireController();
     }
 
     void wireController() {
         auto* w = static_cast<const Calendar*>(widget());
-        if (w->controller) {
-            w->controller->select_date_fn = [this](CalendarDate d) {
+        if (w->props.controller) {
+            w->props.controller->select_date_fn = [this](CalendarDate d) {
                 selected_date_ = d;
                 view_year_ = d.year;
                 view_month_ = d.month;
                 setState([] {});
             };
-            w->controller->select_range_fn = [this](CalendarDate s, CalendarDate e) {
+            w->props.controller->select_range_fn = [this](CalendarDate s, CalendarDate e) {
                 range_start_ = s;
                 range_end_ = e;
                 setState([] {});
             };
-            w->controller->go_to_today_fn = [this] {
+            w->props.controller->go_to_today_fn = [this] {
                 view_year_ = 2026;
                 view_month_ = 8;
                 selected_date_ = {2026, 8, 19};
                 setState([] {});
             };
-            w->controller->next_month_fn = [this] { nextMonth(); };
-            w->controller->prev_month_fn = [this] { prevMonth(); };
-            w->controller->set_month_fn = [this](int y, int m) {
+            w->props.controller->next_month_fn = [this] { nextMonth(); };
+            w->props.controller->prev_month_fn = [this] { prevMonth(); };
+            w->props.controller->set_month_fn = [this](int y, int m) {
                 view_year_ = y;
                 view_month_ = m;
                 setState([] {});
             };
-            w->controller->add_event_fn = [this](CalendarEvent ev) {
+            w->props.controller->add_event_fn = [this](CalendarEvent ev) {
                 all_events_.push_back(std::move(ev));
                 setState([] {});
             };
-            w->controller->get_selected_date_fn = [this] { return selected_date_; };
+            w->props.controller->get_selected_date_fn = [this] { return selected_date_; };
         }
     }
 
@@ -123,7 +123,7 @@ public:
             view_month_++;
         }
         auto* w = static_cast<const Calendar*>(widget());
-        if (w->options.on_month_changed) w->options.on_month_changed(view_year_, view_month_);
+        if (w->props.on_month_changed) w->props.on_month_changed(view_year_, view_month_);
         setState([] {});
     }
 
@@ -135,17 +135,17 @@ public:
             view_month_--;
         }
         auto* w = static_cast<const Calendar*>(widget());
-        if (w->options.on_month_changed) w->options.on_month_changed(view_year_, view_month_);
+        if (w->props.on_month_changed) w->props.on_month_changed(view_year_, view_month_);
         setState([] {});
     }
 
     void handleDayClick(CalendarDate d) {
         auto* w = static_cast<const Calendar*>(widget());
 
-        if (w->options.selection_mode == CalendarSelectionMode::Single) {
+        if (w->props.selection_mode == CalendarSelectionMode::Single) {
             selected_date_ = d;
-            if (w->options.on_date_selected) w->options.on_date_selected(d);
-        } else if (w->options.selection_mode == CalendarSelectionMode::Range) {
+            if (w->props.on_date_selected) w->props.on_date_selected(d);
+        } else if (w->props.selection_mode == CalendarSelectionMode::Range) {
             if (!is_selecting_range_end_ || d < range_start_) {
                 range_start_ = d;
                 range_end_ = d;
@@ -153,7 +153,7 @@ public:
             } else {
                 range_end_ = d;
                 is_selecting_range_end_ = false;
-                if (w->options.on_range_selected) w->options.on_range_selected(range_start_, range_end_);
+                if (w->props.on_range_selected) w->props.on_range_selected(range_start_, range_end_);
             }
         }
 
@@ -162,7 +162,7 @@ public:
 
     // ── Build Single Day Cell ─────────────────────────────────────
 
-    WidgetPtr buildDayCell(CalendarDate date, bool is_current_month, const CalendarOptions& opts) {
+    WidgetPtr buildDayCell(CalendarDate date, bool is_current_month, const CalendarProps& opts) {
         bool is_today = (date == CalendarDate{2026, 8, 19});
 
         bool is_selected = false;
@@ -244,7 +244,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const Calendar*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         // ── 1. Month Header Bar ───────────────────────────────────────
         std::string month_str = std::string(getMonthName(view_month_)) + " " + std::to_string(view_year_);

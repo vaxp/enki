@@ -45,7 +45,7 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const TextFormField*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         if (opts.controller) {
             controller_ = opts.controller;
@@ -61,23 +61,23 @@ public:
     void didUpdateWidget(const Widget& old) override {
         State::didUpdateWidget(old);
         auto* w = static_cast<const TextFormField*>(widget());
-        if (w && w->options.controller) {
-            controller_ = w->options.controller;
+        if (w && w->props.controller) {
+            controller_ = w->props.controller;
         }
     }
 
     void dispose() override {
         auto* w = static_cast<const TextFormField*>(widget());
-        if (w && w->options.form_state) {
-            w->options.form_state->unregisterField(this);
+        if (w && w->props.form_state) {
+            w->props.form_state->unregisterField(this);
         }
         State::dispose();
     }
 
     bool validate() override {
         auto* w = static_cast<const TextFormField*>(widget());
-        if (w && w->options.validator) {
-            auto res = w->options.validator(controller_->text);
+        if (w && w->props.validator) {
+            auto res = w->props.validator(controller_->text);
             std::string prev_err = error_text_;
             error_text_ = res.value_or("");
             if (prev_err != error_text_) {
@@ -90,15 +90,15 @@ public:
 
     void save() override {
         auto* w = static_cast<const TextFormField*>(widget());
-        if (w && w->options.on_saved) {
-            w->options.on_saved(controller_->text);
+        if (w && w->props.on_saved) {
+            w->props.on_saved(controller_->text);
         }
     }
 
     void reset() override {
         auto* w = static_cast<const TextFormField*>(widget());
         if (w) {
-            controller_->text = w->options.initial_value;
+            controller_->text = w->props.initial_value;
             controller_->clearSelection();
             error_text_.clear();
             is_touched_ = false;
@@ -108,7 +108,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const TextFormField*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         std::vector<WidgetPtr> col_items;
 
@@ -130,14 +130,14 @@ public:
         }
 
         // 2. Main TextField Input
-        TextFieldOptions tf_opts;
+        TextFieldProps tf_opts;
         tf_opts.hint_text = opts.hint;
         tf_opts.obscure_text = opts.obscure_text;
         tf_opts.on_changed = [this](std::string val) {
             is_touched_ = true;
             auto* cur_w = static_cast<const TextFormField*>(widget());
-            if (cur_w && cur_w->options.on_changed) {
-                cur_w->options.on_changed(val);
+            if (cur_w && cur_w->props.on_changed) {
+                cur_w->props.on_changed(val);
             }
             if (!error_text_.empty()) {
                 validate();
@@ -201,10 +201,10 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const CheckboxFormField*>(widget());
-        is_checked_ = w->options.initial_value;
+        is_checked_ = w->props.initial_value;
 
-        if (w->options.form_state) {
-            w->options.form_state->registerField(this);
+        if (w->props.form_state) {
+            w->props.form_state->registerField(this);
         }
     }
 
@@ -212,22 +212,22 @@ public:
         State::didUpdateWidget(old);
         auto* w = static_cast<const CheckboxFormField*>(widget());
         if (w) {
-            is_checked_ = w->options.initial_value;
+            is_checked_ = w->props.initial_value;
         }
     }
 
     void dispose() override {
         auto* w = static_cast<const CheckboxFormField*>(widget());
-        if (w && w->options.form_state) {
-            w->options.form_state->unregisterField(this);
+        if (w && w->props.form_state) {
+            w->props.form_state->unregisterField(this);
         }
         State::dispose();
     }
 
     bool validate() override {
         auto* w = static_cast<const CheckboxFormField*>(widget());
-        if (w && w->options.validator) {
-            auto res = w->options.validator(is_checked_);
+        if (w && w->props.validator) {
+            auto res = w->props.validator(is_checked_);
             std::string prev_err = error_text_;
             error_text_ = res.value_or("");
             if (prev_err != error_text_) {
@@ -240,15 +240,15 @@ public:
 
     void save() override {
         auto* w = static_cast<const CheckboxFormField*>(widget());
-        if (w && w->options.on_saved) {
-            w->options.on_saved(is_checked_);
+        if (w && w->props.on_saved) {
+            w->props.on_saved(is_checked_);
         }
     }
 
     void reset() override {
         auto* w = static_cast<const CheckboxFormField*>(widget());
         if (w) {
-            is_checked_ = w->options.initial_value;
+            is_checked_ = w->props.initial_value;
             error_text_.clear();
             setState([] {});
         }
@@ -256,7 +256,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const CheckboxFormField*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         auto cb = checkbox(is_checked_, [this, opts](bool val) {
             is_checked_ = val;

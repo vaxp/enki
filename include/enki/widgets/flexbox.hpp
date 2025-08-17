@@ -312,6 +312,127 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Declarative Props (C++20 Designated Initializers Support)
+// ════════════════════════════════════════════════════════════════
+
+struct FlexboxProps {
+    std::optional<Direction>     direction;
+    std::optional<FlexDirection> flex_direction;
+    std::optional<FlexWrap>      flex_wrap;
+    std::optional<Display>       display;
+    std::optional<Overflow>      overflow;
+    std::optional<BoxSizing>     box_sizing;
+    std::optional<PositionType>  position_type;
+    std::optional<Justify>       justify_content;
+    std::optional<Align>         align_items;
+    std::optional<Align>         align_self;
+    std::optional<Align>         align_content;
+    std::optional<float>         flex;
+    std::optional<float>         flex_grow;
+    std::optional<float>         flex_shrink;
+    std::optional<StyleValue>    flex_basis;
+    std::optional<StyleValue>    gap;
+    std::optional<StyleValue>    row_gap;
+    std::optional<StyleValue>    column_gap;
+    std::optional<StyleValue>    width;
+    std::optional<StyleValue>    height;
+    std::optional<StyleValue>    min_width;
+    std::optional<StyleValue>    min_height;
+    std::optional<StyleValue>    max_width;
+    std::optional<StyleValue>    max_height;
+    std::optional<float>         aspect_ratio;
+    std::optional<StyleInsets>   padding;
+    std::optional<StyleInsets>   margin;
+    std::optional<StyleInsets>   position;
+    std::optional<StyleBorders>  border;
+
+    std::vector<WidgetPtr>       children;
+    Key                          key = Key::none();
+
+    FlexboxStyle extractStyle() const {
+        FlexboxStyle s;
+        if (direction) s.direction = direction;
+        if (flex_direction) s.flex_direction = flex_direction;
+        if (flex_wrap) s.flex_wrap = flex_wrap;
+        if (display) s.display = display;
+        if (overflow) s.overflow = overflow;
+        if (box_sizing) s.box_sizing = box_sizing;
+        if (position_type) s.position_type = position_type;
+        if (justify_content) s.justify_content = justify_content;
+        if (align_items) s.align_items = align_items;
+        if (align_self) s.align_self = align_self;
+        if (align_content) s.align_content = align_content;
+        if (flex) s.flex = flex;
+        if (flex_grow) s.flex_grow = flex_grow;
+        if (flex_shrink) s.flex_shrink = flex_shrink;
+        if (flex_basis) s.flex_basis = *flex_basis;
+        if (gap) s.gap = *gap;
+        if (row_gap) s.row_gap = *row_gap;
+        if (column_gap) s.column_gap = *column_gap;
+        if (width) s.width = *width;
+        if (height) s.height = *height;
+        if (min_width) s.min_width = *min_width;
+        if (min_height) s.min_height = *min_height;
+        if (max_width) s.max_width = *max_width;
+        if (max_height) s.max_height = *max_height;
+        if (aspect_ratio) s.aspect_ratio = aspect_ratio;
+        if (padding) s.padding = *padding;
+        if (margin) s.margin = *margin;
+        if (position) s.position = *position;
+        if (border) s.border = *border;
+        return s;
+    }
+};
+
+struct FlexItemProps {
+    std::optional<Align>         align_self;
+    std::optional<float>         flex;
+    std::optional<float>         flex_grow;
+    std::optional<float>         flex_shrink;
+    std::optional<StyleValue>    flex_basis;
+    std::optional<PositionType>  position_type;
+    std::optional<StyleValue>    width;
+    std::optional<StyleValue>    height;
+    std::optional<StyleValue>    min_width;
+    std::optional<StyleValue>    min_height;
+    std::optional<StyleValue>    max_width;
+    std::optional<StyleValue>    max_height;
+    std::optional<float>         aspect_ratio;
+    std::optional<StyleInsets>   padding;
+    std::optional<StyleInsets>   margin;
+    std::optional<StyleInsets>   position;
+
+    WidgetPtr child = nullptr;
+    Key key = Key::none();
+
+    FlexboxStyle extractStyle() const {
+        FlexboxStyle s;
+        if (align_self) s.align_self = align_self;
+        if (flex) s.flex = flex;
+        if (flex_grow) s.flex_grow = flex_grow;
+        if (flex_shrink) s.flex_shrink = flex_shrink;
+        if (flex_basis) s.flex_basis = *flex_basis;
+        if (position_type) s.position_type = position_type;
+        if (width) s.width = *width;
+        if (height) s.height = *height;
+        if (min_width) s.min_width = *min_width;
+        if (min_height) s.min_height = *min_height;
+        if (max_width) s.max_width = *max_width;
+        if (max_height) s.max_height = *max_height;
+        if (aspect_ratio) s.aspect_ratio = aspect_ratio;
+        if (padding) s.padding = *padding;
+        if (margin) s.margin = *margin;
+        if (position) s.position = *position;
+        return s;
+    }
+};
+
+struct ExpandedProps {
+    float flex = 1.0f;
+    WidgetPtr child = nullptr;
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -329,6 +450,10 @@ inline std::shared_ptr<Flexbox> flexbox(FlexboxStyle style, std::vector<WidgetPt
 
 inline std::shared_ptr<Flexbox> flexbox(FlexboxStyle style, std::initializer_list<WidgetPtr> children) {
     return std::make_shared<Flexbox>(std::move(style), std::vector<WidgetPtr>(children));
+}
+
+inline std::shared_ptr<Flexbox> flexbox(FlexboxProps props) {
+    return std::make_shared<Flexbox>(props.key, props.extractStyle(), std::move(props.children));
 }
 
 inline std::shared_ptr<Row> row(std::vector<WidgetPtr> children) {
@@ -355,6 +480,13 @@ inline std::shared_ptr<Row> row(Justify justify, Align align, std::initializer_l
     return std::make_shared<Row>(justify, align, std::vector<WidgetPtr>(children));
 }
 
+inline std::shared_ptr<Row> row(FlexboxProps props) {
+    auto r = std::make_shared<Row>(props.key, std::move(props.children));
+    r->style = props.extractStyle();
+    r->style.flex_direction = FlexDirection::Row;
+    return r;
+}
+
 inline std::shared_ptr<Column> column(std::vector<WidgetPtr> children) {
     return std::make_shared<Column>(std::move(children));
 }
@@ -379,6 +511,13 @@ inline std::shared_ptr<Column> column(Justify justify, Align align, std::initial
     return std::make_shared<Column>(justify, align, std::vector<WidgetPtr>(children));
 }
 
+inline std::shared_ptr<Column> column(FlexboxProps props) {
+    auto c = std::make_shared<Column>(props.key, std::move(props.children));
+    c->style = props.extractStyle();
+    c->style.flex_direction = FlexDirection::Column;
+    return c;
+}
+
 inline std::shared_ptr<Wrap> wrap(std::vector<WidgetPtr> children) {
     return std::make_shared<Wrap>(std::move(children));
 }
@@ -395,8 +534,20 @@ inline std::shared_ptr<Wrap> wrap(Justify justify, Align align, std::vector<Widg
     return std::make_shared<Wrap>(justify, align, std::move(children));
 }
 
+inline std::shared_ptr<Wrap> wrap(FlexboxProps props) {
+    auto w = std::make_shared<Wrap>(props.key, std::move(props.children));
+    w->style = props.extractStyle();
+    w->style.flex_direction = FlexDirection::Row;
+    w->style.flex_wrap = FlexWrap::Wrap;
+    return w;
+}
+
 inline std::shared_ptr<FlexItem> flexItem(FlexboxStyle style, WidgetPtr child) {
     return std::make_shared<FlexItem>(std::move(style), std::move(child));
+}
+
+inline std::shared_ptr<FlexItem> flexItem(FlexItemProps props) {
+    return std::make_shared<FlexItem>(props.key, props.extractStyle(), std::move(props.child));
 }
 
 inline std::shared_ptr<FlexItem> expanded(WidgetPtr child, float flex = 1.0f) {
@@ -407,12 +558,28 @@ inline std::shared_ptr<FlexItem> expanded(WidgetPtr child, float flex = 1.0f) {
     return std::make_shared<FlexItem>(s, std::move(child));
 }
 
+inline std::shared_ptr<FlexItem> expanded(ExpandedProps props) {
+    FlexboxStyle s;
+    s.flex_grow = props.flex;
+    s.flex_shrink = 1.0f;
+    s.flex_basis = StyleValue::point(0.0f);
+    return std::make_shared<FlexItem>(s, std::move(props.child));
+}
+
 inline std::shared_ptr<FlexItem> flexible(WidgetPtr child, float flex = 1.0f) {
     FlexboxStyle s;
     s.flex_grow = flex;
     s.flex_shrink = 1.0f;
     s.flex_basis = StyleValue::autoValue();
     return std::make_shared<FlexItem>(s, std::move(child));
+}
+
+inline std::shared_ptr<FlexItem> flexible(ExpandedProps props) {
+    FlexboxStyle s;
+    s.flex_grow = props.flex;
+    s.flex_shrink = 1.0f;
+    s.flex_basis = StyleValue::autoValue();
+    return std::make_shared<FlexItem>(s, std::move(props.child));
 }
 
 inline std::shared_ptr<FlexItem> spacer(float flex = 1.0f) {

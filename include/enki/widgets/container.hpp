@@ -339,6 +339,49 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Declarative Props (C++20 Designated Initializers Support)
+// ════════════════════════════════════════════════════════════════
+
+struct ContainerProps {
+    // ── Visual Decoration ──────────────────────────────────────
+    std::optional<Color>          color;
+    std::optional<GradientConfig> gradient;
+    std::optional<BorderRadius>   border_radius;
+    std::optional<Border>         border;
+    std::vector<BoxShadow>        box_shadow;
+    std::optional<BoxShape>       shape;
+    std::optional<bool>           clip_content;
+
+    // ── Child Alignment ────────────────────────────────────────
+    std::optional<Alignment>      align;
+
+    // ── Dimensions & Constraints ───────────────────────────────
+    std::optional<StyleValue>     width;
+    std::optional<StyleValue>     height;
+    std::optional<StyleValue>     min_width;
+    std::optional<StyleValue>     min_height;
+    std::optional<StyleValue>     max_width;
+    std::optional<StyleValue>     max_height;
+    std::optional<float>          aspect_ratio;
+
+    // ── Insets ─────────────────────────────────────────────────
+    std::optional<StyleInsets>    padding;
+    std::optional<StyleInsets>    margin;
+    std::optional<StyleInsets>    position;
+
+    // ── Flexbox Item Properties ────────────────────────────────
+    std::optional<float>          flex;
+    std::optional<float>          flex_grow;
+    std::optional<float>          flex_shrink;
+    std::optional<StyleValue>     flex_basis;
+    std::optional<Align>          align_self;
+    std::optional<PositionType>   position_type;
+
+    WidgetPtr child = nullptr;
+    Key key = Key::none();
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -356,6 +399,51 @@ inline std::shared_ptr<Container> container(BoxDecoration decoration, WidgetPtr 
 
 inline std::shared_ptr<Container> container(Key key, BoxDecoration decoration, WidgetPtr child = nullptr) {
     return std::make_shared<Container>(std::move(key), std::move(decoration), std::move(child));
+}
+
+inline std::shared_ptr<Container> container(ContainerProps props) {
+    auto c = std::make_shared<Container>(props.key, std::move(props.child));
+    
+    // Apply Decoration
+    if (props.color) c->color(*props.color);
+    if (props.gradient) c->gradient(*props.gradient);
+    if (props.border_radius) c->borderRadius(*props.border_radius);
+    if (props.border) c->border(*props.border);
+    for (const auto& shadow : props.box_shadow) c->shadow(shadow);
+    if (props.shape) c->shape(*props.shape);
+    if (props.clip_content) c->clip(*props.clip_content);
+    
+    // Apply Alignment
+    if (props.align) c->align(*props.align);
+    
+    // Apply Constraints & Dimensions
+    if (props.width) c->width(*props.width);
+    if (props.height) c->height(*props.height);
+    if (props.min_width) c->minWidth(*props.min_width);
+    if (props.min_height) c->minHeight(*props.min_height);
+    if (props.max_width) c->maxWidth(*props.max_width);
+    if (props.max_height) c->maxHeight(*props.max_height);
+    if (props.aspect_ratio) c->aspectRatio(*props.aspect_ratio);
+    
+    // Apply Insets
+    if (props.padding) c->padding(*props.padding);
+    if (props.margin) c->margin(*props.margin);
+    if (props.position) c->position(*props.position);
+    
+    // Apply Flex Factors
+    if (props.flex) c->flex(*props.flex);
+    if (props.flex_grow) c->flexGrow(*props.flex_grow);
+    if (props.flex_shrink) c->flexShrink(*props.flex_shrink);
+    if (props.flex_basis) c->flexBasis(*props.flex_basis);
+    if (props.align_self) c->alignSelf(*props.align_self);
+    if (props.position_type) c->positionType(*props.position_type);
+    
+    return c;
+}
+
+inline std::shared_ptr<Container> container(ContainerProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return container(std::move(props));
 }
 
 inline std::shared_ptr<Container> sizedBox(float width, float height, WidgetPtr child = nullptr) {

@@ -121,7 +121,7 @@ static sk_sp<skia::textlayout::FontCollection> getTextAreaFontCollection() {
 class RenderTextAreaBox : public RenderBox {
 public:
     std::shared_ptr<TextAreaController> controller;
-    TextAreaOptions options;
+    TextAreaProps options;
     bool is_focused = false;
     bool show_cursor = false;
     float scroll_y = 0.0f;
@@ -129,7 +129,7 @@ public:
 
     std::unique_ptr<skia::textlayout::Paragraph> paragraph_;
 
-    RenderTextAreaBox(std::shared_ptr<TextAreaController> ctrl, TextAreaOptions opt, float scroll)
+    RenderTextAreaBox(std::shared_ptr<TextAreaController> ctrl, TextAreaProps opt, float scroll)
         : controller(std::move(ctrl)), options(std::move(opt)), scroll_y(scroll) {
         
         float line_h = (options.style.font_size > 0 ? options.style.font_size : 14.0f) * 1.45f;
@@ -362,12 +362,12 @@ static RenderTextAreaBox* findTextAreaBox(RenderObject* ro) {
 class RenderTextAreaWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<TextAreaController> controller;
-    TextAreaOptions options;
+    TextAreaProps options;
     bool is_focused;
     bool show_cursor;
     float scroll_y;
 
-    RenderTextAreaWidget(std::shared_ptr<TextAreaController> ctrl, TextAreaOptions opt, bool focused, bool cursor, float scroll)
+    RenderTextAreaWidget(std::shared_ptr<TextAreaController> ctrl, TextAreaProps opt, bool focused, bool cursor, float scroll)
         : SingleChildRenderObjectWidget(Key::none()), controller(std::move(ctrl)),
           options(std::move(opt)), is_focused(focused), show_cursor(cursor), scroll_y(scroll) {}
 

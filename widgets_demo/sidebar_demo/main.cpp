@@ -10,22 +10,24 @@ using namespace enki;
 class SidebarDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        SidebarOptions opts;
-        opts.background_color = 0xFF1E293B;
-        opts.expanded_width = 250.0f;
-        opts.collapsed_width = 60.0f;
-        opts.side = SidebarSide::Left;
-        
-        auto sb_content = container(text("Sidebar Area"));
-        sb_content->paddingAll(20.0f).align(Alignment::TopCenter);
-
-        auto body_content = centerBox(text("Main Body Area"));
-        auto body_container = container(body_content);
-        body_container->color(0xFF0F172A).flex(1.0f);
-
-        auto sb = sidebar(sb_content, body_container, opts);
-        
-        return sb;
+        return sidebar({
+            .sidebar_content = container({
+                .align = Alignment::TopCenter,
+                .padding = StyleInsets::all(20.0f),
+                .child = text("Sidebar Area")
+            }),
+            .body = container({
+                .color = 0xFF0F172A,
+                .flex_grow = 1.0f,
+                .child = centerBox(text("Main Body Area"))
+            }),
+            .options = {
+                .expanded_width = 250.0f,
+                .collapsed_width = 60.0f,
+                .background_color = 0xFF1E293B,
+                .side = SidebarSide::Left
+            }
+        });
     }
 };
 

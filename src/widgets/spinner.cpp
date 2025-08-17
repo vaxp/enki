@@ -35,13 +35,13 @@ inline double getSteadyTimeSecs() {
 
 class RenderSpinner : public RenderBox {
 public:
-    SpinnerOptions options;
+    SpinnerProps options;
     float anim_time;
     double start_time;
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderSpinner(const SpinnerOptions& opt, float anim_t, double st)
+    RenderSpinner(const SpinnerProps& opt, float anim_t, double st)
         : options(opt), anim_time(anim_t), start_time(st) {
         
         updateAnuStyles();
@@ -65,7 +65,7 @@ public:
         }
     }
 
-    void setOptions(const SpinnerOptions& opt) {
+    void setOptions(const SpinnerProps& opt) {
         options = opt;
         updateAnuStyles();
         markNeedsLayout();
@@ -238,11 +238,11 @@ public:
 
 class SpinnerRenderWidget : public SingleChildRenderObjectWidget {
 public:
-    SpinnerOptions options;
+    SpinnerProps options;
     float anim_time;
     double start_time;
 
-    SpinnerRenderWidget(SpinnerOptions opt, float anim_t, double st, WidgetPtr child)
+    SpinnerRenderWidget(SpinnerProps opt, float anim_t, double st, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
           options(std::move(opt)), anim_time(anim_t), start_time(st) {}
 

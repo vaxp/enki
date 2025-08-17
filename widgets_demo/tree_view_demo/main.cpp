@@ -27,85 +27,88 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         // ── Build tree data ────────────────────────────────────
         std::vector<TreeNodeData> nodes = {
-            TreeNodeData("home", folder(), std::make_shared<Text>("Home", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                TreeNodeData("docs", folder(), std::make_shared<Text>("Documents", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                    TreeNodeData("resume", file_icon(), std::make_shared<Text>("Resume.pdf", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
-                    TreeNodeData("cover",  file_icon(), std::make_shared<Text>("CoverLetter.docx", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
-                    TreeNodeData("notes",  file_icon(), std::make_shared<Text>("Notes.md", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
+            TreeNodeData("home", folder(), text("Home", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                TreeNodeData("docs", folder(), text("Documents", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                    TreeNodeData("resume", file_icon(), text("Resume.pdf", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
+                    TreeNodeData("cover",  file_icon(), text("CoverLetter.docx", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
+                    TreeNodeData("notes",  file_icon(), text("Notes.md", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
                 }).expand(),
-                TreeNodeData("pics", folder(0xFF2563EB), std::make_shared<Text>("Pictures", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                    TreeNodeData("vac", folder(), std::make_shared<Text>("Vacation 2024", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                        TreeNodeData("p1", file_icon(), std::make_shared<Text>("IMG_001.jpg", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
-                        TreeNodeData("p2", file_icon(), std::make_shared<Text>("IMG_002.jpg", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
+                TreeNodeData("pics", folder(0xFF2563EB), text("Pictures", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                    TreeNodeData("vac", folder(), text("Vacation 2024", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                        TreeNodeData("p1", file_icon(), text("IMG_001.jpg", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
+                        TreeNodeData("p2", file_icon(), text("IMG_002.jpg", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
                     }),
-                    TreeNodeData("pf", folder(), std::make_shared<Text>("Profile Photos", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f})),
+                    TreeNodeData("pf", folder(), text("Profile Photos", { .color = 0xFFE2E8F0, .font_size = 14.0f })),
                 }),
-                TreeNodeData("dl", folder(0xFF10B981), std::make_shared<Text>("Downloads", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                    TreeNodeData("f1", file_icon(), std::make_shared<Text>("setup.exe", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
-                    TreeNodeData("f2", file_icon(), std::make_shared<Text>("archive.zip", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
+                TreeNodeData("dl", folder(0xFF10B981), text("Downloads", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                    TreeNodeData("f1", file_icon(), text("setup.exe", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
+                    TreeNodeData("f2", file_icon(), text("archive.zip", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
                 }),
             }).expand(),
-            TreeNodeData("dev", folder(0xFF8B5CF6), std::make_shared<Text>("Projects", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                TreeNodeData("enki_proj", folder(0xFF2563EB), std::make_shared<Text>("enki", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f}), {
-                    TreeNodeData("inc", folder(), std::make_shared<Text>("include", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f})),
-                    TreeNodeData("src2", folder(), std::make_shared<Text>("src", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f})),
-                    TreeNodeData("mb", file_icon(), std::make_shared<Text>("meson.build", TextStyle{.color=0xFFB0C4D8,.font_size=13.0f})),
+            TreeNodeData("dev", folder(0xFF8B5CF6), text("Projects", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                TreeNodeData("enki_proj", folder(0xFF2563EB), text("enki", { .color = 0xFFE2E8F0, .font_size = 14.0f }), {
+                    TreeNodeData("inc", folder(), text("include", { .color = 0xFFE2E8F0, .font_size = 14.0f })),
+                    TreeNodeData("src2", folder(), text("src", { .color = 0xFFE2E8F0, .font_size = 14.0f })),
+                    TreeNodeData("mb", file_icon(), text("meson.build", { .color = 0xFFB0C4D8, .font_size = 13.0f })),
                 }),
-                TreeNodeData("web_proj", folder(), std::make_shared<Text>("webapp", TextStyle{.color=0xFFE2E8F0,.font_size=14.0f})),
+                TreeNodeData("web_proj", folder(), text("webapp", { .color = 0xFFE2E8F0, .font_size = 14.0f })),
             }),
-            TreeNodeData("trash", std::make_shared<Text>("🗑", TextStyle{.font_size=14.0f}),
-                         std::make_shared<Text>("Trash", TextStyle{.color=0xFF8B9BB4,.font_size=14.0f}), {}).disable(),
+            TreeNodeData("trash", text("🗑", { .font_size = 14.0f }),
+                         text("Trash", { .color = 0xFF8B9BB4, .font_size = 14.0f }), {}).disable(),
         };
 
         // ── Build TreeView ─────────────────────────────────────
-        auto tree = treeView(std::move(nodes));
-        tree->showLines(true);
-        tree->indentWidth(18.0f);
-        tree->nodeHeight(30.0f);
-        tree->onNodeSelected([this](const std::string& id){
-            setState([this, id]{ last_action_ = "Selected: " + id; });
-            std::cout << "[TreeView] Selected: " << id << "\n";
+        return container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = column({
+                .children = {
+                    container({
+                        .color = 0xFF0D1117,
+                        .width = StyleValue::percent(100.0f),
+                        .padding = StyleInsets::symmetric(14.0f, 18.0f),
+                        .child = column({
+                            .gap = StyleValue::point(4.0f),
+                            .children = {
+                                text("TreeView Demo — File Browser", { .color = 0xFFFFFFFF, .font_size = 22.0f, .font_weight = FontWeight::Bold }),
+                                text("Expand/collapse · Selection · Connector lines · Disabled nodes", { .color = 0xFF8B9BB4, .font_size = 12.0f })
+                            }
+                        })
+                    }),
+                    container({
+                        .color = 0xFF161B22,
+                        .width = StyleValue::percent(100.0f),
+                        .padding = StyleInsets::symmetric(7.0f, 18.0f),
+                        .child = text(last_action_, { .color = 0xFF8B9BB4, .font_size = 12.0f })
+                    }),
+                    flexItem(
+                        { .flex_grow = 1.0f, .flex_shrink = 1.0f },
+                        container({
+                            .padding = StyleInsets::all(8.0f),
+                            .child = treeView({
+                                .nodes = std::move(nodes),
+                                .tree_theme = {
+                                    .indent_width = 18.0f,
+                                    .node_height = 30.0f,
+                                    .show_lines = true
+                                },
+                                .on_node_expanded = [this](const std::string& id) {
+                                    setState([this, id]{ last_action_ = "Expanded: " + id; });
+                                },
+                                .on_node_collapsed = [this](const std::string& id) {
+                                    setState([this, id]{ last_action_ = "Collapsed: " + id; });
+                                },
+                                .on_node_selected = [this](const std::string& id) {
+                                    setState([this, id]{ last_action_ = "Selected: " + id; });
+                                    std::cout << "[TreeView] Selected: " << id << "\\n";
+                                }
+                            })
+                        })
+                    )
+                }
+            })
         });
-        tree->onNodeExpanded([this](const std::string& id){
-            setState([this, id]{ last_action_ = "Expanded: " + id; });
-        });
-        tree->onNodeCollapsed([this](const std::string& id){
-            setState([this, id]{ last_action_ = "Collapsed: " + id; });
-        });
-        tree->paddingAll(8.0f);
-
-        auto tree_flex = std::make_shared<FlexItem>(tree);
-        tree_flex->flexGrow(1.0f).flexShrink(1.0f);
-
-        // Header
-        auto title = std::make_shared<Text>("TreeView Demo — File Browser");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
-        auto sub = std::make_shared<Text>("Expand/collapse · Selection · Connector lines · Disabled nodes");
-        sub->fontSize(12.0f).color(0xFF8B9BB4);
-        auto hdr_col = column({title, sub});
-        hdr_col->gap(StyleValue::point(4.0f));
-        auto hdr = container(hdr_col);
-        hdr->padding(EdgeInsets::symmetric(14.0f, 18.0f));
-        hdr->color(0xFF0D1117);
-        hdr->width(StyleValue::percent(100.0f));
-
-        // Status bar
-        auto status = std::make_shared<Text>(last_action_);
-        status->fontSize(12.0f).color(0xFF8B9BB4);
-        auto status_bar = container(status);
-        status_bar->padding(EdgeInsets::symmetric(7.0f, 18.0f));
-        status_bar->color(0xFF161B22);
-        status_bar->width(StyleValue::percent(100.0f));
-
-        auto root_col = column({hdr, status_bar, tree_flex});
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->height(StyleValue::percent(100.0f));
-
-        auto root = container(root_col);
-        root->color(0xFF0D1117);
-        root->width(StyleValue::percent(100.0f));
-        root->height(StyleValue::percent(100.0f));
-        return root;
     }
 };
 

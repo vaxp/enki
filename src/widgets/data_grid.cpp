@@ -253,13 +253,13 @@ std::string DataGridController::exportToCsv(bool selected_only) const {
 class RenderDataGridBox : public RenderBox {
 public:
     std::shared_ptr<DataGridController> controller;
-    DataGridOptions options;
+    DataGridProps options;
 
     int hovered_row_index = -1;
     int hovered_col_header = -1;
     int hovered_col_divider = -1; // Index of column divider being hovered
 
-    RenderDataGridBox(std::shared_ptr<DataGridController> ctrl, DataGridOptions opt)
+    RenderDataGridBox(std::shared_ptr<DataGridController> ctrl, DataGridProps opt)
         : controller(std::move(ctrl)), options(std::move(opt)) {
         updateFlexboxStyle();
     }
@@ -706,12 +706,12 @@ static RenderDataGridBox* findDataGridBox(RenderObject* ro) {
 class RenderDataGridWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<DataGridController> controller;
-    DataGridOptions options;
+    DataGridProps options;
     int hovered_row_index;
     int hovered_col_header;
     int hovered_col_divider;
 
-    RenderDataGridWidget(std::shared_ptr<DataGridController> ctrl, DataGridOptions opt,
+    RenderDataGridWidget(std::shared_ptr<DataGridController> ctrl, DataGridProps opt,
                          int h_row, int h_hdr, int h_div)
         : SingleChildRenderObjectWidget(Key::none()), controller(std::move(ctrl)),
           options(std::move(opt)), hovered_row_index(h_row),
@@ -783,7 +783,10 @@ public:
     void initState() override {
         State::initState();
         auto* dg = static_cast<const DataGrid*>(widget());
-        controller_ = dg->controller;
+        controller_ = dg->props.controller;
+        if (!controller_) {
+            controller_ = std::make_shared<DataGridController>();
+        }
 
         if (Platform::instance()) {
             key_down_conn_ = Platform::instance()->onKeyDown().connect([this](int key, int mods) {
@@ -795,7 +798,10 @@ public:
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
         auto* dg = static_cast<const DataGrid*>(widget());
-        controller_ = dg->controller;
+        controller_ = dg->props.controller;
+        if (!controller_) {
+            controller_ = std::make_shared<DataGridController>();
+        }
     }
 
     void dispose() override {
@@ -809,7 +815,7 @@ public:
         auto* dg = static_cast<const DataGrid*>(widget());
 
         auto grid_render = std::make_shared<RenderDataGridWidget>(
-            controller_, dg->options, hovered_row_index_,
+            controller_, dg->props, hovered_row_index_,
             hovered_col_header_, hovered_col_divider_
         );
 
@@ -854,8 +860,8 @@ public:
                     int col_hdr = box->getHitColumnHeader(e.local_position.x, e.local_position.y);
                     if (col_hdr == -99) { // Header select-all checkbox
                         controller_->selectAll(!controller_->isAllSelected());
-                        if (dg->options.on_selection_changed) {
-                            dg->options.on_selection_changed(controller_->getSelectedRowIds());
+                        if (dg->props.on_selection_changed) {
+                            dg->props.on_selection_changed(controller_->getSelectedRowIds());
                         }
                         setState([] {});
                         return;
@@ -863,8 +869,8 @@ public:
                         const auto& cols = controller_->getColumns();
                         if (static_cast<size_t>(col_hdr) < cols.size() && cols[col_hdr].sortable) {
                             controller_->toggleSort(cols[col_hdr].key);
-                            if (dg->options.on_sort_changed) {
-                                dg->options.on_sort_changed(cols[col_hdr].key, controller_->getSortDirection(cols[col_hdr].key));
+                            if (dg->props.on_sort_changed) {
+                                dg->props.on_sort_changed(cols[col_hdr].key, controller_->getSortDirection(cols[col_hdr].key));
                             }
                             setState([] {});
                             return;
@@ -876,16 +882,16 @@ public:
                         const auto& filtered = controller_->getFilteredIndices();
                         if (static_cast<size_t>(hit_r) < filtered.size()) {
                             const auto& row = controller_->getRawRows()[filtered[hit_r]];
-                            if (dg->options.selection_mode == DataGridSelectionMode::RowMultiple) {
+                            if (dg->props.selection_mode == DataGridSelectionMode::RowMultiple) {
                                 controller_->toggleRowSelection(row.id);
-                            } else if (dg->options.selection_mode == DataGridSelectionMode::RowSingle) {
+                            } else if (dg->props.selection_mode == DataGridSelectionMode::RowSingle) {
                                 controller_->selectRow(row.id, true, true);
                             }
-                            if (dg->options.on_selection_changed) {
-                                dg->options.on_selection_changed(controller_->getSelectedRowIds());
+                            if (dg->props.on_selection_changed) {
+                                dg->props.on_selection_changed(controller_->getSelectedRowIds());
                             }
-                            if (dg->options.on_row_tap) {
-                                dg->options.on_row_tap(row.id);
+                            if (dg->props.on_row_tap) {
+                                dg->props.on_row_tap(row.id);
                             }
                             setState([] {});
                         }
@@ -930,7 +936,7 @@ public:
         std::vector<WidgetPtr> main_items = {detector};
 
         // ── Integrated Pagination Toolbar ─────────────────────────────
-        if (dg->options.show_pagination && controller_->getTotalPages() > 1) {
+        if (dg->props.show_pagination && controller_->getTotalPages() > 1) {
             int cur_p = controller_->getCurrentPage();
             int tot_p = controller_->getTotalPages();
             size_t tot_items = controller_->getTotalFilteredCount();

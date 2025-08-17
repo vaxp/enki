@@ -24,11 +24,11 @@ namespace enki {
 class RenderTextField : public RenderParagraph {
 public:
     std::shared_ptr<TextFieldController> controller;
-    TextFieldOptions options;
+    TextFieldProps options;
     bool is_focused = false;
     bool show_cursor = false;
 
-    RenderTextField(std::shared_ptr<InlineSpan> span, std::shared_ptr<TextFieldController> ctrl, const TextFieldOptions& opt)
+    RenderTextField(std::shared_ptr<InlineSpan> span, std::shared_ptr<TextFieldController> ctrl, const TextFieldProps& opt)
         : RenderParagraph(span, opt.style, TextAlign::Start, TextDirection::LTR, TextOverflow::Clip, opt.max_lines, false),
           controller(ctrl), options(opt) {
         ANUNodeStyleSetWidthPercent(anu_node_, 100.0f);
@@ -108,12 +108,12 @@ public:
 class RenderTextFieldWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<TextFieldController> controller;
-    TextFieldOptions options;
+    TextFieldProps options;
     bool is_focused;
     bool show_cursor;
     std::string text_to_display;
 
-    RenderTextFieldWidget(std::string text_to_display, std::shared_ptr<TextFieldController> ctrl, TextFieldOptions opt, bool focused, bool cursor)
+    RenderTextFieldWidget(std::string text_to_display, std::shared_ptr<TextFieldController> ctrl, TextFieldProps opt, bool focused, bool cursor)
         : SingleChildRenderObjectWidget(Key::none()), controller(ctrl), options(opt), is_focused(focused), show_cursor(cursor), text_to_display(std::move(text_to_display)) {}
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {

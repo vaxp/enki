@@ -34,7 +34,33 @@ enum class ColorFormat {
     HSV
 };
 
-struct ColorPickerOptions {
+/// ════════════════════════════════════════════════════════════════
+/// ColorPicker Controller
+/// ════════════════════════════════════════════════════════════════
+
+class ColorPickerController {
+public:
+    std::function<void(Color)> set_color_fn;
+    std::function<void()> open_fn;
+    std::function<void()> close_fn;
+    std::function<Color()> get_color_fn;
+    std::function<std::string()> get_hex_fn;
+
+    void setColor(Color c) { if (set_color_fn) set_color_fn(c); }
+    void open() { if (open_fn) open_fn(); }
+    void close() { if (close_fn) close_fn(); }
+    [[nodiscard]] Color getColor() const { return get_color_fn ? get_color_fn() : 0xFFFFFFFF; }
+    [[nodiscard]] std::string getHex() const { return get_hex_fn ? get_hex_fn() : "#FFFFFFFF"; }
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// ColorPicker Options
+/// ════════════════════════════════════════════════════════════════
+
+struct ColorPickerProps {
+    std::shared_ptr<ColorPickerController> controller = nullptr;
+    WidgetPtr body = nullptr;
+
     ColorPickerMode mode = ColorPickerMode::InputPopup;
     ColorFormat default_format = ColorFormat::HEX;
 
@@ -71,46 +97,22 @@ struct ColorPickerOptions {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// ColorPicker Controller
-/// ════════════════════════════════════════════════════════════════
-
-class ColorPickerController {
-public:
-    std::function<void(Color)> set_color_fn;
-    std::function<void()> open_fn;
-    std::function<void()> close_fn;
-    std::function<Color()> get_color_fn;
-    std::function<std::string()> get_hex_fn;
-
-    void setColor(Color c) { if (set_color_fn) set_color_fn(c); }
-    void open() { if (open_fn) open_fn(); }
-    void close() { if (close_fn) close_fn(); }
-    [[nodiscard]] Color getColor() const { return get_color_fn ? get_color_fn() : 0xFFFFFFFF; }
-    [[nodiscard]] std::string getHex() const { return get_hex_fn ? get_hex_fn() : "#FFFFFFFF"; }
-};
-
-/// ════════════════════════════════════════════════════════════════
 /// ColorPicker Widget
 /// ════════════════════════════════════════════════════════════════
 
 class ColorPicker : public StatefulWidget {
 public:
-    ColorPickerOptions options;
-    std::shared_ptr<ColorPickerController> controller;
-
+    ColorPickerProps props;
     ColorPicker() = default;
-    explicit ColorPicker(ColorPickerOptions opts = {},
-                         std::shared_ptr<ColorPickerController> ctrl = nullptr)
-        : options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit ColorPicker(ColorPickerProps p)
+        : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ColorPicker"; }
 };
 
-inline std::shared_ptr<ColorPicker> colorPicker(
-    ColorPickerOptions options = {},
-    std::shared_ptr<ColorPickerController> controller = nullptr) {
-    return std::make_shared<ColorPicker>(std::move(options), std::move(controller));
+inline std::shared_ptr<ColorPicker> colorPicker(ColorPickerProps props) {
+    return std::make_shared<ColorPicker>(std::move(props));
 }
 
 } // namespace enki

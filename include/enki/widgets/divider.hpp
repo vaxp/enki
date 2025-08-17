@@ -31,10 +31,10 @@ enum class DividerStyle {
 };
 
 // ════════════════════════════════════════════════════════════════
-// DividerOptions
+// DividerProps
 // ════════════════════════════════════════════════════════════════
 
-struct DividerOptions {
+struct DividerProps {
     float height     = 16.0f;          ///< Total bounding box height (or width for VerticalDivider).
     float thickness  = 1.0f;           ///< Thickness of the drawn line.
     float indent     = 0.0f;           ///< Leading space (left for H, top for V).
@@ -67,9 +67,9 @@ struct DividerOptions {
 
 class Divider : public SingleChildRenderObjectWidget {
 public:
-    DividerOptions options;
+    DividerProps options;
 
-    explicit Divider(DividerOptions options = {})
+    explicit Divider(DividerProps options = {})
         : options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
@@ -83,9 +83,9 @@ public:
 
 class VerticalDivider : public SingleChildRenderObjectWidget {
 public:
-    DividerOptions options;
+    DividerProps options;
 
-    explicit VerticalDivider(DividerOptions options = {})
+    explicit VerticalDivider(DividerProps options = {})
         : options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
@@ -97,12 +97,12 @@ public:
 // Factory helpers
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Divider> divider(DividerOptions options = {}) {
-    return std::make_shared<Divider>(std::move(options));
+inline std::shared_ptr<Divider> divider(DividerProps props = {}) {
+    return std::make_shared<Divider>(std::move(props));
 }
 
-inline std::shared_ptr<VerticalDivider> verticalDivider(DividerOptions options = {}) {
-    return std::make_shared<VerticalDivider>(std::move(options));
+inline std::shared_ptr<VerticalDivider> verticalDivider(DividerProps props = {}) {
+    return std::make_shared<VerticalDivider>(std::move(props));
 }
 
 } // namespace enki

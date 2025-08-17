@@ -30,7 +30,8 @@ enum class PlaceholderStyle {
     Solid           ///< Clean tinted scaffolding block
 };
 
-struct PlaceholderOptions {
+struct PlaceholderProps {
+    Key key = Key::none();
     PlaceholderStyle style = PlaceholderStyle::Blueprint;
 
     float width  = 200.0f;
@@ -63,11 +64,11 @@ struct PlaceholderOptions {
 
 class Placeholder : public SingleChildRenderObjectWidget {
 public:
-    PlaceholderOptions options;
+    PlaceholderProps options;
 
     Placeholder() : SingleChildRenderObjectWidget(Key::none(), nullptr) {}
-    explicit Placeholder(PlaceholderOptions opts)
-        : SingleChildRenderObjectWidget(Key::none(), nullptr), options(std::move(opts)) {}
+    explicit Placeholder(PlaceholderProps opts)
+        : SingleChildRenderObjectWidget(opts.key, nullptr), options(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
@@ -78,12 +79,12 @@ public:
 /// Convenience Factory Helpers
 /// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Placeholder> placeholder(PlaceholderOptions options = {}) {
+inline std::shared_ptr<Placeholder> placeholder(PlaceholderProps options = {}) {
     return std::make_shared<Placeholder>(std::move(options));
 }
 
 inline std::shared_ptr<Placeholder> placeholderBlueprint(float w = 240.0f, float h = 140.0f, std::string label = "") {
-    PlaceholderOptions opts;
+    PlaceholderProps opts;
     opts.style = PlaceholderStyle::Blueprint;
     opts.width = w;
     opts.height = h;
@@ -92,7 +93,7 @@ inline std::shared_ptr<Placeholder> placeholderBlueprint(float w = 240.0f, float
 }
 
 inline std::shared_ptr<Placeholder> placeholderSkeleton(float w = 200.0f, float h = 20.0f, float radius = 4.0f) {
-    PlaceholderOptions opts;
+    PlaceholderProps opts;
     opts.style = PlaceholderStyle::Skeleton;
     opts.width = w;
     opts.height = h;
@@ -105,7 +106,7 @@ inline std::shared_ptr<Placeholder> placeholderMediaSlot(std::string label = "Up
                                                          std::string icon = "📁",
                                                          float w = 280.0f, float h = 160.0f,
                                                          std::function<void()> on_tap = nullptr) {
-    PlaceholderOptions opts;
+    PlaceholderProps opts;
     opts.style = PlaceholderStyle::MediaSlot;
     opts.label = std::move(label);
     opts.icon = std::move(icon);

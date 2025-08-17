@@ -23,7 +23,7 @@ void test_default_initialization() {
 
 void test_custom_options() {
     std::cout << "Testing Custom Options..." << std::endl;
-    ButtonOptions opt;
+    ButtonProps opt;
     opt.normal_color = 0xFFFF0000;
     opt.enable_ripple = false;
     opt.custom_shader = "void main() {}";

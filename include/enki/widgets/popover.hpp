@@ -73,7 +73,8 @@ public:
 };
 
 /// Configuration options for Popover styling and positioning
-struct PopoverOptions {
+struct PopoverProps {
+    Key key = Key::none();
     PopoverDirection direction = PopoverDirection::Top;
     PopoverAlignment alignment = PopoverAlignment::Center;
     PopoverTrigger trigger     = PopoverTrigger::Click;
@@ -101,17 +102,20 @@ class Popover : public StatefulWidget {
 public:
     WidgetPtr child;
     std::function<WidgetPtr(BuildContext&)> popover_builder;
-    PopoverOptions options;
+    PopoverProps options;
     std::shared_ptr<PopoverController> controller;
 
     Popover(WidgetPtr child,
             std::function<WidgetPtr(BuildContext&)> popover_builder,
-            PopoverOptions options = PopoverOptions(),
+            PopoverProps options = PopoverProps(),
             std::shared_ptr<PopoverController> controller = nullptr)
         : child(std::move(child)),
           popover_builder(std::move(popover_builder)),
           options(std::move(options)),
           controller(std::move(controller)) {}
+          
+    Popover(Key k, WidgetPtr child, std::function<WidgetPtr(BuildContext&)> popover_builder, PopoverProps options, std::shared_ptr<PopoverController> controller)
+        : StatefulWidget(std::move(k)), child(std::move(child)), popover_builder(std::move(popover_builder)), options(std::move(options)), controller(std::move(controller)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Popover"; }
@@ -122,13 +126,31 @@ public:
 inline WidgetPtr popover(
     WidgetPtr child,
     std::function<WidgetPtr(BuildContext&)> popover_builder,
-    PopoverOptions options = PopoverOptions(),
+    PopoverProps options = PopoverProps(),
     std::shared_ptr<PopoverController> controller = nullptr) {
     return std::make_shared<Popover>(
         std::move(child),
         std::move(popover_builder),
         std::move(options),
         std::move(controller)
+    );
+}
+
+struct PopoverDeclarativeProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    std::function<WidgetPtr(BuildContext&)> popover_builder;
+    PopoverProps options = PopoverProps();
+    std::shared_ptr<PopoverController> controller = nullptr;
+};
+
+inline WidgetPtr popover(PopoverDeclarativeProps props) {
+    return std::make_shared<Popover>(
+        std::move(props.key),
+        std::move(props.child),
+        std::move(props.popover_builder),
+        std::move(props.options),
+        std::move(props.controller)
     );
 }
 

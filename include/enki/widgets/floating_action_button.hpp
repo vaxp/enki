@@ -8,7 +8,11 @@
 
 namespace enki {
 
-struct FloatingActionButtonOptions {
+struct FloatingActionButtonProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    ButtonCallback on_pressed;
+    
     Color normal_color = 0xFF2563EB; // Primary Blue
     Color hover_color = 0xFF3B82F6;
     Color pressed_color = 0xFF1D4ED8;
@@ -31,11 +35,14 @@ class FloatingActionButton : public StatelessWidget {
 public:
     WidgetPtr child;
     ButtonCallback on_pressed;
-    FloatingActionButtonOptions options;
+    FloatingActionButtonProps options;
     bool disabled;
 
-    FloatingActionButton(WidgetPtr child, ButtonCallback on_pressed = nullptr, FloatingActionButtonOptions options = FloatingActionButtonOptions(), bool disabled = false)
+    FloatingActionButton(WidgetPtr child, ButtonCallback on_pressed = nullptr, FloatingActionButtonProps options = FloatingActionButtonProps(), bool disabled = false)
         : child(std::move(child)), on_pressed(std::move(on_pressed)), options(std::move(options)), disabled(disabled) {}
+    
+    FloatingActionButton(Key key, WidgetPtr child, ButtonCallback on_pressed, FloatingActionButtonProps options, bool disabled)
+        : StatelessWidget(std::move(key)), child(std::move(child)), on_pressed(std::move(on_pressed)), options(std::move(options)), disabled(disabled) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& context) override;
     [[nodiscard]] std::string_view typeName() const override { return "FloatingActionButton"; }
@@ -52,8 +59,21 @@ public:
     }
 };
 
-inline std::shared_ptr<FloatingActionButton> floatingActionButton(WidgetPtr child, ButtonCallback on_pressed = nullptr, FloatingActionButtonOptions options = FloatingActionButtonOptions()) {
+inline std::shared_ptr<FloatingActionButton> floatingActionButton(WidgetPtr child, ButtonCallback on_pressed = nullptr, FloatingActionButtonProps options = FloatingActionButtonProps()) {
     return std::make_shared<FloatingActionButton>(std::move(child), std::move(on_pressed), std::move(options), on_pressed == nullptr);
+}
+
+inline std::shared_ptr<FloatingActionButton> floatingActionButton(FloatingActionButtonProps props) {
+    bool is_disabled = props.on_pressed == nullptr;
+    auto key = std::move(props.key);
+    auto child = std::move(props.child);
+    auto on_pressed = std::move(props.on_pressed);
+    return std::make_shared<FloatingActionButton>(std::move(key), std::move(child), std::move(on_pressed), std::move(props), is_disabled);
+}
+
+inline std::shared_ptr<FloatingActionButton> floatingActionButton(FloatingActionButtonProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return floatingActionButton(std::move(props));
 }
 
 } // namespace enki

@@ -24,29 +24,33 @@ class BreadcrumbDemoState : public State {
             });
         }
         
-        auto bc = breadcrumb(items, BreadcrumbOptions{});
-
-        auto btn_content = container(text("Go Deeper"));
-        btn_content->color(0xFF3B82F6).paddingSymmetric(8.0f, 16.0f).borderRadius(4.0f);
-        
-        auto add_btn = std::make_shared<GestureDetector>(btn_content);
-        add_btn->on_tap = [this] {
-            setState([this] {
-                path_names.push_back("Item " + std::to_string(path_names.size()));
-            });
-        };
-
-        auto btn_margin = container(add_btn);
-        btn_margin->marginAll(20.0f);
-
-        auto col = std::make_shared<Column>(std::vector<WidgetPtr>{
-            std::static_pointer_cast<Widget>(bc),
-            std::static_pointer_cast<Widget>(btn_margin)
+        return container({
+            .color = 0xFF0F172A,
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .children = {
+                    breadcrumb({
+                        .items = items
+                    }),
+                    container({
+                        .margin = StyleInsets::all(20.0f),
+                        .child = gestureDetector({
+                            .child = container({
+                                .color = 0xFF3B82F6,
+                                .border_radius = BorderRadius::circular(4.0f),
+                                .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                                .child = text("Go Deeper")
+                            }),
+                            .on_tap = [this] {
+                                setState([this] {
+                                    path_names.push_back("Item " + std::to_string(path_names.size()));
+                                });
+                            }
+                        })
+                    })
+                }
+            })
         });
-
-        auto root = container(col);
-        root->color(0xFF0F172A).paddingAll(20.0f);
-        return root;
     }
 };
 

@@ -38,14 +38,22 @@ public:
         auto row2 = row({cb2, text2});
         row2->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
         
-        CheckboxOptions disabled_opt;
+        CheckboxProps disabled_opt;
         disabled_opt.disabled = true;
         auto cb3 = checkbox(false, nullptr, disabled_opt);
         auto text3 = std::make_shared<Text>("Disabled Checkbox", TextStyle{.color = 0xFF888888});
-        auto row3 = row({cb3, text3});
+        std::vector<WidgetPtr> r3_items;
+        r3_items.push_back(cb3);
+        r3_items.push_back(text3);
+        auto row3 = row(r3_items);
         row3->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
 
-        auto col = column({title, row1, row2, row3});
+        std::vector<WidgetPtr> col_items;
+        col_items.push_back(title);
+        col_items.push_back(row1);
+        col_items.push_back(row2);
+        col_items.push_back(row3);
+        auto col = column(col_items);
         col->gap(StyleValue::point(24.0f));
         col->padding(StyleInsets::all(32.0f));
 

@@ -12,8 +12,11 @@
 
 namespace enki {
 
-/// Options for configuring a Switch.
-struct SwitchOptions {
+struct SwitchProps {
+    Key key = Key::none();
+    bool value = false;
+    std::function<void(bool)> on_changed = nullptr;
+
     float width = 44.0f;                            ///< Width of the switch track.
     float height = 24.0f;                           ///< Height of the switch track.
     float thumb_padding = 2.0f;                     ///< Padding between the track and the thumb.
@@ -37,17 +40,25 @@ class Switch : public StatefulWidget {
 public:
     bool value;
     std::function<void(bool)> on_changed;
-    SwitchOptions options;
+    SwitchProps options;
 
-    Switch(bool value, std::function<void(bool)> on_changed = nullptr, SwitchOptions options = SwitchOptions())
+    Switch(bool value, std::function<void(bool)> on_changed = nullptr, SwitchProps options = SwitchProps())
         : value(value), on_changed(std::move(on_changed)), options(std::move(options)) {}
+
+    Switch(Key key, bool value, std::function<void(bool)> on_changed, SwitchProps options)
+        : StatefulWidget(std::move(key)), value(value), on_changed(std::move(on_changed)), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Switch"; }
 };
 
-inline WidgetPtr toggleSwitch(bool value, std::function<void(bool)> on_changed = nullptr, SwitchOptions options = SwitchOptions()) {
+inline WidgetPtr toggleSwitch(bool value, std::function<void(bool)> on_changed = nullptr, SwitchProps options = SwitchProps()) {
     return std::make_shared<Switch>(value, std::move(on_changed), std::move(options));
+}
+
+inline std::shared_ptr<Switch> toggleSwitch(SwitchProps props) {
+    if (props.on_changed == nullptr) props.disabled = true;
+    return std::make_shared<Switch>(std::move(props.key), props.value, std::move(props.on_changed), std::move(props));
 }
 
 } // namespace enki

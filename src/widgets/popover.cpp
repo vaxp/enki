@@ -27,10 +27,10 @@ namespace enki {
 
 class RenderPopoverBackground : public RenderBox {
 public:
-    PopoverOptions options;
+    PopoverProps options;
     PopoverDirection direction;
 
-    RenderPopoverBackground(PopoverOptions opt, PopoverDirection dir)
+    RenderPopoverBackground(PopoverProps opt, PopoverDirection dir)
         : options(std::move(opt)), direction(dir) {}
 
     void paint(PaintContext& ctx) override {
@@ -164,10 +164,10 @@ public:
 
 class PopoverBackgroundWidget : public SingleChildRenderObjectWidget {
 public:
-    PopoverOptions options;
+    PopoverProps options;
     PopoverDirection direction;
 
-    PopoverBackgroundWidget(PopoverOptions opt, PopoverDirection dir, WidgetPtr child)
+    PopoverBackgroundWidget(PopoverProps opt, PopoverDirection dir, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
           options(std::move(opt)), direction(dir) {}
 

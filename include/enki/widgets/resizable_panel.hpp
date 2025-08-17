@@ -118,12 +118,30 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "ResizablePanel"; }
 };
 
+/// ════════════════════════════════════════════════════════════════
+/// Props for Declarative Syntax
+/// ════════════════════════════════════════════════════════════════
+
+struct ResizablePanelProps {
+    WidgetPtr child = nullptr;
+    WidgetPtr body = nullptr;
+    ResizablePanelOptions options = {};
+    std::shared_ptr<ResizablePanelController> controller = nullptr;
+    Key key = Key::none();
+};
+
 inline std::shared_ptr<ResizablePanel> resizablePanel(
     WidgetPtr child,
     WidgetPtr body,
     ResizablePanelOptions options = {},
     std::shared_ptr<ResizablePanelController> controller = nullptr) {
     return std::make_shared<ResizablePanel>(std::move(child), std::move(body), std::move(options), std::move(controller));
+}
+
+inline std::shared_ptr<ResizablePanel> resizablePanel(ResizablePanelProps props) {
+    auto rp = std::make_shared<ResizablePanel>(std::move(props.child), std::move(props.body), std::move(props.options), std::move(props.controller));
+    if (props.key != Key::none()) rp->key = props.key;
+    return rp;
 }
 
 } // namespace enki

@@ -45,7 +45,7 @@ public:
         auto lbl_brand = text("Primary Brand Color:");
         lbl_brand->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        ColorPickerOptions brand_opts;
+        ColorPickerProps brand_opts;
         brand_opts.initial_color = brand_color_;
         brand_opts.on_color_changed = [this](Color c) {
             brand_color_ = c;
@@ -57,7 +57,7 @@ public:
         auto lbl_acc = text("Accent & Glow Color:");
         lbl_acc->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        ColorPickerOptions acc_opts;
+        ColorPickerProps acc_opts;
         acc_opts.initial_color = accent_color_;
         acc_opts.on_color_changed = [this](Color c) {
             accent_color_ = c;
@@ -85,7 +85,7 @@ public:
         auto studio_title = text("🖌️ Color Studio (Inline)");
         studio_title->fontSize(15.0f).bold().color(0xFF10B981);
 
-        ColorPickerOptions studio_opts;
+        ColorPickerProps studio_opts;
         studio_opts.mode = ColorPickerMode::Inline;
         studio_opts.initial_color = brand_color_;
         studio_opts.enable_alpha = true;

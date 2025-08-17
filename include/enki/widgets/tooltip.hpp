@@ -60,6 +60,14 @@ struct TooltipOptions {
     float font_size        = 13.0f;
 };
 
+struct TooltipProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    std::string message;
+    WidgetPtr rich_message;
+    TooltipOptions options;
+};
+
 /// @brief Tooltip widget wrapping a target child widget.
 class Tooltip : public StatefulWidget {
 public:
@@ -88,6 +96,14 @@ inline WidgetPtr tooltip(WidgetPtr child, std::string message, TooltipOptions op
 /// Helper function to construct a rich widget Tooltip
 inline WidgetPtr tooltip(WidgetPtr child, WidgetPtr rich_message, TooltipOptions options = TooltipOptions()) {
     return std::make_shared<Tooltip>(std::move(child), std::move(rich_message), std::move(options));
+}
+
+inline WidgetPtr tooltip(TooltipProps props) {
+    auto tt = props.rich_message 
+        ? std::make_shared<Tooltip>(std::move(props.child), std::move(props.rich_message), std::move(props.options))
+        : std::make_shared<Tooltip>(std::move(props.child), std::move(props.message), std::move(props.options));
+    tt->key = props.key;
+    return tt;
 }
 
 } // namespace enki

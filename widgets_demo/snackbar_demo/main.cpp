@@ -210,36 +210,38 @@ public:
                 .paddingAll(20.0f)
                 .width(480.0f);
 
-        // ── Main Page Layout ──────────────────────────────────────────
-        std::vector<WidgetPtr> cards_list = {trigger_card, pos_card};
-        auto cards_row = row(cards_list);
-        cards_row->gap(StyleValue::point(16.0f)).justifyContent(Justify::Center);
-
-        // HUD / Status Box
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
-
-        auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(1076.0f);
-
-        std::vector<WidgetPtr> page_items = {title_col, cards_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(24.0f)).alignItems(Align::Center);
-
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(24.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
-
         // ── Wrap with Snackbar Overlay ────────────────────────────────
-        auto snackbar_overlay = snackbar(background_page, snackbar_ctrl_);
-        return snackbar_overlay;
+        return snackbar({
+            .body = container({
+                .color = 0xFF0B1120,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .padding = StyleInsets::all(24.0f),
+                .child = column({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(24.0f),
+                    .children = {
+                        title_col,
+                        row({
+                            .justify_content = Justify::Center,
+                            .gap = StyleValue::point(16.0f),
+                            .children = { trigger_card, pos_card }
+                        }),
+                        container({
+                            .color = 0xFF1E293B,
+                            .border_radius = BorderRadius::circular(6.0f),
+                            .border = Border(0xFF334155, 1.0f),
+                            .width = StyleValue::point(1076.0f),
+                            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                            .child = row({
+                                .children = { text("💡 " + hud_msg_, { .color = 0xFF38BDF8, .font_size = 12.5f }) }
+                            })
+                        })
+                    }
+                })
+            }),
+            .controller = snackbar_ctrl_
+        });
     }
 };
 

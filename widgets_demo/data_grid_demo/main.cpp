@@ -115,165 +115,152 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        // Main Header
-        auto title = text("Advanced Enterprise DataGrid Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
-
-        auto sub = text("Live column drag-resizing, multi-column sorting, row selection, pagination, summary aggregations, and CSV export");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center);
-
-        // ── Grid Toolbar (Search Bar + Action Buttons) ────────────────
-        SearchFieldOptions search_opts;
-        search_opts.placeholder = "Filter by name, dept, role, status, salary...";
-        search_opts.size = SearchFieldSize::Small;
-        search_opts.on_changed = [this](std::string_view q) {
-            grid_ctrl_->setGlobalFilter(q);
-            setState([] {});
-        };
-
-        auto search_widget = searchField(search_ctrl_, search_opts);
-        auto search_box = container(search_widget);
-        search_box->width(420.0f);
-
-        // Action Buttons
-        auto btn_add = button(text("+ Add Employee"), [this] {
-            static int s_counter = 1013;
-            std::string new_id = "#" + std::to_string(s_counter++);
-            DataGridRow r(new_id);
-            r.set("id", new_id)
-             .set("name", "New Employee " + new_id)
-             .set("dept", "Engineering")
-             .set("role", "Software Engineer")
-             .setBadge("status", "Active", 0x2E10B981, 0xFFFFFFFF)
-             .setProgress("perf", 0.85f, "85%")
-             .set("salary", "$ 140,000")
-             .set("loc", "Remote");
-            grid_ctrl_->addRow(r);
-            hud_message_ = "Added new employee " + new_id;
-            setState([] {});
+        return container({
+            .color = 0xFF0B1120,
+            .padding = StyleInsets::all(16.0f),
+            .flex_grow = 1.0f,
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(14.0f),
+                .children = {
+                    column({
+                        .align_items = Align::Center,
+                        .children = {
+                            text("Advanced Enterprise DataGrid Suite", { .color = 0xFFFFFFFF, .font_size = 22.0f, .font_weight = FontWeight::Bold }),
+                            text("Live column drag-resizing, multi-column sorting, row selection, pagination, summary aggregations, and CSV export", { .color = 0xFF94A3B8, .font_size = 13.0f })
+                        }
+                    }),
+                    container({
+                        .color = 0xFF1E293B,
+                        .border_radius = BorderRadius::circular(10.0f),
+                        .border = Border(0xFF334155, 1.0f),
+                        .width = StyleValue::point(1080.0f),
+                        .padding = StyleInsets::all(16.0f),
+                        .child = column({
+                            .gap = StyleValue::point(10.0f),
+                            .children = {
+                                row({
+                                    .justify_content = Justify::SpaceBetween,
+                                    .align_items = Align::Center,
+                                    .children = {
+                                        container({
+                                            .width = StyleValue::point(420.0f),
+                                            .child = searchField({
+                                                .controller = search_ctrl_,
+                                                .placeholder = "Filter by name, dept, role, status, salary...",
+                                                .size = SearchFieldSize::Small,
+                                                .on_changed = [this](std::string_view q) {
+                                                    grid_ctrl_->setGlobalFilter(q);
+                                                    setState([] {});
+                                                }
+                                            })
+                                        }),
+                                        row({
+                                            .align_items = Align::Center,
+                                            .gap = StyleValue::point(8.0f),
+                                            .children = {
+                                                button(text("+ Add Employee"), [this] {
+                                                    static int s_counter = 1013;
+                                                    std::string new_id = "#" + std::to_string(s_counter++);
+                                                    DataGridRow r(new_id);
+                                                    r.set("id", new_id)
+                                                     .set("name", "New Employee " + new_id)
+                                                     .set("dept", "Engineering")
+                                                     .set("role", "Software Engineer")
+                                                     .setBadge("status", "Active", 0x2E10B981, 0xFFFFFFFF)
+                                                     .setProgress("perf", 0.85f, "85%")
+                                                     .set("salary", "$ 140,000")
+                                                     .set("loc", "Remote");
+                                                    grid_ctrl_->addRow(r);
+                                                    hud_message_ = "Added new employee " + new_id;
+                                                    setState([] {});
+                                                }),
+                                                button(text("- Delete Selected"), [this] {
+                                                    const auto& sel = grid_ctrl_->getSelectedRowIds();
+                                                    if (sel.empty()) {
+                                                        hud_message_ = "No rows selected to delete!";
+                                                    } else {
+                                                        size_t count = sel.size();
+                                                        for (const auto& id : sel) {
+                                                            grid_ctrl_->removeRow(id);
+                                                        }
+                                                        hud_message_ = "Deleted " + std::to_string(count) + " selected rows.";
+                                                    }
+                                                    setState([] {});
+                                                }),
+                                                button(text("📊 Export CSV"), [this] {
+                                                    std::string csv = grid_ctrl_->exportToCsv(false);
+                                                    if (Platform::instance()) {
+                                                        ClipboardData data;
+                                                        data.setText(csv);
+                                                        Platform::instance()->setClipboardData(data);
+                                                        Platform::instance()->setClipboardText(csv);
+                                                    }
+                                                    hud_message_ = "Exported " + std::to_string(grid_ctrl_->getTotalFilteredCount()) + " rows to CSV and copied to Clipboard!";
+                                                    setState([] {});
+                                                })
+                                            }
+                                        })
+                                    }
+                                }),
+                                dataGrid({
+                                    .controller = grid_ctrl_,
+                                    .selection_mode = DataGridSelectionMode::RowMultiple,
+                                    .show_pagination = true,
+                                    .show_summary_footer = true,
+                                    .header_height = 38.0f,
+                                    .row_height = 36.0f,
+                                    .footer_height = 36.0f,
+                                    .on_selection_changed = [this](const std::set<std::string>& selected) {
+                                        hud_message_ = "Selected " + std::to_string(selected.size()) + " rows. Press Ctrl+C to copy as CSV.";
+                                        setState([] {});
+                                    },
+                                    .summary_calculator = [](const std::string& col_key, const std::vector<DataGridRow>& rows) -> std::string {
+                                        if (col_key == "id") return "Total:";
+                                        if (col_key == "name") return std::to_string(rows.size()) + " Employees";
+                                        if (col_key == "perf") {
+                                            float total_p = 0.0f;
+                                            int count = 0;
+                                            for (const auto& r : rows) {
+                                                auto it = r.cells.find("perf");
+                                                if (it != r.cells.end()) {
+                                                    total_p += it->second.progress;
+                                                    count++;
+                                                }
+                                            }
+                                            if (count > 0) {
+                                                std::ostringstream ss;
+                                                ss << "Avg: " << std::fixed << std::setprecision(1) << (total_p / count * 100.0f) << "%";
+                                                return ss.str();
+                                            }
+                                        }
+                                        if (col_key == "salary") {
+                                            long long sum = 0;
+                                            for (const auto& r : rows) {
+                                                std::string s = r.get("salary");
+                                                std::string clean = "";
+                                                for (char c : s) if (std::isdigit(c)) clean += c;
+                                                if (!clean.empty()) sum += std::stoll(clean);
+                                            }
+                                            std::ostringstream ss;
+                                            ss << "$ " << (sum / 1000) << ",000";
+                                            return ss.str();
+                                        }
+                                        return "";
+                                    }
+                                }),
+                                container({
+                                    .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                                    .child = row({
+                                        .children = { text("💡 " + hud_message_, { .color = 0xFF38BDF8, .font_size = 12.0f }) }
+                                    })
+                                })
+                            }
+                        })
+                    })
+                }
+            })
         });
-
-        auto btn_del = button(text("- Delete Selected"), [this] {
-            const auto& sel = grid_ctrl_->getSelectedRowIds();
-            if (sel.empty()) {
-                hud_message_ = "No rows selected to delete!";
-            } else {
-                size_t count = sel.size();
-                for (const auto& id : sel) {
-                    grid_ctrl_->removeRow(id);
-                }
-                hud_message_ = "Deleted " + std::to_string(count) + " selected rows.";
-            }
-            setState([] {});
-        });
-
-        auto btn_export = button(text("📊 Export CSV"), [this] {
-            std::string csv = grid_ctrl_->exportToCsv(false);
-            if (Platform::instance()) {
-                ClipboardData data;
-                data.setText(csv);
-                Platform::instance()->setClipboardData(data);
-                Platform::instance()->setClipboardText(csv);
-            }
-            hud_message_ = "Exported " + std::to_string(grid_ctrl_->getTotalFilteredCount()) + " rows to CSV and copied to Clipboard!";
-            setState([] {});
-        });
-
-        std::vector<WidgetPtr> tool_actions = {btn_add, btn_del, btn_export};
-        auto tool_act_row = row(tool_actions);
-        tool_act_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
-
-        std::vector<WidgetPtr> toolbar_items = {search_box, tool_act_row};
-        auto toolbar_row = row(toolbar_items);
-        toolbar_row->justifyContent(Justify::SpaceBetween)
-                   .alignItems(Align::Center);
-
-        // ── DataGrid Options & Summary Calculator ─────────────────────
-        DataGridOptions grid_opts;
-        grid_opts.selection_mode = DataGridSelectionMode::RowMultiple;
-        grid_opts.show_pagination = true;
-        grid_opts.show_summary_footer = true;
-        grid_opts.row_height = 36.0f;
-        grid_opts.header_height = 38.0f;
-        grid_opts.footer_height = 36.0f;
-        grid_opts.summary_calculator = [](const std::string& col_key, const std::vector<DataGridRow>& rows) -> std::string {
-            if (col_key == "id") return "Total:";
-            if (col_key == "name") return std::to_string(rows.size()) + " Employees";
-            if (col_key == "perf") {
-                float total_p = 0.0f;
-                int count = 0;
-                for (const auto& r : rows) {
-                    auto it = r.cells.find("perf");
-                    if (it != r.cells.end()) {
-                        total_p += it->second.progress;
-                        count++;
-                    }
-                }
-                if (count > 0) {
-                    std::ostringstream ss;
-                    ss << "Avg: " << std::fixed << std::setprecision(1) << (total_p / count * 100.0f) << "%";
-                    return ss.str();
-                }
-            }
-            if (col_key == "salary") {
-                long long sum = 0;
-                for (const auto& r : rows) {
-                    std::string s = r.get("salary");
-                    std::string clean = "";
-                    for (char c : s) if (std::isdigit(c)) clean += c;
-                    if (!clean.empty()) sum += std::stoll(clean);
-                }
-                std::ostringstream ss;
-                ss << "$ " << (sum / 1000) << ",000";
-                return ss.str();
-            }
-            return "";
-        };
-
-        grid_opts.on_selection_changed = [this](const std::set<std::string>& selected) {
-            hud_message_ = "Selected " + std::to_string(selected.size()) + " rows. Press Ctrl+C to copy as CSV.";
-            setState([] {});
-        };
-
-        auto grid_widget = dataGrid(grid_ctrl_, grid_opts);
-
-        // ── HUD / Status Bar ──────────────────────────────────────────
-        auto hud_txt = text("💡 " + hud_message_);
-        hud_txt->fontSize(12.0f).color(0xFF38BDF8);
-
-        std::vector<WidgetPtr> hud_items = {hud_txt};
-        auto hud_row = row(hud_items);
-
-        auto hud_box = container(hud_row);
-        hud_box->paddingSymmetric(4.0f, 8.0f);
-
-        // Main Card Stack
-        std::vector<WidgetPtr> card_items = {toolbar_row, grid_widget, hud_box};
-        auto card_col = column(card_items);
-        card_col->gap(StyleValue::point(10.0f));
-
-        auto grid_card = container(card_col);
-        grid_card->color(0xFF1E293B)
-                 .borderRadius(10.0f)
-                 .border(0xFF334155, 1.0f)
-                 .paddingAll(16.0f)
-                 .width(1080.0f);
-
-        std::vector<WidgetPtr> root_items = {title_col, grid_card};
-        auto root_col = column(root_items);
-        root_col->gap(StyleValue::point(14.0f))
-                .alignItems(Align::Center);
-
-        auto app_root = container(root_col);
-        app_root->color(0xFF0B1120)
-                .paddingAll(16.0f)
-                .flexGrow(1.0f);
-
-        return app_root;
     }
 };
 

@@ -33,14 +33,14 @@ inline double getSteadyTimeSecs() {
 
 class RenderProgressRing : public RenderBox {
 public:
-    ProgressRingOptions options;
+    ProgressRingProps options;
     float value;
     float anim_time;
     double start_time;
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderProgressRing(const ProgressRingOptions& opt, float val, float anim_t, double st)
+    RenderProgressRing(const ProgressRingProps& opt, float val, float anim_t, double st)
         : options(opt), value(val), anim_time(anim_t), start_time(st) {
         
         updateAnuStyles();
@@ -64,7 +64,7 @@ public:
         }
     }
 
-    void setOptions(const ProgressRingOptions& opt) {
+    void setOptions(const ProgressRingProps& opt) {
         options = opt;
         updateAnuStyles();
         markNeedsLayout();
@@ -177,12 +177,12 @@ public:
 
 class ProgressRingRenderWidget : public SingleChildRenderObjectWidget {
 public:
-    ProgressRingOptions options;
+    ProgressRingProps options;
     float value;
     float anim_time;
     double start_time;
 
-    ProgressRingRenderWidget(ProgressRingOptions opt, float val, float anim_t, double st, WidgetPtr child)
+    ProgressRingRenderWidget(ProgressRingProps opt, float val, float anim_t, double st, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
           options(std::move(opt)), value(val), anim_time(anim_t), start_time(st) {}
 

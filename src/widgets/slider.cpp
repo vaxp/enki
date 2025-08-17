@@ -15,14 +15,14 @@ namespace enki {
 class RenderSlider : public RenderBox {
 public:
     float value_;
-    SliderOptions options_;
+    SliderProps options_;
     SliderCallback on_change_;
 
     PanGestureRecognizer pan_recognizer_;
     bool is_hovered_ = false;
     bool is_dragging_ = false;
 
-    RenderSlider(float value, SliderOptions opt, SliderCallback on_change)
+    RenderSlider(float value, SliderProps opt, SliderCallback on_change)
         : value_(value), options_(std::move(opt)), on_change_(std::move(on_change)) 
     {
         pan_recognizer_.touch_slop = 2.0f; // Respond quickly but allow tiny taps
@@ -62,7 +62,7 @@ public:
         }
     }
 
-    void setOptions(const SliderOptions& opt) {
+    void setOptions(const SliderProps& opt) {
         options_ = opt;
         updateAnuStyles();
         markNeedsLayout();

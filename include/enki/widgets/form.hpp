@@ -91,7 +91,7 @@ public:
 /// Form Widget
 /// ════════════════════════════════════════════════════════════════
 
-struct FormOptions {
+struct FormProps {
     AutoValidateMode autovalidate_mode = AutoValidateMode::Disabled;
     std::shared_ptr<FormState> controller;
     std::function<void()> on_changed;
@@ -100,10 +100,10 @@ struct FormOptions {
 class Form : public StatefulWidget {
 public:
     WidgetPtr child;
-    FormOptions options;
+    FormProps props;
 
-    Form(WidgetPtr child_, FormOptions opts = {})
-        : child(std::move(child_)), options(std::move(opts)) {}
+    Form(WidgetPtr child_, FormProps opts = {})
+        : child(std::move(child_)), props(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Form"; }
@@ -174,7 +174,7 @@ struct Validators {
 /// TextFormField Widget
 /// ════════════════════════════════════════════════════════════════
 
-struct TextFormFieldOptions {
+struct TextFormFieldProps {
     std::string label;
     std::string hint;
     std::string initial_value;
@@ -192,10 +192,10 @@ struct TextFormFieldOptions {
 
 class TextFormField : public StatefulWidget {
 public:
-    TextFormFieldOptions options;
+    TextFormFieldProps props;
 
     TextFormField() = default;
-    explicit TextFormField(TextFormFieldOptions opts) : options(std::move(opts)) {}
+    explicit TextFormField(TextFormFieldProps opts) : props(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TextFormField"; }
@@ -205,7 +205,7 @@ public:
 /// CheckboxFormField Widget
 /// ════════════════════════════════════════════════════════════════
 
-struct CheckboxFormFieldOptions {
+struct CheckboxFormFieldProps {
     std::string label;
     bool initial_value = false;
     bool required = false;
@@ -218,10 +218,10 @@ struct CheckboxFormFieldOptions {
 
 class CheckboxFormField : public StatefulWidget {
 public:
-    CheckboxFormFieldOptions options;
+    CheckboxFormFieldProps props;
 
     CheckboxFormField() = default;
-    explicit CheckboxFormField(CheckboxFormFieldOptions opts) : options(std::move(opts)) {}
+    explicit CheckboxFormField(CheckboxFormFieldProps opts) : props(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "CheckboxFormField"; }
@@ -231,16 +231,16 @@ public:
 /// Convenience Factory Helpers
 /// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Form> form(WidgetPtr child, FormOptions options = {}) {
-    return std::make_shared<Form>(std::move(child), std::move(options));
+inline std::shared_ptr<Form> form(WidgetPtr child, FormProps props = {}) {
+    return std::make_shared<Form>(std::move(child), std::move(props));
 }
 
-inline std::shared_ptr<TextFormField> textFormField(TextFormFieldOptions options) {
-    return std::make_shared<TextFormField>(std::move(options));
+inline std::shared_ptr<TextFormField> textFormField(TextFormFieldProps props) {
+    return std::make_shared<TextFormField>(std::move(props));
 }
 
-inline std::shared_ptr<CheckboxFormField> checkboxFormField(CheckboxFormFieldOptions options) {
-    return std::make_shared<CheckboxFormField>(std::move(options));
+inline std::shared_ptr<CheckboxFormField> checkboxFormField(CheckboxFormFieldProps props) {
+    return std::make_shared<CheckboxFormField>(std::move(props));
 }
 
 } // namespace enki

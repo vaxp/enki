@@ -69,7 +69,10 @@ public:
         auto scroll_flex = std::make_shared<FlexItem>(scroll);
         scroll_flex->flexGrow(1.0f).flexShrink(1.0f);
 
-        auto root_col = column({hdr_wrap, scroll_flex});
+        std::vector<WidgetPtr> root_col_items;
+        root_col_items.push_back(hdr_wrap);
+        root_col_items.push_back(scroll_flex);
+        auto root_col = column(root_col_items);
         root_col->width(StyleValue::percent(100.0f));
         root_col->height(StyleValue::percent(100.0f));
 

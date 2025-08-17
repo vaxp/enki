@@ -175,6 +175,13 @@ public:
 /// Snackbar Widget
 /// ════════════════════════════════════════════════════════════════
 
+struct SnackbarProps {
+    Key key = Key::none();
+    WidgetPtr body;
+    std::shared_ptr<SnackbarController> controller;
+    SnackbarOptions initial_options;
+};
+
 class Snackbar : public StatefulWidget {
 public:
     WidgetPtr body;                              ///< Main page body content to wrap
@@ -195,6 +202,12 @@ inline std::shared_ptr<Snackbar> snackbar(
     std::shared_ptr<SnackbarController> controller,
     SnackbarOptions options = {}) {
     return std::make_shared<Snackbar>(std::move(body), std::move(controller), std::move(options));
+}
+
+inline std::shared_ptr<Snackbar> snackbar(SnackbarProps props) {
+    auto sb = std::make_shared<Snackbar>(std::move(props.body), std::move(props.controller), std::move(props.initial_options));
+    sb->key = props.key;
+    return sb;
 }
 
 } // namespace enki

@@ -147,7 +147,7 @@ void PasswordFieldController::generateStrongPassword(size_t length, bool use_sym
 class RenderPasswordFieldBox : public RenderBox {
 public:
     std::shared_ptr<PasswordFieldController> controller;
-    PasswordFieldOptions options;
+    PasswordFieldProps options;
     bool is_focused = false;
     bool is_hovered = false;
     bool show_cursor = false;
@@ -162,7 +162,7 @@ public:
     std::unique_ptr<skia::textlayout::Paragraph> lock_paragraph_;
     std::unique_ptr<skia::textlayout::Paragraph> capslock_paragraph_;
 
-    RenderPasswordFieldBox(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldOptions opt)
+    RenderPasswordFieldBox(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt)
         : controller(std::move(ctrl)), options(std::move(opt)) {
         
         FlexboxStyle st;
@@ -481,7 +481,7 @@ static RenderPasswordFieldBox* findPasswordFieldBox(RenderObject* ro) {
 class RenderPasswordFieldWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<PasswordFieldController> controller;
-    PasswordFieldOptions options;
+    PasswordFieldProps options;
     bool is_focused;
     bool is_hovered;
     bool show_cursor;
@@ -491,7 +491,7 @@ public:
     size_t selection_end;
     int hovered_btn;
 
-    RenderPasswordFieldWidget(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldOptions opt,
+    RenderPasswordFieldWidget(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt,
                               bool focused, bool hovered, bool cursor, bool caps, size_t cur_pos,
                               size_t sel_s, size_t sel_e, int h_btn)
         : SingleChildRenderObjectWidget(Key::none()), controller(std::move(ctrl)),

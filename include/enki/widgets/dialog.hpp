@@ -132,6 +132,15 @@ public:
     [[nodiscard]] bool isOpen() const { return is_open_fn ? is_open_fn() : false; }
 };
 
+struct DialogProps {
+    Key key = Key::none();
+    WidgetPtr dialog_content;
+    WidgetPtr child;
+    bool initial_open = false;
+    DialogOptions options;
+    std::shared_ptr<DialogController> controller;
+};
+
 /// ════════════════════════════════════════════════════════════════
 /// Dialog Widget
 /// ════════════════════════════════════════════════════════════════
@@ -176,6 +185,14 @@ inline std::shared_ptr<Dialog> dialog(
     WidgetPtr body,
     DialogOptions options = {}) {
     return std::make_shared<Dialog>(std::move(dialog_content), std::move(body), std::move(options));
+}
+
+inline std::shared_ptr<Dialog> dialog(DialogProps props) {
+    auto d = std::make_shared<Dialog>(std::move(props.dialog_content), std::move(props.child), std::move(props.options));
+    d->key = props.key;
+    d->initial_open = props.initial_open;
+    d->controller = std::move(props.controller);
+    return d;
 }
 
 /// Convenience factory for confirmation/alert dialog

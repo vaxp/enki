@@ -36,14 +36,14 @@ public:
         auto r2 = create_radio_row(2, "Option 2");
         auto r3 = create_radio_row(3, "Option 3");
         
-        RadioOptions disabled_opt;
+        RadioProps disabled_opt;
         disabled_opt.disabled = true;
         auto rb_disabled = radio(4, group_value_, nullptr, disabled_opt);
         auto text_disabled = std::make_shared<Text>("Disabled Option", TextStyle{.color = 0xFF888888});
-        auto row_disabled = row({rb_disabled, text_disabled});
+        auto row_disabled = row(std::vector<WidgetPtr>{rb_disabled, text_disabled});
         row_disabled->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
 
-        auto col = column({title, r1, r2, r3, row_disabled});
+        auto col = column(std::vector<WidgetPtr>{title, r1, r2, r3, row_disabled});
         col->gap(StyleValue::point(20.0f));
         col->padding(StyleInsets::all(32.0f));
 

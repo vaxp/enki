@@ -80,7 +80,10 @@ public:
 /// Configuration Options for PasswordField
 /// ════════════════════════════════════════════════════════════════
 
-struct PasswordFieldOptions {
+struct PasswordFieldProps {
+    Key key = Key::none();
+    std::shared_ptr<PasswordFieldController> controller = nullptr;
+
     std::string placeholder = "Enter password...";
     std::string mask_char = "•"; // Default bullet glyph
 
@@ -111,9 +114,9 @@ struct PasswordFieldOptions {
     EdgeInsets padding = EdgeInsets::symmetric(8.0f, 12.0f);
 
     // Callbacks
-    std::function<void(std::string_view password)> on_changed;
-    std::function<void(std::string_view password)> on_submitted;
-    std::function<void(PasswordStrengthLevel strength)> on_strength_changed;
+    std::function<void(std::string_view password)> on_changed = nullptr;
+    std::function<void(std::string_view password)> on_submitted = nullptr;
+    std::function<void(PasswordStrengthLevel strength)> on_strength_changed = nullptr;
 };
 
 /// ════════════════════════════════════════════════════════════════
@@ -123,14 +126,19 @@ struct PasswordFieldOptions {
 class PasswordField : public StatefulWidget {
 public:
     std::shared_ptr<PasswordFieldController> controller;
-    PasswordFieldOptions options;
+    PasswordFieldProps options;
 
-    PasswordField(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldOptions opt = {})
+    PasswordField(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<PasswordFieldController>()),
           options(std::move(opt)) {}
 
-    PasswordField(PasswordFieldOptions opt = {})
+    PasswordField(PasswordFieldProps opt = {})
         : controller(std::make_shared<PasswordFieldController>()),
+          options(std::move(opt)) {}
+
+    PasswordField(Key key, std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt)
+        : StatefulWidget(std::move(key)),
+          controller(ctrl ? std::move(ctrl) : std::make_shared<PasswordFieldController>()),
           options(std::move(opt)) {}
 
     // Fluent API Chaining
@@ -151,13 +159,18 @@ public:
 
 inline std::shared_ptr<PasswordField> passwordField(
     std::shared_ptr<PasswordFieldController> ctrl,
-    PasswordFieldOptions options = {}) {
+    PasswordFieldProps options = {}) {
     return std::make_shared<PasswordField>(std::move(ctrl), std::move(options));
 }
 
 inline std::shared_ptr<PasswordField> passwordField(
-    PasswordFieldOptions options = {}) {
+    PasswordFieldProps options = {}) {
     return std::make_shared<PasswordField>(std::move(options));
+}
+
+inline std::shared_ptr<PasswordField> passwordField(PasswordFieldProps props, std::shared_ptr<PasswordFieldController> ctrl) {
+    props.controller = std::move(ctrl);
+    return passwordField(std::move(props));
 }
 
 } // namespace enki

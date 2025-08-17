@@ -163,7 +163,7 @@ public:
 // Number Formatting Helper
 // ════════════════════════════════════════════════════════════════
 
-static std::string formatNumberValue(double val, const NumberFieldOptions& opts) {
+static std::string formatNumberValue(double val, const NumberFieldProps& opts) {
     if (opts.custom_formatter) {
         return opts.custom_formatter(val);
     }
@@ -207,7 +207,7 @@ static std::string formatNumberValue(double val, const NumberFieldOptions& opts)
 class RenderNumberFieldBox : public RenderBox {
 public:
     std::shared_ptr<NumberFieldController> controller;
-    NumberFieldOptions options;
+    NumberFieldProps options;
     std::string edit_text;
     bool is_focused = false;
     bool is_hovered = false;
@@ -222,7 +222,7 @@ public:
     std::unique_ptr<skia::textlayout::Paragraph> prefix_paragraph_;
     std::unique_ptr<skia::textlayout::Paragraph> suffix_paragraph_;
 
-    RenderNumberFieldBox(std::shared_ptr<NumberFieldController> ctrl, NumberFieldOptions opt, std::string text_val)
+    RenderNumberFieldBox(std::shared_ptr<NumberFieldController> ctrl, NumberFieldProps opt, std::string text_val)
         : controller(std::move(ctrl)), options(std::move(opt)), edit_text(std::move(text_val)) {
         
         float h = 40.0f;
@@ -556,7 +556,7 @@ static RenderNumberFieldBox* findNumberFieldBox(RenderObject* ro) {
 class RenderNumberFieldWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<NumberFieldController> controller;
-    NumberFieldOptions options;
+    NumberFieldProps options;
     std::string edit_text;
     bool is_focused;
     bool is_hovered;
@@ -566,7 +566,7 @@ public:
     size_t selection_end;
     int hovered_button;
 
-    RenderNumberFieldWidget(std::shared_ptr<NumberFieldController> ctrl, NumberFieldOptions opt,
+    RenderNumberFieldWidget(std::shared_ptr<NumberFieldController> ctrl, NumberFieldProps opt,
                             std::string txt, bool focused, bool hovered, bool cursor, size_t cur_pos,
                             size_t sel_s, size_t sel_e, int h_btn)
         : SingleChildRenderObjectWidget(Key::none()), controller(std::move(ctrl)),

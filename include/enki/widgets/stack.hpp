@@ -146,6 +146,38 @@ inline std::shared_ptr<Positioned> positioned(float top, float right, float bott
     return p;
 }
 
+struct PositionedProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    std::optional<StyleValue> top;
+    std::optional<StyleValue> right;
+    std::optional<StyleValue> bottom;
+    std::optional<StyleValue> left;
+    std::optional<StyleValue> start;
+    std::optional<StyleValue> end;
+    std::optional<StyleValue> width;
+    std::optional<StyleValue> height;
+};
+
+inline std::shared_ptr<Positioned> positioned(PositionedProps props) {
+    auto p = std::make_shared<Positioned>(std::move(props.key), std::move(props.child));
+    if (props.top) p->style.top = props.top;
+    if (props.right) p->style.right = props.right;
+    if (props.bottom) p->style.bottom = props.bottom;
+    if (props.left) p->style.left = props.left;
+    if (props.start) p->style.start = props.start;
+    if (props.end) p->style.end = props.end;
+    if (props.width) p->style.width = props.width;
+    if (props.height) p->style.height = props.height;
+    return p;
+}
+
+inline std::shared_ptr<Positioned> positioned(PositionedProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return positioned(std::move(props));
+}
+
 // ════════════════════════════════════════════════════════════════
 // StackStyle — Configuration for Stack container
 // ════════════════════════════════════════════════════════════════
@@ -241,6 +273,41 @@ inline std::shared_ptr<Stack> stack(Alignment alignment, StackFit fit, std::vect
     auto s = std::make_shared<Stack>(std::move(children));
     s->alignment(alignment).fit(fit);
     return s;
+}
+
+struct StackProps {
+    Key key = Key::none();
+    std::vector<WidgetPtr> children;
+
+    Alignment alignment = Alignment::TopLeft;
+    StackFit fit = StackFit::Loose;
+    Clip clip_behavior = Clip::HardEdge;
+
+    std::optional<StyleValue> width;
+    std::optional<StyleValue> height;
+    std::optional<StyleValue> min_width;
+    std::optional<StyleValue> min_height;
+    std::optional<StyleValue> max_width;
+    std::optional<StyleValue> max_height;
+};
+
+inline std::shared_ptr<Stack> stack(StackProps props) {
+    auto s = std::make_shared<Stack>(std::move(props.key), std::move(props.children));
+    s->style.alignment = props.alignment;
+    s->style.fit = props.fit;
+    s->style.clip_behavior = props.clip_behavior;
+    if (props.width) s->style.width = props.width;
+    if (props.height) s->style.height = props.height;
+    if (props.min_width) s->style.min_width = props.min_width;
+    if (props.min_height) s->style.min_height = props.min_height;
+    if (props.max_width) s->style.max_width = props.max_width;
+    if (props.max_height) s->style.max_height = props.max_height;
+    return s;
+}
+
+inline std::shared_ptr<Stack> stack(StackProps props, std::vector<WidgetPtr> children) {
+    props.children = std::move(children);
+    return stack(std::move(props));
 }
 
 } // namespace enki

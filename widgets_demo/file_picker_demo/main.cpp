@@ -37,62 +37,56 @@ public:
         auto open_btn_text = text("📂 Open File...");
         open_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
 
-        FilePickerOptions open_opt;
+        FilePickerProps open_opt;
         open_opt.mode = FilePickerMode::OpenFile;
+        open_opt.child = button(open_btn_text, nullptr);
+        open_opt.on_result = [this](const FilePickerResult& res) {
+            if (!res.canceled && !res.selected_paths.empty()) {
+                setState([this, res]() {
+                    selected_file_path_ = "Opened File: " + res.selected_paths[0];
+                });
+                std::cout << "[FilePicker] Selected file: " << res.selected_paths[0] << "\n";
+            }
+        };
 
-        auto open_picker = filePicker(
-            button(open_btn_text, nullptr),
-            [this](const FilePickerResult& res) {
-                if (!res.canceled && !res.selected_paths.empty()) {
-                    setState([this, res]() {
-                        selected_file_path_ = "Opened File: " + res.selected_paths[0];
-                    });
-                    std::cout << "[FilePicker] Selected file: " << res.selected_paths[0] << "\n";
-                }
-            },
-            open_opt
-        );
+        auto open_picker = filePicker(std::move(open_opt));
 
         // 2. Select Folder Button
         auto folder_btn_text = text("📁 Select Folder...");
         folder_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
 
-        FilePickerOptions folder_opt;
+        FilePickerProps folder_opt;
         folder_opt.mode = FilePickerMode::SelectFolder;
+        folder_opt.child = button(folder_btn_text, nullptr);
+        folder_opt.on_result = [this](const FilePickerResult& res) {
+            if (!res.canceled && !res.selected_paths.empty()) {
+                setState([this, res]() {
+                    selected_file_path_ = "Selected Folder: " + res.selected_paths[0];
+                });
+                std::cout << "[FilePicker] Selected folder: " << res.selected_paths[0] << "\n";
+            }
+        };
 
-        auto folder_picker = filePicker(
-            button(folder_btn_text, nullptr),
-            [this](const FilePickerResult& res) {
-                if (!res.canceled && !res.selected_paths.empty()) {
-                    setState([this, res]() {
-                        selected_file_path_ = "Selected Folder: " + res.selected_paths[0];
-                    });
-                    std::cout << "[FilePicker] Selected folder: " << res.selected_paths[0] << "\n";
-                }
-            },
-            folder_opt
-        );
+        auto folder_picker = filePicker(std::move(folder_opt));
 
         // 3. Save File Button
         auto save_btn_text = text("💾 Save File As...");
         save_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
 
-        FilePickerOptions save_opt;
+        FilePickerProps save_opt;
         save_opt.mode = FilePickerMode::SaveFile;
         save_opt.default_filename = "export_project.json";
+        save_opt.child = button(save_btn_text, nullptr);
+        save_opt.on_result = [this](const FilePickerResult& res) {
+            if (!res.canceled && !res.selected_paths.empty()) {
+                setState([this, res]() {
+                    selected_file_path_ = "Save Destination: " + res.selected_paths[0];
+                });
+                std::cout << "[FilePicker] Save destination: " << res.selected_paths[0] << "\n";
+            }
+        };
 
-        auto save_picker = filePicker(
-            button(save_btn_text, nullptr),
-            [this](const FilePickerResult& res) {
-                if (!res.canceled && !res.selected_paths.empty()) {
-                    setState([this, res]() {
-                        selected_file_path_ = "Save Destination: " + res.selected_paths[0];
-                    });
-                    std::cout << "[FilePicker] Save destination: " << res.selected_paths[0] << "\n";
-                }
-            },
-            save_opt
-        );
+        auto save_picker = filePicker(std::move(save_opt));
 
         // Result Card
         auto res_title = text("Current Selection Payload:");

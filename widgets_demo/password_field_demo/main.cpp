@@ -44,7 +44,7 @@ public:
         title_col->alignItems(Align::Center);
 
         // ── Card 1: User Registration / Sign-Up (Full Suite) ─────────
-        PasswordFieldOptions signup_opts;
+        PasswordFieldProps signup_opts;
         signup_opts.placeholder = "Create a strong password...";
         signup_opts.show_strength_meter = true;
         signup_opts.show_rules_checklist = true;
@@ -61,7 +61,10 @@ public:
         auto c1_desc = text("Includes live 4-segment strength meter, 5-point criteria checklist, and [🎲] generator.");
         c1_desc->fontSize(12.0f).color(0xFF94A3B8);
 
-        std::vector<WidgetPtr> c1_items = {c1_title, c1_desc, signup_field};
+        std::vector<WidgetPtr> c1_items;
+        c1_items.push_back(c1_title);
+        c1_items.push_back(c1_desc);
+        c1_items.push_back(signup_field);
         auto c1_col = column(c1_items);
         c1_col->gap(StyleValue::point(8.0f));
 
@@ -73,7 +76,7 @@ public:
              .width(540.0f);
 
         // ── Card 2: User Login Password ──────────────────────────────
-        PasswordFieldOptions login_opts;
+        PasswordFieldProps login_opts;
         login_opts.placeholder = "Enter account password...";
         login_opts.show_visibility_toggle = true;
         login_opts.show_capslock_warning = true;
@@ -88,7 +91,10 @@ public:
         auto c2_desc = text("Clean input with toggle button [👁] and automatic [⇪ CAPS] warning detection.");
         c2_desc->fontSize(12.0f).color(0xFF94A3B8);
 
-        std::vector<WidgetPtr> c2_items = {c2_title, c2_desc, login_field};
+        std::vector<WidgetPtr> c2_items;
+        c2_items.push_back(c2_title);
+        c2_items.push_back(c2_desc);
+        c2_items.push_back(login_field);
         auto c2_col = column(c2_items);
         c2_col->gap(StyleValue::point(8.0f));
 
@@ -100,7 +106,7 @@ public:
              .width(540.0f);
 
         // ── Card 3: Hold-to-Peek PIN / Password ───────────────────────
-        PasswordFieldOptions peek_opts;
+        PasswordFieldProps peek_opts;
         peek_opts.placeholder = "Enter 6-digit PIN...";
         peek_opts.show_visibility_toggle = true;
         peek_opts.hold_to_peek = true;
@@ -115,7 +121,10 @@ public:
         auto c3_desc = text("Press and hold the eye button [👁] to reveal temporarily, re-obscures on release.");
         c3_desc->fontSize(12.0f).color(0xFF94A3B8);
 
-        std::vector<WidgetPtr> c3_items = {c3_title, c3_desc, peek_field};
+        std::vector<WidgetPtr> c3_items;
+        c3_items.push_back(c3_title);
+        c3_items.push_back(c3_desc);
+        c3_items.push_back(peek_field);
         auto c3_col = column(c3_items);
         c3_col->gap(StyleValue::point(8.0f));
 

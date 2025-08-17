@@ -76,7 +76,37 @@ enum class DatePickerView {
     Years           ///< Multi-year selector
 };
 
-struct DatePickerOptions {
+/// ════════════════════════════════════════════════════════════════
+/// DatePicker Controller
+/// ════════════════════════════════════════════════════════════════
+
+class DatePickerController {
+public:
+    std::function<void(const DateVal&)> set_date_fn;
+    std::function<void(const DateRangeVal&)> set_range_fn;
+    std::function<void()> open_fn;
+    std::function<void()> close_fn;
+    std::function<void()> clear_fn;
+    std::function<DateVal()> get_date_fn;
+    std::function<DateRangeVal()> get_range_fn;
+
+    void setDate(const DateVal& d) { if (set_date_fn) set_date_fn(d); }
+    void setDateRange(const DateRangeVal& r) { if (set_range_fn) set_range_fn(r); }
+    void open() { if (open_fn) open_fn(); }
+    void close() { if (close_fn) close_fn(); }
+    void clear() { if (clear_fn) clear_fn(); }
+    [[nodiscard]] DateVal getSelectedDate() const { return get_date_fn ? get_date_fn() : DateVal{}; }
+    [[nodiscard]] DateRangeVal getSelectedRange() const { return get_range_fn ? get_range_fn() : DateRangeVal{}; }
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// DatePicker Options
+/// ════════════════════════════════════════════════════════════════
+
+struct DatePickerProps {
+    WidgetPtr body = nullptr;
+    std::shared_ptr<DatePickerController> controller = nullptr;
+
     DatePickerMode mode = DatePickerMode::InputPopup;
     DatePickerSelectionMode selection_mode = DatePickerSelectionMode::Single;
 
@@ -109,60 +139,29 @@ struct DatePickerOptions {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// DatePicker Controller
-/// ════════════════════════════════════════════════════════════════
-
-class DatePickerController {
-public:
-    std::function<void(const DateVal&)> set_date_fn;
-    std::function<void(const DateRangeVal&)> set_range_fn;
-    std::function<void()> open_fn;
-    std::function<void()> close_fn;
-    std::function<void()> clear_fn;
-    std::function<DateVal()> get_date_fn;
-    std::function<DateRangeVal()> get_range_fn;
-
-    void setDate(const DateVal& d) { if (set_date_fn) set_date_fn(d); }
-    void setDateRange(const DateRangeVal& r) { if (set_range_fn) set_range_fn(r); }
-    void open() { if (open_fn) open_fn(); }
-    void close() { if (close_fn) close_fn(); }
-    void clear() { if (clear_fn) clear_fn(); }
-    [[nodiscard]] DateVal getSelectedDate() const { return get_date_fn ? get_date_fn() : DateVal{}; }
-    [[nodiscard]] DateRangeVal getSelectedRange() const { return get_range_fn ? get_range_fn() : DateRangeVal{}; }
-};
-
-/// ════════════════════════════════════════════════════════════════
 /// DatePicker Widget
 /// ════════════════════════════════════════════════════════════════
 
 class DatePicker : public StatefulWidget {
 public:
-    DatePickerOptions options;
+    DatePickerProps props;
     WidgetPtr body; ///< Workspace body layer when in InputPopup mode
-    std::shared_ptr<DatePickerController> controller;
 
     DatePicker() = default;
-    explicit DatePicker(DatePickerOptions opts = {}, WidgetPtr body_ = nullptr,
-                        std::shared_ptr<DatePickerController> ctrl = nullptr)
-        : options(std::move(opts)), body(std::move(body_)), controller(std::move(ctrl)) {}
+    explicit DatePicker(DatePickerProps p)
+        : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DatePicker"; }
 };
 
-inline std::shared_ptr<DatePicker> datePicker(
-    DatePickerOptions options = {},
-    WidgetPtr body = nullptr,
-    std::shared_ptr<DatePickerController> controller = nullptr) {
-    return std::make_shared<DatePicker>(std::move(options), std::move(body), std::move(controller));
+inline std::shared_ptr<DatePicker> datePicker(DatePickerProps props) {
+    return std::make_shared<DatePicker>(std::move(props));
 }
 
-inline std::shared_ptr<DatePicker> dateRangePicker(
-    DatePickerOptions options = {},
-    WidgetPtr body = nullptr,
-    std::shared_ptr<DatePickerController> controller = nullptr) {
-    options.selection_mode = DatePickerSelectionMode::Range;
-    return std::make_shared<DatePicker>(std::move(options), std::move(body), std::move(controller));
+inline std::shared_ptr<DatePicker> dateRangePicker(DatePickerProps props) {
+    props.selection_mode = DatePickerSelectionMode::Range;
+    return std::make_shared<DatePicker>(std::move(props));
 }
 
 } // namespace enki

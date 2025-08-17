@@ -57,7 +57,31 @@ enum class TimeFormat {
     TwentyFourHour  ///< 24-hour military format
 };
 
-struct TimePickerOptions {
+/// ════════════════════════════════════════════════════════════════
+/// TimePicker Controller
+/// ════════════════════════════════════════════════════════════════
+
+class TimePickerController {
+public:
+    std::function<void(const TimeVal&)> set_time_fn;
+    std::function<void()> open_fn;
+    std::function<void()> close_fn;
+    std::function<TimeVal()> get_time_fn;
+
+    void setTime(const TimeVal& t) { if (set_time_fn) set_time_fn(t); }
+    void open() { if (open_fn) open_fn(); }
+    void close() { if (close_fn) close_fn(); }
+    [[nodiscard]] TimeVal getTime() const { return get_time_fn ? get_time_fn() : TimeVal{}; }
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// TimePicker Options
+/// ════════════════════════════════════════════════════════════════
+
+struct TimePickerProps {
+    std::shared_ptr<TimePickerController> controller = nullptr;
+    WidgetPtr body = nullptr;
+
     TimePickerMode mode = TimePickerMode::InputPopup;
     TimeFormat format = TimeFormat::TwelveHour;
 
@@ -83,44 +107,22 @@ struct TimePickerOptions {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// TimePicker Controller
-/// ════════════════════════════════════════════════════════════════
-
-class TimePickerController {
-public:
-    std::function<void(const TimeVal&)> set_time_fn;
-    std::function<void()> open_fn;
-    std::function<void()> close_fn;
-    std::function<TimeVal()> get_time_fn;
-
-    void setTime(const TimeVal& t) { if (set_time_fn) set_time_fn(t); }
-    void open() { if (open_fn) open_fn(); }
-    void close() { if (close_fn) close_fn(); }
-    [[nodiscard]] TimeVal getTime() const { return get_time_fn ? get_time_fn() : TimeVal{}; }
-};
-
-/// ════════════════════════════════════════════════════════════════
 /// TimePicker Widget
 /// ════════════════════════════════════════════════════════════════
 
 class TimePicker : public StatefulWidget {
 public:
-    TimePickerOptions options;
-    std::shared_ptr<TimePickerController> controller;
-
+    TimePickerProps props;
     TimePicker() = default;
-    explicit TimePicker(TimePickerOptions opts = {},
-                        std::shared_ptr<TimePickerController> ctrl = nullptr)
-        : options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit TimePicker(TimePickerProps p)
+        : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TimePicker"; }
 };
 
-inline std::shared_ptr<TimePicker> timePicker(
-    TimePickerOptions options = {},
-    std::shared_ptr<TimePickerController> controller = nullptr) {
-    return std::make_shared<TimePicker>(std::move(options), std::move(controller));
+inline std::shared_ptr<TimePicker> timePicker(TimePickerProps props) {
+    return std::make_shared<TimePicker>(std::move(props));
 }
 
 } // namespace enki

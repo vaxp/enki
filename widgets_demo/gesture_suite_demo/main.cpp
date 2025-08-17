@@ -215,7 +215,7 @@ private:
         auto del_box = container(del_txt);
         del_box->color(0x33EF4444).borderRadius(8.0f).paddingSymmetric(12.0f, 16.0f);
 
-        DismissibleOptions d_opts;
+        DismissibleProps d_opts;
         d_opts.background = arc_box;
         d_opts.secondary_background = del_box;
         d_opts.on_dismissed = [this, msg](DismissDirection dir) {

@@ -43,7 +43,8 @@ enum class ChipSize {
     Large       ///< 40px height, prominent font
 };
 
-struct ChipOptions {
+struct ChipProps {
+    Key key = Key::none();
     ChipType type = ChipType::Action;
     ChipVariant variant = ChipVariant::Filled;
     ChipSize size = ChipSize::Medium;
@@ -77,10 +78,12 @@ struct ChipOptions {
 
 class Chip : public StatefulWidget {
 public:
-    ChipOptions options;
+    ChipProps options;
 
     Chip() = default;
-    explicit Chip(ChipOptions opts) : options(std::move(opts)) {}
+    explicit Chip(ChipProps opts) : options(std::move(opts)) {}
+    
+    Chip(Key k, ChipProps opt) : StatefulWidget(std::move(k)), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Chip"; }
@@ -90,7 +93,8 @@ public:
 /// ChipGroup Widget
 /// ════════════════════════════════════════════════════════════════
 
-struct ChipGroupOptions {
+struct ChipGroupProps {
+    Key key = Key::none();
     bool single_choice = false;         ///< If true, acts as ChoiceGroup; otherwise FilterGroup
     float gap = 8.0f;
     std::function<void(int index)> on_choice_changed;
@@ -99,10 +103,14 @@ struct ChipGroupOptions {
 class ChipGroup : public StatefulWidget {
 public:
     std::vector<std::shared_ptr<Chip>> chips;
-    ChipGroupOptions options;
+    ChipGroupProps options;
 
-    ChipGroup(std::vector<std::shared_ptr<Chip>> chips_, ChipGroupOptions opts = {})
+    ChipGroup(std::vector<std::shared_ptr<Chip>> chips_, ChipGroupProps opts = {})
         : chips(std::move(chips_)), options(std::move(opts)) {}
+    
+    ChipGroup(Key k, std::vector<std::shared_ptr<Chip>> chips_, ChipGroupProps opt) : StatefulWidget(std::move(k)), chips(std::move(chips_)), options(std::move(opt)) {}
+    
+    ChipGroup(ChipGroupProps props) : StatefulWidget(std::move(props.key)), options(std::move(props)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ChipGroup"; }
@@ -112,13 +120,13 @@ public:
 /// Convenience Factory Helpers
 /// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Chip> chip(ChipOptions options = {}) {
-    return std::make_shared<Chip>(std::move(options));
+inline std::shared_ptr<Chip> chip(ChipProps options = {}) {
+    return std::make_shared<Chip>(std::move(options.key), std::move(options));
 }
 
 inline std::shared_ptr<Chip> actionChip(std::string label, std::function<void()> on_tap,
                                         std::string icon = "") {
-    ChipOptions opts;
+    ChipProps opts;
     opts.type = ChipType::Action;
     opts.label = std::move(label);
     opts.avatar_icon = std::move(icon);
@@ -129,7 +137,7 @@ inline std::shared_ptr<Chip> actionChip(std::string label, std::function<void()>
 inline std::shared_ptr<Chip> filterChip(std::string label, bool selected,
                                         std::function<void(bool)> on_selected,
                                         std::string icon = "") {
-    ChipOptions opts;
+    ChipProps opts;
     opts.type = ChipType::Filter;
     opts.label = std::move(label);
     opts.selected = selected;
@@ -140,7 +148,7 @@ inline std::shared_ptr<Chip> filterChip(std::string label, bool selected,
 
 inline std::shared_ptr<Chip> choiceChip(std::string label, bool selected,
                                         std::function<void(bool)> on_selected) {
-    ChipOptions opts;
+    ChipProps opts;
     opts.type = ChipType::Choice;
     opts.label = std::move(label);
     opts.selected = selected;
@@ -150,7 +158,7 @@ inline std::shared_ptr<Chip> choiceChip(std::string label, bool selected,
 
 inline std::shared_ptr<Chip> inputChip(std::string label, std::function<void()> on_deleted,
                                        std::string avatar = "") {
-    ChipOptions opts;
+    ChipProps opts;
     opts.type = ChipType::Input;
     opts.label = std::move(label);
     opts.avatar_icon = std::move(avatar);
@@ -161,7 +169,7 @@ inline std::shared_ptr<Chip> inputChip(std::string label, std::function<void()> 
 
 inline std::shared_ptr<Chip> statusChip(std::string label, Color status_color = 0xFF10B981,
                                         bool pulsing = true) {
-    ChipOptions opts;
+    ChipProps opts;
     opts.type = ChipType::Status;
     opts.label = std::move(label);
     opts.status_color = status_color;
@@ -170,8 +178,12 @@ inline std::shared_ptr<Chip> statusChip(std::string label, Color status_color = 
 }
 
 inline std::shared_ptr<ChipGroup> chipGroup(std::vector<std::shared_ptr<Chip>> chips,
-                                            ChipGroupOptions options = {}) {
+                                            ChipGroupProps options = {}) {
     return std::make_shared<ChipGroup>(std::move(chips), std::move(options));
+}
+
+inline std::shared_ptr<ChipGroup> chipGroup(ChipGroupProps props) {
+    return std::make_shared<ChipGroup>(std::move(props));
 }
 
 } // namespace enki

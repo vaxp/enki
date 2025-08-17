@@ -101,25 +101,25 @@ public:
 
     void wireController() {
         auto* w = static_cast<const ComboBox*>(widget());
-        if (w->controller) {
-            w->controller->select_fn = [this](const std::string& id) {
+        if (w->props.controller) {
+            w->props.controller->select_fn = [this](const std::string& id) {
                 selected_id_ = id;
                 setState([] {});
             };
-            w->controller->select_multi_fn = [this](const std::vector<std::string>& ids) {
+            w->props.controller->select_multi_fn = [this](const std::vector<std::string>& ids) {
                 multi_selected_ids_.clear();
                 for (const auto& id : ids) multi_selected_ids_.insert(id);
                 setState([] {});
             };
-            w->controller->clear_fn = [this] { clearSelection(); };
-            w->controller->open_fn = [this] { openDropdown(); };
-            w->controller->close_fn = [this] { closeDropdown(); };
-            w->controller->toggle_fn = [this] { toggleDropdown(); };
-            w->controller->get_value_fn = [this] { return selected_id_; };
-            w->controller->get_multi_values_fn = [this] {
+            w->props.controller->clear_fn = [this] { clearSelection(); };
+            w->props.controller->open_fn = [this] { openDropdown(); };
+            w->props.controller->close_fn = [this] { closeDropdown(); };
+            w->props.controller->toggle_fn = [this] { toggleDropdown(); };
+            w->props.controller->get_value_fn = [this] { return selected_id_; };
+            w->props.controller->get_multi_values_fn = [this] {
                 return std::vector<std::string>(multi_selected_ids_.begin(), multi_selected_ids_.end());
             };
-            w->controller->is_open_fn = [this] { return is_open_; };
+            w->props.controller->is_open_fn = [this] { return is_open_; };
         }
     }
 
@@ -144,22 +144,22 @@ public:
         if (it.is_disabled) return;
         auto* w = static_cast<const ComboBox*>(widget());
 
-        if (w->options.mode == ComboBoxMode::Single) {
+        if (w->props.mode == ComboBoxMode::Single) {
             selected_id_ = it.id;
             closeDropdown();
-            if (w->options.on_selected) w->options.on_selected(it);
+            if (w->props.on_selected) w->props.on_selected(it);
         } else { // Multi
             if (multi_selected_ids_.count(it.id) > 0) {
                 multi_selected_ids_.erase(it.id);
             } else {
                 multi_selected_ids_.insert(it.id);
             }
-            if (w->options.on_multi_changed) {
+            if (w->props.on_multi_changed) {
                 std::vector<ComboBoxItem> selected_items;
-                for (const auto& item : w->items) {
+                for (const auto& item : w->props.items) {
                     if (multi_selected_ids_.count(item.id) > 0) selected_items.push_back(item);
                 }
-                w->options.on_multi_changed(selected_items);
+                w->props.on_multi_changed(selected_items);
             }
         }
         setState([] {});
@@ -168,12 +168,12 @@ public:
     void removeMultiTag(const std::string& id) {
         auto* w = static_cast<const ComboBox*>(widget());
         multi_selected_ids_.erase(id);
-        if (w->options.on_multi_changed) {
+        if (w->props.on_multi_changed) {
             std::vector<ComboBoxItem> selected_items;
-            for (const auto& item : w->items) {
+            for (const auto& item : w->props.items) {
                 if (multi_selected_ids_.count(item.id) > 0) selected_items.push_back(item);
             }
-            w->options.on_multi_changed(selected_items);
+            w->props.on_multi_changed(selected_items);
         }
         setState([] {});
     }
@@ -188,12 +188,12 @@ public:
     // ── Build Floating Dropdown Menu Panel ────────────────────────
 
     WidgetPtr buildFloatingMenu(const ComboBox* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         std::vector<WidgetPtr> menu_rows;
         std::string last_group = "";
 
-        for (const auto& item : w->items) {
+        for (const auto& item : w->props.items) {
             // Group Header (if new group category)
             if (!item.group.empty() && item.group != last_group) {
                 last_group = item.group;
@@ -297,12 +297,12 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const ComboBox*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         // ── 1. Invariant Page Body (100% dimensions) ──────────────────
         WidgetPtr body_widget;
-        if (w->body) {
-            auto bx = container(w->body);
+        if (w->props.body) {
+            auto bx = container(w->props.body);
             bx->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
             body_widget = Positioned::fill(bx);
         } else {

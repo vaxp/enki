@@ -179,7 +179,10 @@ public:
             DropdownMenuItem::standard("py",   "Python 3.12 Bindings",   "🐍").setBadge("AI", 0x20F59E0B, 0xFFF59E0B),
             DropdownMenuItem::standard("kt",   "Kotlin Multiplatform",   "☕"),
         };
-        DropdownMenuOptions tech_opts;
+        DropdownMenuProps tech_opts;
+        tech_opts.items          = tech_items;
+        tech_opts.body           = body;
+        tech_opts.controller     = ctrl_tech_;
         tech_opts.selected_id    = sel_tech_;
         tech_opts.menu_width     = 280.0f;
         tech_opts.trigger_height = 38.0f;
@@ -190,6 +193,7 @@ public:
             hud_msg_ = "Technology: " + it.label;
             setState([] {});
         };
+        auto dm1 = dropdownMenu(std::move(tech_opts));
 
         // ── Dropdown 2 — Workspace Actions ────────────────────────
         std::vector<DropdownMenuItem> ws_items = {
@@ -205,7 +209,10 @@ public:
             DropdownMenuItem::divider(),
             DropdownMenuItem::standard("del",  "Delete Workspace",  "🗑️", "Shift+Del").setDanger(true),
         };
-        DropdownMenuOptions ws_opts;
+        DropdownMenuProps ws_opts;
+        ws_opts.items          = ws_items;
+        ws_opts.body           = dm1;
+        ws_opts.controller     = ctrl_ws_;
         ws_opts.menu_width     = 260.0f;
         ws_opts.trigger_height = 38.0f;
         ws_opts.anchor_x       = 453.0f;  // x of Card 2 trigger
@@ -221,6 +228,7 @@ public:
             hud_msg_ = "Setting [" + id + "] → " + (chk ? "ON" : "OFF");
             setState([] {});
         };
+        auto dm2 = dropdownMenu(std::move(ws_opts));
 
         // ── Dropdown 3 — Environment ──────────────────────────────
         std::vector<DropdownMenuItem> env_items = {
@@ -230,7 +238,10 @@ public:
             DropdownMenuItem::radio("prod",  "Production (US-East)",   sel_env_ == "prod",  "🌐")
                 .setBadge("LIVE", 0x20F59E0B, 0xFFF59E0B).setSubtitle("99.99% HA SLA"),
         };
-        DropdownMenuOptions env_opts;
+        DropdownMenuProps env_opts;
+        env_opts.items         = env_items;
+        env_opts.body          = dm2;
+        env_opts.controller    = ctrl_env_;
         env_opts.selected_id   = sel_env_;
         env_opts.menu_width    = 290.0f;
         env_opts.trigger_height = 38.0f;
@@ -242,15 +253,7 @@ public:
             setState([] {});
         };
 
-        // Chain: dm1(body) → dm2(dm1) → dm3(dm2)  [same body-wrapping as Drawer]
-        auto dm1 = std::make_shared<DropdownMenu>(tech_items, body, tech_opts);
-        dm1->setController(ctrl_tech_);
-
-        auto dm2 = std::make_shared<DropdownMenu>(ws_items, dm1, ws_opts);
-        dm2->setController(ctrl_ws_);
-
-        auto dm3 = std::make_shared<DropdownMenu>(env_items, dm2, env_opts);
-        dm3->setController(ctrl_env_);
+        auto dm3 = dropdownMenu(std::move(env_opts));
 
         return dm3;
     }

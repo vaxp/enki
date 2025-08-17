@@ -14,15 +14,15 @@ class RenderCheckbox : public RenderBox {
 public:
     bool value;
     bool hovered;
-    CheckboxOptions options;
+    CheckboxProps options;
 
-    RenderCheckbox(bool val, bool hov, CheckboxOptions opt) 
+    RenderCheckbox(bool val, bool hov, CheckboxProps opt) 
         : value(val), hovered(hov), options(std::move(opt)) {
         ANUNodeStyleSetWidth(anu_node_, options.size);
         ANUNodeStyleSetHeight(anu_node_, options.size);
     }
 
-    void update(bool new_value, bool new_hovered, const CheckboxOptions& new_options) {
+    void update(bool new_value, bool new_hovered, const CheckboxProps& new_options) {
         if (options.size != new_options.size) {
             ANUNodeStyleSetWidth(anu_node_, new_options.size);
             ANUNodeStyleSetHeight(anu_node_, new_options.size);
@@ -111,9 +111,9 @@ class CheckboxRenderWidget : public SingleChildRenderObjectWidget {
 public:
     bool value;
     bool hovered;
-    CheckboxOptions options;
+    CheckboxProps options;
 
-    CheckboxRenderWidget(bool val, bool hov, CheckboxOptions opt)
+    CheckboxRenderWidget(bool val, bool hov, CheckboxProps opt)
         : value(val), hovered(hov), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {

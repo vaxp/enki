@@ -94,6 +94,18 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Props for Declarative Syntax
+// ════════════════════════════════════════════════════════════════
+
+struct SidebarProps {
+    WidgetPtr                  sidebar_content = nullptr;
+    WidgetPtr                  body = nullptr;
+    SidebarOptions             options = {};
+    std::function<void(bool)>  on_toggle;
+    Key                        key = Key::none();
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -101,6 +113,14 @@ inline std::shared_ptr<Sidebar> sidebar(WidgetPtr sidebar_content, WidgetPtr bod
                                         SidebarOptions options = {}) {
     return std::make_shared<Sidebar>(std::move(sidebar_content), std::move(body),
                                     std::move(options));
+}
+
+inline std::shared_ptr<Sidebar> sidebar(SidebarProps props) {
+    auto sb = std::make_shared<Sidebar>(std::move(props.sidebar_content), std::move(props.body),
+                                        std::move(props.options));
+    if (props.on_toggle) sb->onToggle(std::move(props.on_toggle));
+    if (props.key != Key::none()) sb->key = props.key;
+    return sb;
 }
 
 } // namespace enki

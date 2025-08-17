@@ -34,7 +34,7 @@ WidgetPtr ReorderableDragHandle::build(BuildContext&) {
 
 class RenderReorderableList : public RenderBox {
 public:
-    ReorderableListOptions options;
+    ReorderableListProps options;
 
     int   dragging_index = -1;
     int   target_index   = -1;
@@ -44,7 +44,7 @@ public:
     // Yoga-computed tops for each child (cached after syncLayout)
     std::vector<float> yoga_tops_;
 
-    explicit RenderReorderableList(ReorderableListOptions opts)
+    explicit RenderReorderableList(ReorderableListProps opts)
         : options(std::move(opts))
     {
         // Column flex layout so Yoga sizes children normally
@@ -53,7 +53,7 @@ public:
         ANUNodeStyleSetGap(anu_node_, ANUGutterRow, options.gap);
     }
 
-    void updateOptions(const ReorderableListOptions& opts) {
+    void updateOptions(const ReorderableListProps& opts) {
         options = opts;
         ANUNodeStyleSetWidth(anu_node_, options.width);
         ANUNodeStyleSetGap(anu_node_, ANUGutterRow, options.gap);
@@ -206,12 +206,12 @@ public:
 // ════════════════════════════════════════════════════════════════
 
 std::unique_ptr<RenderObject> ReorderableList::createRenderObject(BuildContext&) {
-    return std::make_unique<RenderReorderableList>(options);
+    return std::make_unique<RenderReorderableList>(props);
 }
 
 void ReorderableList::updateRenderObject(BuildContext&, RenderObject& renderObject) {
     if (auto* rrl = dynamic_cast<RenderReorderableList*>(&renderObject)) {
-        rrl->updateOptions(options);
+        rrl->updateOptions(props);
     }
 }
 

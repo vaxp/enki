@@ -35,10 +35,10 @@ namespace enki {
 
 class RenderFilePickerBackground : public RenderBox {
 public:
-    FilePickerOptions options;
+    FilePickerProps props;
 
-    explicit RenderFilePickerBackground(FilePickerOptions opt)
-        : options(std::move(opt)) {}
+    explicit RenderFilePickerBackground(FilePickerProps opt)
+        : props(std::move(opt)) {}
 
     void paint(PaintContext& ctx) override {
         SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
@@ -47,17 +47,17 @@ public:
 
         SkRect rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
         SkRRect rrect;
-        rrect.setRectXY(rect, options.border_radius, options.border_radius);
+        rrect.setRectXY(rect, props.border_radius, props.border_radius);
 
         // 1. Draw Drop Shadow
-        if (options.elevation > 0.0f) {
+        if (props.elevation > 0.0f) {
             SkPaint shadow_paint;
             shadow_paint.setAntiAlias(true);
-            shadow_paint.setColor(options.shadow_color);
-            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.elevation * 0.5f));
+            shadow_paint.setColor(props.shadow_color);
+            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, props.elevation * 0.5f));
 
             canvas->save();
-            canvas->translate(0, options.elevation * 0.3f);
+            canvas->translate(0, props.elevation * 0.3f);
             canvas->drawRRect(rrect, shadow_paint);
             canvas->restore();
         }
@@ -65,7 +65,7 @@ public:
         // 2. Draw Main Dialog Background
         SkPaint bg_paint;
         bg_paint.setAntiAlias(true);
-        bg_paint.setColor(options.background_color);
+        bg_paint.setColor(props.background_color);
         canvas->drawRRect(rrect, bg_paint);
 
         // 3. Draw Outer Border Stroke
@@ -73,7 +73,7 @@ public:
         border_paint.setAntiAlias(true);
         border_paint.setStyle(SkPaint::kStroke_Style);
         border_paint.setStrokeWidth(1.0f);
-        border_paint.setColor(options.border_color);
+        border_paint.setColor(props.border_color);
         canvas->drawRRect(rrect, border_paint);
 
         // 4. Paint Child Content
@@ -92,19 +92,19 @@ public:
 
 class FilePickerBackgroundWidget : public SingleChildRenderObjectWidget {
 public:
-    FilePickerOptions options;
+    FilePickerProps props;
 
-    FilePickerBackgroundWidget(FilePickerOptions opt, WidgetPtr child)
+    FilePickerBackgroundWidget(FilePickerProps opt, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
-          options(std::move(opt)) {}
+          props(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override {
-        return std::make_unique<RenderFilePickerBackground>(options);
+        return std::make_unique<RenderFilePickerBackground>(props);
     }
 
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override {
         if (auto* rb = dynamic_cast<RenderFilePickerBackground*>(&renderObject)) {
-            rb->options = options;
+            rb->props = props;
             rb->markNeedsPaint();
         }
     }
@@ -125,14 +125,14 @@ struct FileEntryItem {
 
 class FilePickerContentView : public StatefulWidget {
 public:
-    FilePickerOptions options;
+    FilePickerProps props;
     std::function<void(const FilePickerResult&)> on_result;
     std::shared_ptr<NativePopup> popup_handle;
 
-    FilePickerContentView(FilePickerOptions options,
+    FilePickerContentView(FilePickerProps props_,
                           std::function<void(const FilePickerResult&)> on_result,
                           std::shared_ptr<NativePopup> popup_handle)
-        : options(std::move(options)), on_result(std::move(on_result)), popup_handle(std::move(popup_handle)) {}
+        : props(std::move(props_)), on_result(std::move(on_result)), popup_handle(std::move(popup_handle)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "FilePickerContentView"; }
@@ -149,8 +149,8 @@ public:
         State::initState();
 
         auto* view = static_cast<const FilePickerContentView*>(widget());
-        if (view && !view->options.initial_directory.empty() && fs::exists(view->options.initial_directory)) {
-            current_path_ = view->options.initial_directory;
+        if (view && !view->props.initial_directory.empty() && fs::exists(view->props.initial_directory)) {
+            current_path_ = view->props.initial_directory;
         } else {
             const char* home = std::getenv("HOME");
             current_path_ = home ? fs::path(home) : fs::current_path();
@@ -222,7 +222,7 @@ public:
         auto* view = static_cast<const FilePickerContentView*>(widget());
         if (!view) return nullptr;
 
-        const auto& opt = view->options;
+        const auto& opt = view->props;
         const char* home_env = std::getenv("HOME");
         std::string home_dir = home_env ? home_env : "/";
 
@@ -297,7 +297,7 @@ public:
             entry_widgets.push_back(gesture);
         }
 
-        auto files_col = column(entry_widgets);
+        auto files_col = column(std::vector<WidgetPtr>(entry_widgets.begin(), entry_widgets.end()));
         files_col->gap(StyleValue::point(2.0f));
 
         ScrollOptions s_opt;
@@ -327,7 +327,7 @@ public:
         if (opt.mode == FilePickerMode::SaveFile) confirm_label = "Save";
         else if (opt.mode == FilePickerMode::SelectFolder) confirm_label = "Select Folder";
 
-        ButtonOptions confirm_opt;
+        ButtonProps confirm_opt;
         confirm_opt.normal_color = opt.accent_color;
 
         auto confirm_lbl = text(confirm_label);
@@ -335,7 +335,7 @@ public:
 
         auto confirm_btn = button(confirm_lbl, [this, view]() {
             std::string final_path = selected_path_;
-            if (final_path.empty() && (view->options.mode == FilePickerMode::SelectFolder || view->options.mode == FilePickerMode::SaveFile)) {
+            if (final_path.empty() && (view->props.mode == FilePickerMode::SelectFolder || view->props.mode == FilePickerMode::SaveFile)) {
                 final_path = current_path_.string();
             }
 
@@ -347,17 +347,27 @@ public:
             }
         }, confirm_opt);
 
-        auto actions_row = row({cancel_btn, confirm_btn});
+        std::vector<WidgetPtr> actions_children;
+        actions_children.push_back(cancel_btn);
+        actions_children.push_back(confirm_btn);
+        auto actions_row = row(actions_children);
         actions_row->justifyContent(Justify::End).gap(StyleValue::point(10.0f));
 
         auto actions_box = container(actions_row);
         actions_box->paddingAll(8.0f);
 
         // Right Main Content Assembly
-        auto right_col = column({header_box, files_scroll, actions_box});
+        std::vector<WidgetPtr> right_col_children;
+        right_col_children.push_back(header_box);
+        right_col_children.push_back(files_scroll);
+        right_col_children.push_back(actions_box);
+        auto right_col = column(right_col_children);
         right_col->flexGrow(1.0f);
 
-        auto main_row = row({sidebar, right_col});
+        std::vector<WidgetPtr> main_row_children;
+        main_row_children.push_back(sidebar);
+        main_row_children.push_back(right_col);
+        auto main_row = row(main_row_children);
         main_row->flexGrow(1.0f);
 
         return main_row;
@@ -374,16 +384,15 @@ std::unique_ptr<State> FilePickerContentView::createState() {
 
 std::shared_ptr<NativePopup> FilePicker::show(
     BuildContext& context,
-    std::function<void(const FilePickerResult&)> on_result,
-    FilePickerOptions options) {
+    FilePickerProps props) {
 
     Element* elem = context.element();
     if (!elem) return nullptr;
 
     Size screen_sz = context.mediaSize();
 
-    int32_t pop_w = static_cast<int32_t>(options.window_size.width);
-    int32_t pop_h = static_cast<int32_t>(options.window_size.height);
+    int32_t pop_w = static_cast<int32_t>(props.window_size.width);
+    int32_t pop_h = static_cast<int32_t>(props.window_size.height);
 
     float pop_x = (screen_sz.width - pop_w) / 2.0f;
     float pop_y = (screen_sz.height - pop_h) / 2.0f;
@@ -397,9 +406,9 @@ std::shared_ptr<NativePopup> FilePicker::show(
     pop_opts.height = pop_h;
     pop_opts.auto_dismiss = false; // Modal dialog
 
-    return NativePopup::show(context, pop_opts, [options, on_result](BuildContext&, std::shared_ptr<NativePopup> popup) {
-        auto content = std::make_shared<FilePickerContentView>(options, on_result, popup);
-        return std::make_shared<FilePickerBackgroundWidget>(options, content);
+    return NativePopup::show(context, pop_opts, [props](BuildContext&, std::shared_ptr<NativePopup> popup) {
+        auto content = std::make_shared<FilePickerContentView>(props, props.on_result, popup);
+        return std::make_shared<FilePickerBackgroundWidget>(props, content);
     });
 }
 
@@ -419,7 +428,7 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* picker_widget = static_cast<const FilePicker*>(widget());
 
-        auto gesture = gestureDetector(picker_widget->child);
+        auto gesture = gestureDetector(picker_widget->props.child);
         gesture->hit_test_behavior = HitTestBehavior::Translucent;
 
         gesture->onTapUp([this, picker_widget](const TapUpDetails&) {
@@ -427,7 +436,7 @@ public:
             if (!elem) return;
             BuildContext context(elem);
 
-            active_popup_ = FilePicker::show(context, picker_widget->on_result, picker_widget->options);
+            active_popup_ = FilePicker::show(context, picker_widget->props);
         });
 
         return gesture;

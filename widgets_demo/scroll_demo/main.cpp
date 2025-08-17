@@ -20,7 +20,7 @@ public:
 
             auto btn_text = text("Action " + std::to_string(i));
             btn_text->color(0xFFFFFFFF);
-            ButtonOptions btn_opts;
+            ButtonProps btn_opts;
             btn_opts.normal_color = 0xFF3B82F6;
             auto item_btn = button(std::static_pointer_cast<Widget>(btn_text), [i]() {
                 std::cout << "Clicked Action " << i << std::endl;

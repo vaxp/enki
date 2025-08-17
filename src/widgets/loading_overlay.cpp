@@ -96,7 +96,7 @@ private:
     AnimationController anim_;
     std::unique_ptr<Ticker> ticker_;
     bool is_loading_ = false;
-    LoadingOverlayOptions current_opts_;
+    LoadingOverlayProps current_opts_;
 
 public:
     void initState() override {
@@ -131,7 +131,7 @@ public:
     void wireController() {
         auto* w = static_cast<const LoadingOverlay*>(widget());
         if (w->controller) {
-            w->controller->show_fn = [this](const LoadingOverlayOptions& opts) { showOverlay(opts); };
+            w->controller->show_fn = [this](const LoadingOverlayProps& opts) { showOverlay(opts); };
             w->controller->hide_fn = [this] { hideOverlay(); };
             w->controller->set_progress_fn = [this](float p, const std::string& msg) {
                 current_opts_.progress = p;
@@ -147,7 +147,7 @@ public:
         }
     }
 
-    void showOverlay(const LoadingOverlayOptions& opts) {
+    void showOverlay(const LoadingOverlayProps& opts) {
         current_opts_ = opts;
         is_loading_ = true;
         anim_.forward();
@@ -165,10 +165,10 @@ public:
 
     // ── Build Indicator Widget ────────────────────────────────────
 
-    WidgetPtr buildIndicator(const LoadingOverlayOptions& opts) {
+    WidgetPtr buildIndicator(const LoadingOverlayProps& opts) {
         switch (opts.indicator_style) {
             case LoadingIndicatorStyle::Spinner: {
-                SpinnerOptions so;
+                SpinnerProps so;
                 so.style = SpinnerStyle::DualArc;
                 so.size = 44.0f;
                 so.color = opts.accent_color;
@@ -179,7 +179,7 @@ public:
                 auto pct_txt = text(std::to_string(pct) + "%");
                 pct_txt->fontSize(11.0f).bold().color(opts.title_color);
 
-                ProgressRingOptions ro;
+                ProgressRingProps ro;
                 ro.size = 56.0f;
                 ro.stroke_width = 5.0f;
                 ro.progress_color = opts.accent_color;
@@ -188,7 +188,7 @@ public:
                 return progressRing(opts.progress, pct_txt, ro);
             }
             case LoadingIndicatorStyle::ProgressBar: {
-                ProgressBarOptions pbo;
+                ProgressBarProps pbo;
                 pbo.height = 6.0f;
                 pbo.progress_color = opts.accent_color;
                 pbo.indeterminate = !opts.is_determinate;
@@ -197,7 +197,7 @@ public:
                 return progressBar(opts.progress, pbo);
             }
             case LoadingIndicatorStyle::DotsPulse: {
-                SpinnerOptions so;
+                SpinnerProps so;
                 so.style = SpinnerStyle::OrbitDots;
                 so.size = 38.0f;
                 so.color = opts.accent_color;
@@ -205,7 +205,7 @@ public:
             }
             case LoadingIndicatorStyle::Custom: {
                 if (opts.custom_indicator) return opts.custom_indicator;
-                SpinnerOptions so;
+                SpinnerProps so;
                 so.style = SpinnerStyle::DualArc;
                 so.size = 44.0f;
                 so.color = opts.accent_color;
@@ -217,7 +217,7 @@ public:
 
     // ── Build Centered Card ───────────────────────────────────────
 
-    WidgetPtr buildLoadingCard(const LoadingOverlayOptions& opts) {
+    WidgetPtr buildLoadingCard(const LoadingOverlayProps& opts) {
         std::vector<WidgetPtr> card_elements;
 
         // 1. Indicator

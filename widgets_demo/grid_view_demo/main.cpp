@@ -40,7 +40,7 @@ class GridDemoState : public State {
         bool active = (tab_ == idx);
         auto lbl = std::make_shared<Text>(label);
         lbl->fontSize(13.0f).color(active ? 0xFFFFFFFF : 0xFF8B9BB4);
-        ButtonOptions opts;
+        ButtonProps opts;
         opts.normal_color  = active ? 0xFF2563EB : 0xFF161B22;
         opts.hover_color   = active ? 0xFF3B82F6 : 0xFF1E2937;
         opts.pressed_color = active ? 0xFF1D4ED8 : 0xFF0D1117;

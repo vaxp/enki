@@ -15,7 +15,10 @@
 namespace enki {
 
 /// Options for configuring a ProgressRing
-struct ProgressRingOptions {
+struct ProgressRingProps {
+    Key key = Key::none();
+    float value = 0.0f; // 0.0f to 1.0f
+
     float size = 48.0f;
     float stroke_width = 6.0f;
     
@@ -38,18 +41,25 @@ class ProgressRing : public StatefulWidget {
 public:
     float value; // 0.0f to 1.0f
     WidgetPtr child;
-    ProgressRingOptions options;
+    ProgressRingProps options;
 
-    explicit ProgressRing(float value = 0.0f, WidgetPtr child = nullptr, ProgressRingOptions options = ProgressRingOptions())
+    explicit ProgressRing(float value = 0.0f, WidgetPtr child = nullptr, ProgressRingProps options = ProgressRingProps())
         : value(value), child(std::move(child)), options(std::move(options)) {}
+
+    explicit ProgressRing(Key key, float value, WidgetPtr child, ProgressRingProps options)
+        : StatefulWidget(std::move(key)), value(value), child(std::move(child)), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ProgressRing"; }
 };
 
 /// Helper function to construct a ProgressRing widget
-inline WidgetPtr progressRing(float value = 0.0f, WidgetPtr child = nullptr, ProgressRingOptions options = ProgressRingOptions()) {
+inline std::shared_ptr<ProgressRing> progressRing(float value = 0.0f, WidgetPtr child = nullptr, ProgressRingProps options = ProgressRingProps()) {
     return std::make_shared<ProgressRing>(value, std::move(child), std::move(options));
+}
+
+inline std::shared_ptr<ProgressRing> progressRing(ProgressRingProps props, WidgetPtr child = nullptr) {
+    return std::make_shared<ProgressRing>(std::move(props.key), props.value, std::move(child), std::move(props));
 }
 
 } // namespace enki

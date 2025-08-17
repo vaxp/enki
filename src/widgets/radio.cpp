@@ -14,15 +14,15 @@ class RenderRadio : public RenderBox {
 public:
     bool is_selected;
     bool hovered;
-    RadioOptions options;
+    RadioProps options;
 
-    RenderRadio(bool sel, bool hov, RadioOptions opt) 
+    RenderRadio(bool sel, bool hov, RadioProps opt) 
         : is_selected(sel), hovered(hov), options(std::move(opt)) {
         ANUNodeStyleSetWidth(anu_node_, options.size);
         ANUNodeStyleSetHeight(anu_node_, options.size);
     }
 
-    void update(bool new_sel, bool new_hovered, const RadioOptions& new_options) {
+    void update(bool new_sel, bool new_hovered, const RadioProps& new_options) {
         if (options.size != new_options.size) {
             ANUNodeStyleSetWidth(anu_node_, new_options.size);
             ANUNodeStyleSetHeight(anu_node_, new_options.size);
@@ -100,9 +100,9 @@ class RadioRenderWidget : public SingleChildRenderObjectWidget {
 public:
     bool is_selected;
     bool hovered;
-    RadioOptions options;
+    RadioProps options;
 
-    RadioRenderWidget(bool sel, bool hov, RadioOptions opt)
+    RadioRenderWidget(bool sel, bool hov, RadioProps opt)
         : is_selected(sel), hovered(hov), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {

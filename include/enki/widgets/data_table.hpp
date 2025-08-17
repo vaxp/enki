@@ -211,8 +211,8 @@ struct DataTableTheme {
 ///   ->sortColumnIndex(0)
 ///   ->sortAscending(true);
 /// @endcode
-class DataTable : public StatefulWidget {
-public:
+struct DataTableProps {
+    Key key = Key::none();
     std::vector<DataColumn> columns;   ///< Column definitions (header).
     std::vector<DataRow>    rows;      ///< Data rows.
 
@@ -235,43 +235,46 @@ public:
     ScrollPhysics scroll_physics = ScrollPhysics::Clamped;
     float         scroll_speed   = 50.0f;
     bool          horizontal_scroll = true;  ///< Enable horizontal scroll for wide tables.
+};
 
-    // ─────────────────────────────────────────────────────────
+class DataTable : public StatefulWidget {
+public:
+    DataTableProps props;
+
     DataTable() = default;
-    DataTable(std::vector<DataColumn> columns, std::vector<DataRow> rows)
-        : columns(std::move(columns)), rows(std::move(rows)) {}
+    explicit DataTable(DataTableProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder API ─────────────────────────────────────
 
-    DataTable& sortColumnIndex(int idx)     { sort_column_index = idx; return *this; }
-    DataTable& sortAscending(bool asc)      { sort_ascending = asc; return *this; }
-    DataTable& showCheckboxColumn(bool v)   { theme.show_checkbox_column = v; return *this; }
-    DataTable& headingRowHeight(float h)    { theme.heading_row_height = h; return *this; }
+    DataTable& sortColumnIndex(int idx)     { props.sort_column_index = idx; return *this; }
+    DataTable& sortAscending(bool asc)      { props.sort_ascending = asc; return *this; }
+    DataTable& showCheckboxColumn(bool v)   { props.theme.show_checkbox_column = v; return *this; }
+    DataTable& headingRowHeight(float h)    { props.theme.heading_row_height = h; return *this; }
     DataTable& dataRowHeight(float h) {
-        theme.data_row_height = theme.data_row_min_height = theme.data_row_max_height = h;
+        props.theme.data_row_height = props.theme.data_row_min_height = props.theme.data_row_max_height = h;
         return *this;
     }
-    DataTable& columnSpacing(float s)       { theme.column_spacing = s; return *this; }
-    DataTable& horizontalMargin(float m)    { theme.horizontal_margin = m; return *this; }
-    DataTable& dividerThickness(float t)    { theme.divider_thickness = t; return *this; }
-    DataTable& showBottomBorder(bool v)     { theme.show_bottom_border = v; return *this; }
-    DataTable& alternatingRows(bool v)      { theme.use_alternating_rows = v; return *this; }
-    DataTable& border(TableBorder b)        { theme.border = std::move(b); return *this; }
-    DataTable& withTheme(DataTableTheme t)  { theme = std::move(t); return *this; }
-    DataTable& headingRowColor(Color c)     { theme.heading_row_color = c; return *this; }
-    DataTable& dataRowColor(Color c)        { theme.data_row_color = c; return *this; }
-    DataTable& selectedRowColor(Color c)    { theme.selected_row_color = c; return *this; }
+    DataTable& columnSpacing(float s)       { props.theme.column_spacing = s; return *this; }
+    DataTable& horizontalMargin(float m)    { props.theme.horizontal_margin = m; return *this; }
+    DataTable& dividerThickness(float t)    { props.theme.divider_thickness = t; return *this; }
+    DataTable& showBottomBorder(bool v)     { props.theme.show_bottom_border = v; return *this; }
+    DataTable& alternatingRows(bool v)      { props.theme.use_alternating_rows = v; return *this; }
+    DataTable& border(TableBorder b)        { props.theme.border = std::move(b); return *this; }
+    DataTable& withTheme(DataTableTheme t)  { props.theme = std::move(t); return *this; }
+    DataTable& headingRowColor(Color c)     { props.theme.heading_row_color = c; return *this; }
+    DataTable& dataRowColor(Color c)        { props.theme.data_row_color = c; return *this; }
+    DataTable& selectedRowColor(Color c)    { props.theme.selected_row_color = c; return *this; }
 
     DataTable& onSelectAll(std::function<void(bool)> cb) {
-        on_select_all = std::move(cb);
+        props.on_select_all = std::move(cb);
         return *this;
     }
     DataTable& onRowTap(std::function<void(int)> cb) {
-        on_row_tap = std::move(cb);
+        props.on_row_tap = std::move(cb);
         return *this;
     }
     DataTable& onRowSecondaryTap(std::function<void(int)> cb) {
-        on_row_secondary_tap = std::move(cb);
+        props.on_row_secondary_tap = std::move(cb);
         return *this;
     }
 
@@ -283,9 +286,16 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+inline std::shared_ptr<DataTable> dataTable(DataTableProps props = {}) {
+    return std::make_shared<DataTable>(std::move(props));
+}
+
 inline std::shared_ptr<DataTable> dataTable(std::vector<DataColumn> columns,
                                              std::vector<DataRow>    rows) {
-    return std::make_shared<DataTable>(std::move(columns), std::move(rows));
+    DataTableProps props;
+    props.columns = std::move(columns);
+    props.rows = std::move(rows);
+    return std::make_shared<DataTable>(std::move(props));
 }
 
 inline std::shared_ptr<DataTable> dataTable() {

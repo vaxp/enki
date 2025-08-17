@@ -17,7 +17,14 @@
 
 namespace enki {
 
-struct RangeSliderOptions {
+using RangeSliderCallback = std::function<void(float start, float end)>;
+
+struct RangeSliderProps {
+    Key key = Key::none();
+    float start_value = 0.0f;
+    float end_value = 1.0f;
+    RangeSliderCallback on_change = nullptr;
+
     Color active_color = 0xFF3B82F6; // Blue 500
     Color inactive_color = 0xFFCBD5E1; // Slate 300
     Color thumb_color = 0xFFFFFFFF; // White
@@ -32,17 +39,18 @@ struct RangeSliderOptions {
     float shadow_offset_dy = 2.0f;
 };
 
-using RangeSliderCallback = std::function<void(float start, float end)>;
-
 class RangeSlider : public SingleChildRenderObjectWidget {
 public:
     float start_value;
     float end_value;
     RangeSliderCallback on_change;
-    RangeSliderOptions options;
+    RangeSliderProps options;
 
-    RangeSlider(float start, float end, RangeSliderCallback on_change, RangeSliderOptions options = RangeSliderOptions())
+    RangeSlider(float start, float end, RangeSliderCallback on_change, RangeSliderProps options = RangeSliderProps())
         : SingleChildRenderObjectWidget(Key::none(), nullptr), start_value(start), end_value(end), on_change(std::move(on_change)), options(std::move(options)) {}
+
+    RangeSlider(Key key, float start, float end, RangeSliderCallback on_change, RangeSliderProps options)
+        : SingleChildRenderObjectWidget(std::move(key), nullptr), start_value(start), end_value(end), on_change(std::move(on_change)), options(std::move(options)) {}
 
     // Fluent API
     RangeSlider* activeColor(Color c) { options.active_color = c; return this; }
@@ -58,8 +66,12 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "RangeSlider"; }
 };
 
-inline std::shared_ptr<RangeSlider> rangeSlider(float start, float end, RangeSliderCallback on_change) {
-    return std::make_shared<RangeSlider>(start, end, std::move(on_change));
+inline std::shared_ptr<RangeSlider> rangeSlider(float start, float end, RangeSliderCallback on_change, RangeSliderProps options = RangeSliderProps()) {
+    return std::make_shared<RangeSlider>(start, end, std::move(on_change), std::move(options));
+}
+
+inline std::shared_ptr<RangeSlider> rangeSlider(RangeSliderProps props) {
+    return std::make_shared<RangeSlider>(std::move(props.key), props.start_value, props.end_value, std::move(props.on_change), std::move(props));
 }
 
 } // namespace enki

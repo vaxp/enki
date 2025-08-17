@@ -220,30 +220,6 @@ public:
                     .paddingAll(20.0f)
                     .width(900.0f);
 
-        // HUD / Status
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.0f).color(0xFF38BDF8);
-
-        std::vector<WidgetPtr> hud_items = {hud_txt};
-        auto hud_row = row(hud_items);
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(900.0f);
-
-        // Page Main Content
-        std::vector<WidgetPtr> page_items = {title_col, trigger_card, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
-
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(20.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
-
         // ── Active BottomSheet Setup ──────────────────────────────────
         BottomSheetOptions sheet_opts;
         sheet_opts.type = (current_demo_mode_ == "player") ? BottomSheetType::Persistent : BottomSheetType::Modal;
@@ -284,10 +260,35 @@ public:
             sheet_body = buildCheckoutContent();
         }
 
-        auto active_sheet = bottomSheet(sheet_body, background_page, sheet_opts);
-        active_sheet->setController(sheet_ctrl_);
-
-        return active_sheet;
+        return bottomSheet({
+            .sheet_content = sheet_body,
+            .body = container({
+                .color = 0xFF0B1120,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .padding = StyleInsets::all(20.0f),
+                .child = column({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(16.0f),
+                    .children = {
+                        title_col,
+                        trigger_card,
+                        container({
+                            .color = 0xFF1E293B,
+                            .border_radius = BorderRadius::circular(6.0f),
+                            .border = Border(0xFF334155, 1.0f),
+                            .width = StyleValue::point(900.0f),
+                            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                            .child = row({
+                                .children = { text("💡 " + hud_msg_, { .color = 0xFF38BDF8, .font_size = 12.0f }) }
+                            })
+                        })
+                    }
+                })
+            }),
+            .options = sheet_opts,
+            .controller = sheet_ctrl_
+        });
     }
 };
 

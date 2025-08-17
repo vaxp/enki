@@ -8,6 +8,7 @@
 #include "enki/widgets/text.hpp"
 #include "enki/widgets/gesture_detector.hpp"
 #include "enki/widgets/popup.hpp"
+#include "enki/widgets/button.hpp"
 #include "enki/state/state.hpp"
 #include <iostream>
 #include <vector>
@@ -87,123 +88,134 @@ std::unique_ptr<State> DemoButton::createState() {
 class PopupDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        // Title & Header
-        auto title = text("Universal Native Popup Widget (NativePopup)");
-        title->fontSize(24.0f).bold().color(0xFFFFFFFF);
+        // 1. TopCenter Default Popup
+        auto top_btn = std::make_shared<DemoButton>("✨", "TopCenter Popup");
 
-        auto sub = text("Demonstrates 12-direction placements, cursor tracking, and instant auto-dismiss");
-        sub->fontSize(14.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> t_children = {title, sub};
-        auto titleCol = column(t_children);
-        titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
-
-        // 1. TopCenter Placement Popup
-        auto top_btn = std::make_shared<DemoButton>("🔼", "TopCenter Popup", 0xFF1E293B, 0xFF334155);
-
-        PopupWidgetOptions opt1;
-        opt1.placement = PopupPlacement::TopCenter;
-        opt1.content_size = Size{220.0f, 85.0f};
-        opt1.background_color = 0xFA1E293B;
-        opt1.border_color = 0xFF38BDF8;
-
-        auto top_popup = popup(top_btn, [](BuildContext&, std::shared_ptr<NativePopup> popup) {
-            auto h = text("TopCenter Popup Card");
-            h->fontSize(13.0f).bold().color(0xFF38BDF8);
-            auto b = text("Positioned precisely above anchor widget with auto-fitting.");
-            b->fontSize(11.0f).color(0xFFCBD5E1);
-            return column({h, b});
-        }, opt1);
+        auto top_popup = popup({
+            .child = top_btn,
+            .builder = [](BuildContext&, std::shared_ptr<NativePopup>) {
+                return column({
+                    .children = {
+                        text("Hello from TopCenter!", { .color = 0xFFF8FAFC, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+                        text("This is the default popup behavior.", { .color = 0xFF94A3B8, .font_size = 11.0f })
+                    }
+                });
+            },
+            .options = {
+                .placement = PopupPlacement::TopCenter
+            }
+        });
 
         // 2. BottomRight Placement Popup
         auto bottom_btn = std::make_shared<DemoButton>("🔽", "BottomRight Popup", 0xFF1E293B, 0xFF334155);
 
-        PopupWidgetOptions opt2;
-        opt2.placement = PopupPlacement::BottomRight;
-        opt2.content_size = Size{220.0f, 85.0f};
-        opt2.background_color = 0xFA1E293B;
-        opt2.border_color = 0xFF10B981;
-
-        auto bottom_popup = popup(bottom_btn, [](BuildContext&, std::shared_ptr<NativePopup> popup) {
-            auto h = text("BottomRight Popup Card");
-            h->fontSize(13.0f).bold().color(0xFF10B981);
-            auto b = text("Aligned to bottom right corner with smooth drop shadows.");
-            b->fontSize(11.0f).color(0xFFCBD5E1);
-            return column({h, b});
-        }, opt2);
+        auto bottom_popup = popup({
+            .child = bottom_btn,
+            .builder = [](BuildContext&, std::shared_ptr<NativePopup>) {
+                return column({
+                    .children = {
+                        text("BottomRight Popup Card", { .color = 0xFF10B981, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+                        text("Aligned to bottom right corner with smooth drop shadows.", { .color = 0xFFCBD5E1, .font_size = 11.0f })
+                    }
+                });
+            },
+            .options = {
+                .placement = PopupPlacement::BottomRight,
+                .background_color = 0xFA1E293B,
+                .border_color = 0xFF10B981,
+                .content_size = Size{220.0f, 85.0f}
+            }
+        });
 
         // 3. Follow Cursor Popup (Hover Trigger)
         auto hover_btn = std::make_shared<DemoButton>("🎯", "Hover (FollowCursor)", 0xFF1E293B, 0xFF334155);
 
-        PopupWidgetOptions opt3;
-        opt3.placement = PopupPlacement::FollowCursor;
-        opt3.trigger = PopupTrigger::Hover;
-        opt3.content_size = Size{200.0f, 65.0f};
-        opt3.background_color = 0xFA0F172A;
-        opt3.border_color = 0xFFF59E0B;
-
-        auto cursor_popup = popup(hover_btn, [](BuildContext&, std::shared_ptr<NativePopup> popup) {
-            auto h = text("Tracking Cursor Point");
-            h->fontSize(12.0f).bold().color(0xFFF59E0B);
-            auto b = text("Dynamically spawns near pointer position.");
-            b->fontSize(11.0f).color(0xFF94A3B8);
-            return column({h, b});
-        }, opt3);
+        auto cursor_popup = popup({
+            .child = hover_btn,
+            .builder = [](BuildContext&, std::shared_ptr<NativePopup>) {
+                return column({
+                    .children = {
+                        text("Tracking Cursor Point", { .color = 0xFFF59E0B, .font_size = 12.0f, .font_weight = FontWeight::Bold }),
+                        text("Dynamically spawns near pointer position.", { .color = 0xFF94A3B8, .font_size = 11.0f })
+                    }
+                });
+            },
+            .options = {
+                .placement = PopupPlacement::FollowCursor,
+                .trigger = PopupTrigger::Hover,
+                .background_color = 0xFA0F172A,
+                .border_color = 0xFFF59E0B,
+                .content_size = Size{200.0f, 65.0f}
+            }
+        });
 
         // 4. Center Screen Modal Popup
-        auto center_btn = std::make_shared<DemoButton>("⚡", "Center Modal Popup", 0xFF2563EB, 0xFF3B82F6);
+        auto modal_btn = std::make_shared<DemoButton>("🔲", "Center Screen Modal", 0xFF3B82F6, 0xFF60A5FA);
 
-        PopupWidgetOptions opt4;
-        opt4.placement = PopupPlacement::CenterScreen;
-        opt4.trigger = PopupTrigger::Click;
-        opt4.content_size = Size{260.0f, 130.0f};
-        opt4.background_color = 0xFA1E1E2E;
-        opt4.border_color = 0xFFA855F7;
+        auto modal_popup = popup({
+            .child = modal_btn,
+            .builder = [](BuildContext& ctx, std::shared_ptr<NativePopup> popup_instance) {
+                return column({
+                    .gap = StyleValue::point(16.0f),
+                    .children = {
+                        text("Center Screen Modal", { .color = 0xFFFFFFFF, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+                        text("This popup ignores the anchor position and is centered on the current window screen.", { .color = 0xFFE2E8F0, .font_size = 12.0f }),
+                        row({
+                            .justify_content = Justify::End,
+                            .children = {
+                                button(text("Close Modal"), [popup_instance]() {
+                                    if (popup_instance) popup_instance->close();
+                                })
+                            }
+                        })
+                    }
+                });
+            },
+            .options = {
+                .placement = PopupPlacement::CenterScreen,
+                .background_color = 0xEA0F172A,
+                .border_color = 0xFF3B82F6,
+                .padding = EdgeInsets::all(20.0f),
+                .content_size = Size{300.0f, 150.0f}
+            }
+        });
 
-        auto center_popup = popup(center_btn, [](BuildContext& sub_ctx, std::shared_ptr<NativePopup> popup) {
-            auto h = text("Center Screen Modal Popup");
-            h->fontSize(14.0f).bold().color(0xFFA855F7);
-            auto b = text("Spawned in center of screen with dismiss action button.");
-            b->fontSize(11.0f).color(0xFFCBD5E1);
-
-            // Dismiss Button using clean GestureDetector
-            auto dismiss_txt = text("Dismiss");
-            dismiss_txt->fontSize(12.0f).bold().color(0xFFFFFFFF);
-            auto dismiss_box = container(dismiss_txt);
-            dismiss_box->color(0xFF2563EB)
-                       .borderRadius(6.0f)
-                       .paddingSymmetric(6.0f, 16.0f)
-                       .align(Alignment::Center);
-
-            auto dismiss_gesture = std::make_shared<GestureDetector>();
-            dismiss_gesture->hit_test_behavior = HitTestBehavior::Opaque;
-            dismiss_gesture->cursor_type       = SystemCursor::Pointer;
-            dismiss_gesture->on_tap = [popup] {
-                std::cout << "[Popup] Dismiss Clicked — closing popup!\n";
-                if (popup) popup->close();
-            };
-            dismiss_gesture->child = dismiss_box;
-
-            auto col = column({h, b, dismiss_gesture});
-            col->gap(StyleValue::point(10.0f));
-            return col;
-        }, opt4);
-
-        // Layout rows
-        std::vector<WidgetPtr> r_children = {top_popup, bottom_popup, cursor_popup, center_popup};
-        auto buttonsRow = row(r_children);
-        buttonsRow->justifyContent(Justify::Center).alignItems(Align::Center).gap(16_px);
-
-        std::vector<WidgetPtr> m_children = {titleCol, buttonsRow};
-        auto mainCol = column(m_children);
-        mainCol->alignItems(Align::Center).justifyContent(Justify::Center);
-
-        auto appRoot = container(mainCol);
-        appRoot->color(0xFF0F172A)
-               .paddingAll(40.0f)
-               .flexGrow(1.0f);
-
-        return appRoot;
+        // Assemble Demo Layout
+        return container({
+            .color = 0xFF0B1120,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .children = {
+                    container({
+                        .padding = StyleInsets::only(0.0f, 40.0f, 40.0f, 40.0f),
+                        .child = column({
+                            .align_items = Align::Center,
+                            .gap = StyleValue::point(8.0f),
+                            .children = {
+                                text("Universal Popup Subsystem", { .color = 0xFFFFFFFF, .font_size = 24.0f, .font_weight = FontWeight::Bold }),
+                                text("Context menus, tooltips, and floating windows with multi-directional anchoring.", { .color = 0xFF94A3B8, .font_size = 14.0f })
+                            }
+                        })
+                    }),
+                    container({
+                        .padding = StyleInsets::only(40.0f, 40.0f, 40.0f, 40.0f),
+                        .child = wrap({
+                            .justify_content = Justify::Center,
+                            .align_items = Align::Center,
+                            .gap = StyleValue::point(16.0f),
+                            .children = {
+                                top_popup,
+                                bottom_popup,
+                                cursor_popup,
+                                modal_popup
+                            }
+                        })
+                    })
+                }
+            })
+        });
     }
 };
 

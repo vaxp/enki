@@ -45,7 +45,10 @@ struct FilePickerResult {
 };
 
 /// Configuration options for FilePicker styling and behavior
-struct FilePickerOptions {
+struct FilePickerProps {
+    WidgetPtr child = nullptr;
+    std::function<void(const FilePickerResult&)> on_result = nullptr;
+
     FilePickerMode mode           = FilePickerMode::OpenFile;
     std::string initial_directory = "";        ///< Initial directory path (defaults to $HOME)
     std::string default_filename  = "";        ///< Default filename for SaveFile mode
@@ -69,14 +72,10 @@ struct FilePickerOptions {
 /// @brief FilePicker widget wrapping a target child widget or static show helper.
 class FilePicker : public StatefulWidget {
 public:
-    WidgetPtr child;
-    std::function<void(const FilePickerResult&)> on_result;
-    FilePickerOptions options;
+    FilePickerProps props;
 
-    FilePicker(WidgetPtr child,
-               std::function<void(const FilePickerResult&)> on_result,
-               FilePickerOptions options = FilePickerOptions())
-        : child(std::move(child)), on_result(std::move(on_result)), options(std::move(options)) {}
+    FilePicker(FilePickerProps p)
+        : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "FilePicker"; }
@@ -84,18 +83,14 @@ public:
     /// Static launcher to open FilePicker dialog programmatically from anywhere.
     static std::shared_ptr<NativePopup> show(
         BuildContext& context,
-        std::function<void(const FilePickerResult&)> on_result,
-        FilePickerOptions options = FilePickerOptions()
+        FilePickerProps props
     );
 };
 
 // ── Factory Helpers ────────────────────────────────────────────────
 
-inline WidgetPtr filePicker(
-    WidgetPtr child,
-    std::function<void(const FilePickerResult&)> on_result,
-    FilePickerOptions options = FilePickerOptions()) {
-    return std::make_shared<FilePicker>(std::move(child), std::move(on_result), std::move(options));
+inline WidgetPtr filePicker(FilePickerProps props) {
+    return std::make_shared<FilePicker>(std::move(props));
 }
 
 } // namespace enki

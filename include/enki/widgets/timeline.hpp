@@ -158,7 +158,10 @@ public:
 /// Configuration Options for Timeline
 /// ════════════════════════════════════════════════════════════════
 
-struct TimelineOptions {
+struct TimelineProps {
+    Key key = Key::none();
+    std::shared_ptr<TimelineController> controller;
+
     TimelineOrientation orientation = TimelineOrientation::Vertical;
     TimelineAlignment alignment = TimelineAlignment::Start;
     TimelineLineStyle line_style = TimelineLineStyle::Solid;
@@ -197,30 +200,37 @@ struct TimelineOptions {
 
 class Timeline : public StatefulWidget {
 public:
-    std::shared_ptr<TimelineController> controller;
-    TimelineOptions options;
+    TimelineProps props;
 
-    Timeline(std::shared_ptr<TimelineController> ctrl, TimelineOptions opt = {})
-        : controller(ctrl ? ctrl : std::make_shared<TimelineController>()),
-          options(std::move(opt)) {}
+    Timeline() = default;
+    explicit Timeline(TimelineProps p) : props(std::move(p)) {
+        if (!props.controller) {
+            props.controller = std::make_shared<TimelineController>();
+        }
+    }
 
     // Fluent API Chaining
-    Timeline* orientation(TimelineOrientation o) { options.orientation = o; return this; }
-    Timeline* alignment(TimelineAlignment a) { options.alignment = a; return this; }
-    Timeline* lineStyle(TimelineLineStyle s) { options.line_style = s; return this; }
-    Timeline* stepper(bool enable = true) { options.is_stepper = enable; return this; }
-    Timeline* cardWidth(float w) { options.card_width = w; return this; }
-    Timeline* onItemTap(std::function<void(const TimelineItem&)> cb) { options.on_item_tap = std::move(cb); return this; }
-    Timeline* onStepChanged(std::function<void(int)> cb) { options.on_step_changed = std::move(cb); return this; }
+    Timeline& orientation(TimelineOrientation o) { props.orientation = o; return *this; }
+    Timeline& alignment(TimelineAlignment a) { props.alignment = a; return *this; }
+    Timeline& lineStyle(TimelineLineStyle s) { props.line_style = s; return *this; }
+    Timeline& stepper(bool enable = true) { props.is_stepper = enable; return *this; }
+    Timeline& cardWidth(float w) { props.card_width = w; return *this; }
+    Timeline& onItemTap(std::function<void(const TimelineItem&)> cb) { props.on_item_tap = std::move(cb); return *this; }
+    Timeline& onStepChanged(std::function<void(int)> cb) { props.on_step_changed = std::move(cb); return *this; }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Timeline"; }
 };
 
+inline std::shared_ptr<Timeline> timeline(TimelineProps props = {}) {
+    return std::make_shared<Timeline>(std::move(props));
+}
+
 inline std::shared_ptr<Timeline> timeline(
-    std::shared_ptr<TimelineController> ctrl,
-    TimelineOptions options = {}) {
-    return std::make_shared<Timeline>(std::move(ctrl), std::move(options));
+    std::shared_ptr<TimelineController> ctrl) {
+    TimelineProps props;
+    props.controller = std::move(ctrl);
+    return std::make_shared<Timeline>(std::move(props));
 }
 
 } // namespace enki

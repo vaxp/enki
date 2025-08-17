@@ -3,7 +3,7 @@
 namespace enki {
 
 WidgetPtr IconButton::build(BuildContext& context) {
-    ButtonOptions btn_options;
+    ButtonProps btn_options;
     btn_options.normal_color = options.normal_color;
     btn_options.hover_color = options.hover_color;
     btn_options.pressed_color = options.pressed_color;

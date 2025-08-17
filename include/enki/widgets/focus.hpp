@@ -93,11 +93,39 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "Focus"; }
 };
 
+struct FocusProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    std::shared_ptr<FocusNode> focus_node = nullptr;
+    bool autofocus = false;
+    bool show_focus_ring = true;
+    Color focus_ring_color = 0xFF38BDF8;
+
+    std::function<void(bool has_focus)> on_focus_change;
+    std::function<void(int key, int mod)> on_key;
+};
+
 inline std::shared_ptr<Focus> focus(
     WidgetPtr child,
     std::shared_ptr<FocusNode> node = nullptr,
     bool autofocus = false) {
     return std::make_shared<Focus>(std::move(child), std::move(node), autofocus);
+}
+
+inline std::shared_ptr<Focus> focus(FocusProps props) {
+    auto f = std::make_shared<Focus>(std::move(props.child), std::move(props.focus_node), props.autofocus);
+    f->key = std::move(props.key);
+    f->show_focus_ring = props.show_focus_ring;
+    f->focus_ring_color = props.focus_ring_color;
+    f->on_focus_change = std::move(props.on_focus_change);
+    f->on_key = std::move(props.on_key);
+    return f;
+}
+
+inline std::shared_ptr<Focus> focus(FocusProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return focus(std::move(props));
 }
 
 /// ════════════════════════════════════════════════════════════════
@@ -117,8 +145,25 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "FocusScope"; }
 };
 
+struct FocusScopeProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    bool autofocus = false;
+};
+
 inline std::shared_ptr<FocusScope> focusScope(WidgetPtr child, bool autofocus = false) {
     return std::make_shared<FocusScope>(std::move(child), autofocus);
+}
+
+inline std::shared_ptr<FocusScope> focusScope(FocusScopeProps props) {
+    auto fs = std::make_shared<FocusScope>(std::move(props.child), props.autofocus);
+    fs->key = std::move(props.key);
+    return fs;
+}
+
+inline std::shared_ptr<FocusScope> focusScope(FocusScopeProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return focusScope(std::move(props));
 }
 
 } // namespace enki

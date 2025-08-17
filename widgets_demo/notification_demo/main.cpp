@@ -192,59 +192,62 @@ public:
             setState([] {});
         });
 
-        std::vector<WidgetPtr> cards_list = {card1, card2, card3, card4};
-        auto cards_row = row(cards_list);
-        cards_row->gap(StyleValue::point(14.0f)).justifyContent(Justify::Center);
-
         // ── Feed Quick Action Bar ─────────────────────────────────────
-        auto btn_open_feed = button(text("📂 Open Notification Center Drawer"), [this] {
+        auto btn_open_feed = button(text("📂 Open Notification Center Drawer", { .color = 0xFFFFFFFF, .font_size = 13.0f, .font_weight = FontWeight::Bold }), [this] {
             notify_mgr_->openCenter();
             hud_msg_ = "Opened In-App Notification Center Drawer.";
             setState([] {});
         });
 
-        auto btn_read_all = button(text("✓ Mark All As Read"), [this] {
+        auto btn_read_all = button(text("✓ Mark All As Read", { .color = 0xFFFFFFFF, .font_size = 13.0f, .font_weight = FontWeight::Bold }), [this] {
             notify_mgr_->markAllAsRead();
             hud_msg_ = "Marked all notifications as read.";
             setState([] {});
         });
 
-        auto btn_clear = button(text("🗑️ Clear All Feed Items"), [this] {
+        auto btn_clear = button(text("🗑️ Clear All Feed Items", { .color = 0xFFFFFFFF, .font_size = 13.0f, .font_weight = FontWeight::Bold }), [this] {
             notify_mgr_->clearAll();
             hud_msg_ = "Cleared all notification feed items.";
             setState([] {});
         });
 
-        std::vector<WidgetPtr> feed_actions = {btn_open_feed, btn_read_all, btn_clear};
-        auto feed_row = row(feed_actions);
-        feed_row->gap(StyleValue::point(12.0f)).justifyContent(Justify::Center);
-
-        // ── HUD / Status Box ──────────────────────────────────────────
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
-
-        auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(1080.0f);
-
-        // ── Assemble Page Body ────────────────────────────────────────
-        std::vector<WidgetPtr> page_items = {top_bar, cards_row, feed_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(26.0f)).alignItems(Align::Center);
-
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(24.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
-
         // Wrap with NotificationOverlay
-        auto overlay = notificationOverlay(background_page, notify_mgr_);
-        return overlay;
+        return notificationOverlay({
+            .body = container({
+                .color = 0xFF0B1120,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .padding = StyleInsets::all(24.0f),
+                .child = column({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(26.0f),
+                    .children = {
+                        top_bar,
+                        row({
+                            .justify_content = Justify::Center,
+                            .gap = StyleValue::point(14.0f),
+                            .children = {card1, card2, card3, card4}
+                        }),
+                        row({
+                            .justify_content = Justify::Center,
+                            .gap = StyleValue::point(12.0f),
+                            .children = { btn_open_feed, btn_read_all, btn_clear }
+                        }),
+                        container({
+                            .color = 0xFF1E293B,
+                            .border_radius = BorderRadius::circular(6.0f),
+                            .border = Border(0xFF334155, 1.0f),
+                            .width = StyleValue::point(1080.0f),
+                            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                            .child = row({
+                                .children = { text("💡 " + hud_msg_, { .color = 0xFF38BDF8, .font_size = 12.5f }) }
+                            })
+                        })
+                    }
+                })
+            }),
+            .manager = notify_mgr_
+        });
     }
 };
 

@@ -102,6 +102,15 @@ struct PopupWidgetOptions {
 
 using PopupConfig = PopupWidgetOptions;
 
+struct PopupProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> builder;
+    std::function<WidgetPtr(BuildContext&)> simple_builder;
+    PopupWidgetOptions options;
+    std::shared_ptr<PopupController> controller;
+};
+
 /// @brief Universal Popup widget wrapping an anchor child and popup content.
 class Popup : public StatefulWidget {
 public:
@@ -166,17 +175,22 @@ inline WidgetPtr popup(
     );
 }
 
-inline WidgetPtr popup(
-    WidgetPtr child,
-    std::function<WidgetPtr(BuildContext&)> popup_builder,
-    PopupWidgetOptions options = PopupWidgetOptions(),
-    std::shared_ptr<PopupController> controller = nullptr) {
-    return std::make_shared<Popup>(
-        std::move(child),
-        std::move(popup_builder),
-        std::move(options),
-        std::move(controller)
-    );
+inline std::shared_ptr<Popup> popup(WidgetPtr child,
+                                    std::function<WidgetPtr(BuildContext&)> builder,
+                                    PopupWidgetOptions options = PopupWidgetOptions(),
+                                    std::shared_ptr<PopupController> controller = nullptr) {
+    return std::make_shared<Popup>(std::move(child), std::move(builder), std::move(options), std::move(controller));
+}
+
+inline std::shared_ptr<Popup> popup(PopupProps props) {
+    std::shared_ptr<Popup> p;
+    if (props.builder) {
+        p = std::make_shared<Popup>(std::move(props.child), std::move(props.builder), std::move(props.options), std::move(props.controller));
+    } else {
+        p = std::make_shared<Popup>(std::move(props.child), std::move(props.simple_builder), std::move(props.options), std::move(props.controller));
+    }
+    p->key = props.key;
+    return p;
 }
 
 } // namespace enki

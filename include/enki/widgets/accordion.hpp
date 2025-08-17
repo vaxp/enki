@@ -81,7 +81,13 @@ struct AccordionItem {
 /// Accordion Options
 /// ════════════════════════════════════════════════════════════════
 
-struct AccordionOptions {
+class AccordionController;
+
+struct AccordionProps {
+    Key key = Key::none();
+    std::vector<AccordionItem> items;
+    std::shared_ptr<AccordionController> controller;
+
     AccordionMode mode = AccordionMode::Single;
     AccordionVariant variant = AccordionVariant::Bordered;
 
@@ -134,24 +140,24 @@ public:
 
 class Accordion : public StatefulWidget {
 public:
-    std::vector<AccordionItem> items;
-    AccordionOptions options;
-    std::shared_ptr<AccordionController> controller;
+    AccordionProps props;
 
     Accordion() = default;
-    Accordion(std::vector<AccordionItem> items_, AccordionOptions opts = {},
-              std::shared_ptr<AccordionController> ctrl = nullptr)
-        : items(std::move(items_)), options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit Accordion(AccordionProps p) : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Accordion"; }
 };
 
+inline std::shared_ptr<Accordion> accordion(AccordionProps props = {}) {
+    return std::make_shared<Accordion>(std::move(props));
+}
+
 inline std::shared_ptr<Accordion> accordion(
-    std::vector<AccordionItem> items,
-    AccordionOptions options = {},
-    std::shared_ptr<AccordionController> controller = nullptr) {
-    return std::make_shared<Accordion>(std::move(items), std::move(options), std::move(controller));
+    std::vector<AccordionItem> items) {
+    AccordionProps props;
+    props.items = std::move(items);
+    return std::make_shared<Accordion>(std::move(props));
 }
 
 } // namespace enki

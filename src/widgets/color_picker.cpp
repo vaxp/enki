@@ -349,9 +349,9 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const ColorPicker*>(widget());
-        initial_color_ = w->options.initial_color;
+        initial_color_ = w->props.initial_color;
         current_color_ = initial_color_;
-        current_format_ = w->options.default_format;
+        current_format_ = w->props.default_format;
 
         RGBtoHSV(current_color_, hue_, saturation_, value_, alpha_);
         wireController();
@@ -364,30 +364,30 @@ public:
 
     void wireController() {
         auto* w = static_cast<const ColorPicker*>(widget());
-        if (w->controller) {
-            w->controller->set_color_fn = [this](Color c) {
+        if (w->props.controller) {
+            w->props.controller->set_color_fn = [this](Color c) {
                 current_color_ = c;
                 RGBtoHSV(c, hue_, saturation_, value_, alpha_);
                 setState([] {});
             };
-            w->controller->open_fn = [this] {
+            w->props.controller->open_fn = [this] {
                 is_popup_open_ = true;
                 setState([] {});
             };
-            w->controller->close_fn = [this] {
+            w->props.controller->close_fn = [this] {
                 is_popup_open_ = false;
                 setState([] {});
             };
-            w->controller->get_color_fn = [this] { return current_color_; };
-            w->controller->get_hex_fn = [this] { return colorToHex(current_color_); };
+            w->props.controller->get_color_fn = [this] { return current_color_; };
+            w->props.controller->get_hex_fn = [this] { return colorToHex(current_color_); };
         }
     }
 
     void updateColorFromHSV() {
         current_color_ = HSVtoRGB(hue_, saturation_, value_, alpha_);
         auto* w = static_cast<const ColorPicker*>(widget());
-        if (w->options.on_color_changed) {
-            w->options.on_color_changed(current_color_);
+        if (w->props.on_color_changed) {
+            w->props.on_color_changed(current_color_);
         }
         setState([] {});
     }
@@ -524,7 +524,7 @@ public:
     // ── Build Swatch Palette ──────────────────────────────────────
     WidgetPtr buildPalette(const ColorPicker* w) {
         std::vector<WidgetPtr> swatch_boxes;
-        for (Color sw_color : w->options.palette) {
+        for (Color sw_color : w->props.palette) {
             auto b = container();
             b->color(sw_color).borderRadius(10.0f).width(20.0f).height(20.0f).border(0xFF334155, 1.0f);
 
@@ -563,7 +563,7 @@ public:
 
     // ── Build Full Color Picker Card ──────────────────────────────
     WidgetPtr buildColorPickerCard(const ColorPicker* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         // Header Title & Comparison
         auto t_txt = text("🎨 Color Inspector");
@@ -610,7 +610,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const ColorPicker*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         if (opts.mode == ColorPickerMode::Inline) {
             return buildColorPickerCard(w);

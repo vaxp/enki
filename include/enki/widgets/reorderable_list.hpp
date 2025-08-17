@@ -22,7 +22,10 @@ namespace enki {
 /// ReorderableList Options
 /// ════════════════════════════════════════════════════════════════
 
-struct ReorderableListOptions {
+struct ReorderableListProps {
+    Key key = Key::none();
+    std::vector<WidgetPtr> children;
+
     float item_height = 56.0f;          ///< Uniform item height
     float gap = 10.0f;                  ///< Gap between items
     float width = 480.0f;               ///< Width of the list container
@@ -39,10 +42,11 @@ struct ReorderableListOptions {
 
 class ReorderableList : public MultiChildRenderObjectWidget {
 public:
-    ReorderableListOptions options;
+    ReorderableListProps props;
 
-    ReorderableList(std::vector<WidgetPtr> children_, ReorderableListOptions opts = {})
-        : MultiChildRenderObjectWidget(Key::none(), std::move(children_)), options(std::move(opts)) {}
+    ReorderableList() : MultiChildRenderObjectWidget(Key::none(), {}) {}
+    explicit ReorderableList(ReorderableListProps p)
+        : MultiChildRenderObjectWidget(p.key, p.children), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
@@ -68,12 +72,15 @@ public:
 /// Convenience Factory Helpers
 /// ════════════════════════════════════════════════════════════════
 
+inline std::shared_ptr<ReorderableList> reorderableList(ReorderableListProps props = {}) {
+    return std::make_shared<ReorderableList>(std::move(props));
+}
+
 inline std::shared_ptr<ReorderableList> reorderableList(
-    std::vector<WidgetPtr> children,
-    std::function<void(int old_index, int new_index)> on_reorder = nullptr,
-    ReorderableListOptions options = {}) {
-    if (on_reorder) options.on_reorder = std::move(on_reorder);
-    return std::make_shared<ReorderableList>(std::move(children), std::move(options));
+    std::vector<WidgetPtr> children) {
+    ReorderableListProps props;
+    props.children = std::move(children);
+    return std::make_shared<ReorderableList>(std::move(props));
 }
 
 inline std::shared_ptr<ReorderableDragHandle> reorderableDragHandle(WidgetPtr child = nullptr) {

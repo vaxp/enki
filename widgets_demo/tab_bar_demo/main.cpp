@@ -12,39 +12,40 @@ class TabBarDemoState : public State {
     int selected_tab = 0;
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        // TabBar
-        auto tabs = tabBar({
-            TabItem{"Discover", Icons::Material::explore(), ""},
-            TabItem{"Library", Icons::Material::library_books(), ""},
-            TabItem{"Messages", Icons::Material::chat(), "3"},
-            TabItem{"Settings", Icons::Material::settings(), ""}
-        }, selected_tab, [this](int idx) {
-            setState([this, idx] { selected_tab = idx; });
+        return container({
+            .color = 0xFF0F172A,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = column({
+                .height = StyleValue::percent(100.0f),
+                .children = {
+                    tabBar({
+                        .tabs = {
+                            {"Discover", Icons::Material::explore(), ""},
+                            {"Library", Icons::Material::library_books(), ""},
+                            {"Messages", Icons::Material::chat(), "3"},
+                            {"Settings", Icons::Material::settings(), ""}
+                        },
+                        .selected_index = selected_tab,
+                        .on_tab_changed = [this](int idx) {
+                            setState([this, idx] { selected_tab = idx; });
+                        }
+                    }),
+                    container({
+                        .flex_grow = 1.0f,
+                        .child = tabView({
+                            .selected_index = selected_tab,
+                            .children = {
+                                centerBox(text("Welcome to the Home Page", { .color = 0xFFFFFFFF })),
+                                centerBox(text("Analytics Dashboard", { .color = 0xFFFFFFFF })),
+                                centerBox(text("You have 3 unread messages", { .color = 0xFFFFFFFF })),
+                                centerBox(text("Settings Configuration", { .color = 0xFFFFFFFF }))
+                            }
+                        })
+                    })
+                }
+            })
         });
-
-        auto home_page = centerBox(text("Welcome to the Home Page"));
-        auto analytics_page = centerBox(text("Analytics Dashboard"));
-        auto messages_page = centerBox(text("You have 3 unread messages"));
-        auto settings_page = centerBox(text("Settings Configuration"));
-
-        auto content = tabView(selected_tab, {
-            home_page, analytics_page, messages_page, settings_page
-        });
-
-        auto flex_content = container(content);
-        flex_content->flex(1.0f);
-
-        auto col = std::make_shared<Column>(std::vector<WidgetPtr>{
-            std::static_pointer_cast<Widget>(tabs),
-            std::static_pointer_cast<Widget>(flex_content)
-        });
-
-        col->style.height = StyleValue::percent(100.0f);
-
-        auto root = container(col);
-        root->color(0xFF0F172A).width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
-
-        return root;
     }
 };
 

@@ -12,8 +12,12 @@
 
 namespace enki {
 
-/// Options for configuring a Radio button.
-struct RadioOptions {
+struct RadioProps {
+    Key key = Key::none();
+    int value = 0;
+    int group_value = 0;
+    std::function<void(int)> on_changed = nullptr;
+
     float size = 20.0f;                             ///< Diameter of the outer circle.
     float inner_size = 10.0f;                       ///< Diameter of the inner selected circle.
     float border_width = 2.0f;                      ///< Thickness of the unselected border.
@@ -35,17 +39,25 @@ public:
     int value;
     int group_value;
     std::function<void(int)> on_changed;
-    RadioOptions options;
+    RadioProps options;
 
-    Radio(int value, int group_value, std::function<void(int)> on_changed = nullptr, RadioOptions options = RadioOptions())
+    Radio(int value, int group_value, std::function<void(int)> on_changed = nullptr, RadioProps options = RadioProps())
         : value(value), group_value(group_value), on_changed(std::move(on_changed)), options(std::move(options)) {}
+
+    Radio(Key key, int value, int group_value, std::function<void(int)> on_changed, RadioProps options)
+        : StatefulWidget(std::move(key)), value(value), group_value(group_value), on_changed(std::move(on_changed)), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Radio"; }
 };
 
-inline WidgetPtr radio(int value, int group_value, std::function<void(int)> on_changed = nullptr, RadioOptions options = RadioOptions()) {
+inline std::shared_ptr<Radio> radio(int value, int group_value, std::function<void(int)> on_changed = nullptr, RadioProps options = RadioProps()) {
     return std::make_shared<Radio>(value, group_value, std::move(on_changed), std::move(options));
+}
+
+inline std::shared_ptr<Radio> radio(RadioProps props) {
+    if (props.on_changed == nullptr) props.disabled = true;
+    return std::make_shared<Radio>(std::move(props.key), props.value, props.group_value, std::move(props.on_changed), std::move(props));
 }
 
 } // namespace enki
