@@ -11,61 +11,51 @@
 
 namespace enki {
 
-struct BadgeProps {
-    Key key = Key::none();
-    WidgetPtr child = nullptr;
-    WidgetPtr label = nullptr;
-
+/// @brief A material-style badge widget.
+///
+/// Draws a badge (notification counter or status dot) over a child widget.
+class BadgeWidget : public StatelessWidget {
+public:
+    WidgetPtr child;
+    WidgetPtr label;
+    
     Color bg_color = 0xFFEF4444;                            ///< Background color (default Red).
     Alignment alignment = Alignment::TopRight;              ///< Placement of the badge relative to the child.
     Point offset = {0.0f, 0.0f};                            ///< X,Y offset for fine-tuning positioning.
     float size = 12.0f;                                     ///< Diameter if it's an empty dot.
     StyleInsets padding = StyleInsets::symmetric(2.0f, 6.0f); ///< Padding if it contains a label.
     BorderRadius border_radius = BorderRadius::circular(10.0f); ///< Corner radius.
-};
 
-/// @brief A material-style badge widget.
-///
-/// Draws a badge (notification counter or status dot) over a child widget.
-class Badge : public StatelessWidget {
-public:
-    WidgetPtr child;
-    WidgetPtr label;
-    BadgeProps options;
-
-    Badge() = default;
-    explicit Badge(WidgetPtr c) : child(std::move(c)) {}
-    Badge(WidgetPtr c, WidgetPtr l) : child(std::move(c)), label(std::move(l)) {}
-    Badge(WidgetPtr c, WidgetPtr l, BadgeProps opt)
-        : child(std::move(c)), label(std::move(l)), options(std::move(opt)) {}
-    Badge(Key key, WidgetPtr c, WidgetPtr l, BadgeProps opt)
-        : StatelessWidget(std::move(key)), child(std::move(c)), label(std::move(l)), options(std::move(opt)) {}
+    explicit BadgeWidget(Key key) : StatelessWidget(std::move(key)) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "Badge"; }
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    Badge& bgColor(Color c) { options.bg_color = c; return *this; }
-    Badge& alignment(Alignment a) { options.alignment = a; return *this; }
-    Badge& offset(float x, float y) { options.offset = {x, y}; return *this; }
-    Badge& size(float s) { options.size = s; return *this; }
-    Badge& padding(StyleInsets p) { options.padding = p; return *this; }
 };
 
-// ── Global Factory Helper ────────────────────────────────────
+struct Badge {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    WidgetPtr label = nullptr;
 
-inline std::shared_ptr<Badge> badge(WidgetPtr child, WidgetPtr label = nullptr) {
-    return std::make_shared<Badge>(std::move(child), std::move(label));
-}
+    Color bg_color = 0xFFEF4444;
+    Alignment alignment = Alignment::TopRight;
+    Point offset = {0.0f, 0.0f};
+    float size = 12.0f;
+    StyleInsets padding = StyleInsets::symmetric(2.0f, 6.0f);
+    BorderRadius border_radius = BorderRadius::circular(10.0f);
 
-inline std::shared_ptr<Badge> badge(BadgeProps props) {
-    return std::make_shared<Badge>(std::move(props.key), std::move(props.child), std::move(props.label), std::move(props));
-}
-
-inline std::shared_ptr<Badge> badge(BadgeProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return badge(std::move(props));
-}
+    operator WidgetPtr() const {
+        auto w = std::make_shared<BadgeWidget>(key);
+        w->child = child;
+        w->label = label;
+        w->bg_color = bg_color;
+        w->alignment = alignment;
+        w->offset = offset;
+        w->size = size;
+        w->padding = padding;
+        w->border_radius = border_radius;
+        return w;
+    }
+};
 
 } // namespace enki

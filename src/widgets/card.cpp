@@ -2,23 +2,21 @@
 
 namespace enki {
 
-WidgetPtr Card::build(BuildContext&) {
-    auto c = container(child);
-    c->color(options.color);
-    c->borderRadius(options.border_radius);
-    
-    if (options.border.has_value()) {
-        c->border(options.border.value());
+WidgetPtr CardWidget::build(BuildContext&) {
+    std::vector<BoxShadow> shadows;
+    if (elevation > 0.0f) {
+        shadows.push_back(BoxShadow(shadow_color, {0.0f, elevation / 2.0f}, elevation));
     }
     
-    c->margin(options.margin);
-    c->padding(options.padding);
-    
-    if (options.elevation > 0.0f) {
-        c->shadow(options.shadow_color, {0.0f, options.elevation / 2.0f}, options.elevation);
-    }
-    
-    return c;
+    return container({
+        .color = color,
+        .border_radius = border_radius,
+        .border = border,
+        .box_shadow = std::move(shadows),
+        .padding = padding,
+        .margin = margin,
+        .child = child
+    });
 }
 
 } // namespace enki

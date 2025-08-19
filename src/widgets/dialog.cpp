@@ -108,7 +108,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Dialog*>(widget());
+        auto* w = static_cast<const DialogWidget*>(widget());
         is_open_ = w->initial_open;
 
         anim_.setDuration(std::chrono::milliseconds(200));
@@ -125,7 +125,7 @@ public:
         if (Platform::instance()) {
             key_down_conn_ = Platform::instance()->onKeyDown().connect([this](int key, int) {
                 if (key == 0xff1b) { // Escape key
-                    auto* w = static_cast<const Dialog*>(widget());
+                    auto* w = static_cast<const DialogWidget*>(widget());
                     if (w->options.escape_to_close && is_open_) {
                         closeDialog();
                     }
@@ -149,7 +149,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const Dialog*>(widget());
+        auto* w = static_cast<const DialogWidget*>(widget());
         if (w->controller) {
             w->controller->show_fn = [this] { openDialog(); };
             w->controller->hide_fn = [this] { closeDialog(); };
@@ -162,7 +162,7 @@ public:
         if (is_open_) return;
         is_open_ = true;
         anim_.forward();
-        auto* w = static_cast<const Dialog*>(widget());
+        auto* w = static_cast<const DialogWidget*>(widget());
         if (w->options.on_opened) w->options.on_opened();
     }
 
@@ -170,7 +170,7 @@ public:
         if (!is_open_) return;
         is_open_ = false;
         anim_.reverse();
-        auto* w = static_cast<const Dialog*>(widget());
+        auto* w = static_cast<const DialogWidget*>(widget());
         if (w->options.on_closed) w->options.on_closed();
     }
 
@@ -181,7 +181,7 @@ public:
 
     // ── Build Dialog Card ─────────────────────────────────────────
 
-    WidgetPtr buildDialogCard(const Dialog* w, float t) {
+    WidgetPtr buildDialogCard(const DialogWidget* w, float t) {
         const auto& opts = w->options;
 
         std::vector<WidgetPtr> card_elements;
@@ -193,52 +193,51 @@ public:
 
             // Icon Badge
             if (!opts.icon.empty()) {
-                auto ic_txt = text(opts.icon);
-                ic_txt->fontSize(18.0f);
-
                 Color badge_bg = opts.icon_badge_bg;
                 if (opts.type == DialogType::Danger)  badge_bg = 0x2EEF4444;
                 if (opts.type == DialogType::Warning) badge_bg = 0x2EF59E0B;
                 if (opts.type == DialogType::Success) badge_bg = 0x2E10B981;
 
-                auto badge_box = container(ic_txt);
-                badge_box->color(badge_bg)
-                         .borderRadius(8.0f)
-                         .paddingAll(8.0f);
-                header_left_items.push_back(badge_box);
+                header_left_items.push_back(container({
+                    .color = badge_bg,
+                    .border_radius = BorderRadius::circular(8.0f),
+                    .padding = StyleInsets::all(8.0f),
+                    .child = text(opts.icon, { .font_size = 18.0f })
+                }));
             }
 
             // Title + Subtitle Column
             std::vector<WidgetPtr> titles;
             if (!opts.title.empty()) {
-                auto t_txt = text(opts.title);
-                t_txt->fontSize(16.0f).bold().color(opts.title_color);
-                titles.push_back(t_txt);
+                titles.push_back(text(opts.title, { .color = opts.title_color, .font_size = 16.0f, .font_weight = FontWeight::Bold }));
             }
             if (!opts.subtitle.empty()) {
-                auto s_txt = text(opts.subtitle);
-                s_txt->fontSize(12.5f).color(opts.subtitle_color);
-                titles.push_back(s_txt);
+                titles.push_back(text(opts.subtitle, { .color = opts.subtitle_color, .font_size = 12.5f }));
             }
 
-            auto titles_col = column(titles);
-            titles_col->gap(StyleValue::point(2.0f)).flex(1.0f);
-            header_left_items.push_back(titles_col);
+            header_left_items.push_back(column({
+                .flex = 1.0f,
+                .gap = StyleValue::point(2.0f),
+                .children = titles
+            }));
 
-            auto header_left = row(header_left_items);
-            header_left->gap(StyleValue::point(12.0f)).alignItems(Align::Center).flex(1.0f);
-
-            std::vector<WidgetPtr> header_items = {header_left};
+            std::vector<WidgetPtr> header_items = {
+                row({
+                    .align_items = Align::Center,
+                    .flex = 1.0f,
+                    .gap = StyleValue::point(12.0f),
+                    .children = header_left_items
+                })
+            };
 
             // Close button ✕
             if (opts.show_close_button) {
-                auto close_lbl = text("✕");
-                close_lbl->fontSize(14.0f).bold().color(0xFF94A3B8);
-
-                auto close_box = container(close_lbl);
-                close_box->paddingAll(6.0f);
-
-                auto close_btn = std::make_shared<GestureDetector>(close_box);
+                auto close_btn = std::make_shared<GestureDetector>(
+                    container({
+                        .padding = StyleInsets::all(6.0f),
+                        .child = text("✕", { .color = 0xFF94A3B8, .font_size = 14.0f, .font_weight = FontWeight::Bold })
+                    })
+                );
                 close_btn->cursor_type = SystemCursor::Pointer;
                 close_btn->on_tap_up = [this](const TapUpDetails&) {
                     closeDialog();
@@ -246,38 +245,40 @@ public:
                 header_items.push_back(close_btn);
             }
 
-            auto header_row = row(header_items);
-            header_row->justifyContent(Justify::SpaceBetween)
-                      .alignItems(Align::Center)
-                      .width(StyleValue::percent(100.0f));
-
-            card_elements.push_back(header_row);
+            card_elements.push_back(row({
+                .justify_content = Justify::SpaceBetween,
+                .align_items = Align::Center,
+                .width = StyleValue::percent(100.0f),
+                .children = header_items
+            }));
 
             // Divider below header
-            auto div = container();
-            div->color(0xFF334155).height(1.0f).width(StyleValue::percent(100.0f));
-            card_elements.push_back(div);
+            card_elements.push_back(container({
+                .color = 0xFF334155,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f)
+            }));
         }
 
         // ── 2. Content Body ───────────────────────────────────────────
         if (w->dialog_content) {
-            auto body_box = container(w->dialog_content);
-            body_box->width(StyleValue::percent(100.0f));
-            card_elements.push_back(body_box);
+            card_elements.push_back(container({
+                .width = StyleValue::percent(100.0f),
+                .child = w->dialog_content
+            }));
         }
 
         // ── 3. Footer Action Buttons ──────────────────────────────────
         if (!opts.actions.empty()) {
             // Divider above actions
-            auto div2 = container();
-            div2->color(0xFF334155).height(1.0f).width(StyleValue::percent(100.0f));
-            card_elements.push_back(div2);
+            card_elements.push_back(container({
+                .color = 0xFF334155,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f)
+            }));
 
             std::vector<WidgetPtr> action_buttons;
             for (const auto& act : opts.actions) {
-                auto btn_txt = text(act.label);
-                btn_txt->fontSize(13.0f).bold();
-
                 Color bg_col = 0xFF334155;
                 Color txt_col = 0xFFF1F5F9;
                 Color border_col = 0xFF475569;
@@ -296,15 +297,15 @@ public:
                     txt_col = 0xFF94A3B8;
                 }
 
-                btn_txt->color(txt_col);
-
-                auto btn_box = container(btn_txt);
-                btn_box->color(bg_col)
-                       .border(border_col, 1.0f)
-                       .borderRadius(6.0f)
-                       .paddingSymmetric(8.0f, 18.0f);
-
-                auto btn_gd = std::make_shared<GestureDetector>(btn_box);
+                auto btn_gd = std::make_shared<GestureDetector>(
+                    container({
+                        .color = bg_col,
+                        .border_radius = BorderRadius::circular(6.0f),
+                        .border = Border(border_col, 1.0f),
+                        .padding = StyleInsets::symmetric(8.0f, 18.0f),
+                        .child = text(act.label, { .color = txt_col, .font_size = 13.0f, .font_weight = FontWeight::Bold })
+                    })
+                );
                 btn_gd->cursor_type = SystemCursor::Pointer;
                 btn_gd->on_tap_up = [this, act](const TapUpDetails&) {
                     if (act.on_click) act.on_click();
@@ -313,57 +314,58 @@ public:
                 action_buttons.push_back(btn_gd);
             }
 
-            auto actions_row = row(action_buttons);
-            actions_row->gap(StyleValue::point(10.0f))
-                       .justifyContent(Justify::End)
-                       .alignItems(Align::Center)
-                       .width(StyleValue::percent(100.0f));
-
-            card_elements.push_back(actions_row);
+            card_elements.push_back(row({
+                .justify_content = Justify::End,
+                .align_items = Align::Center,
+                .gap = StyleValue::point(10.0f),
+                .width = StyleValue::percent(100.0f),
+                .children = action_buttons
+            }));
         }
 
-        auto card_col = column(card_elements);
-        card_col->gap(StyleValue::point(14.0f))
-                .width(StyleValue::percent(100.0f));
-
         // Outer dialog panel box with elevation shadow
-        auto dialog_box = container(card_col);
-        dialog_box->color(opts.background_color)
-                  .border(opts.border_color, 1.0f)
-                  .borderRadius(opts.border_radius)
-                  .paddingAll(20.0f)
-                  .width(opts.width)
-                  .shadow(BoxShadow(0x99000000, {0.0f, 12.0f}, 32.0f));
-
-        return dialog_box;
+        return container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 12.0f}, 32.0f)},
+            .width = StyleValue::point(opts.width),
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .gap = StyleValue::point(14.0f),
+                .width = StyleValue::percent(100.0f),
+                .children = card_elements
+            })
+        });
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Dialog*>(widget());
+        auto* w = static_cast<const DialogWidget*>(widget());
         const auto& opts = w->options;
         float t = anim_.value();
 
         // ── 1. Page Body (Invariant 100% full-screen stack layer) ─────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->width(StyleValue::percent(100.0f))
-              .height(StyleValue::percent(100.0f));
-            body_widget = Positioned::fill(bx);
+            body_widget = Positioned::fill(container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->body
+            }));
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f));
-            body_widget = Positioned::fill(empty);
+            body_widget = Positioned::fill(container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f)
+            }));
         }
 
         // When closed and animation finished: render only body
         if (t <= 0.001f) {
-            std::vector<WidgetPtr> stack_items = {body_widget};
-            auto root = stack(stack_items);
-            root->style.width = StyleValue::percent(100.0f);
-            root->style.height = StyleValue::percent(100.0f);
-            return root;
+            return stack({
+                .children = {body_widget},
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f)
+            });
         }
 
         // ── 2. Scrim Backdrop Overlay (Dismiss on tap) ────────────────
@@ -377,30 +379,28 @@ public:
         auto dialog_card = buildDialogCard(w, t);
 
         // Perfect centering layout in full viewport
-        std::vector<WidgetPtr> center_items = {dialog_card};
-        auto center_col = column(center_items);
-        center_col->justifyContent(Justify::Center)
-                  .alignItems(Align::Center)
-                  .width(StyleValue::percent(100.0f))
-                  .height(StyleValue::percent(100.0f));
-
-        auto pos_center = Positioned::fill(center_col);
+        auto pos_center = Positioned::fill(column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {dialog_card}
+        }));
 
         // ── 4. Stack Composition: Body + Scrim + Centered Modal ───────
-        std::vector<WidgetPtr> stack_items = {
-            body_widget,
-            scrim,
-            pos_center
-        };
-
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
+        return stack({
+            .children = {
+                body_widget,
+                scrim,
+                pos_center
+            },
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f)
+        });
     }
 };
 
-std::unique_ptr<State> Dialog::createState() {
+std::unique_ptr<State> DialogWidget::createState() {
     return std::make_unique<DialogState>();
 }
 

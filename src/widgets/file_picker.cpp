@@ -382,7 +382,8 @@ std::unique_ptr<State> FilePickerContentView::createState() {
 // FilePicker State & Static Launcher
 // ════════════════════════════════════════════════════════════════
 
-std::shared_ptr<NativePopup> FilePicker::show(
+
+std::shared_ptr<NativePopup> FilePickerWidget::show(
     BuildContext& context,
     FilePickerProps props) {
 
@@ -426,7 +427,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* picker_widget = static_cast<const FilePicker*>(widget());
+        auto* picker_widget = static_cast<const FilePickerWidget*>(widget());
 
         auto gesture = gestureDetector(picker_widget->props.child);
         gesture->hit_test_behavior = HitTestBehavior::Translucent;
@@ -436,14 +437,16 @@ public:
             if (!elem) return;
             BuildContext context(elem);
 
-            active_popup_ = FilePicker::show(context, picker_widget->props);
+            active_popup_ = FilePickerWidget::show(context, picker_widget->props);
         });
 
         return gesture;
     }
 };
 
-std::unique_ptr<State> FilePicker::createState() {
+
+
+std::unique_ptr<State> FilePickerWidget::createState() {
     return std::make_unique<FilePickerState>();
 }
 

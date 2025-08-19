@@ -107,22 +107,66 @@ struct TimePickerProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// TimePicker Widget
+/// TimePicker Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class TimePicker : public StatefulWidget {
+class TimePickerWidget : public StatefulWidget {
 public:
     TimePickerProps props;
-    TimePicker() = default;
-    explicit TimePicker(TimePickerProps p)
+    TimePickerWidget() = default;
+    explicit TimePickerWidget(TimePickerProps p)
         : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TimePicker"; }
 };
 
-inline std::shared_ptr<TimePicker> timePicker(TimePickerProps props) {
-    return std::make_shared<TimePicker>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
+
+struct TimePicker {
+    std::shared_ptr<TimePickerController> controller = nullptr;
+    WidgetPtr body = nullptr;
+    TimePickerMode mode = TimePickerMode::InputPopup;
+    TimeFormat format = TimeFormat::TwelveHour;
+    TimeVal initial_time = {8, 30, 0, true};
+    bool show_seconds = false;
+    int minute_step = 1;
+    bool show_quick_presets = true;
+    std::string placeholder = "Select time...";
+    Color background_color = 0xFF1E293B;
+    Color border_color = 0xFF334155;
+    Color active_color = 0xFF0284C7;
+    Color highlight_color = 0xFF38BDF8;
+    Color text_color = 0xFFFFFFFF;
+    Color muted_text_color = 0xFF94A3B8;
+    std::function<void(const TimeVal& time)> on_time_selected;
+    std::function<void()> on_popup_opened;
+    std::function<void()> on_popup_closed;
+
+    operator WidgetPtr() const {
+        TimePickerProps p;
+        p.controller = controller;
+        p.body = body;
+        p.mode = mode;
+        p.format = format;
+        p.initial_time = initial_time;
+        p.show_seconds = show_seconds;
+        p.minute_step = minute_step;
+        p.show_quick_presets = show_quick_presets;
+        p.placeholder = placeholder;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.active_color = active_color;
+        p.highlight_color = highlight_color;
+        p.text_color = text_color;
+        p.muted_text_color = muted_text_color;
+        p.on_time_selected = on_time_selected;
+        p.on_popup_opened = on_popup_opened;
+        p.on_popup_closed = on_popup_closed;
+        return std::make_shared<TimePickerWidget>(std::move(p));
+    }
+};
 
 } // namespace enki

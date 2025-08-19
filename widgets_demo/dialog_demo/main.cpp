@@ -262,12 +262,12 @@ public:
             active_content = buildLicenseContent();
         }
 
-        return dialog({
+        return Dialog {
             .dialog_content = active_content,
             .child = background_page,
             .options = dialog_opts,
             .controller = dialog_ctrl_
-        });
+        };
     }
 };
 

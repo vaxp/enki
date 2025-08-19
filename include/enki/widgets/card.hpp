@@ -11,66 +11,51 @@
 
 namespace enki {
 
-struct CardProps {
-    Key key = Key::none();
-    WidgetPtr child = nullptr;
+/// @brief A material-style card widget.
+///
+/// It acts as a specialized Container with default styling suited for cards, 
+/// such as rounded corners, surface background color, and soft shadows.
+class CardWidget : public StatelessWidget {
+public:
+    WidgetPtr child;
 
     Color color = 0xFF1E293B;                       ///< Background color of the card.
     Color shadow_color = 0x40000000;                ///< Color of the drop shadow.
     float elevation = 8.0f;                         ///< Elevation of the card (controls shadow size).
     BorderRadius border_radius = BorderRadius::circular(12.0f); ///< Corner radius.
     std::optional<Border> border = std::nullopt;    ///< Optional border around the card.
-    EdgeInsets margin = EdgeInsets::all(4.0f);      ///< Margin around the card.
+    StyleInsets margin = StyleInsets::all(4.0f);      ///< Margin around the card.
     StyleInsets padding = StyleInsets::all(0.0f);      ///< Padding inside the card.
-};
 
-/// @brief A material-style card widget.
-///
-/// It acts as a specialized Container with default styling suited for cards, 
-/// such as rounded corners, surface background color, and soft shadows.
-class Card : public StatelessWidget {
-public:
-    WidgetPtr child;
-    CardProps options;
-
-    Card() = default;
-    explicit Card(WidgetPtr c) : child(std::move(c)) {}
-    Card(WidgetPtr c, CardProps opt)
-        : child(std::move(c)), options(std::move(opt)) {}
-    Card(Key key, WidgetPtr c, CardProps opt)
-        : StatelessWidget(std::move(key)), child(std::move(c)), options(std::move(opt)) {}
+    explicit CardWidget(Key key) : StatelessWidget(std::move(key)) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "Card"; }
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    Card& color(Color c) { options.color = c; return *this; }
-    Card& shadowColor(Color c) { options.shadow_color = c; return *this; }
-    Card& elevation(float e) { options.elevation = e; return *this; }
-    Card& borderRadius(BorderRadius r) { options.border_radius = r; return *this; }
-    Card& borderRadius(float r) { options.border_radius = BorderRadius::circular(r); return *this; }
-    Card& border(Border b) { options.border = b; return *this; }
-    Card& border(Color c, float w) { options.border = Border(c, w); return *this; }
-    Card& margin(EdgeInsets m) { options.margin = m; return *this; }
-    Card& marginAll(float m) { options.margin = EdgeInsets::all(m); return *this; }
-    Card& padding(StyleInsets p) { options.padding = p; return *this; }
-    Card& paddingAll(float p) { options.padding = StyleInsets::all(p); return *this; }
 };
 
-// ── Global Factory Helper ────────────────────────────────────
+struct Card {
+    Color color = 0xFF1E293B;                       
+    Color shadow_color = 0x40000000;                
+    float elevation = 8.0f;                         
+    BorderRadius border_radius = BorderRadius::circular(12.0f); 
+    std::optional<Border> border = std::nullopt;    
+    StyleInsets margin = StyleInsets::all(4.0f);      
+    StyleInsets padding = StyleInsets::all(0.0f);      
+    WidgetPtr child = nullptr;
+    Key key = Key::none();
 
-inline std::shared_ptr<Card> card(WidgetPtr child) {
-    return std::make_shared<Card>(std::move(child));
-}
-
-inline std::shared_ptr<Card> card(CardProps props) {
-    return std::make_shared<Card>(std::move(props.key), std::move(props.child), std::move(props));
-}
-
-inline std::shared_ptr<Card> card(CardProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return card(std::move(props));
-}
+    operator WidgetPtr() const {
+        auto w = std::make_shared<CardWidget>(key);
+        w->color = color;
+        w->shadow_color = shadow_color;
+        w->elevation = elevation;
+        w->border_radius = border_radius;
+        w->border = border;
+        w->margin = margin;
+        w->padding = padding;
+        w->child = child;
+        return w;
+    }
+};
 
 } // namespace enki

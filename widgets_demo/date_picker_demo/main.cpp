@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <format>
 
 using namespace enki;
 
@@ -36,134 +37,126 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        // ── Main Page Header ──────────────────────────────────────────
-        auto title = text("Advanced DatePicker & DateRangePicker Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        return container({
+            .color = 0xFF0B1120,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(20.0f),
+                .children = {
+                    // ── Main Page Header ──────────────────────────────────────────
+                    column({
+                        .align_items = Align::Center,
+                        .gap = StyleValue::point(6.0f),
+                        .children = {
+                            text("Advanced DatePicker & DateRangePicker Suite", { .color = 0xFFFFFFFF, .font_size = 22.0f, .font_weight = FontWeight::Bold }),
+                            text("Enterprise date input (Category 3. Input / Forms), Input Popup & Inline modes, Date Range strip highlighting, and Year/Month fast jumps", { .color = 0xFF94A3B8, .font_size = 13.0f })
+                        }
+                    }),
 
-        auto sub = text("Enterprise date input (Category 3. Input / Forms), Input Popup & Inline modes, Date Range strip highlighting, and Year/Month fast jumps");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+                    // ── Side-by-Side Main Sections ────────────────────────────────
+                    row({
+                        .justify_content = Justify::Center,
+                        .align_items = Align::Start,
+                        .gap = StyleValue::point(24.0f),
+                        .children = {
+                            // ── Left Column: Form with Input Popup DatePicker ─────────────
+                            container({
+                                .color = 0xFF0F172A,
+                                .border_radius = BorderRadius::circular(12.0f),
+                                .border = Border(0xFF334155, 1.0f),
+                                .width = StyleValue::point(380.0f),
+                                .padding = StyleInsets::all(20.0f),
+                                .child = column({
+                                    .gap = StyleValue::point(10.0f),
+                                    .children = {
+                                        text("✈️ Flight Booking Details", { .color = 0xFF38BDF8, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+                                        
+                                        text("Destination:", { .color = 0xFF94A3B8, .font_size = 11.5f, .font_weight = FontWeight::Bold }),
+                                        container({
+                                            .color = 0xFF1E293B,
+                                            .border_radius = BorderRadius::circular(8.0f),
+                                            .border = Border(0xFF334155, 1.0f),
+                                            .width = StyleValue::point(340.0f),
+                                            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+                                            .child = std::make_shared<TextField>(dest_ctrl_, TextFieldProps{ .hint_text = "Enter Destination..." })
+                                        }),
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center).gap(StyleValue::point(6.0f));
+                                        text("Passengers & Class:", { .color = 0xFF94A3B8, .font_size = 11.5f, .font_weight = FontWeight::Bold }),
+                                        container({
+                                            .color = 0xFF1E293B,
+                                            .border_radius = BorderRadius::circular(8.0f),
+                                            .border = Border(0xFF334155, 1.0f),
+                                            .width = StyleValue::point(340.0f),
+                                            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+                                            .child = std::make_shared<TextField>(pass_ctrl_, TextFieldProps{ .hint_text = "Enter Passengers..." })
+                                        }),
 
-        // ── Left Column: Form with Input Popup DatePicker ─────────────
-        auto form_title = text("✈️ Flight Booking Details");
-        form_title->fontSize(15.0f).bold().color(0xFF38BDF8);
+                                        text("Departure Date (Single Date Dropdown):", { .color = 0xFF94A3B8, .font_size = 11.5f, .font_weight = FontWeight::Bold }),
+                                        DatePicker {
+                                            .mode = DatePickerMode::InputPopup,
+                                            .selection_mode = DatePickerSelectionMode::Single,
+                                            .initial_date = selected_single_date_,
+                                            .on_date_selected = [this](const DateVal& d) {
+                                                selected_single_date_ = d;
+                                                hud_msg_ = "Selected Departure Date: " + d.formatFormatted() + " (" + d.formatIso() + ")";
+                                                setState([] {});
+                                            }
+                                        }
+                                    }
+                                })
+                            }),
 
-        auto lbl_dest = text("Destination:");
-        lbl_dest->fontSize(11.5f).bold().color(0xFF94A3B8);
+                            // ── Right Column: Inline DateRangePicker ───────────────────────
+                            container({
+                                .color = 0xFF0F172A,
+                                .border_radius = BorderRadius::circular(12.0f),
+                                .border = Border(0xFF334155, 1.0f),
+                                .width = StyleValue::point(400.0f),
+                                .padding = StyleInsets::all(20.0f),
+                                .child = column({
+                                    .align_items = Align::Center,
+                                    .gap = StyleValue::point(12.0f),
+                                    .children = {
+                                        text("🏨 Hotel Reservation Period (Inline DateRangePicker)", { .color = 0xFF10B981, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+                                        DatePicker {
+                                            .mode = DatePickerMode::Inline,
+                                            .selection_mode = DatePickerSelectionMode::Range,
+                                            .initial_range = selected_range_,
+                                            .on_range_selected = [this](const DateRangeVal& r) {
+                                                selected_range_ = r;
+                                                if (r.start && r.end) {
+                                                    hud_msg_ = "Hotel Reserved: " + r.start->formatFormatted() + " ➔ " + r.end->formatFormatted();
+                                                } else if (r.start) {
+                                                    hud_msg_ = "Check-in selected: " + r.start->formatFormatted() + ". Now click Check-out date.";
+                                                }
+                                                setState([] {});
+                                            }
+                                        }
+                                    }
+                                })
+                            })
+                        }
+                    }),
 
-        TextFieldProps dest_opts;
-        dest_opts.hint_text = "Enter Destination...";
-        auto dest_field = std::make_shared<TextField>(dest_ctrl_, dest_opts);
-        auto dest_box = container(dest_field);
-        dest_box->color(0xFF1E293B).border(0xFF334155, 1.0f).borderRadius(8.0f).paddingSymmetric(8.0f, 12.0f).width(340.0f);
-
-        auto lbl_pass = text("Passengers & Class:");
-        lbl_pass->fontSize(11.5f).bold().color(0xFF94A3B8);
-
-        TextFieldProps pass_opts;
-        pass_opts.hint_text = "Enter Passengers...";
-        auto pass_field = std::make_shared<TextField>(pass_ctrl_, pass_opts);
-        auto pass_box = container(pass_field);
-        pass_box->color(0xFF1E293B).border(0xFF334155, 1.0f).borderRadius(8.0f).paddingSymmetric(8.0f, 12.0f).width(340.0f);
-
-        auto label_dep = text("Departure Date (Single Date Dropdown):");
-        label_dep->fontSize(11.5f).bold().color(0xFF94A3B8);
-
-        DatePickerProps popup_opts;
-        popup_opts.mode = DatePickerMode::InputPopup;
-        popup_opts.selection_mode = DatePickerSelectionMode::Single;
-        popup_opts.initial_date = selected_single_date_;
-        popup_opts.on_date_selected = [this](const DateVal& d) {
-            selected_single_date_ = d;
-            hud_msg_ = "Selected Departure Date: " + d.formatFormatted() + " (" + d.formatIso() + ")";
-            setState([] {});
-        };
-
-        auto single_date_widget = datePicker(popup_opts);
-
-        std::vector<WidgetPtr> root_children;
-        root_children.push_back(form_title);
-        root_children.push_back(lbl_dest);
-        root_children.push_back(dest_box);
-        root_children.push_back(lbl_pass);
-        root_children.push_back(pass_box);
-        root_children.push_back(label_dep);
-        root_children.push_back(single_date_widget);
-        auto form_col = column(root_children);
-        form_col->gap(StyleValue::point(10.0f));
-
-        auto form_card = container(form_col);
-        form_card->color(0xFF0F172A)
-                 .border(0xFF334155, 1.0f)
-                 .borderRadius(12.0f)
-                 .paddingAll(20.0f)
-                 .width(380.0f);
-
-        // ── Right Column: Inline DateRangePicker ───────────────────────
-        auto range_title = text("🏨 Hotel Reservation Period (Inline DateRangePicker)");
-        range_title->fontSize(15.0f).bold().color(0xFF10B981);
-
-        DatePickerProps range_opts;
-        range_opts.mode = DatePickerMode::Inline;
-        range_opts.selection_mode = DatePickerSelectionMode::Range;
-        range_opts.initial_range = selected_range_;
-        range_opts.on_range_selected = [this](const DateRangeVal& r) {
-            selected_range_ = r;
-            if (r.start && r.end) {
-                hud_msg_ = "Hotel Reserved: " + r.start->formatFormatted() + " ➔ " + r.end->formatFormatted();
-            } else if (r.start) {
-                hud_msg_ = "Check-in selected: " + r.start->formatFormatted() + ". Now click Check-out date.";
-            }
-            setState([] {});
-        };
-
-        auto inline_picker = dateRangePicker(range_opts);
-
-        std::vector<WidgetPtr> range_items = {range_title, inline_picker};
-        auto range_col = column(range_items);
-        range_col->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
-
-        auto range_card = container(range_col);
-        range_card->color(0xFF0F172A)
-                  .border(0xFF334155, 1.0f)
-                  .borderRadius(12.0f)
-                  .paddingAll(20.0f)
-                  .width(400.0f);
-
-        // ── Side-by-Side Main Sections ────────────────────────────────
-        std::vector<WidgetPtr> sections = {form_card, range_card};
-        auto sections_row = row(sections);
-        sections_row->gap(StyleValue::point(24.0f))
-                    .justifyContent(Justify::Center)
-                    .alignItems(Align::Start);
-
-        // ── HUD / Status Box ──────────────────────────────────────────
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
-
-        auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(804.0f);
-
-        // ── Assemble Page Body ────────────────────────────────────────
-        std::vector<WidgetPtr> page_items = {title_col, sections_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(20.0f)).alignItems(Align::Center);
-
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(24.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
-
-        return background_page;
+                    // ── HUD / Status Box ──────────────────────────────────────────
+                    container({
+                        .color = 0xFF1E293B,
+                        .border_radius = BorderRadius::circular(6.0f),
+                        .border = Border(0xFF334155, 1.0f),
+                        .width = StyleValue::point(804.0f),
+                        .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                        .child = row({
+                            .children = {
+                                text("💡 " + hud_msg_, { .color = 0xFF38BDF8, .font_size = 12.5f })
+                            }
+                        })
+                    })
+                }
+            })
+        });
     }
 };
 

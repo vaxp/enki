@@ -70,11 +70,12 @@ struct FilePickerProps {
 };
 
 /// @brief FilePicker widget wrapping a target child widget or static show helper.
-class FilePicker : public StatefulWidget {
+class FilePickerWidget : public StatefulWidget {
 public:
     FilePickerProps props;
 
-    FilePicker(FilePickerProps p)
+    FilePickerWidget() = default;
+    FilePickerWidget(FilePickerProps p)
         : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
@@ -87,10 +88,67 @@ public:
     );
 };
 
-// ── Factory Helpers ────────────────────────────────────────────────
+// ── Declarative Proxy Struct (C++20 Designated Initializers) ───────────────
 
-inline WidgetPtr filePicker(FilePickerProps props) {
-    return std::make_shared<FilePicker>(std::move(props));
-}
+struct FilePicker {
+    WidgetPtr child = nullptr;
+    std::function<void(const FilePickerResult&)> on_result = nullptr;
+    FilePickerMode mode = FilePickerMode::OpenFile;
+    std::string initial_directory = "";
+    std::string default_filename = "";
+    std::vector<FileFilter> filters;
+    Size window_size = Size{740.0f, 520.0f};
+    Color background_color = 0xFA1F242C;
+    Color sidebar_color = 0xFA161B22;
+    Color border_color = 0xFF363B42;
+    Color accent_color = 0xFF38BDF8;
+    Color text_color = 0xFFF0F6FC;
+    Color subtext_color = 0xFF8B949E;
+    float border_radius = 12.0f;
+    float elevation = 16.0f;
+    Color shadow_color = 0x60000000;
+
+    operator WidgetPtr() const {
+        FilePickerProps p;
+        p.child = child;
+        p.on_result = on_result;
+        p.mode = mode;
+        p.initial_directory = initial_directory;
+        p.default_filename = default_filename;
+        p.filters = filters;
+        p.window_size = window_size;
+        p.background_color = background_color;
+        p.sidebar_color = sidebar_color;
+        p.border_color = border_color;
+        p.accent_color = accent_color;
+        p.text_color = text_color;
+        p.subtext_color = subtext_color;
+        p.border_radius = border_radius;
+        p.elevation = elevation;
+        p.shadow_color = shadow_color;
+        return std::make_shared<FilePickerWidget>(std::move(p));
+    }
+    
+    static std::shared_ptr<NativePopup> show(BuildContext& context, const FilePicker& fp) {
+        FilePickerProps p;
+        p.child = fp.child;
+        p.on_result = fp.on_result;
+        p.mode = fp.mode;
+        p.initial_directory = fp.initial_directory;
+        p.default_filename = fp.default_filename;
+        p.filters = fp.filters;
+        p.window_size = fp.window_size;
+        p.background_color = fp.background_color;
+        p.sidebar_color = fp.sidebar_color;
+        p.border_color = fp.border_color;
+        p.accent_color = fp.accent_color;
+        p.text_color = fp.text_color;
+        p.subtext_color = fp.subtext_color;
+        p.border_radius = fp.border_radius;
+        p.elevation = fp.elevation;
+        p.shadow_color = fp.shadow_color;
+        return FilePickerWidget::show(context, std::move(p));
+    }
+};
 
 } // namespace enki

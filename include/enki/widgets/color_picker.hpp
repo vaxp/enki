@@ -97,22 +97,69 @@ struct ColorPickerProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// ColorPicker Widget
+/// ColorPicker Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class ColorPicker : public StatefulWidget {
+class ColorPickerWidget : public StatefulWidget {
 public:
     ColorPickerProps props;
-    ColorPicker() = default;
-    explicit ColorPicker(ColorPickerProps p)
+    ColorPickerWidget() = default;
+    explicit ColorPickerWidget(ColorPickerProps p)
         : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ColorPicker"; }
 };
 
-inline std::shared_ptr<ColorPicker> colorPicker(ColorPickerProps props) {
-    return std::make_shared<ColorPicker>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
+
+struct ColorPicker {
+    std::shared_ptr<ColorPickerController> controller = nullptr;
+    WidgetPtr body = nullptr;
+    ColorPickerMode mode = ColorPickerMode::InputPopup;
+    ColorFormat default_format = ColorFormat::HEX;
+    Color initial_color = 0xFF38BDF8;
+    bool enable_alpha = true;
+    bool show_palette = true;
+    bool show_comparison = true;
+    std::vector<Color> palette = {
+        0xFFEF4444, 0xFFF97316, 0xFFF59E0B, 0xFF10B981, 0xFF06B6D4,
+        0xFF38BDF8, 0xFF3B82F6, 0xFF6366F1, 0xFFF43F5E, 0xFF000000
+    };
+    Color background_color = 0xFF1E293B;
+    Color border_color = 0xFF334155;
+    Color active_color = 0xFF0284C7;
+    Color text_color = 0xFFFFFFFF;
+    Color muted_text_color = 0xFF94A3B8;
+    std::function<void(Color color)> on_color_changed;
+    std::function<void(Color color)> on_color_submitted;
+    std::function<void()> on_popup_opened;
+    std::function<void()> on_popup_closed;
+
+    operator WidgetPtr() const {
+        ColorPickerProps p;
+        p.controller = controller;
+        p.body = body;
+        p.mode = mode;
+        p.default_format = default_format;
+        p.initial_color = initial_color;
+        p.enable_alpha = enable_alpha;
+        p.show_palette = show_palette;
+        p.show_comparison = show_comparison;
+        p.palette = palette;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.active_color = active_color;
+        p.text_color = text_color;
+        p.muted_text_color = muted_text_color;
+        p.on_color_changed = on_color_changed;
+        p.on_color_submitted = on_color_submitted;
+        p.on_popup_opened = on_popup_opened;
+        p.on_popup_closed = on_popup_closed;
+        return std::make_shared<ColorPickerWidget>(std::move(p));
+    }
+};
 
 } // namespace enki

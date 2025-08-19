@@ -132,20 +132,11 @@ public:
     [[nodiscard]] bool isOpen() const { return is_open_fn ? is_open_fn() : false; }
 };
 
-struct DialogProps {
-    Key key = Key::none();
-    WidgetPtr dialog_content;
-    WidgetPtr child;
-    bool initial_open = false;
-    DialogOptions options;
-    std::shared_ptr<DialogController> controller;
-};
-
 /// ════════════════════════════════════════════════════════════════
 /// Dialog Widget
 /// ════════════════════════════════════════════════════════════════
 
-class Dialog : public StatefulWidget {
+class DialogWidget : public StatefulWidget {
 public:
     WidgetPtr dialog_content;                    ///< Content inside the modal dialog
     WidgetPtr body;                              ///< Main page body content to wrap
@@ -153,71 +144,29 @@ public:
     DialogOptions options;
     std::shared_ptr<DialogController> controller;
 
-    Dialog() = default;
-
-    Dialog(WidgetPtr content, WidgetPtr body_, DialogOptions opts = {})
-        : dialog_content(std::move(content)), body(std::move(body_)),
-          options(std::move(opts)) {}
-
-    // Fluent Builder API
-    Dialog& width(float w) { options.width = w; return *this; }
-    Dialog& borderRadius(float r) { options.border_radius = r; return *this; }
-    Dialog& barrierDismissible(bool d) { options.barrier_dismissible = d; return *this; }
-    Dialog& type(DialogType t) { options.type = t; return *this; }
-    Dialog& title(std::string t) { options.title = std::move(t); return *this; }
-    Dialog& subtitle(std::string s) { options.subtitle = std::move(s); return *this; }
-    Dialog& icon(std::string i) { options.icon = std::move(i); return *this; }
-    Dialog& addAction(DialogAction a) { options.actions.push_back(std::move(a)); return *this; }
-    Dialog& setController(std::shared_ptr<DialogController> c) {
-        controller = std::move(c);
-        return *this;
-    }
-    Dialog& onOpened(std::function<void()> fn) { options.on_opened = std::move(fn); return *this; }
-    Dialog& onClosed(std::function<void()> fn) { options.on_closed = std::move(fn); return *this; }
+    explicit DialogWidget(Key key) : StatefulWidget(std::move(key)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Dialog"; }
 };
 
-/// Factory function to wrap body with modal dialog overlay
-inline std::shared_ptr<Dialog> dialog(
-    WidgetPtr dialog_content,
-    WidgetPtr body,
-    DialogOptions options = {}) {
-    return std::make_shared<Dialog>(std::move(dialog_content), std::move(body), std::move(options));
-}
+struct Dialog {
+    Key key = Key::none();
+    WidgetPtr dialog_content = nullptr;
+    WidgetPtr child = nullptr;
+    bool initial_open = false;
+    DialogOptions options;
+    std::shared_ptr<DialogController> controller = nullptr;
 
-inline std::shared_ptr<Dialog> dialog(DialogProps props) {
-    auto d = std::make_shared<Dialog>(std::move(props.dialog_content), std::move(props.child), std::move(props.options));
-    d->key = props.key;
-    d->initial_open = props.initial_open;
-    d->controller = std::move(props.controller);
-    return d;
-}
-
-/// Convenience factory for confirmation/alert dialog
-inline std::shared_ptr<Dialog> confirmDialog(
-    std::string title,
-    std::string message,
-    WidgetPtr body,
-    std::function<void()> on_confirm,
-    std::function<void()> on_cancel = nullptr,
-    bool is_danger = false) {
-    DialogOptions opts;
-    opts.title = std::move(title);
-    opts.subtitle = std::move(message);
-    opts.type = is_danger ? DialogType::Danger : DialogType::Standard;
-    opts.icon = is_danger ? "⚠️" : "ℹ️";
-
-    if (is_danger) {
-        opts.actions.push_back(DialogAction::cancel("Cancel", std::move(on_cancel)));
-        opts.actions.push_back(DialogAction::danger("Delete", std::move(on_confirm)));
-    } else {
-        opts.actions.push_back(DialogAction::cancel("Cancel", std::move(on_cancel)));
-        opts.actions.push_back(DialogAction::primary("Confirm", std::move(on_confirm)));
+    operator WidgetPtr() const {
+        auto w = std::make_shared<DialogWidget>(key);
+        w->dialog_content = dialog_content;
+        w->body = child;
+        w->initial_open = initial_open;
+        w->options = options;
+        w->controller = controller;
+        return w;
     }
-
-    return std::make_shared<Dialog>(nullptr, std::move(body), opts);
-}
+};
 
 } // namespace enki

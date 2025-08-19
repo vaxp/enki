@@ -47,7 +47,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const TimePicker*>(widget());
+        auto* w = static_cast<const TimePickerWidget*>(widget());
         time_ = w->props.initial_time;
         wireController();
     }
@@ -58,7 +58,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const TimePicker*>(widget());
+        auto* w = static_cast<const TimePickerWidget*>(widget());
         if (w->props.controller) {
             w->props.controller->set_time_fn = [this](const TimeVal& t) {
                 time_ = t;
@@ -77,7 +77,7 @@ public:
     }
 
     void notifyChanged() {
-        auto* w = static_cast<const TimePicker*>(widget());
+        auto* w = static_cast<const TimePickerWidget*>(widget());
         if (w->props.on_time_selected) {
             w->props.on_time_selected(time_);
         }
@@ -97,7 +97,7 @@ public:
     }
 
     void stepMinute(int delta) {
-        auto* w = static_cast<const TimePicker*>(widget());
+        auto* w = static_cast<const TimePickerWidget*>(widget());
         int step = (w->props.minute_step > 0) ? w->props.minute_step : 1;
         time_.minute = (time_.minute + delta * step + 60) % 60;
         notifyChanged();
@@ -228,7 +228,7 @@ public:
     }
 
     // ── Build Time Picker Card ────────────────────────────────────
-    WidgetPtr buildTimePickerCard(const TimePicker* w) {
+    WidgetPtr buildTimePickerCard(const TimePickerWidget* w) {
         const auto& opts = w->props;
         bool is_24h = (opts.format == TimeFormat::TwentyFourHour);
 
@@ -304,7 +304,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const TimePicker*>(widget());
+        auto* w = static_cast<const TimePickerWidget*>(widget());
         const auto& opts = w->props;
 
         if (opts.mode == TimePickerMode::Inline) {
@@ -356,7 +356,7 @@ public:
     }
 };
 
-std::unique_ptr<State> TimePicker::createState() {
+std::unique_ptr<State> TimePickerWidget::createState() {
     return std::make_unique<TimePickerState>();
 }
 
