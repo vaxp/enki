@@ -22,45 +22,57 @@ class CheckboxDemoState : public State {
 
 public:
     WidgetPtr build(BuildContext&) override {
-        auto title = std::make_shared<Text>("Checkbox Widget Demo", TextStyle{.color = 0xFFFFFFFF, .font_size = 24.0f});
+        auto title = text("Checkbox Widget Demo", { .color = 0xFFFFFFFF, .font_size = 24.0f });
         
-        auto cb1 = checkbox(checked1_, [this](bool val){
-            setState([this, val]{ checked1_ = val; });
+        auto row1 = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(12.0f),
+            .children = {
+                Checkbox {
+                    .value = checked1_,
+                    .on_changed = [this](bool val){
+                        setState([this, val]{ checked1_ = val; });
+                    }
+                },
+                text("Unchecked by default", { .color = 0xFFCCCCCC })
+            }
         });
-        auto text1 = std::make_shared<Text>("Unchecked by default", TextStyle{.color = 0xFFCCCCCC});
-        auto row1 = row({cb1, text1});
-        row1->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
 
-        auto cb2 = checkbox(checked2_, [this](bool val){
-            setState([this, val]{ checked2_ = val; });
+        auto row2 = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(12.0f),
+            .children = {
+                Checkbox {
+                    .value = checked2_,
+                    .on_changed = [this](bool val){
+                        setState([this, val]{ checked2_ = val; });
+                    }
+                },
+                text("Checked by default", { .color = 0xFFCCCCCC })
+            }
         });
-        auto text2 = std::make_shared<Text>("Checked by default", TextStyle{.color = 0xFFCCCCCC});
-        auto row2 = row({cb2, text2});
-        row2->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
         
-        CheckboxProps disabled_opt;
-        disabled_opt.disabled = true;
-        auto cb3 = checkbox(false, nullptr, disabled_opt);
-        auto text3 = std::make_shared<Text>("Disabled Checkbox", TextStyle{.color = 0xFF888888});
-        std::vector<WidgetPtr> r3_items;
-        r3_items.push_back(cb3);
-        r3_items.push_back(text3);
-        auto row3 = row(r3_items);
-        row3->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
+        auto row3 = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(12.0f),
+            .children = {
+                Checkbox {
+                    .value = false,
+                    .on_changed = nullptr,
+                    .disabled = true
+                },
+                text("Disabled Checkbox", { .color = 0xFF888888 })
+            }
+        });
 
-        std::vector<WidgetPtr> col_items;
-        col_items.push_back(title);
-        col_items.push_back(row1);
-        col_items.push_back(row2);
-        col_items.push_back(row3);
-        auto col = column(col_items);
-        col->gap(StyleValue::point(24.0f));
-        col->padding(StyleInsets::all(32.0f));
-
-        auto bg = container(col);
-        bg->color(0xFF1E1E1E);
-
-        return bg;
+        return container({
+            .color = 0xFF1E1E1E,
+            .child = column({
+                .gap = StyleValue::point(24.0f),
+                .padding = StyleInsets::all(32.0f),
+                .children = {title, row1, row2, row3}
+            })
+        });
     }
 };
 

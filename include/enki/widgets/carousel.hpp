@@ -27,44 +27,6 @@ enum class CarouselEffect {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Carousel Options
-/// ════════════════════════════════════════════════════════════════
-
-class CarouselController;
-
-struct CarouselProps {
-    Key key = Key::none();
-    std::vector<WidgetPtr> slides;
-    std::shared_ptr<CarouselController> controller;
-
-    CarouselEffect effect = CarouselEffect::Slide;
-
-    int initial_index = 0;
-    bool auto_play = true;               ///< Automatically advance slides
-    int auto_play_interval_ms = 3500;    ///< Interval between auto advances
-    bool pause_on_hover = true;          ///< Freeze auto-play timer on mouse hover
-    bool infinite_loop = true;           ///< Loop back to start after last slide
-
-    bool show_arrows = true;             ///< Render floating Previous / Next buttons
-    bool show_indicators = true;         ///< Render bottom pagination dots
-
-    float height = 320.0f;               ///< Default carousel height in pixels
-    float border_radius = 12.0f;
-
-    // Styling Colors
-    Color background_color    = 0xFF1E293B; // Slate 800
-    Color border_color        = 0xFF334155; // Slate 700
-    Color arrow_bg_color      = 0xCC0F172A; // Dark slate 80% opacity
-    Color arrow_fg_color      = 0xFFFFFFFF; // White
-    Color arrow_hover_bg      = 0xFF0284C7; // Blue highlight
-    Color indicator_active    = 0xFF38BDF8; // Sky 400
-    Color indicator_inactive  = 0xFF475569; // Slate 600
-
-    // Callbacks
-    std::function<void(int current_index)> on_page_changed;
-};
-
-/// ════════════════════════════════════════════════════════════════
 /// Carousel Controller
 /// ════════════════════════════════════════════════════════════════
 
@@ -89,26 +51,94 @@ public:
 /// Carousel Widget
 /// ════════════════════════════════════════════════════════════════
 
-class Carousel : public StatefulWidget {
+class CarouselWidget : public StatefulWidget {
 public:
-    CarouselProps props;
+    std::vector<WidgetPtr> slides;
+    std::shared_ptr<CarouselController> controller;
 
-    Carousel() = default;
-    explicit Carousel(CarouselProps p) : props(std::move(p)) {}
+    CarouselEffect effect = CarouselEffect::Slide;
+
+    int initial_index = 0;
+    bool auto_play = true;               
+    int auto_play_interval_ms = 3500;    
+    bool pause_on_hover = true;          
+    bool infinite_loop = true;           
+
+    bool show_arrows = true;             
+    bool show_indicators = true;         
+
+    float height = 320.0f;               
+    float border_radius = 12.0f;
+
+    Color background_color    = 0xFF1E293B; 
+    Color border_color        = 0xFF334155; 
+    Color arrow_bg_color      = 0xCC0F172A; 
+    Color arrow_fg_color      = 0xFFFFFFFF; 
+    Color arrow_hover_bg      = 0xFF0284C7; 
+    Color indicator_active    = 0xFF38BDF8; 
+    Color indicator_inactive  = 0xFF475569; 
+
+    std::function<void(int current_index)> on_page_changed;
+
+    CarouselWidget(Key key) : StatefulWidget(std::move(key)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Carousel"; }
 };
 
-inline std::shared_ptr<Carousel> carousel(CarouselProps props = {}) {
-    return std::make_shared<Carousel>(std::move(props));
-}
+struct Carousel {
+    std::vector<WidgetPtr> slides;
+    std::shared_ptr<CarouselController> controller = nullptr;
 
-inline std::shared_ptr<Carousel> carousel(
-    std::vector<WidgetPtr> slides) {
-    CarouselProps props;
-    props.slides = std::move(slides);
-    return std::make_shared<Carousel>(std::move(props));
-}
+    CarouselEffect effect = CarouselEffect::Slide;
+
+    int initial_index = 0;
+    bool auto_play = true;               
+    int auto_play_interval_ms = 3500;    
+    bool pause_on_hover = true;          
+    bool infinite_loop = true;           
+
+    bool show_arrows = true;             
+    bool show_indicators = true;         
+
+    float height = 320.0f;               
+    float border_radius = 12.0f;
+
+    Color background_color    = 0xFF1E293B; 
+    Color border_color        = 0xFF334155; 
+    Color arrow_bg_color      = 0xCC0F172A; 
+    Color arrow_fg_color      = 0xFFFFFFFF; 
+    Color arrow_hover_bg      = 0xFF0284C7; 
+    Color indicator_active    = 0xFF38BDF8; 
+    Color indicator_inactive  = 0xFF475569; 
+
+    std::function<void(int current_index)> on_page_changed = nullptr;
+    Key key = Key::none();
+
+    operator WidgetPtr() const {
+        auto w = std::make_shared<CarouselWidget>(key);
+        w->slides = slides;
+        w->controller = controller;
+        w->effect = effect;
+        w->initial_index = initial_index;
+        w->auto_play = auto_play;
+        w->auto_play_interval_ms = auto_play_interval_ms;
+        w->pause_on_hover = pause_on_hover;
+        w->infinite_loop = infinite_loop;
+        w->show_arrows = show_arrows;
+        w->show_indicators = show_indicators;
+        w->height = height;
+        w->border_radius = border_radius;
+        w->background_color = background_color;
+        w->border_color = border_color;
+        w->arrow_bg_color = arrow_bg_color;
+        w->arrow_fg_color = arrow_fg_color;
+        w->arrow_hover_bg = arrow_hover_bg;
+        w->indicator_active = indicator_active;
+        w->indicator_inactive = indicator_inactive;
+        w->on_page_changed = on_page_changed;
+        return w;
+    }
+};
 
 } // namespace enki

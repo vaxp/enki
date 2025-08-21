@@ -61,17 +61,21 @@ class DataTableState : public State {
             bool all_sel = !row_selected_.empty() &&
                            std::all_of(row_selected_.begin(), row_selected_.end(), [](bool b){ return b; });
 
-            CheckboxProps cb_opts;
-            cb_opts.active_color = theme.checkbox_color;
-            auto cb = std::make_shared<Checkbox>(all_sel, [this, w, all_sel](bool) {
-                bool new_val = !all_sel;
-                setState([this, new_val, w]() {
-                    std::fill(row_selected_.begin(), row_selected_.end(), new_val);
-                    if (w->props.on_select_all) w->props.on_select_all(new_val);
-                });
-            }, cb_opts);
+            auto cb = Checkbox {
+                .value = all_sel,
+                .on_changed = [this, w, all_sel](bool) {
+                    bool new_val = !all_sel;
+                    setState([this, new_val, w]() {
+                        std::fill(row_selected_.begin(), row_selected_.end(), new_val);
+                        if (w->props.on_select_all) w->props.on_select_all(new_val);
+                    });
+                },
+                .active_color = theme.checkbox_color
+            };
+            
+            auto cb_ptr = (WidgetPtr)cb;
 
-            auto cb_cell = container(cb);
+            auto cb_cell = container(cb_ptr);
             cb_cell->width(theme.heading_row_height * 0.5f);
             cb_cell->height(StyleValue::point(theme.heading_row_height));
             cb_cell->padding(EdgeInsets::symmetric(0, theme.checkbox_h_margin));
@@ -160,18 +164,21 @@ class DataTableState : public State {
 
         // Checkbox
         if (theme.show_checkbox_column) {
-            CheckboxProps cb_opts;
-            cb_opts.active_color = theme.checkbox_color;
-            auto cb = std::make_shared<Checkbox>(is_selected, [this, ri, w](bool val) {
-                setState([this, ri, val, w]() {
-                    if (ri < (int)row_selected_.size()) {
-                        row_selected_[ri] = val;
-                        if (w->props.rows[ri].on_select_changed) w->props.rows[ri].on_select_changed(val);
-                    }
-                });
-            }, cb_opts);
+            auto cb = Checkbox {
+                .value = is_selected,
+                .on_changed = [this, ri, w](bool val) {
+                    setState([this, ri, val, w]() {
+                        if (ri < (int)row_selected_.size()) {
+                            row_selected_[ri] = val;
+                            if (w->props.rows[ri].on_select_changed) w->props.rows[ri].on_select_changed(val);
+                        }
+                    });
+                },
+                .active_color = theme.checkbox_color
+            };
+            auto cb_ptr = (WidgetPtr)cb;
 
-            auto cb_cell = container(cb);
+            auto cb_cell = container(cb_ptr);
             cb_cell->width(theme.heading_row_height * 0.5f);
             cb_cell->height(StyleValue::point(dr.height.value_or(theme.data_row_height)));
             cb_cell->padding(EdgeInsets::symmetric(0, theme.checkbox_h_margin));

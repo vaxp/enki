@@ -6,13 +6,12 @@ using namespace enki;
 
 void test_switch_initialization() {
     std::cout << "Testing Switch Default Initialization..." << std::endl;
-    auto sw = toggleSwitch(true, nullptr);
-    auto* s = static_cast<Switch*>(sw.get());
+    Switch s { .value = true };
     
-    assert(s->value == true);
-    assert(s->options.width == 44.0f);
-    assert(s->options.height == 24.0f);
-    assert(s->options.disabled == false);
+    assert(s.value == true);
+    assert(s.width == 44.0f);
+    assert(s.height == 24.0f);
+    assert(s.disabled == false);
     std::cout << "  ✓ Default Initialization passed." << std::endl;
 }
 
@@ -20,16 +19,18 @@ void test_switch_callback() {
     std::cout << "Testing Switch Callback..." << std::endl;
     bool clicked = false;
     bool new_val = false;
-    auto sw = toggleSwitch(false, [&](bool v) {
-        clicked = true;
-        new_val = v;
-    });
+    Switch s {
+        .value = false,
+        .on_changed = [&](bool v) {
+            clicked = true;
+            new_val = v;
+        }
+    };
     
-    auto* s = static_cast<Switch*>(sw.get());
-    assert(s->value == false);
+    assert(s.value == false);
     
-    if (s->on_changed) {
-        s->on_changed(true);
+    if (s.on_changed) {
+        s.on_changed(true);
     }
     
     assert(clicked == true);

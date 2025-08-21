@@ -14,66 +14,102 @@ class RenderSwitch : public RenderBox {
 public:
     bool value;
     bool hovered;
-    SwitchProps options;
+    
+    float width;
+    float height;
+    float thumb_padding;
+    Color active_color;
+    Color active_thumb_color;
+    Color inactive_color;
+    Color inactive_thumb_color;
+    Color hover_color;
+    Color hover_inactive_color;
+    bool disabled;
+    Color disabled_color;
+    Color disabled_thumb_color;
 
-    RenderSwitch(bool val, bool hov, SwitchProps opt) 
-        : value(val), hovered(hov), options(std::move(opt)) {
-        ANUNodeStyleSetWidth(anu_node_, options.width);
-        ANUNodeStyleSetHeight(anu_node_, options.height);
+    RenderSwitch(bool val, bool hov, const SwitchWidget* options) 
+        : value(val), hovered(hov),
+          width(options->width),
+          height(options->height),
+          thumb_padding(options->thumb_padding),
+          active_color(options->active_color),
+          active_thumb_color(options->active_thumb_color),
+          inactive_color(options->inactive_color),
+          inactive_thumb_color(options->inactive_thumb_color),
+          hover_color(options->hover_color),
+          hover_inactive_color(options->hover_inactive_color),
+          disabled(options->disabled),
+          disabled_color(options->disabled_color),
+          disabled_thumb_color(options->disabled_thumb_color) {
+        ANUNodeStyleSetWidth(anu_node_, width);
+        ANUNodeStyleSetHeight(anu_node_, height);
     }
 
-    void update(bool new_value, bool new_hovered, const SwitchProps& new_options) {
-        if (options.width != new_options.width || options.height != new_options.height) {
-            ANUNodeStyleSetWidth(anu_node_, new_options.width);
-            ANUNodeStyleSetHeight(anu_node_, new_options.height);
+    void update(bool new_value, bool new_hovered, const SwitchWidget* new_options) {
+        if (width != new_options->width || height != new_options->height) {
+            ANUNodeStyleSetWidth(anu_node_, new_options->width);
+            ANUNodeStyleSetHeight(anu_node_, new_options->height);
             markNeedsLayout();
         }
         if (value != new_value || hovered != new_hovered || 
-            options.active_color != new_options.active_color ||
-            options.inactive_color != new_options.inactive_color) {
+            active_color != new_options->active_color ||
+            inactive_color != new_options->inactive_color) {
             markNeedsPaint();
         }
         value = new_value;
         hovered = new_hovered;
-        options = new_options;
+        
+        width = new_options->width;
+        height = new_options->height;
+        thumb_padding = new_options->thumb_padding;
+        active_color = new_options->active_color;
+        active_thumb_color = new_options->active_thumb_color;
+        inactive_color = new_options->inactive_color;
+        inactive_thumb_color = new_options->inactive_thumb_color;
+        hover_color = new_options->hover_color;
+        hover_inactive_color = new_options->hover_inactive_color;
+        disabled = new_options->disabled;
+        disabled_color = new_options->disabled_color;
+        disabled_thumb_color = new_options->disabled_thumb_color;
     }
 
     void paint(PaintContext& context) override {
         Rect rect{
             context.offset.x,
             context.offset.y,
-            options.width,
-            options.height
+            width,
+            height
         };
 
-        BorderRadius radius = BorderRadius::circular(options.height / 2.0f);
+        BorderRadius radius = BorderRadius::circular(height / 2.0f);
 
         Paint paint;
         paint.setStyle(PaintStyle::Fill);
         
         // Draw track (background)
-        if (options.disabled) {
-            paint.setColor(options.disabled_color);
+        if (disabled) {
+            paint.setColor(disabled_color);
         } else if (value) {
-            paint.setColor(hovered ? options.hover_color : options.active_color);
+            paint.setColor(hovered ? hover_color : active_color);
         } else {
-            paint.setColor(hovered ? options.hover_inactive_color : options.inactive_color);
+            paint.setColor(hovered ? hover_inactive_color : inactive_color);
         }
         
         context.canvas.drawRRect(rect, radius, paint);
 
         // Draw thumb (circle)
-        float thumb_size = options.height - (options.thumb_padding * 2.0f);
-        float thumb_x = context.offset.x + options.thumb_padding;
+        float thumb_size = height - (thumb_padding * 2.0f);
+        float thumb_x = context.offset.x + thumb_padding;
         
         if (value) {
             // Move thumb to the right
-            thumb_x = context.offset.x + options.width - thumb_size - options.thumb_padding;
+            thumb_x = context.offset.x + width - thumb_size - thumb_padding;
         }
 
         Rect thumb_rect{
             thumb_x,
-            context.offset.y + options.thumb_padding,
+            context.offset.y + thumb_padding,
             thumb_size,
             thumb_size
         };
@@ -83,13 +119,13 @@ public:
         Paint thumb_paint;
         thumb_paint.setStyle(PaintStyle::Fill);
         
-        if (options.disabled) {
-            thumb_paint.setColor(options.disabled_thumb_color);
+        if (disabled) {
+            thumb_paint.setColor(disabled_thumb_color);
         } else if (value) {
-            thumb_paint.setColor(options.active_thumb_color);
+            thumb_paint.setColor(active_thumb_color);
             thumb_paint.setShadow(0x40000000, 4.0f, 0.0f, 2.0f); // Add soft shadow
         } else {
-            thumb_paint.setColor(options.inactive_thumb_color);
+            thumb_paint.setColor(inactive_thumb_color);
             thumb_paint.setShadow(0x30000000, 4.0f, 0.0f, 2.0f); // Add soft shadow
         }
 
@@ -105,10 +141,10 @@ class SwitchRenderWidget : public SingleChildRenderObjectWidget {
 public:
     bool value;
     bool hovered;
-    SwitchProps options;
+    const SwitchWidget* options;
 
-    SwitchRenderWidget(bool val, bool hov, SwitchProps opt)
-        : value(val), hovered(hov), options(std::move(opt)) {}
+    SwitchRenderWidget(bool val, bool hov, const SwitchWidget* opt)
+        : value(val), hovered(hov), options(opt) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
         return std::make_unique<RenderSwitch>(value, hovered, options);
@@ -131,11 +167,11 @@ class SwitchState : public State {
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const Switch*>(widget());
+        auto* w = static_cast<const SwitchWidget*>(widget());
 
-        auto render_widget = std::make_shared<SwitchRenderWidget>(w->value, hovered_, w->options);
+        auto render_widget = std::make_shared<SwitchRenderWidget>(w->value, hovered_, w);
 
-        if (w->options.disabled) {
+        if (w->disabled) {
             return render_widget;
         }
 
@@ -159,7 +195,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Switch::createState() {
+std::unique_ptr<State> SwitchWidget::createState() {
     return std::make_unique<SwitchState>();
 }
 

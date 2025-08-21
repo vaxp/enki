@@ -107,7 +107,7 @@ private:
                         .border = Border(0xFF334155, 1.0f),
                         .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)},
                         .width = StyleValue::point(880.0f),
-                        .child = carousel({
+                        .child = Carousel {
                             .slides = {
                                 buildHeroSlide("FEATURED ENGINE", 0xFF0284C7, "⚡",
                                                "Skia Real-Time 60 FPS Compositor",
@@ -151,7 +151,7 @@ private:
                                 hud_msg_ = "Current Slide: #" + std::to_string(idx + 1) + " of 4";
                                 setState([] {});
                             }
-                        })
+                        }
                     }),
                     row({
                         .justify_content = Justify::Center,
