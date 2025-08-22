@@ -394,7 +394,7 @@ private:
     }
 
     void openMenu(int index, Rect anchor_bounds) {
-        auto* bar = static_cast<const MenuBar*>(widget());
+        auto* bar = static_cast<const MenuBarWidget*>(widget());
         if (index < 0 || index >= static_cast<int>(bar->entries.size())) return;
 
         if (active_index_ == index && active_popup_) {
@@ -476,7 +476,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* bar = static_cast<const MenuBar*>(widget());
+        auto* bar = static_cast<const MenuBarWidget*>(widget());
 
         std::vector<WidgetPtr> btn_widgets;
         for (size_t i = 0; i < bar->entries.size(); ++i) {
@@ -511,7 +511,7 @@ public:
     }
 };
 
-std::unique_ptr<State> MenuBar::createState() {
+std::unique_ptr<State> MenuBarWidget::createState() {
     return std::make_unique<MenuBarState>();
 }
 
@@ -530,7 +530,7 @@ private:
             return;
         }
 
-        auto* menu_widget = static_cast<const Menu*>(widget());
+        auto* menu_widget = static_cast<const MenuWidget*>(widget());
         BuildContext ctx(element());
         Size screen_sz = ctx.mediaSize();
 
@@ -598,7 +598,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* menu_widget = static_cast<const Menu*>(widget());
+        auto* menu_widget = static_cast<const MenuWidget*>(widget());
 
         auto detector = std::make_shared<GestureDetector>();
         detector->hit_test_behavior = HitTestBehavior::Opaque;
@@ -615,7 +615,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Menu::createState() {
+std::unique_ptr<State> MenuWidget::createState() {
     return std::make_unique<MenuState>();
 }
 

@@ -7,17 +7,12 @@ This list can be used as a checklist to systematically refactor the codebase to 
 - [ ] `scroll_demo` ([widgets_demo/scroll_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/scroll_demo/main.cpp))
 - [ ] `split_view_demo` ([widgets_demo/split_view_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/split_view_demo/main.cpp))
 - [ ] `data_grid_demo` ([widgets_demo/data_grid_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/data_grid_demo/main.cpp))
-- [ ] `spinner_demo` ([widgets_demo/spinner_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/spinner_demo/main.cpp))
 - [ ] `expansion_panel_demo` ([widgets_demo/expansion_panel_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/expansion_panel_demo/main.cpp))
 - [ ] `grid_view_demo` ([widgets_demo/grid_view_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/grid_view_demo/main.cpp))
 - [ ] `resizable_panel_demo` ([widgets_demo/resizable_panel_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/resizable_panel_demo/main.cpp))
 - [ ] `rangeslider_demo` ([widgets_demo/rangeslider_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/rangeslider_demo/main.cpp))
-- [ ] `menu_demo` ([widgets_demo/menu_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/menu_demo/main.cpp))
 - [ ] `bottom_sheet_demo` ([widgets_demo/bottom_sheet_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/bottom_sheet_demo/main.cpp))
 - [ ] `snackbar_demo` ([widgets_demo/snackbar_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/snackbar_demo/main.cpp))
-- [ ] `progress_demo` ([widgets_demo/progress_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/progress_demo/main.cpp))
-- [ ] `slider_demo` ([widgets_demo/slider_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/slider_demo/main.cpp))
-
 - [ ] `grid_tile_demo` ([widgets_demo/grid_tile_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/grid_tile_demo/main.cpp))
 
 - [ ] `navigation_bar_demo` ([widgets_demo/navigation_bar_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/navigation_bar_demo/main.cpp))

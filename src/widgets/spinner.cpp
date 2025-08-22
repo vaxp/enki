@@ -35,19 +35,38 @@ inline double getSteadyTimeSecs() {
 
 class RenderSpinner : public RenderBox {
 public:
-    SpinnerProps options;
+    SpinnerStyle style_;
+    float spinner_size_;
+    Color color_;
+    std::vector<Color> gradient_colors_;
+    int spoke_count_;
+    float spoke_width_;
+    float spoke_length_;
+    int dot_count_;
+    float dot_size_;
+    float rotation_speed_;
+    Color glow_color_;
+    float glow_blur_;
+    std::string custom_shader_;
+
     float anim_time;
     double start_time;
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderSpinner(const SpinnerProps& opt, float anim_t, double st)
-        : options(opt), anim_time(anim_t), start_time(st) {
+    RenderSpinner(const SpinnerWidget* opt, float anim_t, double st)
+        : style_(opt->style), spinner_size_(opt->size), color_(opt->color),
+          gradient_colors_(opt->gradient_colors), spoke_count_(opt->spoke_count),
+          spoke_width_(opt->spoke_width), spoke_length_(opt->spoke_length),
+          dot_count_(opt->dot_count), dot_size_(opt->dot_size),
+          rotation_speed_(opt->rotation_speed), glow_color_(opt->glow_color),
+          glow_blur_(opt->glow_blur), custom_shader_(opt->custom_shader),
+          anim_time(anim_t), start_time(st) {
         
         updateAnuStyles();
 
-        if (!options.custom_shader.empty() || options.style == SpinnerStyle::CustomShader) {
-            auto [eff, err] = SkRuntimeEffect::MakeForShader(SkString(options.custom_shader.c_str()));
+        if (!custom_shader_.empty() || style_ == SpinnerStyle::CustomShader) {
+            auto [eff, err] = SkRuntimeEffect::MakeForShader(SkString(custom_shader_.c_str()));
             if (!eff) {
                 std::cerr << "Spinner SkSL Shader Compile Error: " << err.c_str() << "\n";
             } else {
@@ -58,15 +77,28 @@ public:
 
     void updateAnuStyles() {
         if (anu_node_) {
-            ANUNodeStyleSetWidth(anu_node_, options.size);
-            ANUNodeStyleSetHeight(anu_node_, options.size);
+            ANUNodeStyleSetWidth(anu_node_, spinner_size_);
+            ANUNodeStyleSetHeight(anu_node_, spinner_size_);
             ANUNodeStyleSetJustifyContent(anu_node_, ANUJustifyCenter);
             ANUNodeStyleSetAlignItems(anu_node_, ANUAlignCenter);
         }
     }
 
-    void setOptions(const SpinnerProps& opt) {
-        options = opt;
+    void setOptions(const SpinnerWidget* opt) {
+        style_ = opt->style;
+        spinner_size_ = opt->size;
+        color_ = opt->color;
+        gradient_colors_ = opt->gradient_colors;
+        spoke_count_ = opt->spoke_count;
+        spoke_width_ = opt->spoke_width;
+        spoke_length_ = opt->spoke_length;
+        dot_count_ = opt->dot_count;
+        dot_size_ = opt->dot_size;
+        rotation_speed_ = opt->rotation_speed;
+        glow_color_ = opt->glow_color;
+        glow_blur_ = opt->glow_blur;
+        custom_shader_ = opt->custom_shader;
+
         updateAnuStyles();
         markNeedsLayout();
     }
@@ -87,14 +119,14 @@ public:
         constexpr float kPI = 3.14159265358979323846f;
 
         // Custom SkSL Shader Mode
-        if (effect && (options.style == SpinnerStyle::CustomShader || !options.custom_shader.empty())) {
+        if (effect && (style_ == SpinnerStyle::CustomShader || !custom_shader_.empty())) {
             double current_time = getSteadyTimeSecs() - start_time;
             struct Uniforms {
                 float resolution[2];
                 float time;
             } uniforms = {
                 {diameter, diameter},
-                (float)(current_time * options.rotation_speed)
+                (float)(current_time * rotation_speed_)
             };
 
             SkPaint shader_paint;
@@ -113,12 +145,12 @@ public:
                 canvas->drawRect(rect, shader_paint);
             }
         }
-        else if (options.style == SpinnerStyle::Spokes) {
+        else if (style_ == SpinnerStyle::Spokes) {
             // Style 1: Spokes (iOS / macOS Radiating Ticks)
-            int count = std::max(4, options.spoke_count);
+            int count = std::max(4, spoke_count_);
             float step_angle = 360.0f / count;
-            float rot_angle = anim_time * options.rotation_speed * 180.0f;
-            int active_idx = static_cast<int>(fmod(anim_time * options.rotation_speed * count * 0.8f, count));
+            float rot_angle = anim_time * rotation_speed_ * 180.0f;
+            int active_idx = static_cast<int>(fmod(anim_time * rotation_speed_ * count * 0.8f, count));
 
             float inner_r = radius * 0.45f;
             float outer_r = radius * 0.85f;
@@ -126,10 +158,10 @@ public:
             SkPaint spoke_paint;
             spoke_paint.setAntiAlias(true);
             spoke_paint.setStrokeCap(SkPaint::kRound_Cap);
-            spoke_paint.setStrokeWidth(options.spoke_width);
+            spoke_paint.setStrokeWidth(spoke_width_);
 
-            if (options.glow_blur > 0.0f && options.glow_color != 0) {
-                spoke_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.glow_blur * 0.5f));
+            if (glow_blur_ > 0.0f && glow_color_ != 0) {
+                spoke_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
             }
 
             for (int i = 0; i < count; ++i) {
@@ -140,7 +172,7 @@ public:
                 float alpha_ratio = static_cast<float>(relative_idx) / static_cast<float>(count);
                 alpha_ratio = 0.2f + 0.8f * alpha_ratio; // min 20% opacity
 
-                uint32_t base_c = options.color;
+                uint32_t base_c = color_;
                 uint8_t orig_a = (base_c >> 24) & 0xFF;
                 uint8_t final_a = static_cast<uint8_t>(orig_a * alpha_ratio);
                 uint32_t final_c = (final_a << 24) | (base_c & 0x00FFFFFF);
@@ -155,18 +187,18 @@ public:
                 canvas->drawLine(x1, y1, x2, y2, spoke_paint);
             }
         }
-        else if (options.style == SpinnerStyle::OrbitDots) {
+        else if (style_ == SpinnerStyle::OrbitDots) {
             // Style 2: OrbitDots (Material / Fluent Orbiting Dots)
-            int count = std::max(2, options.dot_count);
-            float base_rot = anim_time * options.rotation_speed * 200.0f;
-            float orbit_r = radius - options.dot_size;
+            int count = std::max(2, dot_count_);
+            float base_rot = anim_time * rotation_speed_ * 200.0f;
+            float orbit_r = radius - dot_size_;
 
             SkPaint dot_paint;
             dot_paint.setAntiAlias(true);
             dot_paint.setStyle(SkPaint::kFill_Style);
 
-            if (options.glow_blur > 0.0f && options.glow_color != 0) {
-                dot_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.glow_blur * 0.5f));
+            if (glow_blur_ > 0.0f && glow_color_ != 0) {
+                dot_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
             }
 
             for (int i = 0; i < count; ++i) {
@@ -176,37 +208,37 @@ public:
 
                 float dx = cx + orbit_r * cos(angle_rad);
                 float dy = cy + orbit_r * sin(angle_rad);
-                float dot_r = (options.dot_size / 2.0f) * (0.4f + 0.6f * (1.0f - fraction));
+                float dot_r = (dot_size_ / 2.0f) * (0.4f + 0.6f * (1.0f - fraction));
 
-                if (!options.gradient_colors.empty()) {
-                    size_t c_idx = i % options.gradient_colors.size();
-                    dot_paint.setColor(options.gradient_colors[c_idx]);
+                if (!gradient_colors_.empty()) {
+                    size_t c_idx = i % gradient_colors_.size();
+                    dot_paint.setColor(gradient_colors_[c_idx]);
                 } else {
-                    dot_paint.setColor(options.color);
+                    dot_paint.setColor(color_);
                 }
 
                 canvas->drawCircle(dx, dy, dot_r, dot_paint);
             }
         }
-        else if (options.style == SpinnerStyle::DualArc) {
+        else if (style_ == SpinnerStyle::DualArc) {
             // Style 3: DualArc (Futuristic Dual Counter-Rotating Arcs)
-            float rot1 = fmod(anim_time * options.rotation_speed * 180.0f, 360.0f);
-            float rot2 = fmod(-anim_time * options.rotation_speed * 260.0f, 360.0f);
+            float rot1 = fmod(anim_time * rotation_speed_ * 180.0f, 360.0f);
+            float rot2 = fmod(-anim_time * rotation_speed_ * 260.0f, 360.0f);
 
             SkPaint arc_paint;
             arc_paint.setAntiAlias(true);
             arc_paint.setStyle(SkPaint::kStroke_Style);
             arc_paint.setStrokeCap(SkPaint::kRound_Cap);
 
-            if (options.glow_blur > 0.0f && options.glow_color != 0) {
-                arc_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.glow_blur * 0.5f));
+            if (glow_blur_ > 0.0f && glow_color_ != 0) {
+                arc_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
             }
 
             // Outer Arc
             float r1 = radius - 3.0f;
             SkRect rect1 = SkRect::MakeLTRB(cx - r1, cy - r1, cx + r1, cy + r1);
             arc_paint.setStrokeWidth(3.0f);
-            arc_paint.setColor(options.color);
+            arc_paint.setColor(color_);
             canvas->drawArc(rect1, rot1, 270.0f, false, arc_paint);
 
             // Inner Arc
@@ -214,7 +246,7 @@ public:
             SkRect rect2 = SkRect::MakeLTRB(cx - r2, cy - r2, cx + r2, cy + r2);
             arc_paint.setStrokeWidth(2.5f);
 
-            Color inner_c = options.gradient_colors.empty() ? 0xFFEC4899 : options.gradient_colors[0];
+            Color inner_c = gradient_colors_.empty() ? 0xFFEC4899 : gradient_colors_[0];
             arc_paint.setColor(inner_c);
             canvas->drawArc(rect2, rot2, 180.0f, false, arc_paint);
         }
@@ -222,10 +254,10 @@ public:
         // Paint Center Child Widget if provided
         if (!children().empty()) {
             RenderBox* child_ro = static_cast<RenderBox*>(children()[0]);
-            Point child_offset = {
+            Point child_offset(
                 (size_.width - child_ro->size().width) / 2.0f,
                 (size_.height - child_ro->size().height) / 2.0f
-            };
+            );
             PaintContext child_ctx = ctx.withOffset(child_offset);
             child_ro->paint(child_ctx);
         }
@@ -238,13 +270,13 @@ public:
 
 class SpinnerRenderWidget : public SingleChildRenderObjectWidget {
 public:
-    SpinnerProps options;
+    const SpinnerWidget* options;
     float anim_time;
     double start_time;
 
-    SpinnerRenderWidget(SpinnerProps opt, float anim_t, double st, WidgetPtr child)
+    SpinnerRenderWidget(const SpinnerWidget* opt, float anim_t, double st, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
-          options(std::move(opt)), anim_time(anim_t), start_time(st) {}
+          options(opt), anim_time(anim_t), start_time(st) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override {
         return std::make_unique<RenderSpinner>(options, anim_time, start_time);
@@ -289,15 +321,15 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* sp = static_cast<const Spinner*>(widget());
+        auto* sp = static_cast<const SpinnerWidget*>(widget());
 
         return std::make_shared<SpinnerRenderWidget>(
-            sp->options, anim_time_, start_time_, sp->child
+            sp, anim_time_, start_time_, sp->child
         );
     }
 };
 
-std::unique_ptr<State> Spinner::createState() {
+std::unique_ptr<State> SpinnerWidget::createState() {
     return std::make_unique<SpinnerState>();
 }
 

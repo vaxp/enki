@@ -109,7 +109,7 @@ public:
             MenuEntry("Help", help_items),
         };
 
-        auto app_menubar = menuBar({ .entries = bar_entries });
+        auto app_menubar = MenuBar { .entries = bar_entries };
 
         // ── 2. Standalone Context/Dropdown Button ─────────────────────
         std::vector<MenuItem> quick_items = {
@@ -119,7 +119,7 @@ public:
             MenuItem::action("Clear Cache", [this]() { logAction("Quick Action -> Cache cleared"); }, "🧹"),
         };
 
-        auto standalone_menu = menu({
+        auto standalone_menu = Menu {
             .child = container({
                 .color = 0xFF2563EB,
                 .border_radius = BorderRadius::circular(8.0f),
@@ -127,7 +127,7 @@ public:
                 .child = text("⚡ Quick Actions Menu  ▼", { .color = 0xFFFFFFFF, .font_size = 13.0f, .font_weight = FontWeight::Bold })
             }),
             .items = quick_items
-        });
+        };
 
         // ── 3. Central Showcase Content ──────────────────────────────
         // ── 3. Central Showcase Content ──────────────────────────────

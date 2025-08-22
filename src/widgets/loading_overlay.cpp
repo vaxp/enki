@@ -168,48 +168,49 @@ public:
     WidgetPtr buildIndicator(const LoadingOverlayProps& opts) {
         switch (opts.indicator_style) {
             case LoadingIndicatorStyle::Spinner: {
-                SpinnerProps so;
-                so.style = SpinnerStyle::DualArc;
-                so.size = 44.0f;
-                so.color = opts.accent_color;
-                return spinner(so);
+                return Spinner {
+                    .style = SpinnerStyle::DualArc,
+                    .size = 44.0f,
+                    .color = opts.accent_color
+                };
             }
             case LoadingIndicatorStyle::ProgressRing: {
                 int pct = static_cast<int>(std::clamp(opts.progress, 0.0f, 1.0f) * 100.0f);
                 auto pct_txt = text(std::to_string(pct) + "%");
                 pct_txt->fontSize(11.0f).bold().color(opts.title_color);
 
-                ProgressRingProps ro;
-                ro.size = 56.0f;
-                ro.stroke_width = 5.0f;
-                ro.progress_color = opts.accent_color;
-                ro.indeterminate = !opts.is_determinate;
-
-                return progressRing(opts.progress, pct_txt, ro);
+                return ProgressRing {
+                    .value = opts.progress,
+                    .size = 56.0f,
+                    .stroke_width = 5.0f,
+                    .progress_color = opts.accent_color,
+                    .indeterminate = !opts.is_determinate,
+                    .child = pct_txt
+                };
             }
             case LoadingIndicatorStyle::ProgressBar: {
-                ProgressBarProps pbo;
-                pbo.height = 6.0f;
-                pbo.progress_color = opts.accent_color;
-                pbo.indeterminate = !opts.is_determinate;
-                pbo.min_width = 240.0f;
-
-                return progressBar(opts.progress, pbo);
+                return ProgressBar {
+                    .value = opts.progress,
+                    .height = 6.0f,
+                    .progress_color = opts.accent_color,
+                    .indeterminate = !opts.is_determinate,
+                    .min_width = 240.0f
+                };
             }
             case LoadingIndicatorStyle::DotsPulse: {
-                SpinnerProps so;
-                so.style = SpinnerStyle::OrbitDots;
-                so.size = 38.0f;
-                so.color = opts.accent_color;
-                return spinner(so);
+                return Spinner {
+                    .style = SpinnerStyle::OrbitDots,
+                    .size = 38.0f,
+                    .color = opts.accent_color
+                };
             }
             case LoadingIndicatorStyle::Custom: {
                 if (opts.custom_indicator) return opts.custom_indicator;
-                SpinnerProps so;
-                so.style = SpinnerStyle::DualArc;
-                so.size = 44.0f;
-                so.color = opts.accent_color;
-                return spinner(so);
+                return Spinner {
+                    .style = SpinnerStyle::DualArc,
+                    .size = 44.0f,
+                    .color = opts.accent_color
+                };
             }
         }
         return container();
