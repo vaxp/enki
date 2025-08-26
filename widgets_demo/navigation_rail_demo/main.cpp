@@ -24,7 +24,7 @@ public:
             .child = row({
                 .height = StyleValue::percent(100.0f),
                 .children = {
-                    navigationRail({
+                    NavigationRail {
                         .items = {
                             {"Dashboard", Icons::Material::dashboard(), ""},
                             {"Analytics", Icons::Material::analytics(), "2"},
@@ -35,7 +35,7 @@ public:
                         .on_item_selected = [this](int i) {
                             setState([this, i] { selected_idx = i; });
                         }
-                    }),
+                    },
                     container({
                         .flex_grow = 1.0f,
                         .child = centerBox(text(page_text, { .color = 0xFFFFFFFF, .font_size = 20.0f }))

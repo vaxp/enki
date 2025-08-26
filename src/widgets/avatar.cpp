@@ -3,7 +3,7 @@
 
 namespace enki {
 
-WidgetPtr Avatar::build(BuildContext& ctx) {
+WidgetPtr AvatarWidget::build(BuildContext& ctx) {
     float diameter = options.radius * 2.0f;
     WidgetPtr content;
 
@@ -53,10 +53,7 @@ WidgetPtr Avatar::build(BuildContext& ctx) {
              .color(options.badge_color)
              .border(options.badge_border_color, options.badge_border_width);
              
-        // Position badge at bottom right. The angle is 45 degrees from bottom right.
-        // For a circle, bottom right offset is radius * (1 - sqrt(2)/2) from the corner.
-        // We'll just position it approximately.
-        float offset = options.radius * 0.146f; // (1 - sin(45)) ~ 0.29, half is 0.146
+        float offset = options.radius * 0.146f;
         auto pos_badge = positioned(badge);
         pos_badge->bottom(offset).right(offset);
         
@@ -67,7 +64,7 @@ WidgetPtr Avatar::build(BuildContext& ctx) {
     return bg_container;
 }
 
-WidgetPtr AvatarGroup::build(BuildContext& ctx) {
+WidgetPtr AvatarGroupWidget::build(BuildContext& ctx) {
     if (avatars.empty()) {
         auto empty_box = container(nullptr);
         empty_box->width(0).height(0);
@@ -81,7 +78,7 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
     
     for (size_t i = 0; i < count; ++i) {
         float diameter = 48.0f; // Default diameter
-        if (auto av = std::dynamic_pointer_cast<Avatar>(avatars[i])) {
+        if (auto av = std::dynamic_pointer_cast<AvatarWidget>(avatars[i])) {
             diameter = av->options.radius * 2.0f;
         }
         
@@ -92,17 +89,17 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
     size_t extra = avatars.size() - count;
     WidgetPtr extra_widget = nullptr;
     if (extra > 0) {
-        AvatarProps opt;
-        opt.background_color = 0xFF1E293B; // Dark gray
-        opt.initials = "+" + std::to_string(extra);
-        opt.border_width = 2.0f;
-        
-        if (auto av = std::dynamic_pointer_cast<Avatar>(avatars[0])) {
-            opt.radius = av->options.radius;
+        float rad = 24.0f;
+        if (auto av = std::dynamic_pointer_cast<AvatarWidget>(avatars[0])) {
+            rad = av->options.radius;
         }
-        auto extra_av = avatar(opt);
-        extra_widget = extra_av;
-        total_width += (opt.radius * 2.0f + spacing);
+        extra_widget = Avatar {
+            .radius = rad,
+            .background_color = 0xFF1E293B,
+            .initials = "+" + std::to_string(extra),
+            .border_width = 2.0f,
+        };
+        total_width += (rad * 2.0f + spacing);
     }
     
     std::vector<std::pair<float, WidgetPtr>> positioned_items;
@@ -111,7 +108,7 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
     for (size_t i = 0; i < count; ++i) {
         positioned_items.push_back({current_left, avatars[i]});
         float diameter = 48.0f;
-        if (auto av = std::dynamic_pointer_cast<Avatar>(avatars[i])) {
+        if (auto av = std::dynamic_pointer_cast<AvatarWidget>(avatars[i])) {
             diameter = av->options.radius * 2.0f;
         }
         current_left += (diameter + spacing);
@@ -130,7 +127,7 @@ WidgetPtr AvatarGroup::build(BuildContext& ctx) {
 
     auto s = stack(stack_children);
     float max_d = 48.0f;
-    if (auto av = std::dynamic_pointer_cast<Avatar>(avatars[0])) {
+    if (auto av = std::dynamic_pointer_cast<AvatarWidget>(avatars[0])) {
         max_d = av->options.radius * 2.0f;
     }
     

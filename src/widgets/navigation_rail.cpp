@@ -28,7 +28,7 @@ class NavigationRailState : public State {
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const NavigationRail*>(widget());
+        auto* w = static_cast<const NavigationRailWidget*>(widget());
         is_expanded_ = w->options.initially_expanded;
 
         expand_anim_.setDuration(std::chrono::milliseconds(220));
@@ -49,7 +49,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const NavigationRail*>(widget());
+        auto* w = static_cast<const NavigationRailWidget*>(widget());
         const auto& opts = w->options;
         float t = expand_anim_.value();
         float cur_w = opts.collapsed_width + (opts.expanded_width - opts.collapsed_width) * t;
@@ -181,7 +181,7 @@ public:
     }
 };
 
-std::unique_ptr<State> NavigationRail::createState() {
+std::unique_ptr<State> NavigationRailWidget::createState() {
     return std::make_unique<NavigationRailState>();
 }
 

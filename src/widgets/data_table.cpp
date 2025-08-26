@@ -31,7 +31,7 @@ class DataTableState : public State {
 
     void initState() override {
         State::initState();
-        auto* w = static_cast<const DataTable*>(widget());
+        auto* w = static_cast<const DataTableWidget*>(widget());
         row_selected_.resize(w->props.rows.size());
         for (int i = 0; i < (int)w->props.rows.size(); ++i)
             row_selected_[i] = w->props.rows[i].selected;
@@ -52,7 +52,7 @@ class DataTableState : public State {
         return wrap;
     }
 
-    WidgetPtr buildHeaderRow(const DataTable* w) {
+    WidgetPtr buildHeaderRow(const DataTableWidget* w) {
         const auto& theme = w->props.theme;
         std::vector<WidgetPtr> cells;
 
@@ -155,7 +155,7 @@ class DataTableState : public State {
         return header_wrap;
     }
 
-    WidgetPtr buildDataRow(int ri, const DataTable* w) {
+    WidgetPtr buildDataRow(int ri, const DataTableWidget* w) {
         const auto& theme = w->props.theme;
         const auto& dr = w->props.rows[ri];
         bool is_selected = ri < (int)row_selected_.size() && row_selected_[ri];
@@ -255,7 +255,7 @@ class DataTableState : public State {
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const DataTable*>(widget());
+        auto* w = static_cast<const DataTableWidget*>(widget());
         const auto& theme = w->props.theme;
 
         // Sync row_selected_ size
@@ -320,7 +320,7 @@ public:
     }
 };
 
-std::unique_ptr<State> DataTable::createState() {
+std::unique_ptr<State> DataTableWidget::createState() {
     return std::make_unique<DataTableState>();
 }
 

@@ -64,7 +64,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
         view_year_ = w->props.initial_date.year;
         view_month_ = w->props.initial_date.month;
         selected_date_ = w->props.initial_date;
@@ -75,13 +75,13 @@ public:
 
     void didUpdateWidget(const Widget& old) override {
         State::didUpdateWidget(old);
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
         all_events_ = w->props.events;
         wireController();
     }
 
     void wireController() {
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
         if (w->props.controller) {
             w->props.controller->select_date_fn = [this](CalendarDate d) {
                 selected_date_ = d;
@@ -122,7 +122,7 @@ public:
         } else {
             view_month_++;
         }
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
         if (w->props.on_month_changed) w->props.on_month_changed(view_year_, view_month_);
         setState([] {});
     }
@@ -134,13 +134,13 @@ public:
         } else {
             view_month_--;
         }
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
         if (w->props.on_month_changed) w->props.on_month_changed(view_year_, view_month_);
         setState([] {});
     }
 
     void handleDayClick(CalendarDate d) {
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
 
         if (w->props.selection_mode == CalendarSelectionMode::Single) {
             selected_date_ = d;
@@ -243,7 +243,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Calendar*>(widget());
+        auto* w = static_cast<const CalendarWidget*>(widget());
         const auto& opts = w->props;
 
         // ── 1. Month Header Bar ───────────────────────────────────────
@@ -374,7 +374,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Calendar::createState() {
+std::unique_ptr<State> CalendarWidget::createState() {
     return std::make_unique<CalendarState>();
 }
 

@@ -22,15 +22,17 @@ static const Color kPalette[] = {
 
 static WidgetPtr fakePhoto(int i) {
     Color c = kPalette[i % 10];
-    auto label = std::make_shared<Text>(std::to_string(i + 1));
-    label->fontSize(24.0f).bold().color(Colors::White);
-
-    auto tile_content = container(label);
-    tile_content->color(c);
-    tile_content->align(Alignment::Center);
-    tile_content->width(StyleValue::percent(100.0f));
-    tile_content->height(StyleValue::percent(100.0f));
-    return tile_content;
+    return container({
+        .color = c,
+        .align = Alignment::Center,
+        .width = StyleValue::percent(100.0f),
+        .height = StyleValue::percent(100.0f),
+        .child = text(std::to_string(i + 1), {
+            .color = Colors::White,
+            .font_size = 24.0f,
+            .font_weight = FontWeight::Bold,
+        })
+    });
 }
 
 class GridDemoState : public State {
@@ -38,8 +40,10 @@ class GridDemoState : public State {
 
     WidgetPtr tabButton(const std::string& label, int idx) {
         bool active = (tab_ == idx);
-        auto lbl = std::make_shared<Text>(label);
-        lbl->fontSize(13.0f).color(active ? 0xFFFFFFFF : 0xFF8B9BB4);
+        auto lbl = text(label, {
+            .color = active ? 0xFFFFFFFF : 0xFF8B9BB4,
+            .font_size = 13.0f,
+        });
         ButtonProps opts;
         opts.normal_color  = active ? 0xFF2563EB : 0xFF161B22;
         opts.hover_color   = active ? 0xFF3B82F6 : 0xFF1E2937;
@@ -47,103 +51,123 @@ class GridDemoState : public State {
         opts.border_radius = 6.0f;
         opts.padding       = EdgeInsets::symmetric(6.0f, 14.0f);
         opts.shadow_blur   = 0.0f;
-        return std::make_shared<Button>(lbl, [this, idx](){
+        return button(lbl, [this, idx](){
             setState([this, idx]{ tab_ = idx; });
         }, opts);
     }
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto header_title = std::make_shared<Text>("GridView + GridTile Demo");
-        header_title->fontSize(24.0f).bold().color(0xFFFFFFFF);
+        auto header_title = text("GridView + GridTile Demo", {
+            .color = 0xFFFFFFFF,
+            .font_size = 24.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         std::string desc;
         if (tab_ == 0)      desc = "3 columns, aspect ratio 1:1";
         else if (tab_ == 1) desc = "2 columns, aspect ratio 4:3";
         else                desc = "Max-extent 160px — auto responsive columns";
 
-        auto header_sub = std::make_shared<Text>(desc);
-        header_sub->fontSize(12.0f).color(0xFF8B9BB4);
-
-        auto header_col = column({header_title, header_sub});
-        header_col->gap(StyleValue::point(4.0f));
-        auto header = container(header_col);
-        header->padding(EdgeInsets::symmetric(16.0f, 20.0f));
-        header->color(0xFF0D1117);
-        header->width(StyleValue::percent(100.0f));
-
-        auto tab_row = row({
-            tabButton("3 Cols", 0),
-            tabButton("2 Cols", 1),
-            tabButton("Responsive", 2),
+        auto header_sub = text(desc, {
+            .color = 0xFF8B9BB4,
+            .font_size = 12.0f,
         });
-        tab_row->gap(StyleValue::point(6.0f));
-        tab_row->padding(StyleInsets::symmetric(8.0f, 12.0f));
-        auto tab_wrap = container(tab_row);
-        tab_wrap->color(0xFF161B22);
-        tab_wrap->width(StyleValue::percent(100.0f));
+
+        auto header = container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(16.0f, 20.0f),
+            .child = column({
+                .gap = StyleValue::point(4.0f),
+                .children = {header_title, header_sub}
+            })
+        });
+
+        auto tab_wrap = container({
+            .color = 0xFF161B22,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .child = row({
+                .gap = StyleValue::point(6.0f),
+                .children = {
+                    tabButton("3 Cols", 0),
+                    tabButton("2 Cols", 1),
+                    tabButton("Responsive", 2),
+                }
+            })
+        });
 
         // Grid content
         WidgetPtr grid;
         if (tab_ == 0) {
-            grid = gridView(3, 30, [](int i) -> WidgetPtr {
-                auto footer = gridTileBar();
-                footer->title(std::make_shared<Text>("Item " + std::to_string(i+1),
-                            TextStyle{.color=0xFFFFFFFF, .font_size=12.0f}));
-                return gridTile(fakePhoto(i), nullptr, footer);
-            });
-            auto gv = std::static_pointer_cast<GridView>(grid);
-            gv->crossAxisSpacing(4.0f);
-            gv->mainAxisSpacing(4.0f);
-            gv->paddingAll(4.0f);
-            gv->childAspectRatio(1.0f);
-
+            grid = GridView {
+                .item_count = 30,
+                .item_builder = [](int i) -> WidgetPtr {
+                    return GridTile {
+                        .child = fakePhoto(i),
+                        .footer = GridTileBar {
+                            .title = text("Item " + std::to_string(i + 1), { .color = 0xFFFFFFFF, .font_size = 12.0f }),
+                        }
+                    };
+                },
+                .fixed_delegate = SliverGridDelegateFixedCount(3, 4.0f, 4.0f, 1.0f),
+                .list_padding = EdgeInsets::all(4.0f),
+            };
         } else if (tab_ == 1) {
-            grid = gridView(2, 20, [](int i) -> WidgetPtr {
-                auto footer = gridTileBar();
-                footer->title(std::make_shared<Text>("Photo " + std::to_string(i+1),
-                            TextStyle{.color=0xFFFFFFFF, .font_size=13.0f}));
-                footer->subtitle(std::make_shared<Text>("Subtitle " + std::to_string(i+1),
-                               TextStyle{.color=0xFFB0C4D8, .font_size=11.0f}));
-                return gridTile(fakePhoto(i), nullptr, footer);
-            });
-            auto gv = std::static_pointer_cast<GridView>(grid);
-            gv->crossAxisSpacing(8.0f);
-            gv->mainAxisSpacing(8.0f);
-            gv->paddingAll(8.0f);
-            gv->childAspectRatio(4.0f / 3.0f);
-
+            grid = GridView {
+                .item_count = 20,
+                .item_builder = [](int i) -> WidgetPtr {
+                    return GridTile {
+                        .child = fakePhoto(i),
+                        .footer = GridTileBar {
+                            .title = text("Photo " + std::to_string(i + 1), { .color = 0xFFFFFFFF, .font_size = 13.0f }),
+                            .subtitle = text("Subtitle " + std::to_string(i + 1), { .color = 0xFFB0C4D8, .font_size = 11.0f }),
+                        }
+                    };
+                },
+                .fixed_delegate = SliverGridDelegateFixedCount(2, 8.0f, 8.0f, 4.0f / 3.0f),
+                .list_padding = EdgeInsets::all(8.0f),
+            };
         } else {
-            grid = gridViewExtent(160.0f, 25, [](int i) -> WidgetPtr {
-                auto t = std::make_shared<Text>(std::to_string(i+1));
-                t->fontSize(28.0f).bold().color(Colors::White);
-                auto c = container(t);
-                c->color(kPalette[i % 10]);
-                c->borderRadius(8.0f);
-                c->align(Alignment::Center);
-                c->width(StyleValue::percent(100.0f));
-                c->height(StyleValue::percent(100.0f));
-                return c;
-            });
-            auto gv = std::static_pointer_cast<GridView>(grid);
-            gv->crossAxisSpacing(8.0f);
-            gv->mainAxisSpacing(8.0f);
-            gv->paddingAll(8.0f);
-            gv->childAspectRatio(1.0f);
+            grid = GridView {
+                .item_count = 25,
+                .item_builder = [](int i) -> WidgetPtr {
+                    return container({
+                        .color = kPalette[i % 10],
+                        .border_radius = BorderRadius::circular(8.0f),
+                        .align = Alignment::Center,
+                        .width = StyleValue::percent(100.0f),
+                        .height = StyleValue::percent(100.0f),
+                        .child = text(std::to_string(i + 1), {
+                            .color = Colors::White,
+                            .font_size = 28.0f,
+                            .font_weight = FontWeight::Bold,
+                        })
+                    });
+                },
+                .max_delegate = SliverGridDelegateMaxExtent(160.0f, 8.0f, 8.0f, 1.0f),
+                .use_max_extent_delegate = true,
+                .list_padding = EdgeInsets::all(8.0f),
+            };
         }
 
-        auto grid_flex = std::make_shared<FlexItem>(grid);
-        grid_flex->flexGrow(1.0f).flexShrink(1.0f);
-
-        auto root_col = column({header, tab_wrap, grid_flex});
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->height(StyleValue::percent(100.0f));
-
-        auto root = container(root_col);
-        root->color(0xFF0D1117);
-        root->width(StyleValue::percent(100.0f));
-        root->height(StyleValue::percent(100.0f));
-        return root;
+        return container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = column({
+                .children = {
+                    header,
+                    tab_wrap,
+                    container({
+                        .flex_grow = 1.0f,
+                        .flex_shrink = 1.0f,
+                        .child = grid
+                    })
+                }
+            })
+        });
     }
 };
 

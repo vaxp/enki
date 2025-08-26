@@ -426,7 +426,7 @@ private:
     }
 
     void notifyCursorMoved() {
-        auto* ta = static_cast<const TextArea*>(widget());
+        auto* ta = static_cast<const TextAreaWidget*>(widget());
         if (ta && ta->options.on_cursor_moved) {
             size_t r = 1, c = 1;
             controller_->getCursorPosition(r, c);
@@ -486,7 +486,7 @@ private:
     }
 
     void handleKey(int key, int mods) {
-        auto* ta = static_cast<const TextArea*>(widget());
+        auto* ta = static_cast<const TextAreaWidget*>(widget());
         if (!ta) return;
 
         // XKB Keysyms
@@ -666,7 +666,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* ta = static_cast<const TextArea*>(widget());
+        auto* ta = static_cast<const TextAreaWidget*>(widget());
         controller_ = ta->controller;
         is_focused_ = ta->options.auto_focus;
 
@@ -675,7 +675,7 @@ public:
         if (Platform::instance()) {
             text_input_conn_ = Platform::instance()->onTextInput().connect([this](std::string_view text) {
                 if (g_focused_textarea != this) return;
-                auto* current_ta = static_cast<const TextArea*>(widget());
+                auto* current_ta = static_cast<const TextAreaWidget*>(widget());
                 if (!current_ta || current_ta->options.read_only) return;
 
                 // Ignore control characters (ASCII < 32 and DEL 127) exactly like TextField
@@ -706,7 +706,7 @@ public:
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* ta = static_cast<const TextArea*>(widget());
+        auto* ta = static_cast<const TextAreaWidget*>(widget());
         controller_ = ta->controller;
     }
 
@@ -720,7 +720,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* ta = static_cast<const TextArea*>(widget());
+        auto* ta = static_cast<const TextAreaWidget*>(widget());
 
         if (is_focused_ && Platform::instance()) {
             double cur = Platform::instance()->getTime();
@@ -857,7 +857,7 @@ public:
     }
 };
 
-std::unique_ptr<State> TextArea::createState() {
+std::unique_ptr<State> TextAreaWidget::createState() {
     return std::make_unique<TextAreaState>();
 }
 

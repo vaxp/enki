@@ -28,11 +28,16 @@ private:
 
     // ── Build Agenda Panel for Selected Date ──────────────────────
     WidgetPtr buildAgendaPanel() {
-        auto t = text("📅 Daily Agenda & Schedule");
-        t->fontSize(14.5f).bold().color(0xFF38BDF8);
+        auto t = text("📅 Daily Agenda & Schedule", {
+            .color = 0xFF38BDF8,
+            .font_size = 14.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto d_lbl = text("Events for " + active_date_.toString() + ":");
-        d_lbl->fontSize(12.0f).color(0xFF94A3B8);
+        auto d_lbl = text("Events for " + active_date_.toString() + ":", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
         std::vector<CalendarEvent> day_events;
         for (const auto& ev : sample_events_) {
@@ -42,50 +47,67 @@ private:
         std::vector<WidgetPtr> event_items = {t, d_lbl};
 
         if (day_events.empty()) {
-            auto empty_txt = text("No scheduled events for this day.");
-            empty_txt->fontSize(12.5f).color(0xFF64748B);
+            auto empty_txt = text("No scheduled events for this day.", {
+                .color = 0xFF64748B,
+                .font_size = 12.5f,
+            });
 
-            auto empty_box = container(empty_txt);
-            empty_box->paddingSymmetric(16.0f, 0.0f);
+            auto empty_box = container({
+                .padding = StyleInsets::symmetric(16.0f, 0.0f),
+                .child = empty_txt,
+            });
             event_items.push_back(empty_box);
         } else {
             for (const auto& ev : day_events) {
-                auto ev_tit = text(ev.title);
-                ev_tit->fontSize(13.0f).bold().color(0xFFFFFFFF);
+                auto ev_tit = text(ev.title, {
+                    .color = 0xFFFFFFFF,
+                    .font_size = 13.0f,
+                    .font_weight = FontWeight::Bold,
+                });
 
-                auto ev_time = text(ev.time_str);
-                ev_time->fontSize(11.5f).color(ev.color);
+                auto ev_time = text(ev.time_str, {
+                    .color = ev.color,
+                    .font_size = 11.5f,
+                });
 
-                auto ev_desc = text(ev.description);
-                ev_desc->fontSize(11.5f).color(0xFF94A3B8);
+                auto ev_desc = text(ev.description, {
+                    .color = 0xFF94A3B8,
+                    .font_size = 11.5f,
+                });
 
-                std::vector<WidgetPtr> ev_col_items = {ev_tit, ev_time, ev_desc};
-                auto ev_col = column(ev_col_items);
-                ev_col->gap(StyleValue::point(3.0f));
+                auto ev_col = column({
+                    .gap = StyleValue::point(3.0f),
+                    .children = {ev_tit, ev_time, ev_desc},
+                });
 
-                auto ev_card = container(ev_col);
-                ev_card->color(0xFF0F172A)
-                       .border(ev.color, 1.0f)
-                       .borderRadius(8.0f)
-                       .paddingAll(12.0f)
-                       .width(StyleValue::percent(100.0f));
+                auto ev_card = container({
+                    .color = 0xFF0F172A,
+                    .border_radius = BorderRadius::circular(8.0f),
+                    .border = Border(ev.color, 1.0f),
+                    .width = StyleValue::percent(100.0f),
+                    .padding = StyleInsets::all(12.0f),
+                    .child = ev_col,
+                });
 
                 event_items.push_back(ev_card);
             }
         }
 
-        auto agenda_col = column(event_items);
-        agenda_col->gap(StyleValue::point(10.0f)).width(StyleValue::percent(100.0f));
+        auto agenda_col = column({
+            .gap = StyleValue::point(10.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = event_items,
+        });
 
-        auto agenda_card = container(agenda_col);
-        agenda_card->color(0xFF1E293B)
-                   .border(0xFF334155, 1.0f)
-                   .borderRadius(12.0f)
-                   .paddingAll(18.0f)
-                   .width(360.0f)
-                   .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f));
-
-        return agenda_card;
+        return container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(12.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .box_shadow = { BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f) },
+            .width = StyleValue::point(360.0f),
+            .padding = StyleInsets::all(18.0f),
+            .child = agenda_col,
+        });
     }
 
 public:
@@ -108,27 +130,36 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // ── Main Page Header ──────────────────────────────────────────
-        auto title = text("Advanced Calendar & Scheduling Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced Calendar & Scheduling Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Date picker (Category 10. Advanced / Data UI), month navigation, Single/Range modes, and event markers");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Date picker (Category 10. Advanced / Data UI), month navigation, Single/Range modes, and event markers", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center).gap(StyleValue::point(6.0f));
+        auto title_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {title, sub},
+        });
 
         // ── Mode Control Bar ──────────────────────────────────────────
         auto makePill = [](std::string label, bool active, std::function<void()> cb) -> WidgetPtr {
-            auto t = text(label);
-            t->fontSize(12.0f).color(active ? 0xFFFFFFFF : 0xFF94A3B8);
-            if (active) t->bold();
-
-            auto b = container(t);
-            b->color(active ? 0xFF0284C7 : 0xFF0F172A)
-             .border(active ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-             .borderRadius(6.0f)
-             .paddingSymmetric(6.0f, 14.0f);
+            auto b = container({
+                .color = active ? 0xFF0284C7 : 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(active ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 14.0f),
+                .child = text(std::move(label), {
+                    .color = active ? 0xFFFFFFFF : 0xFF94A3B8,
+                    .font_size = 12.0f,
+                    .font_weight = active ? FontWeight::Bold : FontWeight::Normal,
+                }),
+            });
 
             auto gd = std::make_shared<GestureDetector>(b);
             gd->cursor_type = SystemCursor::Pointer;
@@ -158,61 +189,67 @@ public:
             setState([] {});
         });
 
-        std::vector<WidgetPtr> ctrl_items = {pill_single, pill_range, btn_add_ev};
-        auto ctrl_row = row(ctrl_items);
-        ctrl_row->gap(StyleValue::point(10.0f)).justifyContent(Justify::Center);
+        auto ctrl_row = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(10.0f),
+            .children = {pill_single, pill_range, btn_add_ev},
+        });
 
         // ── Calendar Widget ───────────────────────────────────────────
-        CalendarProps opts;
-        opts.selection_mode = current_mode_;
-        opts.width = 380.0f;
-        opts.on_date_selected = [this](CalendarDate d) {
-            active_date_ = d;
-            hud_msg_ = "Selected Date: " + d.toString();
-            setState([] {});
+        WidgetPtr cal_widget = Calendar {
+            .events = sample_events_,
+            .controller = calendar_ctrl_,
+            .selection_mode = current_mode_,
+            .width = 380.0f,
+            .on_date_selected = [this](CalendarDate d) {
+                active_date_ = d;
+                hud_msg_ = "Selected Date: " + d.toString();
+                setState([] {});
+            },
+            .on_range_selected = [this](CalendarDate s, CalendarDate e) {
+                hud_msg_ = "Selected Range: " + s.toString() + " ➔ " + e.toString();
+                setState([] {});
+            },
         };
-        opts.on_range_selected = [this](CalendarDate s, CalendarDate e) {
-            hud_msg_ = "Selected Range: " + s.toString() + " ➔ " + e.toString();
-            setState([] {});
-        };
-
-        opts.events = sample_events_;
-        opts.controller = calendar_ctrl_;
-        auto cal_widget = calendar(opts);
 
         // ── Agenda Panel ──────────────────────────────────────────────
         auto agenda_widget = buildAgendaPanel();
 
-        std::vector<WidgetPtr> main_row_items;
-        main_row_items.push_back(cal_widget);
-        main_row_items.push_back(agenda_widget);
-        auto main_row = row(main_row_items);
-        main_row->gap(StyleValue::point(20.0f)).justifyContent(Justify::Center);
+        auto main_row = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(20.0f),
+            .children = {cal_widget, agenda_widget},
+        });
 
         // ── HUD / Status Box ──────────────────────────────────────────
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
-
-        auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(760.0f);
+        auto hud_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(760.0f),
+            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+            .child = row({
+                .children = {
+                    text("💡 " + hud_msg_, {
+                        .color = 0xFF38BDF8,
+                        .font_size = 12.5f,
+                    }),
+                },
+            }),
+        });
 
         // ── Assemble Page Body ────────────────────────────────────────
-        std::vector<WidgetPtr> page_items = {title_col, ctrl_row, main_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(20.0f)).alignItems(Align::Center);
-
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(24.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
-
-        return background_page;
+        return container({
+            .color = 0xFF0B1120,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(20.0f),
+                .children = {title_col, ctrl_row, main_row, hud_box},
+            }),
+        });
     }
 };
 

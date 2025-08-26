@@ -12,7 +12,6 @@
 ///   - Smart Badging: Numeric counts, string tags, and glowing dot badges.
 ///   - Hover alpha feedback, press micro-bounce animations, tooltips, and disabled items.
 ///   - Full Desktop Header support with leading brand/logo and trailing actions/search.
-///   - Fluent builder API.
 ///
 /// @copyright ENKI Framework — MIT License
 
@@ -144,10 +143,10 @@ struct NavigationBarOptions {
 };
 
 // ════════════════════════════════════════════════════════════════
-// NavigationBar Widget
+// NavigationBar Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-class NavigationBar : public StatefulWidget {
+class NavigationBarWidget : public StatefulWidget {
 public:
     std::vector<NavigationBarItem> items;
     int                            selected_index = 0;
@@ -156,190 +155,41 @@ public:
     std::function<void(std::string_view)> on_action_clicked; ///< Fired when a header action is clicked
     NavigationBarOptions           options;
 
-    NavigationBar() = default;
-    NavigationBar(std::vector<NavigationBarItem> items, int selected,
-                  std::function<void(int)> on_selected,
-                  NavigationBarOptions opt = {})
+    NavigationBarWidget() = default;
+    NavigationBarWidget(std::vector<NavigationBarItem> items, int selected,
+                        std::function<void(int)> on_selected,
+                        NavigationBarOptions opt = {})
         : items(std::move(items)), selected_index(selected),
           on_item_selected(std::move(on_selected)), options(std::move(opt)) {}
-
-    // ── Fluent Builder API ─────────────────────────────────────
-    NavigationBar& style(NavigationBarStyle s)          { options.style = s; return *this; }
-    NavigationBar& indicatorStyle(NavIndicatorStyle s)  { options.indicator_style = s; return *this; }
-    NavigationBar& itemLayout(NavItemLayout l)          { options.item_layout = l; return *this; }
-    NavigationBar& backgroundColor(Color c)             { options.background_color = c; return *this; }
-    NavigationBar& activeColor(Color c)                 { options.active_color = c; return *this; }
-    NavigationBar& inactiveColor(Color c)               { options.inactive_color = c; return *this; }
-    NavigationBar& indicatorColor(Color c)              { options.indicator_color = c; return *this; }
-    NavigationBar& height(float h)                      { options.height = h; return *this; }
-    NavigationBar& width(float w)                       { options.width = w; return *this; }
-    NavigationBar& cornerRadius(float r)                { options.corner_radius = r; return *this; }
-    NavigationBar& glassmorphism(bool v = true)         { options.enable_glassmorphism = v; return *this; }
-    NavigationBar& showLabels(bool v)                   { options.show_labels = v; return *this; }
-    NavigationBar& leadingBrand(IconData ic, std::string ttl, std::string sub = "") {
-        options.leading_icon = std::move(ic);
-        options.leading_title = std::move(ttl);
-        options.leading_subtitle = std::move(sub);
-        return *this;
-    }
-    NavigationBar& onReselect(std::function<void(int)> cb) {
-        on_item_reselect = std::move(cb);
-        return *this;
-    }
-    NavigationBar& onAction(std::function<void(std::string_view)> cb) {
-        on_action_clicked = std::move(cb);
-        return *this;
-    }
+    NavigationBarWidget(Key key, std::vector<NavigationBarItem> items, int selected,
+                        std::function<void(int)> on_selected,
+                        NavigationBarOptions opt = {})
+        : StatefulWidget(std::move(key)), items(std::move(items)), selected_index(selected),
+          on_item_selected(std::move(on_selected)), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "NavigationBar"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Props for Declarative Syntax
+// Declarative Proxy Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-struct NavigationBarProps {
+struct NavigationBar {
+    Key                            key = Key::none();
     std::vector<NavigationBarItem> items;
     int                            selected_index = 0;
-    std::function<void(int)>       on_item_selected;
+    std::function<void(int)>       on_item_selected = nullptr;
     std::function<void(int)>       on_item_reselect = nullptr;
     std::function<void(std::string_view)> on_action_clicked = nullptr;
     NavigationBarOptions           options = {};
-    Key                            key = Key::none();
+
+    operator WidgetPtr() const {
+        auto nb = std::make_shared<NavigationBarWidget>(key, items, selected_index, on_item_selected, options);
+        nb->on_item_reselect = on_item_reselect;
+        nb->on_action_clicked = on_action_clicked;
+        return nb;
+    }
 };
-
-// ════════════════════════════════════════════════════════════════
-// Factory Functions
-// ════════════════════════════════════════════════════════════════
-
-/// Standard Material 3 Navigation Bar (typically bottom placed).
-inline std::shared_ptr<NavigationBar> navigationBar(
-        std::vector<NavigationBarItem> items,
-        int selected_index,
-        std::function<void(int)> on_selected,
-        NavigationBarOptions options = {}) {
-    return std::make_shared<NavigationBar>(
-        std::move(items), selected_index, std::move(on_selected), std::move(options));
-}
-
-inline std::shared_ptr<NavigationBar> navigationBar(NavigationBarProps props) {
-    auto nb = std::make_shared<NavigationBar>(std::move(props.items), props.selected_index,
-                                              std::move(props.on_item_selected), std::move(props.options));
-    if (props.on_item_reselect) nb->onReselect(std::move(props.on_item_reselect));
-    if (props.on_action_clicked) nb->onAction(std::move(props.on_action_clicked));
-    if (props.key != Key::none()) nb->key = props.key;
-    return nb;
-}
-
-/// Floating Capsule Navigation Bar (macOS Dock / iOS 18 Floating Island).
-inline std::shared_ptr<NavigationBar> floatingNavBar(
-        std::vector<NavigationBarItem> items,
-        int selected_index,
-        std::function<void(int)> on_selected,
-        float fixed_width = 460.0f,
-        NavigationBarOptions options = {}) {
-    options.style = NavigationBarStyle::FloatingPill;
-    options.indicator_style = NavIndicatorStyle::Pill;
-    options.width = fixed_width;
-    options.height = 64.0f;
-    options.corner_radius = 32.0f;
-    options.enable_glassmorphism = true;
-    options.background_color = 0xEE1E293B;
-    options.border_color = 0x3338BDF8;
-    options.indicator_color = 0x3338BDF8;
-    options.indicator_radius = 20.0f;
-    return std::make_shared<NavigationBar>(
-        std::move(items), selected_index, std::move(on_selected), std::move(options));
-}
-
-inline std::shared_ptr<NavigationBar> floatingNavBar(NavigationBarProps props, float fixed_width = 460.0f) {
-    props.options.style = NavigationBarStyle::FloatingPill;
-    props.options.indicator_style = NavIndicatorStyle::Pill;
-    props.options.width = fixed_width;
-    props.options.height = 64.0f;
-    props.options.corner_radius = 32.0f;
-    props.options.enable_glassmorphism = true;
-    props.options.background_color = 0xEE1E293B;
-    props.options.border_color = 0x3338BDF8;
-    props.options.indicator_color = 0x3338BDF8;
-    props.options.indicator_radius = 20.0f;
-    return navigationBar(std::move(props));
-}
-
-/// Desktop / Web Top Header Navigation Bar.
-inline std::shared_ptr<NavigationBar> topNavigationBar(
-        std::vector<NavigationBarItem> items,
-        int selected_index,
-        std::function<void(int)> on_selected,
-        std::string leading_title = "ENKI App",
-        IconData leading_icon = {},
-        NavigationBarOptions options = {}) {
-    options.style = NavigationBarStyle::TopHeader;
-    options.indicator_style = NavIndicatorStyle::Underline;
-    options.item_layout = NavItemLayout::Horizontal;
-    options.height = 60.0f;
-    options.background_color = 0xFF0F172A;
-    options.border_color = 0xFF1E293B;
-    options.leading_title = std::move(leading_title);
-    options.leading_icon = std::move(leading_icon);
-    options.show_search_placeholder = true;
-    return std::make_shared<NavigationBar>(
-        std::move(items), selected_index, std::move(on_selected), std::move(options));
-}
-
-inline std::shared_ptr<NavigationBar> topNavigationBar(NavigationBarProps props, std::string leading_title = "ENKI App", IconData leading_icon = {}) {
-    props.options.style = NavigationBarStyle::TopHeader;
-    props.options.indicator_style = NavIndicatorStyle::Underline;
-    props.options.item_layout = NavItemLayout::Horizontal;
-    props.options.height = 60.0f;
-    props.options.background_color = 0xFF0F172A;
-    props.options.border_color = 0xFF1E293B;
-    props.options.leading_title = std::move(leading_title);
-    props.options.leading_icon = std::move(leading_icon);
-    props.options.show_search_placeholder = true;
-    return navigationBar(std::move(props));
-}
-
-/// Segmented Capsule Navigation Tabs.
-inline std::shared_ptr<NavigationBar> segmentedNavBar(
-        std::vector<NavigationBarItem> items,
-        int selected_index,
-        std::function<void(int)> on_selected,
-        float fixed_width = 380.0f,
-        NavigationBarOptions options = {}) {
-    options.style = NavigationBarStyle::SegmentedCapsule;
-    options.indicator_style = NavIndicatorStyle::Pill;
-    options.item_layout = NavItemLayout::Horizontal;
-    options.width = fixed_width;
-    options.height = 44.0f;
-    options.corner_radius = 22.0f;
-    options.background_color = 0xFF0F172A;
-    options.indicator_color = 0xFF0284C7;
-    options.active_color = 0xFFFFFFFF;
-    options.inactive_color = 0xFF94A3B8;
-    options.indicator_radius = 18.0f;
-    options.indicator_w = 0.0f; // auto-fit
-    options.indicator_h = 36.0f;
-    return std::make_shared<NavigationBar>(
-        std::move(items), selected_index, std::move(on_selected), std::move(options));
-}
-
-inline std::shared_ptr<NavigationBar> segmentedNavBar(NavigationBarProps props, float fixed_width = 380.0f) {
-    props.options.style = NavigationBarStyle::SegmentedCapsule;
-    props.options.indicator_style = NavIndicatorStyle::Pill;
-    props.options.item_layout = NavItemLayout::Horizontal;
-    props.options.width = fixed_width;
-    props.options.height = 44.0f;
-    props.options.corner_radius = 22.0f;
-    props.options.background_color = 0xFF0F172A;
-    props.options.indicator_color = 0xFF0284C7;
-    props.options.active_color = 0xFFFFFFFF;
-    props.options.inactive_color = 0xFF94A3B8;
-    props.options.indicator_radius = 18.0f;
-    props.options.indicator_w = 0.0f;
-    props.options.indicator_h = 36.0f;
-    return navigationBar(std::move(props));
-}
 
 } // namespace enki

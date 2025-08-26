@@ -19,8 +19,11 @@ using namespace enki;
 
 // Helper to create a stylized pill button
 static WidgetPtr makeBtn(const std::string& label, std::function<void()> onClick, bool active = false) {
-    auto t = text(label);
-    t->fontSize(11.5f).bold().color(active ? 0xFFFFFFFF : 0xFFCBD5E1);
+    auto t = text(label, {
+        .color = active ? 0xFFFFFFFF : 0xFFCBD5E1,
+        .font_size = 11.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     ButtonProps b_opt;
     b_opt.normal_color  = active ? 0xFF0284C7 : 0xFF1E293B;
@@ -92,7 +95,7 @@ public:
                             }
                         })
                     }),
-                    navigationBar({
+                    NavigationBar {
                         .items = {
                             {"Home", Icons::Material::home(), Icons::Material::home(), "", false},
                             {"Explore", Icons::Material::search(), Icons::Material::search(), "", false},
@@ -122,7 +125,7 @@ public:
                             .indicator_color = 0x2638BDF8,
                             .height = 68.0f
                         }
-                    })
+                    }
                 }
             });
         }
@@ -146,7 +149,7 @@ public:
                             }
                         })
                     }),
-                    floatingNavBar({
+                    NavigationBar {
                         .items = {
                             {"Home", Icons::Material::home(), "", false},
                             {"Workspaces", Icons::Material::folder(), "", false},
@@ -162,11 +165,19 @@ public:
                             });
                         },
                         .options = {
+                            .style = NavigationBarStyle::FloatingPill,
                             .indicator_style = current_ind_style_,
                             .item_layout = current_layout_,
+                            .background_color = 0xEE1E293B,
+                            .border_color = 0x3338BDF8,
+                            .indicator_color = 0x3338BDF8,
+                            .height = 64.0f,
+                            .width = 520.0f,
+                            .indicator_radius = 20.0f,
+                            .corner_radius = 32.0f,
                             .enable_glassmorphism = glass_effect_
                         }
-                    }, 520.0f)
+                    }
                 }
             });
         }
@@ -175,7 +186,7 @@ public:
                 .align_items = Align::Center,
                 .gap = StyleValue::point(14.0f),
                 .children = {
-                    topNavigationBar({
+                    NavigationBar {
                         .items = {
                             {"Overview", Icons::Material::dashboard(), "", false},
                             {"Builds", Icons::Material::layers(), show_badges_ ? "99+" : "", false},
@@ -195,10 +206,18 @@ public:
                             });
                         },
                         .options = {
+                            .style = NavigationBarStyle::TopHeader,
                             .indicator_style = current_ind_style_ == NavIndicatorStyle::Pill ? NavIndicatorStyle::Underline : current_ind_style_,
+                            .item_layout = NavItemLayout::Horizontal,
+                            .background_color = 0xFF0F172A,
+                            .border_color = 0xFF1E293B,
+                            .height = 60.0f,
+                            .leading_title = "ENKI Studio",
+                            .leading_icon = Icons::Material::bolt(),
+                            .show_search_placeholder = true,
                             .trailing_actions = {"Docs", "GitHub", "Sign In"}
                         }
-                    }, "ENKI Studio", Icons::Material::bolt()),
+                    },
                     container({
                         .color = 0xFF1E293B,
                         .border_radius = BorderRadius::circular(8.0f),
@@ -214,7 +233,7 @@ public:
                 .align_items = Align::Center,
                 .gap = StyleValue::point(18.0f),
                 .children = {
-                    segmentedNavBar({
+                    NavigationBar {
                         .items = {
                             {"All Tasks", Icons::Material::check(), "", false},
                             {"In Progress", Icons::Material::refresh(), show_badges_ ? "4" : "", false},
@@ -227,8 +246,23 @@ public:
                                 seg_selected_idx_ = idx;
                                 status_hud_ = "Segmented Capsule Filter: Selected #" + std::to_string(idx + 1);
                             });
+                        },
+                        .options = {
+                            .style = NavigationBarStyle::SegmentedCapsule,
+                            .indicator_style = NavIndicatorStyle::Pill,
+                            .item_layout = NavItemLayout::Horizontal,
+                            .background_color = 0xFF0F172A,
+                            .active_color = 0xFFFFFFFF,
+                            .inactive_color = 0xFF94A3B8,
+                            .indicator_color = 0xFF0284C7,
+                            .height = 44.0f,
+                            .width = 480.0f,
+                            .indicator_radius = 18.0f,
+                            .indicator_w = 0.0f,
+                            .indicator_h = 36.0f,
+                            .corner_radius = 22.0f
                         }
-                    }, 480.0f),
+                    },
                     container({
                         .color = 0xFF1E293B,
                         .border_radius = BorderRadius::circular(10.0f),
@@ -257,7 +291,7 @@ public:
                             text("600+ FPS Direct Skia Hardware Acceleration · Spring/Lerp Physics · 4 Distinct Styles", { .color = 0xFF94A3B8, .font_size = 12.5f })
                         }
                     }),
-                    segmentedNavBar({
+                    NavigationBar {
                         .items = {
                             {"Material 3 Bottom", Icons::Material::dashboard(), "", false},
                             {"Floating Glass Dock", Icons::Material::layers(), "PRO", false},
@@ -270,8 +304,23 @@ public:
                                 active_demo_mode_ = idx;
                                 status_hud_ = "Switched showcase mode to " + std::to_string(idx);
                             });
+                        },
+                        .options = {
+                            .style = NavigationBarStyle::SegmentedCapsule,
+                            .indicator_style = NavIndicatorStyle::Pill,
+                            .item_layout = NavItemLayout::Horizontal,
+                            .background_color = 0xFF0F172A,
+                            .active_color = 0xFFFFFFFF,
+                            .inactive_color = 0xFF94A3B8,
+                            .indicator_color = 0xFF0284C7,
+                            .height = 44.0f,
+                            .width = 620.0f,
+                            .indicator_radius = 18.0f,
+                            .indicator_w = 0.0f,
+                            .indicator_h = 36.0f,
+                            .corner_radius = 22.0f
                         }
-                    }, 620.0f),
+                    },
                     stage_content,
                     container({
                         .color = 0xFF0F172A,

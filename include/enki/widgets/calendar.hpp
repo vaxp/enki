@@ -22,9 +22,9 @@
 
 namespace enki {
 
-/// ════════════════════════════════════════════════════════════════
-/// Calendar Date Representation
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Calendar Date Representation
+// ════════════════════════════════════════════════════════════════
 
 struct CalendarDate {
     int year = 2026;
@@ -56,9 +56,9 @@ enum class CalendarSelectionMode {
     None        ///< Read-only calendar
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// Calendar Event Model
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Calendar Event Model
+// ════════════════════════════════════════════════════════════════
 
 struct CalendarEvent {
     std::string id = "";
@@ -76,9 +76,9 @@ struct CalendarEvent {
           description(std::move(desc_)), date(date_), color(col) {}
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// Calendar Props
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Calendar Props
+// ════════════════════════════════════════════════════════════════
 
 class CalendarController;
 
@@ -118,9 +118,9 @@ struct CalendarProps {
     std::function<void(const CalendarEvent& event)> on_event_clicked;
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// Calendar Controller
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Calendar Controller
+// ════════════════════════════════════════════════════════════════
 
 class CalendarController {
 public:
@@ -143,30 +143,91 @@ public:
     [[nodiscard]] CalendarDate getSelectedDate() const { return get_selected_date_fn ? get_selected_date_fn() : CalendarDate{2026, 8, 19}; }
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// Calendar Widget
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Calendar Implementation Widget
+// ════════════════════════════════════════════════════════════════
 
-class Calendar : public StatefulWidget {
+class CalendarWidget : public StatefulWidget {
 public:
     CalendarProps props;
 
-    Calendar() = default;
-    explicit Calendar(CalendarProps p) : props(std::move(p)) {}
+    CalendarWidget() = default;
+    explicit CalendarWidget(CalendarProps p) : props(std::move(p)) {}
+    CalendarWidget(Key key, CalendarProps p) : StatefulWidget(std::move(key)), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Calendar"; }
 };
 
-inline std::shared_ptr<Calendar> calendar(CalendarProps props = {}) {
-    return std::make_shared<Calendar>(std::move(props));
-}
+// ════════════════════════════════════════════════════════════════
+// Declarative Calendar Struct (C++20 Designated Initializers)
+// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Calendar> calendar(
-    std::vector<CalendarEvent> events) {
-    CalendarProps props;
-    props.events = std::move(events);
-    return std::make_shared<Calendar>(std::move(props));
-}
+struct Calendar {
+    Key key = Key::none();
+    std::vector<CalendarEvent> events;
+    std::shared_ptr<CalendarController> controller = nullptr;
+
+    CalendarSelectionMode selection_mode = CalendarSelectionMode::Single;
+    CalendarDate initial_date = {2026, 8, 19};
+    int first_day_of_week = 1;
+
+    bool show_today_btn = true;
+    bool show_adjacent_days = true;
+    bool highlight_today = true;
+
+    float width = 360.0f;
+    float border_radius = 12.0f;
+
+    // Styling Colors
+    Color background_color    = 0xFF1E293B;
+    Color border_color        = 0xFF334155;
+    Color header_bg_color     = 0xFF0F172A;
+    Color title_color         = 0xFFFFFFFF;
+    Color weekday_color       = 0xFF94A3B8;
+    Color day_color           = 0xFFF1F5F9;
+    Color adjacent_day_color  = 0xFF475569;
+    Color today_ring_color    = 0xFF38BDF8;
+    Color selected_bg_color   = 0xFF0284C7;
+    Color in_range_bg_color   = 0x330284C7;
+    Color hover_bg_color      = 0x33334155;
+
+    // Callbacks
+    std::function<void(CalendarDate selected_date)> on_date_selected = nullptr;
+    std::function<void(CalendarDate range_start, CalendarDate range_end)> on_range_selected = nullptr;
+    std::function<void(int year, int month)> on_month_changed = nullptr;
+    std::function<void(const CalendarEvent& event)> on_event_clicked = nullptr;
+
+    operator WidgetPtr() const {
+        CalendarProps p;
+        p.key = key;
+        p.events = events;
+        p.controller = controller;
+        p.selection_mode = selection_mode;
+        p.initial_date = initial_date;
+        p.first_day_of_week = first_day_of_week;
+        p.show_today_btn = show_today_btn;
+        p.show_adjacent_days = show_adjacent_days;
+        p.highlight_today = highlight_today;
+        p.width = width;
+        p.border_radius = border_radius;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.header_bg_color = header_bg_color;
+        p.title_color = title_color;
+        p.weekday_color = weekday_color;
+        p.day_color = day_color;
+        p.adjacent_day_color = adjacent_day_color;
+        p.today_ring_color = today_ring_color;
+        p.selected_bg_color = selected_bg_color;
+        p.in_range_bg_color = in_range_bg_color;
+        p.hover_bg_color = hover_bg_color;
+        p.on_date_selected = on_date_selected;
+        p.on_range_selected = on_range_selected;
+        p.on_month_changed = on_month_changed;
+        p.on_event_clicked = on_event_clicked;
+        return std::make_shared<CalendarWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

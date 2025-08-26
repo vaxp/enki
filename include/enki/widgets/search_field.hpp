@@ -70,7 +70,6 @@ public:
 
     void addRecentSearch(const std::string& q) {
         if (q.empty()) return;
-        // Remove existing duplicate
         for (auto it = recent_searches_.begin(); it != recent_searches_.end(); ++it) {
             if (*it == q) {
                 recent_searches_.erase(it);
@@ -135,29 +134,29 @@ struct SearchFieldProps {
     bool show_search_icon = true;
     bool show_clear_button = true;
     bool show_shortcut_badge = true;
-    std::string shortcut_hint = "Ctrl+K"; // e.g. "Ctrl+K" / "⌘K"
+    std::string shortcut_hint = "Ctrl+K";
     bool auto_focus = false;
     bool read_only = false;
 
     // Suggestions & Debounce
     bool show_suggestions = true;
     int max_visible_suggestions = 6;
-    double debounce_ms = 250.0; // Debounce query triggering
+    double debounce_ms = 250.0;
 
     // Styling
     TextStyle style;
-    Color background_color   = 0xFF0F172A; // Slate 900
-    Color border_color       = 0xFF334155; // Slate 700
-    Color focus_border_color = 0xFF38BDF8; // Sky 400
-    Color icon_color         = 0xFF94A3B8; // Slate 400
-    Color placeholder_color  = 0xFF64748B; // Slate 500
-    Color cursor_color       = 0xFF38BDF8; // Sky 400
-    Color selection_color    = 0x4D38BDF8; // Sky 400 alpha
-    Color badge_bg_color     = 0xFF1E293B; // Slate 800
-    Color badge_text_color   = 0xFF94A3B8; // Slate 400
-    Color popup_bg_color     = 0xFF0F172A; // Slate 900
-    Color item_hover_color   = 0xFF1E293B; // Slate 800
-    Color match_highlight_col= 0xFF38BDF8; // Sky 400
+    Color background_color   = 0xFF0F172A;
+    Color border_color       = 0xFF334155;
+    Color focus_border_color = 0xFF38BDF8;
+    Color icon_color         = 0xFF94A3B8;
+    Color placeholder_color  = 0xFF64748B;
+    Color cursor_color       = 0xFF38BDF8;
+    Color selection_color    = 0x4D38BDF8;
+    Color badge_bg_color     = 0xFF1E293B;
+    Color badge_text_color   = 0xFF94A3B8;
+    Color popup_bg_color     = 0xFF0F172A;
+    Color item_hover_color   = 0xFF1E293B;
+    Color match_highlight_col= 0xFF38BDF8;
 
     float border_radius = 10.0f;
     EdgeInsets padding = EdgeInsets::symmetric(8.0f, 12.0f);
@@ -165,54 +164,118 @@ struct SearchFieldProps {
     // Callbacks
     std::function<std::vector<SearchSuggestion>(std::string_view query)> suggestions_provider = nullptr;
     std::function<void(std::string_view query)> on_changed = nullptr;
-    std::function<void(std::string_view query)> on_search = nullptr; // Debounced
+    std::function<void(std::string_view query)> on_search = nullptr;
     std::function<void(std::string_view query)> on_submitted = nullptr;
     std::function<void(const SearchSuggestion& item)> on_suggestion_selected = nullptr;
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// SearchField Widget
+/// SearchField Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class SearchField : public StatefulWidget {
+class SearchFieldWidget : public StatefulWidget {
 public:
     SearchFieldProps props;
 
-    SearchField(SearchFieldProps p)
+    SearchFieldWidget(SearchFieldProps p)
         : props(std::move(p)) {
         if (!props.controller) props.controller = std::make_shared<SearchFieldController>();
     }
 
-    SearchField(Key key, SearchFieldProps p)
+    SearchFieldWidget(Key key, SearchFieldProps p)
         : StatefulWidget(std::move(key)), props(std::move(p)) {
         if (!props.controller) props.controller = std::make_shared<SearchFieldController>();
-    }
-
-    // Fluent API Chaining
-    SearchField* placeholder(std::string p) { props.placeholder = std::move(p); return this; }
-    SearchField* variant(SearchFieldVariant v) { props.variant = v; return this; }
-    SearchField* sizePreset(SearchFieldSize s) { props.size = s; return this; }
-    SearchField* shortcutHint(std::string s) { props.shortcut_hint = std::move(s); return this; }
-    SearchField* debounce(double ms) { props.debounce_ms = ms; return this; }
-    SearchField* maxSuggestions(int m) { props.max_visible_suggestions = m; return this; }
-    SearchField* suggestions(std::function<std::vector<SearchSuggestion>(std::string_view)> prov) {
-        props.suggestions_provider = std::move(prov);
-        return this;
-    }
-    SearchField* onChanged(std::function<void(std::string_view)> cb) { props.on_changed = std::move(cb); return this; }
-    SearchField* onSearch(std::function<void(std::string_view)> cb) { props.on_search = std::move(cb); return this; }
-    SearchField* onSubmitted(std::function<void(std::string_view)> cb) { props.on_submitted = std::move(cb); return this; }
-    SearchField* onSuggestionSelected(std::function<void(const SearchSuggestion&)> cb) {
-        props.on_suggestion_selected = std::move(cb);
-        return this;
     }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "SearchField"; }
 };
 
-inline std::shared_ptr<SearchField> searchField(SearchFieldProps props) {
-    return std::make_shared<SearchField>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
+
+struct SearchField {
+    Key key = Key::none();
+    std::shared_ptr<SearchFieldController> controller = nullptr;
+
+    std::string placeholder = "Search or type a command...";
+    SearchFieldVariant variant = SearchFieldVariant::Filled;
+    SearchFieldSize size = SearchFieldSize::Medium;
+
+    bool show_search_icon = true;
+    bool show_clear_button = true;
+    bool show_shortcut_badge = true;
+    std::string shortcut_hint = "Ctrl+K";
+    bool auto_focus = false;
+    bool read_only = false;
+
+    bool show_suggestions = true;
+    int max_visible_suggestions = 6;
+    double debounce_ms = 250.0;
+
+    TextStyle style;
+    Color background_color   = 0xFF0F172A;
+    Color border_color       = 0xFF334155;
+    Color focus_border_color = 0xFF38BDF8;
+    Color icon_color         = 0xFF94A3B8;
+    Color placeholder_color  = 0xFF64748B;
+    Color cursor_color       = 0xFF38BDF8;
+    Color selection_color    = 0x4D38BDF8;
+    Color badge_bg_color     = 0xFF1E293B;
+    Color badge_text_color   = 0xFF94A3B8;
+    Color popup_bg_color     = 0xFF0F172A;
+    Color item_hover_color   = 0xFF1E293B;
+    Color match_highlight_col= 0xFF38BDF8;
+
+    float border_radius = 10.0f;
+    EdgeInsets padding = EdgeInsets::symmetric(8.0f, 12.0f);
+
+    std::function<std::vector<SearchSuggestion>(std::string_view query)> suggestions_provider = nullptr;
+    std::function<void(std::string_view query)> on_changed = nullptr;
+    std::function<void(std::string_view query)> on_search = nullptr;
+    std::function<void(std::string_view query)> on_submitted = nullptr;
+    std::function<void(const SearchSuggestion& item)> on_suggestion_selected = nullptr;
+
+    operator WidgetPtr() const {
+        SearchFieldProps p;
+        p.key = key;
+        p.controller = controller;
+        p.placeholder = placeholder;
+        p.variant = variant;
+        p.size = size;
+        p.show_search_icon = show_search_icon;
+        p.show_clear_button = show_clear_button;
+        p.show_shortcut_badge = show_shortcut_badge;
+        p.shortcut_hint = shortcut_hint;
+        p.auto_focus = auto_focus;
+        p.read_only = read_only;
+        p.show_suggestions = show_suggestions;
+        p.max_visible_suggestions = max_visible_suggestions;
+        p.debounce_ms = debounce_ms;
+        p.style = style;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.focus_border_color = focus_border_color;
+        p.icon_color = icon_color;
+        p.placeholder_color = placeholder_color;
+        p.cursor_color = cursor_color;
+        p.selection_color = selection_color;
+        p.badge_bg_color = badge_bg_color;
+        p.badge_text_color = badge_text_color;
+        p.popup_bg_color = popup_bg_color;
+        p.item_hover_color = item_hover_color;
+        p.match_highlight_col = match_highlight_col;
+        p.border_radius = border_radius;
+        p.padding = padding;
+        p.suggestions_provider = suggestions_provider;
+        p.on_changed = on_changed;
+        p.on_search = on_search;
+        p.on_submitted = on_submitted;
+        p.on_suggestion_selected = on_suggestion_selected;
+
+        return std::make_shared<SearchFieldWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

@@ -162,17 +162,20 @@ struct TextAreaProps {
     std::function<void(size_t row, size_t col)> on_cursor_moved = nullptr;
 };
 
-/// @brief Advanced multi-line TextArea widget.
-class TextArea : public StatefulWidget {
+/// ════════════════════════════════════════════════════════════════
+/// TextArea Widget Implementation
+/// ════════════════════════════════════════════════════════════════
+
+class TextAreaWidget : public StatefulWidget {
 public:
     std::shared_ptr<TextAreaController> controller;
     TextAreaProps options;
 
-    explicit TextArea(std::shared_ptr<TextAreaController> ctrl = nullptr, TextAreaProps opt = {})
+    explicit TextAreaWidget(std::shared_ptr<TextAreaController> ctrl = nullptr, TextAreaProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<TextAreaController>()),
           options(std::move(opt)) {}
           
-    explicit TextArea(Key key, std::shared_ptr<TextAreaController> ctrl, TextAreaProps opt)
+    explicit TextAreaWidget(Key key, std::shared_ptr<TextAreaController> ctrl, TextAreaProps opt)
         : StatefulWidget(std::move(key)),
           controller(ctrl ? std::move(ctrl) : std::make_shared<TextAreaController>()),
           options(std::move(opt)) {}
@@ -181,14 +184,72 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "TextArea"; }
 };
 
-inline std::shared_ptr<TextArea> textArea(
-    std::shared_ptr<TextAreaController> controller = nullptr,
-    TextAreaProps options = {}) {
-    return std::make_shared<TextArea>(std::move(controller), std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<TextArea> textArea(TextAreaProps props) {
-    return std::make_shared<TextArea>(std::move(props.key), std::move(props.controller), std::move(props));
-}
+struct TextArea {
+    Key key = Key::none();
+    std::shared_ptr<TextAreaController> controller = nullptr;
+
+    TextStyle style;
+    std::string hint_text = "";
+    bool read_only = false;
+    bool auto_focus = false;
+
+    size_t min_lines = 4;
+    size_t max_lines = 12;
+    bool auto_grow = false;
+
+    bool show_line_numbers = false;
+    bool show_counter = false;
+    size_t max_characters = 0;
+
+    Color cursor_color       = 0xFF38BDF8;
+    Color selection_color    = 0x6438BDF8;
+    Color background_color   = 0xFF1E293B;
+    Color border_color       = 0xFF334155;
+    Color focus_border_color = 0xFF38BDF8;
+
+    Color line_number_color  = 0xFF64748B;
+    Color line_number_bg     = 0xFF0F172A;
+
+    float border_radius      = 8.0f;
+    EdgeInsets padding       = EdgeInsets::all(10.0f);
+
+    std::function<void(std::string)> on_changed = nullptr;
+    std::function<void(std::string)> on_submitted = nullptr;
+    std::function<void(size_t row, size_t col)> on_cursor_moved = nullptr;
+
+    operator WidgetPtr() const {
+        TextAreaProps p;
+        p.key = key;
+        p.controller = controller;
+        p.style = style;
+        p.hint_text = hint_text;
+        p.read_only = read_only;
+        p.auto_focus = auto_focus;
+        p.min_lines = min_lines;
+        p.max_lines = max_lines;
+        p.auto_grow = auto_grow;
+        p.show_line_numbers = show_line_numbers;
+        p.show_counter = show_counter;
+        p.max_characters = max_characters;
+        p.cursor_color = cursor_color;
+        p.selection_color = selection_color;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.focus_border_color = focus_border_color;
+        p.line_number_color = line_number_color;
+        p.line_number_bg = line_number_bg;
+        p.border_radius = border_radius;
+        p.padding = padding;
+        p.on_changed = on_changed;
+        p.on_submitted = on_submitted;
+        p.on_cursor_moved = on_cursor_moved;
+
+        return std::make_shared<TextAreaWidget>(key, controller, std::move(p));
+    }
+};
 
 } // namespace enki

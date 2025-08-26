@@ -101,7 +101,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const LoadingOverlay*>(widget());
+        auto* w = static_cast<const LoadingOverlayWidget*>(widget());
         is_loading_ = w->initial_loading;
         current_opts_ = w->initial_options;
 
@@ -129,7 +129,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const LoadingOverlay*>(widget());
+        auto* w = static_cast<const LoadingOverlayWidget*>(widget());
         if (w->controller) {
             w->controller->show_fn = [this](const LoadingOverlayProps& opts) { showOverlay(opts); };
             w->controller->hide_fn = [this] { hideOverlay(); };
@@ -281,7 +281,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const LoadingOverlay*>(widget());
+        auto* w = static_cast<const LoadingOverlayWidget*>(widget());
         const auto& opts = current_opts_;
         float t = anim_.value();
 
@@ -336,7 +336,7 @@ public:
     }
 };
 
-std::unique_ptr<State> LoadingOverlay::createState() {
+std::unique_ptr<State> LoadingOverlayWidget::createState() {
     return std::make_unique<LoadingOverlayState>();
 }
 

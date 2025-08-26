@@ -48,8 +48,11 @@ class TableDemoState : public State {
 
     WidgetPtr tabButton(const std::string& label, int idx) {
         bool active = (tab_ == idx);
-        auto lbl = std::make_shared<Text>(label);
-        lbl->fontSize(13.0f).color(active ? 0xFFFFFFFF : 0xFF8B9BB4);
+        auto lbl = text(label, {
+            .color = active ? 0xFFFFFFFF : 0xFF8B9BB4,
+            .font_size = 13.0f,
+        });
+
         ButtonProps opts;
         opts.normal_color  = active ? 0xFF2563EB : 0xFF161B22;
         opts.hover_color   = active ? 0xFF3B82F6 : 0xFF1E2937;
@@ -57,30 +60,35 @@ class TableDemoState : public State {
         opts.border_radius = 6.0f;
         opts.padding       = EdgeInsets::symmetric(6.0f, 16.0f);
         opts.shadow_blur   = 0.0f;
-        return std::make_shared<Button>(lbl, [this, idx](){
+        return button(lbl, [this, idx](){
             setState([this, idx]{ tab_ = idx; });
         }, opts);
     }
 
     static WidgetPtr cell(const std::string& s, bool bold = false, Color c = 0xFFE2E8F0) {
-        auto t = std::make_shared<Text>(s);
-        t->fontSize(13.0f).color(c);
-        if (bold) t->bold();
-        auto wrap = container(t);
-        wrap->padding(EdgeInsets::symmetric(10.0f, 12.0f));
-        return wrap;
+        return container({
+            .padding = StyleInsets::symmetric(10.0f, 12.0f),
+            .child = text(s, {
+                .color = c,
+                .font_size = 13.0f,
+                .font_weight = bold ? FontWeight::Bold : FontWeight::Normal,
+            })
+        });
     }
 
     static WidgetPtr statusBadge(const std::string& s) {
         Color c = s == "Active"   ? 0xFF10B981 :
                   s == "On Leave" ? 0xFFF59E0B : 0xFF8B9BB4;
-        auto t = std::make_shared<Text>(s);
-        t->fontSize(11.0f).bold().color(Colors::White);
-        auto b = container(t);
-        b->color(c);
-        b->borderRadius(10.0f);
-        b->padding(EdgeInsets::symmetric(3.0f, 8.0f));
-        return b;
+        return container({
+            .color = c,
+            .border_radius = BorderRadius::circular(10.0f),
+            .padding = StyleInsets::symmetric(3.0f, 8.0f),
+            .child = text(s, {
+                .color = Colors::White,
+                .font_size = 11.0f,
+                .font_weight = FontWeight::Bold,
+            })
+        });
     }
 
     WidgetPtr buildBasicTable() {
@@ -129,28 +137,23 @@ class TableDemoState : public State {
         }
 
         std::vector<DataColumn> columns = {
-            DataColumn(cell("Name",   true, 0xFFB0C4D8))
-                .onSort([this](int c, bool a){ setState([this,c,a]{ sort_col_=c; sort_asc_=a; }); }),
-            DataColumn(cell("Dept",   true, 0xFFB0C4D8))
-                .onSort([this](int c, bool a){ setState([this,c,a]{ sort_col_=c; sort_asc_=a; }); }),
-            DataColumn(cell("Salary", true, 0xFFB0C4D8))
-                .asNumeric()
-                .fixedWidth(120.0f)
-                .onSort([this](int c, bool a){ setState([this,c,a]{ sort_col_=c; sort_asc_=a; }); }),
-            DataColumn(cell("Status", true, 0xFFB0C4D8))
-                .fixedWidth(110.0f),
+            DataColumn(cell("Name",   true, 0xFFB0C4D8), true, [this](int c, bool a){ setState([this,c,a]{ sort_col_=c; sort_asc_=a; }); }),
+            DataColumn(cell("Dept",   true, 0xFFB0C4D8), true, [this](int c, bool a){ setState([this,c,a]{ sort_col_=c; sort_asc_=a; }); }),
+            DataColumn(cell("Salary", true, 0xFFB0C4D8), true, [this](int c, bool a){ setState([this,c,a]{ sort_col_=c; sort_asc_=a; }); }).asNumeric().fixedWidth(120.0f),
+            DataColumn(cell("Status", true, 0xFFB0C4D8)).fixedWidth(110.0f),
         };
 
         std::vector<DataRow> rows;
         for (int i = 0; i < (int)sorted.size(); ++i) {
             const auto& e = sorted[i];
-            rows.push_back(DataRow({
+            DataRow row({
                 DataCell(cell(e.name)),
                 DataCell(cell(e.dept)),
                 DataCell(cell("$" + std::to_string(e.salary / 1000) + "K")),
                 DataCell(statusBadge(e.status)),
-            })
-            .onTap([name = e.name]{ std::cout << "[DataTable] Row: " << name << "\n"; }));
+            });
+            row.onTap([name = e.name]{ std::cout << "[DataTable] Row: " << name << "\n"; });
+            rows.push_back(std::move(row));
         }
 
         DataTableTheme theme;
@@ -162,48 +165,69 @@ class TableDemoState : public State {
         theme.divider_color        = 0x20FFFFFF;
         theme.show_checkbox_column = true;
 
-        auto dt = dataTable(std::move(columns), std::move(rows));
-        dt->sortColumnIndex(sort_col_ >= 0 ? sort_col_ : 0);
-        dt->sortAscending(sort_asc_);
-        dt->withTheme(theme);
-        dt->onSelectAll([](bool){ std::cout << "[DataTable] Select all toggled\n"; });
-        return dt;
+        return DataTable {
+            .columns = std::move(columns),
+            .rows = std::move(rows),
+            .sort_column_index = sort_col_ >= 0 ? sort_col_ : 0,
+            .sort_ascending = sort_asc_,
+            .on_select_all = [](bool){ std::cout << "[DataTable] Select all toggled\n"; },
+            .theme = theme,
+        };
     }
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto title = std::make_shared<Text>("Table / DataTable Demo");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
-        auto sub = std::make_shared<Text>(
-            tab_ == 0 ? "Basic Table with column width strategies"
-                      : "DataTable with sort, checkboxes, alternating rows");
-        sub->fontSize(12.0f).color(0xFF8B9BB4);
-        auto hdr_col = column({title, sub});
-        hdr_col->gap(StyleValue::point(4.0f));
-        auto hdr = container(hdr_col);
-        hdr->padding(EdgeInsets::symmetric(14.0f, 18.0f));
-        hdr->color(0xFF0D1117);
-        hdr->width(StyleValue::percent(100.0f));
+        auto title = text("Table / DataTable Demo", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto tabs = row({tabButton("Table", 0), tabButton("DataTable", 1)});
-        tabs->gap(StyleValue::point(6.0f));
-        tabs->padding(StyleInsets::symmetric(8.0f, 12.0f));
-        auto tabs_wrap = container(tabs);
-        tabs_wrap->color(0xFF161B22);
-        tabs_wrap->width(StyleValue::percent(100.0f));
+        auto sub = text(
+            tab_ == 0 ? "Basic Table with column width strategies"
+                      : "DataTable with sort, checkboxes, alternating rows", {
+            .color = 0xFF8B9BB4,
+            .font_size = 12.0f,
+        });
+
+        auto hdr = container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(14.0f, 18.0f),
+            .child = column({
+                .gap = StyleValue::point(4.0f),
+                .children = {title, sub}
+            })
+        });
+
+        auto tabs_wrap = container({
+            .color = 0xFF161B22,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .child = row({
+                .gap = StyleValue::point(6.0f),
+                .children = {tabButton("Table", 0), tabButton("DataTable", 1)}
+            })
+        });
 
         WidgetPtr content = (tab_ == 0) ? buildBasicTable() : buildDataTable();
-        auto content_flex = std::make_shared<FlexItem>(content);
-        content_flex->flexGrow(1.0f).flexShrink(1.0f);
 
-        auto root_col = column({hdr, tabs_wrap, content_flex});
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->height(StyleValue::percent(100.0f));
-        auto root = container(root_col);
-        root->color(0xFF0D1117);
-        root->width(StyleValue::percent(100.0f));
-        root->height(StyleValue::percent(100.0f));
-        return root;
+        return container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = column({
+                .children = {
+                    hdr,
+                    tabs_wrap,
+                    container({
+                        .flex_grow = 1.0f,
+                        .flex_shrink = 1.0f,
+                        .child = content
+                    })
+                }
+            })
+        });
     }
 };
 

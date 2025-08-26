@@ -177,22 +177,32 @@ public:
 // Widget Element & Factory
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> Placeholder::createRenderObject(BuildContext&) {
+std::unique_ptr<RenderObject> PlaceholderWidget::createRenderObject(BuildContext&) {
     return std::make_unique<RenderPlaceholder>(options);
 }
 
-void Placeholder::updateRenderObject(BuildContext&, RenderObject& ro) {
+void PlaceholderWidget::updateRenderObject(BuildContext&, RenderObject& ro) {
     auto& r = static_cast<RenderPlaceholder&>(ro);
     r.updateOptions(options);
 }
 
 // ── Pre-composed Template Helpers ─────────────────────────────────
 
-WidgetPtr placeholderCardSkeleton(float w) {
-    auto avatar = placeholderSkeleton(44.0f, 44.0f, 22.0f);
+static WidgetPtr makeSkeleton(float w, float h, float radius) {
+    return Placeholder {
+        .style = PlaceholderStyle::Skeleton,
+        .width = w,
+        .height = h,
+        .corner_radius = radius,
+        .show_dimensions = false
+    };
+}
 
-    auto title_line = placeholderSkeleton(w * 0.45f, 14.0f, 4.0f);
-    auto sub_line   = placeholderSkeleton(w * 0.30f, 10.0f, 4.0f);
+WidgetPtr placeholderCardSkeleton(float w) {
+    auto avatar = makeSkeleton(44.0f, 44.0f, 22.0f);
+
+    auto title_line = makeSkeleton(w * 0.45f, 14.0f, 4.0f);
+    auto sub_line   = makeSkeleton(w * 0.30f, 10.0f, 4.0f);
 
     std::vector<WidgetPtr> h_lines = {title_line, sub_line};
     auto h_col = column(h_lines);
@@ -202,8 +212,8 @@ WidgetPtr placeholderCardSkeleton(float w) {
     auto head_row = row(head_items);
     head_row->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
 
-    auto body_line1 = placeholderSkeleton(w - 40.0f, 12.0f, 4.0f);
-    auto body_line2 = placeholderSkeleton(w - 70.0f, 12.0f, 4.0f);
+    auto body_line1 = makeSkeleton(w - 40.0f, 12.0f, 4.0f);
+    auto body_line2 = makeSkeleton(w - 70.0f, 12.0f, 4.0f);
 
     std::vector<WidgetPtr> card_items = {head_row, body_line1, body_line2};
     auto card_col = column(card_items);
@@ -223,15 +233,15 @@ WidgetPtr placeholderListSkeleton(int rows, float w) {
     std::vector<WidgetPtr> row_widgets;
 
     for (int i = 0; i < rows; ++i) {
-        auto icon_box = placeholderSkeleton(36.0f, 36.0f, 8.0f);
-        auto t_line   = placeholderSkeleton(w * 0.5f, 12.0f, 4.0f);
-        auto s_line   = placeholderSkeleton(w * 0.28f, 9.0f, 4.0f);
+        auto icon_box = makeSkeleton(36.0f, 36.0f, 8.0f);
+        auto t_line   = makeSkeleton(w * 0.5f, 12.0f, 4.0f);
+        auto s_line   = makeSkeleton(w * 0.28f, 9.0f, 4.0f);
 
         std::vector<WidgetPtr> t_lines = {t_line, s_line};
         auto t_col = column(t_lines);
         t_col->gap(StyleValue::point(4.0f));
 
-        auto badge_box = placeholderSkeleton(50.0f, 20.0f, 10.0f);
+        auto badge_box = makeSkeleton(50.0f, 20.0f, 10.0f);
 
         std::vector<WidgetPtr> r_items = {icon_box, t_col, badge_box};
         auto r_row = row(r_items);

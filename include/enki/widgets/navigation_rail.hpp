@@ -8,7 +8,6 @@
 ///   - Optional header widget (e.g. logo or toggle button).
 ///   - Badge support per item.
 ///   - Hover feedback with cursor change.
-///   - Fluent builder API.
 ///
 /// @copyright ENKI Framework — MIT License
 
@@ -65,68 +64,59 @@ struct NavigationRailOptions {
 };
 
 // ════════════════════════════════════════════════════════════════
-// NavigationRail Widget
+// NavigationRail Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-class NavigationRail : public StatefulWidget {
+struct NavigationRailProps {
+    Key                             key = Key::none();
+    std::vector<NavigationRailItem> items;
+    int                             selected_index = 0;
+    std::function<void(int)>        on_item_selected;
+    NavigationRailOptions           options = {};
+    WidgetPtr                       header = nullptr;
+};
+
+class NavigationRailWidget : public StatefulWidget {
 public:
     std::vector<NavigationRailItem> items;
     int                             selected_index = 0;
     std::function<void(int)>        on_item_selected;
     NavigationRailOptions           options;
-    WidgetPtr                       header;  ///< Optional header widget (nullptr = use default toggle)
+    WidgetPtr                       header;
 
-    NavigationRail() = default;
-    NavigationRail(std::vector<NavigationRailItem> items, int selected,
-                   std::function<void(int)> on_selected,
-                   NavigationRailOptions opt = {})
+    NavigationRailWidget() = default;
+    NavigationRailWidget(std::vector<NavigationRailItem> items, int selected,
+                         std::function<void(int)> on_selected,
+                         NavigationRailOptions opt = {})
         : items(std::move(items)), selected_index(selected),
           on_item_selected(std::move(on_selected)), options(std::move(opt)) {}
-
-    // Fluent API
-    NavigationRail& backgroundColor(Color c)   { options.background_color = c;   return *this; }
-    NavigationRail& activeColor(Color c)       { options.active_color = c;       return *this; }
-    NavigationRail& collapsedWidth(float w)    { options.collapsed_width = w;    return *this; }
-    NavigationRail& expandedWidth(float w)     { options.expanded_width = w;     return *this; }
-    NavigationRail& initiallyExpanded(bool v)  { options.initially_expanded = v; return *this; }
-    NavigationRail& setHeader(WidgetPtr h)     { header = std::move(h);          return *this; }
+    NavigationRailWidget(Key key, std::vector<NavigationRailItem> items, int selected,
+                         std::function<void(int)> on_selected,
+                         NavigationRailOptions opt = {})
+        : StatefulWidget(std::move(key)), items(std::move(items)), selected_index(selected),
+          on_item_selected(std::move(on_selected)), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "NavigationRail"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Props for Declarative Syntax
+// Declarative Proxy Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-struct NavigationRailProps {
+struct NavigationRail {
+    Key                             key = Key::none();
     std::vector<NavigationRailItem> items;
     int                             selected_index = 0;
-    std::function<void(int)>        on_item_selected;
+    std::function<void(int)>        on_item_selected = nullptr;
     NavigationRailOptions           options = {};
     WidgetPtr                       header = nullptr;
-    Key                             key = Key::none();
+
+    operator WidgetPtr() const {
+        auto nr = std::make_shared<NavigationRailWidget>(key, items, selected_index, on_item_selected, options);
+        nr->header = header;
+        return nr;
+    }
 };
-
-// ════════════════════════════════════════════════════════════════
-// Factory Functions
-// ════════════════════════════════════════════════════════════════
-
-inline std::shared_ptr<NavigationRail> navigationRail(
-        std::vector<NavigationRailItem> items,
-        int selected_index,
-        std::function<void(int)> on_selected,
-        NavigationRailOptions options = {}) {
-    return std::make_shared<NavigationRail>(
-        std::move(items), selected_index, std::move(on_selected), std::move(options));
-}
-
-inline std::shared_ptr<NavigationRail> navigationRail(NavigationRailProps props) {
-    auto nr = std::make_shared<NavigationRail>(std::move(props.items), props.selected_index,
-                                               std::move(props.on_item_selected), std::move(props.options));
-    if (props.header) nr->setHeader(std::move(props.header));
-    if (props.key != Key::none()) nr->key = props.key;
-    return nr;
-}
 
 } // namespace enki

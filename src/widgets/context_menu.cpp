@@ -296,7 +296,7 @@ public:
             hideMenuNow();
         }
 
-        auto* menu_widget = static_cast<const ContextMenu*>(widget());
+        auto* menu_widget = static_cast<const ContextMenuWidget*>(widget());
         if (!menu_widget || menu_widget->items.empty()) return;
 
         Element* elem = element();
@@ -359,7 +359,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* menu_widget = static_cast<const ContextMenu*>(widget());
+        auto* menu_widget = static_cast<const ContextMenuWidget*>(widget());
 
         auto gesture = gestureDetector(menu_widget->child);
         gesture->hit_test_behavior = HitTestBehavior::Translucent;
@@ -383,7 +383,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ContextMenu::createState() {
+std::unique_ptr<State> ContextMenuWidget::createState() {
     return std::make_unique<ContextMenuState>();
 }
 

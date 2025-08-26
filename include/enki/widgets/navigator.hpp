@@ -11,13 +11,14 @@
 ///   - Back navigation (pop).
 ///   - Static access helpers: Navigator::push(ctx, route), Navigator::pop(ctx).
 ///   - Route configuration with builder function.
-///   - Fluent API.
 ///
 /// Usage:
 /// @code
-///   auto nav = navigator({
-///       RouteConfig{"home", []{ return make_shared<HomePage>(); }},
-///   });
+///   auto nav = Navigator {
+///       .initial_routes = {
+///           RouteConfig{"home", []{ return make_shared<HomePage>(); }},
+///       }
+///   };
 ///
 ///   // Inside a widget:
 ///   Navigator::push(ctx, RouteConfig{"detail", [](){ return make_shared<DetailPage>(); }});
@@ -65,40 +66,35 @@ struct RouteConfig {
 };
 
 // ════════════════════════════════════════════════════════════════
-// NavigatorOptions
+// NavigatorProps
 // ════════════════════════════════════════════════════════════════
 
 struct NavigatorProps {
-    Key      key                  = Key::none();
+    Key                      key                    = Key::none();
     std::vector<RouteConfig> initial_routes;
-    Color    background_color     = 0xFF0F172A;
-    int      transition_duration_ms = 300;
+    Color                    background_color       = 0xFF0F172A;
+    int                      transition_duration_ms = 300;
 };
 
 // ════════════════════════════════════════════════════════════════
-// Navigator Widget
+// Navigator Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-class Navigator : public StatefulWidget {
+class NavigatorWidget : public StatefulWidget {
 public:
-    std::vector<RouteConfig>   initial_routes; ///< Initial route stack (bottom = first)
+    std::vector<RouteConfig> initial_routes;
     NavigatorProps           options;
 
-    Navigator() = default;
-    explicit Navigator(std::vector<RouteConfig> routes, NavigatorProps opt = {})
+    NavigatorWidget() = default;
+    explicit NavigatorWidget(std::vector<RouteConfig> routes, NavigatorProps opt = {})
         : initial_routes(std::move(routes)), options(std::move(opt)) {}
     
-    Navigator(Key k, NavigatorProps opt) : StatefulWidget(std::move(k)), initial_routes(std::move(opt.initial_routes)), options(std::move(opt)) {}
+    NavigatorWidget(Key k, NavigatorProps opt)
+        : StatefulWidget(std::move(k)), initial_routes(opt.initial_routes), options(std::move(opt)) {}
 
     // ── Static navigation helpers ──────────────────────────────
-
-    /// Push a new route onto the navigator closest to this context.
     static void push(BuildContext& ctx, RouteConfig route);
-
-    /// Pop the topmost route. No-op if only one route remains.
     static void pop(BuildContext& ctx);
-
-    /// Returns true if there is more than one route (can pop).
     static bool canPop(BuildContext& ctx);
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
@@ -106,18 +102,13 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
-// NavigatorState — publicly accessible for static helpers
+// NavigatorState
 // ════════════════════════════════════════════════════════════════
 
 class NavigatorState : public State {
 public:
-    /// Push a new route onto this navigator.
     void push(RouteConfig route);
-
-    /// Pop the topmost route.
     void pop();
-
-    /// Returns true if more than one route exists.
     [[nodiscard]] bool canPop() const;
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
@@ -129,7 +120,7 @@ private:
     struct ActiveRoute {
         RouteConfig   config;
         WidgetPtr     widget_cache;
-        float         anim_value = 1.0f; ///< 0=entering 1=fully visible
+        float         anim_value = 1.0f;
         bool          entering   = false;
         bool          exiting    = false;
     };
@@ -142,16 +133,35 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Factory Functions
+// Declarative Proxy Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Navigator> navigator(std::vector<RouteConfig> routes,
-                                            NavigatorProps options = {}) {
-    return std::make_shared<Navigator>(std::move(routes), std::move(options));
-}
+struct Navigator {
+    Key                      key                    = Key::none();
+    std::vector<RouteConfig> initial_routes;
+    Color                    background_color       = 0xFF0F172A;
+    int                      transition_duration_ms = 300;
 
-inline std::shared_ptr<Navigator> navigator(NavigatorProps props) {
-    return std::make_shared<Navigator>(std::move(props.key), std::move(props));
-}
+    static void push(BuildContext& ctx, RouteConfig route) {
+        NavigatorWidget::push(ctx, std::move(route));
+    }
+
+    static void pop(BuildContext& ctx) {
+        NavigatorWidget::pop(ctx);
+    }
+
+    static bool canPop(BuildContext& ctx) {
+        return NavigatorWidget::canPop(ctx);
+    }
+
+    operator WidgetPtr() const {
+        NavigatorProps props;
+        props.key = key;
+        props.initial_routes = initial_routes;
+        props.background_color = background_color;
+        props.transition_duration_ms = transition_duration_ms;
+        return std::make_shared<NavigatorWidget>(key, std::move(props));
+    }
+};
 
 } // namespace enki

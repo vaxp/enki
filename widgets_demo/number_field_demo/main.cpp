@@ -27,31 +27,40 @@ static WidgetPtr buildSectionCard(
     WidgetPtr field_widget,
     const std::string& current_val_label) {
 
-    auto t = text(title_str);
-    t->fontSize(14.5f).bold().color(accent_color);
+    auto t = text(title_str, {
+        .color = accent_color,
+        .font_size = 14.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto d = text(desc_str);
-    d->fontSize(12.0f).color(0xFF94A3B8);
+    auto d = text(desc_str, {
+        .color = 0xFF94A3B8,
+        .font_size = 12.0f,
+    });
 
-    auto val_txt = text(current_val_label);
-    val_txt->fontSize(12.0f).color(0xFF38BDF8);
+    auto val_txt = text(current_val_label, {
+        .color = 0xFF38BDF8,
+        .font_size = 12.0f,
+    });
 
-    std::vector<WidgetPtr> header_items = {t, d};
-    auto header_col = column(header_items);
-    header_col->gap(StyleValue::point(3.0f));
+    auto header_col = column({
+        .gap = StyleValue::point(3.0f),
+        .children = {t, d}
+    });
 
-    std::vector<WidgetPtr> card_items = {header_col, field_widget, val_txt};
-    auto card_col = column(card_items);
-    card_col->gap(StyleValue::point(12.0f));
+    auto card_col = column({
+        .gap = StyleValue::point(12.0f),
+        .children = {header_col, field_widget, val_txt}
+    });
 
-    auto c_box = container(card_col);
-    c_box->color(0xFF1E293B)
-         .borderRadius(10.0f)
-         .border(0xFF334155, 1.0f)
-         .paddingAll(16.0f)
-         .width(360.0f);
-
-    return c_box;
+    return container({
+        .color = 0xFF1E293B,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(0xFF334155, 1.0f),
+        .width = StyleValue::point(360.0f),
+        .padding = StyleInsets::all(16.0f),
+        .child = card_col
+    });
 }
 
 class NumberFieldDemoState : public State {
@@ -76,28 +85,34 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // Main Title Header
-        auto title = text("Advanced NumberField Widget Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced NumberField Widget Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Precision numeric inputs with steppers, CAD drag scrubbing, math expressions, and unit formatting");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Precision numeric inputs with steppers, CAD drag scrubbing, math expressions, and unit formatting", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center);
+        auto title_col = column({
+            .align_items = Align::Center,
+            .children = {title, sub}
+        });
 
         // ── Card 1: Currency & Financial Input ────────────────────────
-        NumberFieldProps curr_opts;
-        curr_opts.prefix_text = "$ ";
-        curr_opts.precision = 2;
-        curr_opts.step = 50.0;
-        curr_opts.large_step = 500.0;
-        curr_opts.min_value = 0.0;
-        curr_opts.show_thousands_separator = true;
-        curr_opts.stepper_position = NumberFieldStepperPosition::RightVertical;
-        curr_opts.on_changed = [this](double) { setState([] {}); };
-
-        auto curr_field = numberField(currency_ctrl_, curr_opts);
+        auto curr_field = NumberField {
+            .controller = currency_ctrl_,
+            .min_value = 0.0,
+            .step = 50.0,
+            .large_step = 500.0,
+            .precision = 2,
+            .show_thousands_separator = true,
+            .stepper_position = NumberFieldStepperPosition::RightVertical,
+            .prefix_text = "$ ",
+            .on_changed = [this](double) { setState([] {}); }
+        };
         std::ostringstream ss1;
         ss1 << "Bound Value: $" << std::fixed << std::setprecision(2) << currency_ctrl_->getValue();
         auto card1 = buildSectionCard(
@@ -107,18 +122,18 @@ public:
         );
 
         // ── Card 2: CSS / UI Dimensions (Expressions) ────────────────
-        NumberFieldProps dim_opts;
-        dim_opts.suffix_text = " px";
-        dim_opts.precision = 0;
-        dim_opts.step = 10.0;
-        dim_opts.large_step = 100.0;
-        dim_opts.min_value = 100.0;
-        dim_opts.max_value = 7680.0;
-        dim_opts.allow_expressions = true;
-        dim_opts.stepper_position = NumberFieldStepperPosition::RightVertical;
-        dim_opts.on_changed = [this](double) { setState([] {}); };
-
-        auto dim_field = numberField(dimension_ctrl_, dim_opts);
+        auto dim_field = NumberField {
+            .controller = dimension_ctrl_,
+            .min_value = 100.0,
+            .max_value = 7680.0,
+            .step = 10.0,
+            .large_step = 100.0,
+            .precision = 0,
+            .allow_expressions = true,
+            .stepper_position = NumberFieldStepperPosition::RightVertical,
+            .suffix_text = " px",
+            .on_changed = [this](double) { setState([] {}); }
+        };
         std::ostringstream ss2;
         ss2 << "Calculated Value: " << static_cast<int>(dimension_ctrl_->getValue()) << " px (Supports e.g. 1920/2)";
         auto card2 = buildSectionCard(
@@ -128,19 +143,19 @@ public:
         );
 
         // ── Card 3: Percentage & Opacity (Sides Steppers) ─────────────
-        NumberFieldProps pct_opts;
-        pct_opts.suffix_text = " %";
-        pct_opts.precision = 1;
-        pct_opts.step = 0.5;
-        pct_opts.large_step = 5.0;
-        pct_opts.fine_step = 0.1;
-        pct_opts.min_value = 0.0;
-        pct_opts.max_value = 100.0;
-        pct_opts.stepper_position = NumberFieldStepperPosition::Sides;
-        pct_opts.focus_border_color = 0xFF10B981;
-        pct_opts.on_changed = [this](double) { setState([] {}); };
-
-        auto pct_field = numberField(percent_ctrl_, pct_opts);
+        auto pct_field = NumberField {
+            .controller = percent_ctrl_,
+            .min_value = 0.0,
+            .max_value = 100.0,
+            .step = 0.5,
+            .large_step = 5.0,
+            .fine_step = 0.1,
+            .precision = 1,
+            .stepper_position = NumberFieldStepperPosition::Sides,
+            .suffix_text = " %",
+            .focus_border_color = 0xFF10B981,
+            .on_changed = [this](double) { setState([] {}); }
+        };
         std::ostringstream ss3;
         ss3 << "Opacity Level: " << std::fixed << std::setprecision(1) << percent_ctrl_->getValue() << " %";
         auto card3 = buildSectionCard(
@@ -150,17 +165,17 @@ public:
         );
 
         // ── Card 4: CAD / 3D Transform Scrubbing ──────────────────────
-        NumberFieldProps cad_opts;
-        cad_opts.prefix_text = "Rot: ";
-        cad_opts.suffix_text = " deg";
-        cad_opts.precision = 2;
-        cad_opts.step = 1.0;
-        cad_opts.enable_scrubbing = true;
-        cad_opts.stepper_position = NumberFieldStepperPosition::None;
-        cad_opts.focus_border_color = 0xFFF59E0B;
-        cad_opts.on_changed = [this](double) { setState([] {}); };
-
-        auto cad_field = numberField(cad_ctrl_, cad_opts);
+        auto cad_field = NumberField {
+            .controller = cad_ctrl_,
+            .step = 1.0,
+            .precision = 2,
+            .enable_scrubbing = true,
+            .stepper_position = NumberFieldStepperPosition::None,
+            .prefix_text = "Rot: ",
+            .suffix_text = " deg",
+            .focus_border_color = 0xFFF59E0B,
+            .on_changed = [this](double) { setState([] {}); }
+        };
         std::ostringstream ss4;
         ss4 << "Active Angle: " << std::fixed << std::setprecision(2) << cad_ctrl_->getValue() << "° (Click & drag to scrub)";
         auto card4 = buildSectionCard(
@@ -170,16 +185,16 @@ public:
         );
 
         // ── Card 5: Compact Table / Cart Quantity ─────────────────────
-        NumberFieldProps qty_opts;
-        qty_opts.size = NumberFieldSize::Small;
-        qty_opts.precision = 0;
-        qty_opts.min_value = 1.0;
-        qty_opts.max_value = 99.0;
-        qty_opts.step = 1.0;
-        qty_opts.stepper_position = NumberFieldStepperPosition::RightHorizontal;
-        qty_opts.on_changed = [this](double) { setState([] {}); };
-
-        auto qty_field = numberField(quantity_ctrl_, qty_opts);
+        auto qty_field = NumberField {
+            .controller = quantity_ctrl_,
+            .min_value = 1.0,
+            .max_value = 99.0,
+            .step = 1.0,
+            .precision = 0,
+            .stepper_position = NumberFieldStepperPosition::RightHorizontal,
+            .size = NumberFieldSize::Small,
+            .on_changed = [this](double) { setState([] {}); }
+        };
         std::ostringstream ss5;
         ss5 << "Selected Quantity: " << static_cast<int>(quantity_ctrl_->getValue()) << " items (Small Size)";
         auto card5 = buildSectionCard(
@@ -189,18 +204,18 @@ public:
         );
 
         // ── Card 6: Temperature Physics & Wrap Mode ───────────────────
-        NumberFieldProps temp_opts;
-        temp_opts.suffix_text = " °C";
-        temp_opts.precision = 1;
-        temp_opts.step = 0.5;
-        temp_opts.min_value = -40.0;
-        temp_opts.max_value = 120.0;
-        temp_opts.wrap_mode = NumberFieldWrapMode::Wrap;
-        temp_opts.stepper_position = NumberFieldStepperPosition::RightVertical;
-        temp_opts.focus_border_color = 0xFF06B6D4;
-        temp_opts.on_changed = [this](double) { setState([] {}); };
-
-        auto temp_field = numberField(temp_ctrl_, temp_opts);
+        auto temp_field = NumberField {
+            .controller = temp_ctrl_,
+            .min_value = -40.0,
+            .max_value = 120.0,
+            .step = 0.5,
+            .precision = 1,
+            .stepper_position = NumberFieldStepperPosition::RightVertical,
+            .wrap_mode = NumberFieldWrapMode::Wrap,
+            .suffix_text = " °C",
+            .focus_border_color = 0xFF06B6D4,
+            .on_changed = [this](double) { setState([] {}); }
+        };
         std::ostringstream ss6;
         ss6 << "Thermal Reading: " << std::fixed << std::setprecision(1) << temp_ctrl_->getValue() << " °C (Wrap Enabled)";
         auto card6 = buildSectionCard(
@@ -210,35 +225,31 @@ public:
         );
 
         // Row 1 of cards
-        std::vector<WidgetPtr> row1_items;
-        row1_items.push_back(card1);
-        row1_items.push_back(card2);
-        row1_items.push_back(card3);
-        auto row1 = row(row1_items);
-        row1->gap(StyleValue::point(16.0f))
-             .justifyContent(Justify::Center);
+        auto row1 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {card1, card2, card3}
+        });
 
         // Row 2 of cards
-        std::vector<WidgetPtr> row2_items;
-        row2_items.push_back(card4);
-        row2_items.push_back(card5);
-        row2_items.push_back(card6);
-        auto row2 = row(row2_items);
-        row2->gap(StyleValue::point(16.0f))
-             .justifyContent(Justify::Center);
+        auto row2 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {card4, card5, card6}
+        });
 
         // Main Stack Column
-        std::vector<WidgetPtr> main_col_items = {title_col, row1, row2};
-        auto main_col = column(main_col_items);
-        main_col->gap(StyleValue::point(18.0f))
-                .alignItems(Align::Center);
+        auto main_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(18.0f),
+            .children = {title_col, row1, row2}
+        });
 
-        auto app_root = container(main_col);
-        app_root->color(0xFF0B1120)
-                .paddingAll(20.0f)
-                .flexGrow(1.0f);
-
-        return app_root;
+        return container({
+            .color = 0xFF0B1120,
+            .padding = StyleInsets::all(20.0f),
+            .child = main_col
+        });
     }
 };
 

@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 namespace enki {
 
@@ -169,7 +170,7 @@ struct TimelineProps {
     float node_size = 24.0f;
     float line_thickness = 2.0f;
     float item_spacing = 20.0f;
-    float card_width = 380.0f; // For horizontal or alternate modes
+    float card_width = 380.0f;
 
     // Styling Colors
     Color completed_color  = 0xFF10B981; // Emerald 500
@@ -195,42 +196,97 @@ struct TimelineProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Timeline Widget
+/// Timeline Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class Timeline : public StatefulWidget {
+class TimelineWidget : public StatefulWidget {
 public:
     TimelineProps props;
 
-    Timeline() = default;
-    explicit Timeline(TimelineProps p) : props(std::move(p)) {
+    TimelineWidget() = default;
+    explicit TimelineWidget(TimelineProps p) : props(std::move(p)) {
+        if (!props.controller) {
+            props.controller = std::make_shared<TimelineController>();
+        }
+    }
+    TimelineWidget(Key key, TimelineProps p) : StatefulWidget(std::move(key)), props(std::move(p)) {
         if (!props.controller) {
             props.controller = std::make_shared<TimelineController>();
         }
     }
 
-    // Fluent API Chaining
-    Timeline& orientation(TimelineOrientation o) { props.orientation = o; return *this; }
-    Timeline& alignment(TimelineAlignment a) { props.alignment = a; return *this; }
-    Timeline& lineStyle(TimelineLineStyle s) { props.line_style = s; return *this; }
-    Timeline& stepper(bool enable = true) { props.is_stepper = enable; return *this; }
-    Timeline& cardWidth(float w) { props.card_width = w; return *this; }
-    Timeline& onItemTap(std::function<void(const TimelineItem&)> cb) { props.on_item_tap = std::move(cb); return *this; }
-    Timeline& onStepChanged(std::function<void(int)> cb) { props.on_step_changed = std::move(cb); return *this; }
-
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Timeline"; }
 };
 
-inline std::shared_ptr<Timeline> timeline(TimelineProps props = {}) {
-    return std::make_shared<Timeline>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Timeline> timeline(
-    std::shared_ptr<TimelineController> ctrl) {
-    TimelineProps props;
-    props.controller = std::move(ctrl);
-    return std::make_shared<Timeline>(std::move(props));
-}
+struct Timeline {
+    Key key = Key::none();
+    std::shared_ptr<TimelineController> controller = nullptr;
+
+    TimelineOrientation orientation = TimelineOrientation::Vertical;
+    TimelineAlignment alignment = TimelineAlignment::Start;
+    TimelineLineStyle line_style = TimelineLineStyle::Solid;
+
+    float node_size = 24.0f;
+    float line_thickness = 2.0f;
+    float item_spacing = 20.0f;
+    float card_width = 380.0f;
+
+    Color completed_color  = 0xFF10B981;
+    Color active_color     = 0xFF38BDF8;
+    Color pending_color    = 0xFF475569;
+    Color warning_color    = 0xFFF59E0B;
+    Color failed_color     = 0xFFEF4444;
+    Color line_color       = 0xFF334155;
+    Color card_bg_color    = 0xFF1E293B;
+    Color card_border_color= 0xFF334155;
+    Color title_color      = 0xFFF8FAFC;
+    Color timestamp_color  = 0xFF94A3B8;
+    Color desc_color       = 0xFFCBD5E1;
+    Color details_bg_color = 0xFF0F172A;
+
+    float card_border_radius = 8.0f;
+    bool is_stepper = false;
+
+    std::function<void(const TimelineItem& item)> on_item_tap = nullptr;
+    std::function<void(int step_index)> on_step_changed = nullptr;
+    std::function<void(const std::string& item_id, bool is_expanded)> on_item_expanded = nullptr;
+
+    operator WidgetPtr() const {
+        TimelineProps p;
+        p.key = key;
+        p.controller = controller;
+        p.orientation = orientation;
+        p.alignment = alignment;
+        p.line_style = line_style;
+        p.node_size = node_size;
+        p.line_thickness = line_thickness;
+        p.item_spacing = item_spacing;
+        p.card_width = card_width;
+        p.completed_color = completed_color;
+        p.active_color = active_color;
+        p.pending_color = pending_color;
+        p.warning_color = warning_color;
+        p.failed_color = failed_color;
+        p.line_color = line_color;
+        p.card_bg_color = card_bg_color;
+        p.card_border_color = card_border_color;
+        p.title_color = title_color;
+        p.timestamp_color = timestamp_color;
+        p.desc_color = desc_color;
+        p.details_bg_color = details_bg_color;
+        p.card_border_radius = card_border_radius;
+        p.is_stepper = is_stepper;
+        p.on_item_tap = on_item_tap;
+        p.on_step_changed = on_step_changed;
+        p.on_item_expanded = on_item_expanded;
+
+        return std::make_shared<TimelineWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

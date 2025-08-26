@@ -36,7 +36,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Snackbar*>(widget());
+        auto* w = static_cast<const SnackbarWidget*>(widget());
         current_opts_ = w->initial_options;
 
         anim_.setDuration(std::chrono::milliseconds(180));
@@ -85,7 +85,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const Snackbar*>(widget());
+        auto* w = static_cast<const SnackbarWidget*>(widget());
         if (w->controller) {
             w->controller->show_fn = [this](const SnackbarOptions& opts) { showSnackbar(opts); };
             w->controller->hide_fn = [this] { hideSnackbar(); };
@@ -245,7 +245,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Snackbar*>(widget());
+        auto* w = static_cast<const SnackbarWidget*>(widget());
         const auto& opts = current_opts_;
         float t = anim_.value();
 
@@ -343,7 +343,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Snackbar::createState() {
+std::unique_ptr<State> SnackbarWidget::createState() {
     return std::make_unique<SnackbarState>();
 }
 

@@ -19,7 +19,7 @@ namespace enki {
 // ReorderableDragHandle
 // ════════════════════════════════════════════════════════════════
 
-WidgetPtr ReorderableDragHandle::build(BuildContext&) {
+WidgetPtr ReorderableDragHandleWidget::build(BuildContext&) {
     if (child) return child;
     auto grip = text("⋮⋮");
     grip->fontSize(16.0f).bold().color(0xFF94A3B8);
@@ -205,11 +205,11 @@ public:
 // ReorderableList Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> ReorderableList::createRenderObject(BuildContext&) {
+std::unique_ptr<RenderObject> ReorderableListWidget::createRenderObject(BuildContext&) {
     return std::make_unique<RenderReorderableList>(props);
 }
 
-void ReorderableList::updateRenderObject(BuildContext&, RenderObject& renderObject) {
+void ReorderableListWidget::updateRenderObject(BuildContext&, RenderObject& renderObject) {
     if (auto* rrl = dynamic_cast<RenderReorderableList*>(&renderObject)) {
         rrl->updateOptions(props);
     }

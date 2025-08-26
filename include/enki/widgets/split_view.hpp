@@ -72,69 +72,50 @@ public:
     void reset() { if (reset_fn) reset_fn(); }
 };
 
-struct SplitViewProps {
-    Key key = Key::none();
-    WidgetPtr first_child;
-    WidgetPtr second_child;
-    SplitViewOptions options;
-    std::shared_ptr<SplitViewController> controller;
-};
-
 /// ════════════════════════════════════════════════════════════════
-/// SplitView Widget
+/// SplitView Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class SplitView : public StatefulWidget {
+class SplitViewWidget : public StatefulWidget {
 public:
     WidgetPtr leading;
     WidgetPtr trailing;
     SplitViewOptions options;
     std::shared_ptr<SplitViewController> controller;
 
-    SplitView() = default;
-    SplitView(WidgetPtr leading_, WidgetPtr trailing_, SplitViewOptions opts = {},
-              std::shared_ptr<SplitViewController> ctrl = nullptr)
+    SplitViewWidget() = default;
+    SplitViewWidget(WidgetPtr leading_, WidgetPtr trailing_, SplitViewOptions opts = {},
+                    std::shared_ptr<SplitViewController> ctrl = nullptr)
         : leading(std::move(leading_)), trailing(std::move(trailing_)),
+          options(std::move(opts)), controller(std::move(ctrl)) {}
+    SplitViewWidget(Key key, WidgetPtr leading_, WidgetPtr trailing_, SplitViewOptions opts = {},
+                    std::shared_ptr<SplitViewController> ctrl = nullptr)
+        : StatefulWidget(std::move(key)),
+          leading(std::move(leading_)), trailing(std::move(trailing_)),
           options(std::move(opts)), controller(std::move(ctrl)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "SplitView"; }
 };
 
-inline std::shared_ptr<SplitView> splitView(
-    WidgetPtr leading,
-    WidgetPtr trailing,
-    SplitViewOptions options = {},
-    std::shared_ptr<SplitViewController> controller = nullptr) {
-    return std::make_shared<SplitView>(std::move(leading), std::move(trailing), std::move(options), std::move(controller));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<SplitView> splitView(SplitViewProps props) {
-    auto sv = std::make_shared<SplitView>(std::move(props.first_child), std::move(props.second_child), std::move(props.options), std::move(props.controller));
-    sv->key = props.key;
-    return sv;
-}
+struct SplitView {
+    Key key = Key::none();
+    WidgetPtr leading = nullptr;
+    WidgetPtr trailing = nullptr;
+    WidgetPtr first_child = nullptr;
+    WidgetPtr second_child = nullptr;
+    SplitViewOptions options = {};
+    std::shared_ptr<SplitViewController> controller = nullptr;
 
-inline std::shared_ptr<SplitView> horizontalSplit(
-    WidgetPtr leading,
-    WidgetPtr trailing,
-    float ratio = 0.50f,
-    std::shared_ptr<SplitViewController> controller = nullptr) {
-    SplitViewOptions opts;
-    opts.orientation = SplitOrientation::Horizontal;
-    opts.initial_ratio = ratio;
-    return std::make_shared<SplitView>(std::move(leading), std::move(trailing), opts, std::move(controller));
-}
-
-inline std::shared_ptr<SplitView> verticalSplit(
-    WidgetPtr leading,
-    WidgetPtr trailing,
-    float ratio = 0.50f,
-    std::shared_ptr<SplitViewController> controller = nullptr) {
-    SplitViewOptions opts;
-    opts.orientation = SplitOrientation::Vertical;
-    opts.initial_ratio = ratio;
-    return std::make_shared<SplitView>(std::move(leading), std::move(trailing), opts, std::move(controller));
-}
+    operator WidgetPtr() const {
+        auto lead = leading ? leading : first_child;
+        auto trail = trailing ? trailing : second_child;
+        return std::make_shared<SplitViewWidget>(key, lead, trail, options, controller);
+    }
+};
 
 } // namespace enki

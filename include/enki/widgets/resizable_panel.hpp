@@ -98,20 +98,25 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// ResizablePanel Widget
+/// ResizablePanel Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class ResizablePanel : public StatefulWidget {
+class ResizablePanelWidget : public StatefulWidget {
 public:
     WidgetPtr child;                 ///< Content inside the resizable panel
     WidgetPtr body;                  ///< Workspace page body wrapped in stack overlay
     ResizablePanelOptions options;
     std::shared_ptr<ResizablePanelController> controller;
 
-    ResizablePanel() = default;
-    ResizablePanel(WidgetPtr child_, WidgetPtr body_, ResizablePanelOptions opts = {},
-                   std::shared_ptr<ResizablePanelController> ctrl = nullptr)
+    ResizablePanelWidget() = default;
+    ResizablePanelWidget(WidgetPtr child_, WidgetPtr body_, ResizablePanelOptions opts = {},
+                         std::shared_ptr<ResizablePanelController> ctrl = nullptr)
         : child(std::move(child_)), body(std::move(body_)),
+          options(std::move(opts)), controller(std::move(ctrl)) {}
+    ResizablePanelWidget(Key key, WidgetPtr child_, WidgetPtr body_, ResizablePanelOptions opts = {},
+                         std::shared_ptr<ResizablePanelController> ctrl = nullptr)
+        : StatefulWidget(std::move(key)),
+          child(std::move(child_)), body(std::move(body_)),
           options(std::move(opts)), controller(std::move(ctrl)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
@@ -119,29 +124,19 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Props for Declarative Syntax
+/// Declarative Proxy Struct (C++20 Designated Initializers)
 /// ════════════════════════════════════════════════════════════════
 
-struct ResizablePanelProps {
+struct ResizablePanel {
+    Key key = Key::none();
     WidgetPtr child = nullptr;
     WidgetPtr body = nullptr;
     ResizablePanelOptions options = {};
     std::shared_ptr<ResizablePanelController> controller = nullptr;
-    Key key = Key::none();
+
+    operator WidgetPtr() const {
+        return std::make_shared<ResizablePanelWidget>(key, child, body, options, controller);
+    }
 };
-
-inline std::shared_ptr<ResizablePanel> resizablePanel(
-    WidgetPtr child,
-    WidgetPtr body,
-    ResizablePanelOptions options = {},
-    std::shared_ptr<ResizablePanelController> controller = nullptr) {
-    return std::make_shared<ResizablePanel>(std::move(child), std::move(body), std::move(options), std::move(controller));
-}
-
-inline std::shared_ptr<ResizablePanel> resizablePanel(ResizablePanelProps props) {
-    auto rp = std::make_shared<ResizablePanel>(std::move(props.child), std::move(props.body), std::move(props.options), std::move(props.controller));
-    if (props.key != Key::none()) rp->key = props.key;
-    return rp;
-}
 
 } // namespace enki

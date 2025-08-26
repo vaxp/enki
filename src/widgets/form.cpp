@@ -22,12 +22,12 @@ namespace enki {
 class FormWidgetState : public State {
 public:
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Form*>(widget());
+        auto* w = static_cast<const FormWidget*>(widget());
         return w->child;
     }
 };
 
-std::unique_ptr<State> Form::createState() {
+std::unique_ptr<State> FormWidget::createState() {
     return std::make_unique<FormWidgetState>();
 }
 
@@ -44,7 +44,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         const auto& opts = w->props;
 
         if (opts.controller) {
@@ -60,14 +60,14 @@ public:
 
     void didUpdateWidget(const Widget& old) override {
         State::didUpdateWidget(old);
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         if (w && w->props.controller) {
             controller_ = w->props.controller;
         }
     }
 
     void dispose() override {
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         if (w && w->props.form_state) {
             w->props.form_state->unregisterField(this);
         }
@@ -75,7 +75,7 @@ public:
     }
 
     bool validate() override {
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         if (w && w->props.validator) {
             auto res = w->props.validator(controller_->text);
             std::string prev_err = error_text_;
@@ -89,14 +89,14 @@ public:
     }
 
     void save() override {
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         if (w && w->props.on_saved) {
             w->props.on_saved(controller_->text);
         }
     }
 
     void reset() override {
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         if (w) {
             controller_->text = w->props.initial_value;
             controller_->clearSelection();
@@ -107,7 +107,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const TextFormField*>(widget());
+        auto* w = static_cast<const TextFormFieldWidget*>(widget());
         const auto& opts = w->props;
 
         std::vector<WidgetPtr> col_items;
@@ -135,7 +135,7 @@ public:
         tf_opts.obscure_text = opts.obscure_text;
         tf_opts.on_changed = [this](std::string val) {
             is_touched_ = true;
-            auto* cur_w = static_cast<const TextFormField*>(widget());
+            auto* cur_w = static_cast<const TextFormFieldWidget*>(widget());
             if (cur_w && cur_w->props.on_changed) {
                 cur_w->props.on_changed(val);
             }
@@ -184,7 +184,7 @@ public:
     }
 };
 
-std::unique_ptr<State> TextFormField::createState() {
+std::unique_ptr<State> TextFormFieldWidget::createState() {
     return std::make_unique<TextFormFieldState>();
 }
 
@@ -200,7 +200,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         is_checked_ = w->props.initial_value;
 
         if (w->props.form_state) {
@@ -210,14 +210,14 @@ public:
 
     void didUpdateWidget(const Widget& old) override {
         State::didUpdateWidget(old);
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         if (w) {
             is_checked_ = w->props.initial_value;
         }
     }
 
     void dispose() override {
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         if (w && w->props.form_state) {
             w->props.form_state->unregisterField(this);
         }
@@ -225,7 +225,7 @@ public:
     }
 
     bool validate() override {
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         if (w && w->props.validator) {
             auto res = w->props.validator(is_checked_);
             std::string prev_err = error_text_;
@@ -239,14 +239,14 @@ public:
     }
 
     void save() override {
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         if (w && w->props.on_saved) {
             w->props.on_saved(is_checked_);
         }
     }
 
     void reset() override {
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         if (w) {
             is_checked_ = w->props.initial_value;
             error_text_.clear();
@@ -255,7 +255,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const CheckboxFormField*>(widget());
+        auto* w = static_cast<const CheckboxFormFieldWidget*>(widget());
         const auto& opts = w->props;
 
         auto cb = (WidgetPtr)Checkbox {
@@ -304,7 +304,7 @@ public:
     }
 };
 
-std::unique_ptr<State> CheckboxFormField::createState() {
+std::unique_ptr<State> CheckboxFormFieldWidget::createState() {
     return std::make_unique<CheckboxFormFieldState>();
 }
 

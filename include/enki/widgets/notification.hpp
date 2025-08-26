@@ -249,59 +249,63 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Notification Bell Widget
+/// Notification Bell Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class NotificationBell : public StatelessWidget {
+class NotificationBellWidget : public StatelessWidget {
 public:
     std::shared_ptr<NotificationManager> manager;
     std::string bell_icon = "🔔";
 
-    explicit NotificationBell(std::shared_ptr<NotificationManager> mgr, std::string icon = "🔔")
+    explicit NotificationBellWidget(std::shared_ptr<NotificationManager> mgr, std::string icon = "🔔")
         : manager(std::move(mgr)), bell_icon(std::move(icon)) {}
+    NotificationBellWidget(Key k, std::shared_ptr<NotificationManager> mgr, std::string icon = "🔔")
+        : StatelessWidget(std::move(k)), manager(std::move(mgr)), bell_icon(std::move(icon)) {}
 
     WidgetPtr build(BuildContext&) override;
     [[nodiscard]] std::string_view typeName() const override { return "NotificationBell"; }
 };
 
-inline std::shared_ptr<NotificationBell> notificationBell(
-    std::shared_ptr<NotificationManager> manager,
-    std::string bell_icon = "🔔") {
-    return std::make_shared<NotificationBell>(std::move(manager), std::move(bell_icon));
-}
-
 /// ════════════════════════════════════════════════════════════════
-/// Notification Overlay Widget
+/// Notification Overlay Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-struct NotificationOverlayProps {
-    Key key = Key::none();
-    WidgetPtr body;
-    std::shared_ptr<NotificationManager> manager;
-};
-
-class NotificationOverlay : public StatefulWidget {
+class NotificationOverlayWidget : public StatefulWidget {
 public:
     WidgetPtr body;                              ///< Main page body to wrap
     std::shared_ptr<NotificationManager> manager;
 
-    NotificationOverlay(WidgetPtr body_, std::shared_ptr<NotificationManager> mgr)
+    NotificationOverlayWidget(WidgetPtr body_, std::shared_ptr<NotificationManager> mgr)
         : body(std::move(body_)), manager(std::move(mgr)) {}
+    NotificationOverlayWidget(Key k, WidgetPtr body_, std::shared_ptr<NotificationManager> mgr)
+        : StatefulWidget(std::move(k)), body(std::move(body_)), manager(std::move(mgr)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "NotificationOverlay"; }
 };
 
-inline std::shared_ptr<NotificationOverlay> notificationOverlay(
-    WidgetPtr body,
-    std::shared_ptr<NotificationManager> manager) {
-    return std::make_shared<NotificationOverlay>(std::move(body), std::move(manager));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Structs (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<NotificationOverlay> notificationOverlay(NotificationOverlayProps props) {
-    auto overlay = std::make_shared<NotificationOverlay>(std::move(props.body), std::move(props.manager));
-    overlay->key = props.key;
-    return overlay;
-}
+struct NotificationBell {
+    Key key = Key::none();
+    std::shared_ptr<NotificationManager> manager = nullptr;
+    std::string bell_icon = "🔔";
+
+    operator WidgetPtr() const {
+        return std::make_shared<NotificationBellWidget>(key, manager, bell_icon);
+    }
+};
+
+struct NotificationOverlay {
+    Key key = Key::none();
+    WidgetPtr body = nullptr;
+    std::shared_ptr<NotificationManager> manager = nullptr;
+
+    operator WidgetPtr() const {
+        return std::make_shared<NotificationOverlayWidget>(key, body, manager);
+    }
+};
 
 } // namespace enki

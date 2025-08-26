@@ -28,10 +28,10 @@ public:
                         .gap = StyleValue::point(16.0f),
                         .children = {
                             text("Standard Primary FAB:", { .color = 0xFFCCCCCC }),
-                            floatingActionButton({
+                            FloatingActionButton {
                                 .child = icon(IconData::font(0xe145, "Material Icons"), { .size = 24.0f, .color = 0xFFFFFFFF }),
                                 .on_pressed = []{}
-                            })
+                            }
                         }
                     }),
                     
@@ -41,12 +41,12 @@ public:
                         .gap = StyleValue::point(16.0f),
                         .children = {
                             text("Custom Color FAB:", { .color = 0xFFCCCCCC }),
-                            floatingActionButton({
+                            FloatingActionButton {
                                 .child = icon(IconData::font(0xe3c9, "Material Icons"), { .size = 24.0f, .color = 0xFFFFFFFF }),
                                 .on_pressed = []{},
                                 .normal_color = 0xFF10B981,
                                 .hover_color = 0xFF059669
-                            })
+                            }
                         }
                     }),
 
@@ -56,7 +56,7 @@ public:
                         .gap = StyleValue::point(16.0f),
                         .children = {
                             text("Extended FAB:", { .color = 0xFFCCCCCC }),
-                            floatingActionButton({
+                            FloatingActionButton {
                                 .child = row({
                                     .align_items = Align::Center,
                                     .gap = StyleValue::point(8.0f),
@@ -70,7 +70,7 @@ public:
                                 .hover_color = 0xFF7C3AED,
                                 .size = 48.0f,
                                 .border_radius = 16.0f
-                            })
+                            }
                         }
                     })
                 }

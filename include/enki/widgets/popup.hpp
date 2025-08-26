@@ -111,30 +111,54 @@ struct PopupProps {
     std::shared_ptr<PopupController> controller;
 };
 
-/// @brief Universal Popup widget wrapping an anchor child and popup content.
-class Popup : public StatefulWidget {
+/// @brief Universal Popup widget implementation wrapping an anchor child and popup content.
+class PopupWidget : public StatefulWidget {
 public:
     WidgetPtr child;
     std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder;
     PopupWidgetOptions options;
     std::shared_ptr<PopupController> controller;
 
-    Popup(WidgetPtr child,
-          std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder,
-          PopupWidgetOptions options = PopupWidgetOptions(),
-          std::shared_ptr<PopupController> controller = nullptr)
+    PopupWidget(WidgetPtr child,
+                std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder,
+                PopupWidgetOptions options = PopupWidgetOptions(),
+                std::shared_ptr<PopupController> controller = nullptr)
         : child(std::move(child)),
           popup_builder(std::move(popup_builder)),
           options(std::move(options)),
           controller(std::move(controller)) {}
 
-    Popup(WidgetPtr child,
-          std::function<WidgetPtr(BuildContext&)> simple_builder,
-          PopupWidgetOptions options = PopupWidgetOptions(),
-          std::shared_ptr<PopupController> controller = nullptr)
+    PopupWidget(WidgetPtr child,
+                std::function<WidgetPtr(BuildContext&)> simple_builder,
+                PopupWidgetOptions options = PopupWidgetOptions(),
+                std::shared_ptr<PopupController> controller = nullptr)
         : child(std::move(child)),
           popup_builder([b = std::move(simple_builder)](BuildContext& ctx, std::shared_ptr<NativePopup>) {
-              return b(ctx);
+              return b ? b(ctx) : nullptr;
+          }),
+          options(std::move(options)),
+          controller(std::move(controller)) {}
+
+    PopupWidget(Key key,
+                WidgetPtr child,
+                std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder,
+                PopupWidgetOptions options = PopupWidgetOptions(),
+                std::shared_ptr<PopupController> controller = nullptr)
+        : StatefulWidget(std::move(key)),
+          child(std::move(child)),
+          popup_builder(std::move(popup_builder)),
+          options(std::move(options)),
+          controller(std::move(controller)) {}
+
+    PopupWidget(Key key,
+                WidgetPtr child,
+                std::function<WidgetPtr(BuildContext&)> simple_builder,
+                PopupWidgetOptions options = PopupWidgetOptions(),
+                std::shared_ptr<PopupController> controller = nullptr)
+        : StatefulWidget(std::move(key)),
+          child(std::move(child)),
+          popup_builder([b = std::move(simple_builder)](BuildContext& ctx, std::shared_ptr<NativePopup>) {
+              return b ? b(ctx) : nullptr;
           }),
           options(std::move(options)),
           controller(std::move(controller)) {}
@@ -155,42 +179,48 @@ public:
         PopupWidgetOptions options = PopupWidgetOptions()
     ) {
         return show(context, [b = std::move(popup_builder)](BuildContext& ctx, std::shared_ptr<NativePopup>) {
-            return b(ctx);
+            return b ? b(ctx) : nullptr;
         }, options);
     }
 };
 
-// ── Factory Helpers ────────────────────────────────────────────────
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline WidgetPtr popup(
-    WidgetPtr child,
-    std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder,
-    PopupWidgetOptions options = PopupWidgetOptions(),
-    std::shared_ptr<PopupController> controller = nullptr) {
-    return std::make_shared<Popup>(
-        std::move(child),
-        std::move(popup_builder),
-        std::move(options),
-        std::move(controller)
-    );
-}
+struct Popup {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> builder = nullptr;
+    std::function<WidgetPtr(BuildContext&)> simple_builder = nullptr;
+    PopupWidgetOptions options = {};
+    std::shared_ptr<PopupController> controller = nullptr;
 
-inline std::shared_ptr<Popup> popup(WidgetPtr child,
-                                    std::function<WidgetPtr(BuildContext&)> builder,
-                                    PopupWidgetOptions options = PopupWidgetOptions(),
-                                    std::shared_ptr<PopupController> controller = nullptr) {
-    return std::make_shared<Popup>(std::move(child), std::move(builder), std::move(options), std::move(controller));
-}
-
-inline std::shared_ptr<Popup> popup(PopupProps props) {
-    std::shared_ptr<Popup> p;
-    if (props.builder) {
-        p = std::make_shared<Popup>(std::move(props.child), std::move(props.builder), std::move(props.options), std::move(props.controller));
-    } else {
-        p = std::make_shared<Popup>(std::move(props.child), std::move(props.simple_builder), std::move(props.options), std::move(props.controller));
+    static std::shared_ptr<NativePopup> show(
+        BuildContext& context,
+        std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder,
+        PopupWidgetOptions options = PopupWidgetOptions()) {
+        return PopupWidget::show(context, std::move(popup_builder), options);
     }
-    p->key = props.key;
-    return p;
-}
+
+    static std::shared_ptr<NativePopup> show(
+        BuildContext& context,
+        std::function<WidgetPtr(BuildContext&)> popup_builder,
+        PopupWidgetOptions options = PopupWidgetOptions()) {
+        return PopupWidget::show(context, std::move(popup_builder), options);
+    }
+
+    operator WidgetPtr() const {
+        if (builder) {
+            return std::make_shared<PopupWidget>(key, child, builder, options, controller);
+        } else if (simple_builder) {
+            return std::make_shared<PopupWidget>(key, child, simple_builder, options, controller);
+        } else {
+            return std::make_shared<PopupWidget>(key, child, [](BuildContext&, std::shared_ptr<NativePopup>) -> WidgetPtr {
+                return nullptr;
+            }, options, controller);
+        }
+    }
+};
 
 } // namespace enki

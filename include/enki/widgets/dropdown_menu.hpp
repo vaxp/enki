@@ -6,9 +6,6 @@
 /// the floating menu panel as an absolutely-positioned Positioned child inside a Stack
 /// that spans 100% of the window. This ensures the menu appears above all page content.
 ///
-/// Usage:
-///   auto page = dropdownMenu(trigger, items, body_widget, options);
-///
 /// Architecture (Category 7. Overlays — same as BottomSheet, Drawer):
 ///   Stack (100% x 100%)
 ///     ├── Positioned::fill(body_widget)       ← page content, invariant layout
@@ -124,7 +121,7 @@ struct DropdownMenuItem {
 };
 
 // ════════════════════════════════════════════════════════════════
-// DropdownMenuOptions
+// DropdownMenuController & Props
 // ════════════════════════════════════════════════════════════════
 
 class DropdownMenuController {
@@ -145,6 +142,7 @@ public:
 };
 
 struct DropdownMenuProps {
+    Key key = Key::none();
     std::vector<DropdownMenuItem>       items;
     WidgetPtr                           body = nullptr;           ///< Page body to wrap
     WidgetPtr                           custom_trigger = nullptr; ///< Optional custom trigger widget
@@ -163,8 +161,8 @@ struct DropdownMenuProps {
     float trigger_height    = 38.0f;
 
     // Anchor coordinates (absolute pixel position of trigger top-left in window)
-    float anchor_x = 0.0f;  ///< Filled in at runtime by the trigger GestureDetector
-    float anchor_y = 0.0f;  ///< Filled in at runtime by the trigger GestureDetector
+    float anchor_x = 0.0f;
+    float anchor_y = 0.0f;
 
     // Theme
     Color background_color = 0xFF1E293B;
@@ -187,54 +185,100 @@ struct DropdownMenuProps {
 };
 
 // ════════════════════════════════════════════════════════════════
-// DropdownMenuController
+// DropdownMenu Implementation Widget
 // ════════════════════════════════════════════════════════════════
 
-
-
-// ════════════════════════════════════════════════════════════════
-// DropdownMenu Widget
-// ════════════════════════════════════════════════════════════════
-
-/// @brief Advanced in-window overlay dropdown menu.
-///
-/// Wraps body content in a Stack; the floating menu panel is an absolutely-positioned
-/// Positioned widget at the trigger anchor coordinates. This matches the Drawer/BottomSheet
-/// overlay architecture exactly.
-class DropdownMenu : public StatefulWidget {
+class DropdownMenuWidget : public StatefulWidget {
 public:
-    DropdownMenuProps                 props;
+    DropdownMenuProps props;
 
-    DropdownMenu() = default;
-    explicit DropdownMenu(DropdownMenuProps p)
-        : props(std::move(p)) {}
-
-    // Fluent API
-    DropdownMenu& selected(std::string id)         { props.selected_id = std::move(id); return *this; }
-    DropdownMenu& placeholder(std::string p)       { props.placeholder = std::move(p);  return *this; }
-    DropdownMenu& menuWidth(float w)               { props.menu_width = w;              return *this; }
-    DropdownMenu& triggerWidth(float w)            { props.trigger_width = w;           return *this; }
-    DropdownMenu& anchorAt(float x, float y)       { props.anchor_x = x; props.anchor_y = y; return *this; }
-    DropdownMenu& setController(std::shared_ptr<DropdownMenuController> c) {
-        props.controller = std::move(c); return *this;
-    }
-    DropdownMenu& onSelected(std::function<void(const DropdownMenuItem&)> cb) {
-        props.on_selected = std::move(cb); return *this;
-    }
-    DropdownMenu& onToggleChecked(std::function<void(const std::string&, bool)> cb) {
-        props.on_toggle_checked = std::move(cb); return *this;
-    }
+    DropdownMenuWidget() = default;
+    explicit DropdownMenuWidget(DropdownMenuProps p)
+        : StatefulWidget(p.key), props(std::move(p)) {}
+    DropdownMenuWidget(Key k, DropdownMenuProps p)
+        : StatefulWidget(std::move(k)), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DropdownMenu"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Factory Helpers
+// Declarative DropdownMenu Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<DropdownMenu> dropdownMenu(DropdownMenuProps props) {
-    return std::make_shared<DropdownMenu>(std::move(props));
-}
+struct DropdownMenu {
+    Key key = Key::none();
+    std::vector<DropdownMenuItem> items;
+    WidgetPtr body = nullptr;
+    WidgetPtr custom_trigger = nullptr;
+    std::shared_ptr<DropdownMenuController> controller = nullptr;
+
+    float menu_width      = 240.0f;
+    float max_menu_height = 340.0f;
+    float border_radius   = 8.0f;
+    bool  close_on_select = true;
+    DropdownPlacement placement = DropdownPlacement::Bottom;
+
+    std::string placeholder = "Select an option...";
+    std::string selected_id = "";
+    float trigger_width     = 220.0f;
+    float trigger_height    = 38.0f;
+
+    float anchor_x = 0.0f;
+    float anchor_y = 0.0f;
+
+    Color background_color = 0xFF1E293B;
+    Color border_color     = 0xFF334155;
+    Color trigger_bg       = 0xFF0F172A;
+    Color trigger_border   = 0xFF334155;
+    Color hover_color      = 0x2238BDF8;
+    Color text_color       = 0xFFF1F5F9;
+    Color subtitle_color   = 0xFF94A3B8;
+    Color shortcut_color   = 0xFF64748B;
+    Color header_color     = 0xFF38BDF8;
+    Color divider_color    = 0xFF334155;
+    Color danger_color     = 0xFFEF4444;
+
+    std::function<void(const DropdownMenuItem&)>       on_selected = nullptr;
+    std::function<void(const std::string&, bool)>      on_toggle_checked = nullptr;
+    std::function<void()>                              on_opened = nullptr;
+    std::function<void()>                              on_closed = nullptr;
+
+    operator WidgetPtr() const {
+        DropdownMenuProps p;
+        p.key = key;
+        p.items = items;
+        p.body = body;
+        p.custom_trigger = custom_trigger;
+        p.controller = controller;
+        p.menu_width = menu_width;
+        p.max_menu_height = max_menu_height;
+        p.border_radius = border_radius;
+        p.close_on_select = close_on_select;
+        p.placement = placement;
+        p.placeholder = placeholder;
+        p.selected_id = selected_id;
+        p.trigger_width = trigger_width;
+        p.trigger_height = trigger_height;
+        p.anchor_x = anchor_x;
+        p.anchor_y = anchor_y;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.trigger_bg = trigger_bg;
+        p.trigger_border = trigger_border;
+        p.hover_color = hover_color;
+        p.text_color = text_color;
+        p.subtitle_color = subtitle_color;
+        p.shortcut_color = shortcut_color;
+        p.header_color = header_color;
+        p.divider_color = divider_color;
+        p.danger_color = danger_color;
+        p.on_selected = on_selected;
+        p.on_toggle_checked = on_toggle_checked;
+        p.on_opened = on_opened;
+        p.on_closed = on_closed;
+        return std::make_shared<DropdownMenuWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

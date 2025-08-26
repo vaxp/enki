@@ -7,7 +7,6 @@
 ///   - Last item is active (non-clickable, distinct color).
 ///   - Custom separator string.
 ///   - Hover feedback on clickable items.
-///   - Fluent builder API.
 ///
 /// @copyright ENKI Framework — MIT License
 
@@ -28,11 +27,11 @@ namespace enki {
 
 struct BreadcrumbItem {
     std::string          label;
-    std::function<void()> on_tap;  ///< nullptr = non-clickable (last item)
+    std::function<void()> on_tap = nullptr;  ///< nullptr = non-clickable (last item)
 };
 
 // ════════════════════════════════════════════════════════════════
-// BreadcrumbOptions
+// BreadcrumbProps
 // ════════════════════════════════════════════════════════════════
 
 struct BreadcrumbProps {
@@ -49,47 +48,62 @@ struct BreadcrumbProps {
     float item_spacing      = 8.0f;
     float separator_spacing = 8.0f;
     bool  bold_active       = true;
-
 };
 
 // ════════════════════════════════════════════════════════════════
-// Breadcrumb Widget
+// Breadcrumb Implementation Widget
 // ════════════════════════════════════════════════════════════════
 
 /// @brief Builds a horizontal row of labeled path items.
-class Breadcrumb : public StatelessWidget {
+class BreadcrumbWidget : public StatelessWidget {
 public:
-    std::vector<BreadcrumbItem> items;
-    BreadcrumbProps            options;
+    BreadcrumbProps options;
 
-    Breadcrumb() = default;
-    explicit Breadcrumb(std::vector<BreadcrumbItem> items, BreadcrumbProps opt = {})
-        : items(std::move(items)), options(std::move(opt)) {}
-    
-    Breadcrumb(Key k, BreadcrumbProps opt) : StatelessWidget(std::move(k)), items(std::move(opt.items)), options(std::move(opt)) {}
-
-    // Fluent API
-    Breadcrumb& activeColor(Color c)     { options.active_color = c;   return *this; }
-    Breadcrumb& inactiveColor(Color c)   { options.inactive_color = c; return *this; }
-    Breadcrumb& separator(std::string s) { options.separator = std::move(s); return *this; }
-    Breadcrumb& fontSize(float f)        { options.font_size = f;      return *this; }
+    BreadcrumbWidget() = default;
+    explicit BreadcrumbWidget(BreadcrumbProps opt)
+        : StatelessWidget(opt.key), options(std::move(opt)) {}
+    BreadcrumbWidget(Key k, BreadcrumbProps opt)
+        : StatelessWidget(std::move(k)), options(std::move(opt)) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "Breadcrumb"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Factory Functions
+// Declarative Breadcrumb Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Breadcrumb> breadcrumb(
-        std::vector<BreadcrumbItem> items,
-        BreadcrumbProps options = {}) {
-    return std::make_shared<Breadcrumb>(std::move(items), std::move(options));
-}
+struct Breadcrumb {
+    Key key = Key::none();
+    std::vector<BreadcrumbItem> items;
+    Color active_color      = 0xFFF1F5F9;
+    Color inactive_color    = 0xFF64748B;
+    Color hover_color       = 0xFF818CF8;
+    Color separator_color   = 0xFF475569;
 
-inline std::shared_ptr<Breadcrumb> breadcrumb(BreadcrumbProps props) {
-    return std::make_shared<Breadcrumb>(std::move(props.key), std::move(props));
-}
+    std::string separator   = "/";
+    float font_size         = 13.0f;
+    float separator_font_size = 12.0f;
+    float item_spacing      = 8.0f;
+    float separator_spacing = 8.0f;
+    bool  bold_active       = true;
+
+    operator WidgetPtr() const {
+        BreadcrumbProps p;
+        p.key = key;
+        p.items = items;
+        p.active_color = active_color;
+        p.inactive_color = inactive_color;
+        p.hover_color = hover_color;
+        p.separator_color = separator_color;
+        p.separator = separator;
+        p.font_size = font_size;
+        p.separator_font_size = separator_font_size;
+        p.item_spacing = item_spacing;
+        p.separator_spacing = separator_spacing;
+        p.bold_active = bold_active;
+        return std::make_shared<BreadcrumbWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

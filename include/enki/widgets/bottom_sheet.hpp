@@ -35,7 +35,7 @@ enum class BottomSheetDetent {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// BottomSheet Options
+/// BottomSheet Options & Props
 /// ════════════════════════════════════════════════════════════════
 
 struct BottomSheetOptions {
@@ -94,18 +94,18 @@ public:
 
 struct BottomSheetProps {
     Key key = Key::none();
-    WidgetPtr sheet_content;
-    WidgetPtr body;
+    WidgetPtr sheet_content = nullptr;
+    WidgetPtr body = nullptr;
     bool initial_open = false;
     BottomSheetOptions options;
-    std::shared_ptr<BottomSheetController> controller;
+    std::shared_ptr<BottomSheetController> controller = nullptr;
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// BottomSheet Widget
+/// BottomSheet Implementation Widget
 /// ════════════════════════════════════════════════════════════════
 
-class BottomSheet : public StatefulWidget {
+class BottomSheetWidget : public StatefulWidget {
 public:
     WidgetPtr sheet_content;  ///< Content inside the sheet
     WidgetPtr body;           ///< Background body content
@@ -113,53 +113,87 @@ public:
     BottomSheetOptions options;
     std::shared_ptr<BottomSheetController> controller;
 
-    BottomSheet() = default;
-    BottomSheet(WidgetPtr sheet_content, WidgetPtr body, BottomSheetOptions opt = {})
-        : sheet_content(std::move(sheet_content)), body(std::move(body)),
-          options(std::move(opt)) {}
-
-    // Fluent API
-    BottomSheet& type(BottomSheetType t) { options.type = t; return *this; }
-    BottomSheet& title(std::string t, std::string sub = "") {
-        options.title = std::move(t);
-        options.subtitle = std::move(sub);
-        return *this;
-    }
-    BottomSheet& dragHandle(bool enable = true) { options.show_drag_handle = enable; return *this; }
-    BottomSheet& closeButton(bool enable = true) { options.show_close_button = enable; return *this; }
-    BottomSheet& borderRadius(float r) { options.border_radius = r; return *this; }
-    BottomSheet& backgroundColor(Color c) { options.background_color = c; return *this; }
-    BottomSheet& overlayColor(Color c) { options.overlay_color = c; return *this; }
-    BottomSheet& setController(std::shared_ptr<BottomSheetController> c) {
-        controller = std::move(c);
-        return *this;
-    }
-    BottomSheet& onClosed(std::function<void()> cb) { options.on_closed = std::move(cb); return *this; }
-    BottomSheet& onOpened(std::function<void()> cb) { options.on_opened = std::move(cb); return *this; }
-    BottomSheet& onDetentChanged(std::function<void(BottomSheetDetent)> cb) {
-        options.on_detent_changed = std::move(cb);
-        return *this;
-    }
+    BottomSheetWidget() = default;
+    BottomSheetWidget(Key key, WidgetPtr sheet_content, WidgetPtr body, bool initial_open,
+                      BottomSheetOptions options, std::shared_ptr<BottomSheetController> controller)
+        : StatefulWidget(std::move(key)), sheet_content(std::move(sheet_content)), body(std::move(body)),
+          initial_open(initial_open), options(std::move(options)), controller(std::move(controller)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "BottomSheet"; }
 };
 
-inline std::shared_ptr<BottomSheet> bottomSheet(
-    WidgetPtr sheet_content,
-    WidgetPtr body,
-    BottomSheetOptions options = {}) {
-    return std::make_shared<BottomSheet>(std::move(sheet_content), std::move(body), std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative BottomSheet Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<BottomSheet> bottomSheet(BottomSheetProps props) {
-    auto bs = std::make_shared<BottomSheet>(std::move(props.sheet_content), std::move(props.body), std::move(props.options));
-    bs->key = props.key;
-    bs->initial_open = props.initial_open;
-    if (props.controller) {
-        bs->setController(props.controller);
+struct BottomSheet {
+    Key key = Key::none();
+    WidgetPtr sheet_content = nullptr;
+    WidgetPtr body = nullptr;
+    bool initial_open = false;
+
+    BottomSheetType type = BottomSheetType::Modal;
+    BottomSheetDetent initial_detent = BottomSheetDetent::Half;
+
+    bool show_drag_handle = true;
+    bool show_close_button = true;
+    bool enable_drag = true;
+    bool close_on_overlay = true;
+
+    float peek_height = 90.0f;
+    float half_fraction = 0.50f;
+    float full_fraction = 0.88f;
+    float border_radius = 16.0f;
+
+    // Styling Colors
+    Color background_color = 0xFF1E293B; // Slate 800
+    Color border_color     = 0xFF334155; // Slate 700
+    Color handle_color     = 0xFF64748B; // Slate 500
+    Color handle_hover_col = 0xFF94A3B8; // Slate 400
+    Color overlay_color    = 0x99000000; // Semi-transparent black scrim
+    Color title_color      = 0xFFFFFFFF; // White
+    Color subtitle_color   = 0xFF94A3B8; // Slate 400
+
+    std::string title = "";
+    std::string subtitle = "";
+
+    // Callbacks
+    std::function<void()> on_opened = nullptr;
+    std::function<void()> on_closed = nullptr;
+    std::function<void(BottomSheetDetent detent)> on_detent_changed = nullptr;
+    std::function<void(float fraction)> on_drag_progress = nullptr;
+
+    std::shared_ptr<BottomSheetController> controller = nullptr;
+
+    operator WidgetPtr() const {
+        BottomSheetOptions opt;
+        opt.type = type;
+        opt.initial_detent = initial_detent;
+        opt.show_drag_handle = show_drag_handle;
+        opt.show_close_button = show_close_button;
+        opt.enable_drag = enable_drag;
+        opt.close_on_overlay = close_on_overlay;
+        opt.peek_height = peek_height;
+        opt.half_fraction = half_fraction;
+        opt.full_fraction = full_fraction;
+        opt.border_radius = border_radius;
+        opt.background_color = background_color;
+        opt.border_color = border_color;
+        opt.handle_color = handle_color;
+        opt.handle_hover_col = handle_hover_col;
+        opt.overlay_color = overlay_color;
+        opt.title_color = title_color;
+        opt.subtitle_color = subtitle_color;
+        opt.title = title;
+        opt.subtitle = subtitle;
+        opt.on_opened = on_opened;
+        opt.on_closed = on_closed;
+        opt.on_detent_changed = on_detent_changed;
+        opt.on_drag_progress = on_drag_progress;
+
+        return std::make_shared<BottomSheetWidget>(key, sheet_content, body, initial_open, std::move(opt), controller);
     }
-    return bs;
-}
+};
 
 } // namespace enki

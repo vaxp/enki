@@ -128,46 +128,43 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// LoadingOverlay Widget
+/// LoadingOverlay Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class LoadingOverlay : public StatefulWidget {
+class LoadingOverlayWidget : public StatefulWidget {
 public:
     WidgetPtr body;                                      ///< Background content to wrap
     std::shared_ptr<LoadingOverlayController> controller;
     bool initial_loading = false;
     LoadingOverlayProps initial_options;
 
-    LoadingOverlay() = default;
-    LoadingOverlay(WidgetPtr body_, std::shared_ptr<LoadingOverlayController> ctrl,
-                   bool init_loading = false, LoadingOverlayProps init_opts = {})
+    LoadingOverlayWidget() = default;
+    LoadingOverlayWidget(WidgetPtr body_, std::shared_ptr<LoadingOverlayController> ctrl,
+                         bool init_loading = false, LoadingOverlayProps init_opts = {})
         : body(std::move(body_)), controller(std::move(ctrl)),
           initial_loading(init_loading), initial_options(std::move(init_opts)) {}
           
-    LoadingOverlay(Key k, WidgetPtr body_, std::shared_ptr<LoadingOverlayController> ctrl, bool init_loading, LoadingOverlayProps init_opts)
+    LoadingOverlayWidget(Key k, WidgetPtr body_, std::shared_ptr<LoadingOverlayController> ctrl, bool init_loading, LoadingOverlayProps init_opts)
         : StatefulWidget(std::move(k)), body(std::move(body_)), controller(std::move(ctrl)), initial_loading(init_loading), initial_options(std::move(init_opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "LoadingOverlay"; }
 };
 
-inline std::shared_ptr<LoadingOverlay> loadingOverlay(
-    WidgetPtr body,
-    std::shared_ptr<LoadingOverlayController> controller,
-    LoadingOverlayProps options = {}) {
-    return std::make_shared<LoadingOverlay>(std::move(body), std::move(controller), false, std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-struct LoadingOverlayDeclarativeProps {
+struct LoadingOverlay {
     Key key = Key::none();
-    WidgetPtr body;
-    std::shared_ptr<LoadingOverlayController> controller;
+    WidgetPtr body = nullptr;
+    std::shared_ptr<LoadingOverlayController> controller = nullptr;
     bool initial_loading = false;
     LoadingOverlayProps initial_options;
-};
 
-inline std::shared_ptr<LoadingOverlay> loadingOverlay(LoadingOverlayDeclarativeProps props) {
-    return std::make_shared<LoadingOverlay>(std::move(props.key), std::move(props.body), std::move(props.controller), props.initial_loading, std::move(props.initial_options));
-}
+    operator WidgetPtr() const {
+        return std::make_shared<LoadingOverlayWidget>(key, body, controller, initial_loading, initial_options);
+    }
+};
 
 } // namespace enki

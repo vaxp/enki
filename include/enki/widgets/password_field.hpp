@@ -120,57 +120,104 @@ struct PasswordFieldProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// PasswordField Widget
+/// PasswordField Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class PasswordField : public StatefulWidget {
+class PasswordFieldWidget : public StatefulWidget {
 public:
     std::shared_ptr<PasswordFieldController> controller;
     PasswordFieldProps options;
 
-    PasswordField(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt = {})
+    PasswordFieldWidget(std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<PasswordFieldController>()),
           options(std::move(opt)) {}
 
-    PasswordField(PasswordFieldProps opt = {})
+    PasswordFieldWidget(PasswordFieldProps opt = {})
         : controller(std::make_shared<PasswordFieldController>()),
           options(std::move(opt)) {}
 
-    PasswordField(Key key, std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt)
+    PasswordFieldWidget(Key key, std::shared_ptr<PasswordFieldController> ctrl, PasswordFieldProps opt)
         : StatefulWidget(std::move(key)),
           controller(ctrl ? std::move(ctrl) : std::make_shared<PasswordFieldController>()),
           options(std::move(opt)) {}
-
-    // Fluent API Chaining
-    PasswordField* placeholder(std::string p) { options.placeholder = std::move(p); return this; }
-    PasswordField* strengthMeter(bool show = true) { options.show_strength_meter = show; return this; }
-    PasswordField* rulesChecklist(bool show = true) { options.show_rules_checklist = show; return this; }
-    PasswordField* generatorButton(bool show = true) { options.show_generator_button = show; return this; }
-    PasswordField* clearButton(bool show = true) { options.show_clear_button = show; return this; }
-    PasswordField* holdToPeek(bool enable = true) { options.hold_to_peek = enable; return this; }
-    PasswordField* capslockWarning(bool enable = true) { options.show_capslock_warning = enable; return this; }
-    PasswordField* rules(PasswordValidationRules r) { controller->setRules(r); return this; }
-    PasswordField* onChanged(std::function<void(std::string_view)> cb) { options.on_changed = std::move(cb); return this; }
-    PasswordField* onSubmitted(std::function<void(std::string_view)> cb) { options.on_submitted = std::move(cb); return this; }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "PasswordField"; }
 };
 
-inline std::shared_ptr<PasswordField> passwordField(
-    std::shared_ptr<PasswordFieldController> ctrl,
-    PasswordFieldProps options = {}) {
-    return std::make_shared<PasswordField>(std::move(ctrl), std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<PasswordField> passwordField(
-    PasswordFieldProps options = {}) {
-    return std::make_shared<PasswordField>(std::move(options));
-}
+struct PasswordField {
+    Key key = Key::none();
+    std::shared_ptr<PasswordFieldController> controller = nullptr;
 
-inline std::shared_ptr<PasswordField> passwordField(PasswordFieldProps props, std::shared_ptr<PasswordFieldController> ctrl) {
-    props.controller = std::move(ctrl);
-    return passwordField(std::move(props));
-}
+    std::string placeholder = "Enter password...";
+    std::string mask_char = "•";
+
+    bool show_lock_icon = true;
+    bool show_visibility_toggle = true;
+    bool show_clear_button = false;
+    bool show_generator_button = false;
+    bool show_strength_meter = false;
+    bool show_rules_checklist = false;
+    bool show_capslock_warning = true;
+    bool hold_to_peek = false;
+
+    bool auto_focus = false;
+    bool read_only = false;
+
+    TextStyle style;
+    Color background_color   = 0xFF0F172A;
+    Color border_color       = 0xFF334155;
+    Color focus_border_color = 0xFF38BDF8;
+    Color icon_color         = 0xFF94A3B8;
+    Color placeholder_color  = 0xFF64748B;
+    Color cursor_color       = 0xFF38BDF8;
+    Color selection_color    = 0x4D38BDF8;
+    Color warning_color      = 0xFFF59E0B;
+
+    float border_radius = 8.0f;
+    EdgeInsets padding = EdgeInsets::symmetric(8.0f, 12.0f);
+
+    std::function<void(std::string_view password)> on_changed = nullptr;
+    std::function<void(std::string_view password)> on_submitted = nullptr;
+    std::function<void(PasswordStrengthLevel strength)> on_strength_changed = nullptr;
+
+    operator WidgetPtr() const {
+        PasswordFieldProps opts;
+        opts.key = key;
+        opts.controller = controller;
+        opts.placeholder = placeholder;
+        opts.mask_char = mask_char;
+        opts.show_lock_icon = show_lock_icon;
+        opts.show_visibility_toggle = show_visibility_toggle;
+        opts.show_clear_button = show_clear_button;
+        opts.show_generator_button = show_generator_button;
+        opts.show_strength_meter = show_strength_meter;
+        opts.show_rules_checklist = show_rules_checklist;
+        opts.show_capslock_warning = show_capslock_warning;
+        opts.hold_to_peek = hold_to_peek;
+        opts.auto_focus = auto_focus;
+        opts.read_only = read_only;
+        opts.style = style;
+        opts.background_color = background_color;
+        opts.border_color = border_color;
+        opts.focus_border_color = focus_border_color;
+        opts.icon_color = icon_color;
+        opts.placeholder_color = placeholder_color;
+        opts.cursor_color = cursor_color;
+        opts.selection_color = selection_color;
+        opts.warning_color = warning_color;
+        opts.border_radius = border_radius;
+        opts.padding = padding;
+        opts.on_changed = on_changed;
+        opts.on_submitted = on_submitted;
+        opts.on_strength_changed = on_strength_changed;
+
+        return std::make_shared<PasswordFieldWidget>(key, controller, std::move(opts));
+    }
+};
 
 } // namespace enki

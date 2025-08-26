@@ -116,7 +116,7 @@ public:
 
 void NavigatorState::initState() {
     State::initState();
-    auto* w = static_cast<const Navigator*>(widget());
+    auto* w = static_cast<const NavigatorWidget*>(widget());
 
     for (const auto& rc : w->initial_routes) {
         ActiveRoute ar;
@@ -146,7 +146,7 @@ void NavigatorState::dispose() {
 }
 
 void NavigatorState::push(RouteConfig route) {
-    auto* w = static_cast<const Navigator*>(widget());
+    auto* w = static_cast<const NavigatorWidget*>(widget());
     int dur = w->options.transition_duration_ms;
 
     // Mark any entering/exiting as done
@@ -190,7 +190,7 @@ bool NavigatorState::canPop() const {
 void NavigatorState::tickAnimation() {
     if (!animating_) return;
 
-    auto* w = static_cast<const Navigator*>(widget());
+    auto* w = static_cast<const NavigatorWidget*>(widget());
     float dt = 1.0f / 60.0f; // approximate, good enough
     int dur_ms = w->options.transition_duration_ms;
     float step = dur_ms > 0 ? (dt * 1000.0f / dur_ms) : 1.0f;
@@ -224,7 +224,7 @@ void NavigatorState::tickAnimation() {
 }
 
 WidgetPtr NavigatorState::build(BuildContext& ctx) {
-    auto* w = static_cast<const Navigator*>(widget());
+    auto* w = static_cast<const NavigatorWidget*>(widget());
     Color bg = w->options.background_color;
 
     if (stack_.empty()) {
@@ -278,7 +278,7 @@ WidgetPtr NavigatorState::build(BuildContext& ctx) {
     return root_box;
 }
 
-std::unique_ptr<State> Navigator::createState() {
+std::unique_ptr<State> NavigatorWidget::createState() {
     return std::make_unique<NavigatorState>();
 }
 
@@ -286,7 +286,7 @@ std::unique_ptr<State> Navigator::createState() {
 // Static Navigator helpers
 // ════════════════════════════════════════════════════════════════
 
-void Navigator::push(BuildContext& ctx, RouteConfig route) {
+void NavigatorWidget::push(BuildContext& ctx, RouteConfig route) {
     // Walk up the element tree to find the nearest NavigatorState
     Element* el = ctx.element();
     while (el) {
@@ -300,7 +300,7 @@ void Navigator::push(BuildContext& ctx, RouteConfig route) {
     }
 }
 
-void Navigator::pop(BuildContext& ctx) {
+void NavigatorWidget::pop(BuildContext& ctx) {
     Element* el = ctx.element();
     while (el) {
         if (auto* se = dynamic_cast<StatefulElement*>(el)) {
@@ -313,7 +313,7 @@ void Navigator::pop(BuildContext& ctx) {
     }
 }
 
-bool Navigator::canPop(BuildContext& ctx) {
+bool NavigatorWidget::canPop(BuildContext& ctx) {
     Element* el = ctx.element();
     while (el) {
         if (auto* se = dynamic_cast<StatefulElement*>(el)) {

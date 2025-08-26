@@ -280,47 +280,108 @@ struct DataGridProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// DataGrid Widget
+/// DataGrid Implementation Widget
 /// ════════════════════════════════════════════════════════════════
 
-class DataGrid : public StatefulWidget {
+class DataGridWidget : public StatefulWidget {
 public:
     DataGridProps props;
 
-    DataGrid() = default;
-    explicit DataGrid(DataGridProps p) : props(std::move(p)) {
+    DataGridWidget() = default;
+    explicit DataGridWidget(DataGridProps p) : StatefulWidget(p.key), props(std::move(p)) {
+        if (!props.controller) {
+            props.controller = std::make_shared<DataGridController>();
+        }
+    }
+    DataGridWidget(Key k, DataGridProps p) : StatefulWidget(std::move(k)), props(std::move(p)) {
         if (!props.controller) {
             props.controller = std::make_shared<DataGridController>();
         }
     }
 
-    // Fluent API Chaining
-    DataGrid& selectionMode(DataGridSelectionMode mode) { props.selection_mode = mode; return *this; }
-    DataGrid& pagination(bool enable = true) { props.show_pagination = enable; return *this; }
-    DataGrid& quickFilter(bool enable = true) { props.show_quick_filter = enable; return *this; }
-    DataGrid& summaryFooter(bool enable = true) { props.show_summary_footer = enable; return *this; }
-    DataGrid& zebra(bool enable = true) { props.zebra_stripes = enable; return *this; }
-    DataGrid& rowHeight(float h) { props.row_height = h; return *this; }
-    DataGrid& onSelectionChanged(std::function<void(const std::set<std::string>&)> cb) {
-        props.on_selection_changed = std::move(cb);
-        return *this;
-    }
-    DataGrid& onRowTap(std::function<void(const std::string&)> cb) { props.on_row_tap = std::move(cb); return *this; }
-    DataGrid& onRowDoubleTap(std::function<void(const std::string&)> cb) { props.on_row_double_tap = std::move(cb); return *this; }
-
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DataGrid"; }
 };
 
-inline std::shared_ptr<DataGrid> dataGrid(DataGridProps props = {}) {
-    return std::make_shared<DataGrid>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative DataGrid Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<DataGrid> dataGrid(
-    std::shared_ptr<DataGridController> ctrl) {
-    DataGridProps props;
-    props.controller = std::move(ctrl);
-    return std::make_shared<DataGrid>(std::move(props));
-}
+struct DataGrid {
+    Key key = Key::none();
+    std::shared_ptr<DataGridController> controller = nullptr;
+
+    DataGridSelectionMode selection_mode = DataGridSelectionMode::RowMultiple;
+    bool show_header = true;
+    bool show_row_numbers = false;
+    bool show_pagination = true;
+    bool show_quick_filter = true;
+    bool show_summary_footer = false;
+    bool show_borders = true;
+    bool zebra_stripes = true;
+
+    float header_height = 38.0f;
+    float row_height = 36.0f;
+    float footer_height = 36.0f;
+    float pagination_height = 42.0f;
+
+    Color background_color    = 0xFF0F172A;
+    Color header_bg_color     = 0xFF1E293B;
+    Color header_text_color   = 0xFFF1F5F9;
+    Color row_bg_color        = 0xFF0F172A;
+    Color zebra_row_bg_color  = 0xFF172033;
+    Color row_hover_color     = 0xFF1E293B;
+    Color row_selected_color  = 0x4038BDF8;
+    Color border_color        = 0xFF334155;
+    Color text_color          = 0xFFE2E8F0;
+    Color sort_icon_color     = 0xFF38BDF8;
+    Color footer_bg_color     = 0xFF1E293B;
+
+    float border_radius = 8.0f;
+
+    std::function<void(const std::set<std::string>& selected_ids)> on_selection_changed = nullptr;
+    std::function<void(const std::string& row_id)> on_row_tap = nullptr;
+    std::function<void(const std::string& row_id)> on_row_double_tap = nullptr;
+    std::function<void(const std::string& col_key, DataGridSortDirection dir)> on_sort_changed = nullptr;
+    std::function<void(int new_page)> on_page_changed = nullptr;
+    std::function<std::string(const std::string& col_key, const std::vector<DataGridRow>& rows)> summary_calculator = nullptr;
+
+    operator WidgetPtr() const {
+        DataGridProps p;
+        p.key = key;
+        p.controller = controller;
+        p.selection_mode = selection_mode;
+        p.show_header = show_header;
+        p.show_row_numbers = show_row_numbers;
+        p.show_pagination = show_pagination;
+        p.show_quick_filter = show_quick_filter;
+        p.show_summary_footer = show_summary_footer;
+        p.show_borders = show_borders;
+        p.zebra_stripes = zebra_stripes;
+        p.header_height = header_height;
+        p.row_height = row_height;
+        p.footer_height = footer_height;
+        p.pagination_height = pagination_height;
+        p.background_color = background_color;
+        p.header_bg_color = header_bg_color;
+        p.header_text_color = header_text_color;
+        p.row_bg_color = row_bg_color;
+        p.zebra_row_bg_color = zebra_row_bg_color;
+        p.row_hover_color = row_hover_color;
+        p.row_selected_color = row_selected_color;
+        p.border_color = border_color;
+        p.text_color = text_color;
+        p.sort_icon_color = sort_icon_color;
+        p.footer_bg_color = footer_bg_color;
+        p.border_radius = border_radius;
+        p.on_selection_changed = on_selection_changed;
+        p.on_row_tap = on_row_tap;
+        p.on_row_double_tap = on_row_double_tap;
+        p.on_sort_changed = on_sort_changed;
+        p.on_page_changed = on_page_changed;
+        p.summary_calculator = summary_calculator;
+        return std::make_shared<DataGridWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

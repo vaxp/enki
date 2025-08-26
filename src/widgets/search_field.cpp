@@ -473,7 +473,7 @@ private:
     }
 
     void triggerQueryUpdate() {
-        auto* sf = static_cast<const SearchField*>(widget());
+        auto* sf = static_cast<const SearchFieldWidget*>(widget());
         if (!sf) return;
 
         resetBlink();
@@ -493,7 +493,7 @@ private:
     }
 
     void handleKey(int key, int mods) {
-        auto* sf = static_cast<const SearchField*>(widget());
+        auto* sf = static_cast<const SearchFieldWidget*>(widget());
         if (!sf) return;
 
         bool shift = (mods & 1) != 0;
@@ -678,7 +678,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* sf = static_cast<const SearchField*>(widget());
+        auto* sf = static_cast<const SearchFieldWidget*>(widget());
         controller_ = sf->props.controller;
         cursor_pos_ = controller_->getQuery().length();
         selection_start_ = cursor_pos_;
@@ -692,7 +692,7 @@ public:
         if (Platform::instance()) {
             text_input_conn_ = Platform::instance()->onTextInput().connect([this](std::string_view text) {
                 if (g_focused_searchfield != this || !is_focused_) return;
-                auto* current_sf = static_cast<const SearchField*>(widget());
+                auto* current_sf = static_cast<const SearchFieldWidget*>(widget());
                 if (!current_sf || current_sf->props.read_only) return;
 
                 // Ignore control characters
@@ -722,7 +722,7 @@ public:
                 if (!is_focused_) return;
                 if (auto* ro = context().element()->findRenderObject()) {
                     Rect b = ro->globalBounds();
-                    auto* current_sf = static_cast<const SearchField*>(widget());
+                    auto* current_sf = static_cast<const SearchFieldWidget*>(widget());
                     bool has_sug = current_sf && current_sf->props.show_suggestions &&
                         (!controller_->getSuggestions().empty() || (!controller_->getRecentSearches().empty() && controller_->getQuery().empty()));
                     float extra_h = has_sug ? 300.0f : 0.0f;
@@ -736,7 +736,7 @@ public:
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* sf = static_cast<const SearchField*>(widget());
+        auto* sf = static_cast<const SearchFieldWidget*>(widget());
         controller_ = sf->props.controller;
     }
 
@@ -751,7 +751,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* sf = static_cast<const SearchField*>(widget());
+        auto* sf = static_cast<const SearchFieldWidget*>(widget());
 
         // Process Debounce Timer
         if (debounce_pending_ && Platform::instance()) {
@@ -976,7 +976,7 @@ public:
     }
 };
 
-std::unique_ptr<State> SearchField::createState() {
+std::unique_ptr<State> SearchFieldWidget::createState() {
     return std::make_unique<SearchFieldState>();
 }
 

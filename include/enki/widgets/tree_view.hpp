@@ -18,16 +18,6 @@
 ///   - All layout delegated to Anu — the tree is a Column of padded rows.
 ///   - Integrated in a ScrollView for overflow content.
 ///
-/// Architecture:
-///   TreeView (StatefulWidget)
-///     └── build() → ScrollView
-///                     └── Column (FlexDirection::Column)
-///                           ├── _buildNode(root[0], depth=0)
-///                           │     ├── TreeNodeRow (Row: indent + arrow + icon + label + trailing)
-///                           │     └── if expanded → Column of children (recursed)
-///                           ├── _buildNode(root[1], depth=0)
-///                           └── ...
-///
 /// @copyright ENKI Framework — MIT License
 
 #include "enki/core/types.hpp"
@@ -132,24 +122,9 @@ struct TreeViewTheme {
 };
 
 // ════════════════════════════════════════════════════════════════
-// TreeView Widget
+// TreeView Props
 // ════════════════════════════════════════════════════════════════
 
-/// @brief A fully-featured hierarchical tree widget for desktop environments.
-///
-/// Usage:
-/// @code
-///   treeView({
-///       TreeNodeData("root", icon(Icons::Folder), text("Documents"), {
-///           TreeNodeData("sub1", icon(Icons::InsertDriveFile), text("Resume.pdf")),
-///           TreeNodeData("sub2", icon(Icons::InsertDriveFile), text("Cover.docx")),
-///       }).expand(),
-///       TreeNodeData("root2", icon(Icons::Folder), text("Downloads")),
-///   })
-///   ->onNodeSelected([](const std::string& id){ /* ... */ })
-///   ->showLines(true)
-///   ->multiSelect(true);
-/// @endcode
 struct TreeViewProps {
     Key key = Key::none();
     std::vector<TreeNodeData> nodes;   ///< Root-level tree nodes.
@@ -172,113 +147,95 @@ struct TreeViewProps {
     EdgeInsets    list_padding = EdgeInsets{};
 
     // ── Callbacks ──────────────────────────────────────────────
-
-    /// Fired when a node is expanded. `id` = the expanded node's id.
-    std::function<void(const std::string& id)> on_node_expanded;
-
-    /// Fired when a node is collapsed.
-    std::function<void(const std::string& id)> on_node_collapsed;
-
-    /// Fired when a node is selected (single-select).
-    std::function<void(const std::string& id)> on_node_selected;
-
-    /// Fired when the multi-select set changes.
-    std::function<void(const std::set<std::string>& ids)> on_selection_changed;
-
-    /// Fired when a checkable node's check state changes.
-    std::function<void(const std::string& id, bool checked)> on_node_checked;
-
-    /// Called when a node with no loaded children is first expanded.
-    /// The implementation should load children and call setState via the
-    /// returned callback (or rebuild the tree externally).
+    std::function<void(const std::string& id)> on_node_expanded = nullptr;
+    std::function<void(const std::string& id)> on_node_collapsed = nullptr;
+    std::function<void(const std::string& id)> on_node_selected = nullptr;
+    std::function<void(const std::set<std::string>& ids)> on_selection_changed = nullptr;
+    std::function<void(const std::string& id, bool checked)> on_node_checked = nullptr;
     std::function<void(const std::string& id,
                         std::function<void(std::vector<TreeNodeData>)> resolve)>
-        on_children_requested;
-
-    /// Called on right-click / secondary tap of a node.
-    std::function<void(const std::string& id, Point global_position)> on_node_context_menu;
-
-    /// Called when a drag starts on a node (for Drag & Drop integration).
-    std::function<void(const std::string& id)> on_node_drag_start;
-
-    /// Custom node builder — if set, overrides the default node rendering entirely.
-    /// Receives: node data, depth, isExpanded, isSelected, isHovered.
+        on_children_requested = nullptr;
+    std::function<void(const std::string& id, Point global_position)> on_node_context_menu = nullptr;
+    std::function<void(const std::string& id)> on_node_drag_start = nullptr;
     std::function<WidgetPtr(const TreeNodeData&, int depth,
-                             bool expanded, bool selected, bool hovered)> node_builder;
+                             bool expanded, bool selected, bool hovered)> node_builder = nullptr;
 };
 
-class TreeView : public StatefulWidget {
+// ════════════════════════════════════════════════════════════════
+// TreeView Widget Implementation
+// ════════════════════════════════════════════════════════════════
+
+class TreeViewWidget : public StatefulWidget {
 public:
     TreeViewProps props;
 
-    TreeView() = default;
-    explicit TreeView(TreeViewProps p) : props(std::move(p)) {}
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    TreeView& showLines(bool s = true)        { props.tree_theme.show_lines = s; return *this; }
-    TreeView& indentWidth(float w)            { props.tree_theme.indent_width = w; return *this; }
-    TreeView& nodeHeight(float h)             { props.tree_theme.node_height = h; return *this; }
-    TreeView& multiSelect(bool m = true)      { props.multi_select = m; return *this; }
-    TreeView& selectedId(std::string id)      { props.selected_node_id = std::move(id); return *this; }
-    TreeView& toggleOnLabel(bool v = true)    { props.toggle_on_label = v; return *this; }
-    TreeView& toggleOnArrow(bool v = true)    { props.toggle_on_arrow = v; return *this; }
-    TreeView& theme(TreeViewTheme t)          { props.tree_theme = std::move(t); return *this; }
-    TreeView& padding(EdgeInsets p)           { props.list_padding = p; return *this; }
-    TreeView& paddingAll(float p)             { props.list_padding = EdgeInsets::all(p); return *this; }
-    TreeView& physics(ScrollPhysics p)        { props.scroll_physics = p; return *this; }
-
-    TreeView& onNodeSelected(std::function<void(const std::string&)> cb) {
-        props.on_node_selected = std::move(cb);
-        return *this;
-    }
-    TreeView& onNodeExpanded(std::function<void(const std::string&)> cb) {
-        props.on_node_expanded = std::move(cb);
-        return *this;
-    }
-    TreeView& onNodeCollapsed(std::function<void(const std::string&)> cb) {
-        props.on_node_collapsed = std::move(cb);
-        return *this;
-    }
-    TreeView& onSelectionChanged(std::function<void(const std::set<std::string>&)> cb) {
-        props.on_selection_changed = std::move(cb);
-        return *this;
-    }
-    TreeView& onNodeChecked(std::function<void(const std::string&, bool)> cb) {
-        props.on_node_checked = std::move(cb);
-        return *this;
-    }
-    TreeView& onContextMenu(std::function<void(const std::string&, Point)> cb) {
-        props.on_node_context_menu = std::move(cb);
-        return *this;
-    }
-    TreeView& onChildrenRequested(
-        std::function<void(const std::string&, std::function<void(std::vector<TreeNodeData>)>)> cb) {
-        props.on_children_requested = std::move(cb);
-        return *this;
-    }
-    TreeView& nodeBuilder(
-        std::function<WidgetPtr(const TreeNodeData&, int, bool, bool, bool)> cb) {
-        props.node_builder = std::move(cb);
-        return *this;
-    }
+    TreeViewWidget() = default;
+    explicit TreeViewWidget(TreeViewProps p) : props(std::move(p)) {}
+    TreeViewWidget(Key key, TreeViewProps p) : StatefulWidget(std::move(key)), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TreeView"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Factory Functions
+// Declarative Proxy Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<TreeView> treeView(TreeViewProps props = {}) {
-    return std::make_shared<TreeView>(std::move(props));
-}
+struct TreeView {
+    Key key = Key::none();
+    std::vector<TreeNodeData> nodes;
 
-inline std::shared_ptr<TreeView> treeView(std::vector<TreeNodeData> nodes) {
-    TreeViewProps props;
-    props.nodes = std::move(nodes);
-    return std::make_shared<TreeView>(std::move(props));
-}
+    bool multi_select = false;
+    std::optional<std::string> selected_node_id;
+    std::set<std::string>      selected_node_ids;
+
+    bool toggle_on_arrow  = true;
+    bool toggle_on_label  = false;
+
+    TreeViewTheme tree_theme;
+
+    ScrollPhysics scroll_physics = ScrollPhysics::Clamped;
+    float         scroll_speed = 50.0f;
+    EdgeInsets    list_padding = EdgeInsets{};
+
+    std::function<void(const std::string& id)> on_node_expanded = nullptr;
+    std::function<void(const std::string& id)> on_node_collapsed = nullptr;
+    std::function<void(const std::string& id)> on_node_selected = nullptr;
+    std::function<void(const std::set<std::string>& ids)> on_selection_changed = nullptr;
+    std::function<void(const std::string& id, bool checked)> on_node_checked = nullptr;
+    std::function<void(const std::string& id,
+                        std::function<void(std::vector<TreeNodeData>)> resolve)>
+        on_children_requested = nullptr;
+    std::function<void(const std::string& id, Point global_position)> on_node_context_menu = nullptr;
+    std::function<void(const std::string& id)> on_node_drag_start = nullptr;
+    std::function<WidgetPtr(const TreeNodeData&, int depth,
+                             bool expanded, bool selected, bool hovered)> node_builder = nullptr;
+
+    operator WidgetPtr() const {
+        TreeViewProps p;
+        p.key = key;
+        p.nodes = nodes;
+        p.multi_select = multi_select;
+        p.selected_node_id = selected_node_id;
+        p.selected_node_ids = selected_node_ids;
+        p.toggle_on_arrow = toggle_on_arrow;
+        p.toggle_on_label = toggle_on_label;
+        p.tree_theme = tree_theme;
+        p.scroll_physics = scroll_physics;
+        p.scroll_speed = scroll_speed;
+        p.list_padding = list_padding;
+        p.on_node_expanded = on_node_expanded;
+        p.on_node_collapsed = on_node_collapsed;
+        p.on_node_selected = on_node_selected;
+        p.on_selection_changed = on_selection_changed;
+        p.on_node_checked = on_node_checked;
+        p.on_children_requested = on_children_requested;
+        p.on_node_context_menu = on_node_context_menu;
+        p.on_node_drag_start = on_node_drag_start;
+        p.node_builder = node_builder;
+
+        return std::make_shared<TreeViewWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

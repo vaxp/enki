@@ -25,7 +25,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const SplitView*>(widget());
+        auto* w = static_cast<const SplitViewWidget*>(widget());
         current_ratio_ = std::clamp(w->options.initial_ratio, 0.0f, 1.0f);
         wireController();
     }
@@ -36,29 +36,29 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const SplitView*>(widget());
+        auto* w = static_cast<const SplitViewWidget*>(widget());
         if (w->controller) {
             w->controller->set_ratio_fn = [this](float r) {
                 current_ratio_ = std::clamp(r, 0.0f, 1.0f);
-                auto* sw = static_cast<const SplitView*>(widget());
+                auto* sw = static_cast<const SplitViewWidget*>(widget());
                 if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
                 setState([] {});
             };
             w->controller->get_ratio_fn = [this] { return current_ratio_; };
             w->controller->collapse_leading_fn = [this] {
                 current_ratio_ = 0.0f;
-                auto* sw = static_cast<const SplitView*>(widget());
+                auto* sw = static_cast<const SplitViewWidget*>(widget());
                 if (sw->options.on_pane_collapsed) sw->options.on_pane_collapsed(true);
                 setState([] {});
             };
             w->controller->collapse_trailing_fn = [this] {
                 current_ratio_ = 1.0f;
-                auto* sw = static_cast<const SplitView*>(widget());
+                auto* sw = static_cast<const SplitViewWidget*>(widget());
                 if (sw->options.on_pane_collapsed) sw->options.on_pane_collapsed(false);
                 setState([] {});
             };
             w->controller->reset_fn = [this] {
-                auto* sw = static_cast<const SplitView*>(widget());
+                auto* sw = static_cast<const SplitViewWidget*>(widget());
                 current_ratio_ = sw->options.initial_ratio;
                 if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
                 setState([] {});
@@ -66,7 +66,7 @@ public:
         }
     }
 
-    WidgetPtr buildHandle(const SplitView* w) {
+    WidgetPtr buildHandle(const SplitViewWidget* w) {
         const auto& opts = w->options;
         bool is_horizontal = (opts.orientation == SplitOrientation::Horizontal);
 
@@ -122,7 +122,7 @@ public:
             float fraction_delta = delta / 800.0f;
             current_ratio_ = std::clamp(current_ratio_ + fraction_delta, 0.05f, 0.95f);
 
-            auto* sw = static_cast<const SplitView*>(widget());
+            auto* sw = static_cast<const SplitViewWidget*>(widget());
             if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
             setState([] {});
         };
@@ -133,7 +133,7 @@ public:
         };
 
         handle_gd->on_double_tap = [this] {
-            auto* sw = static_cast<const SplitView*>(widget());
+            auto* sw = static_cast<const SplitViewWidget*>(widget());
             current_ratio_ = sw->options.initial_ratio;
             if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
             setState([] {});
@@ -143,7 +143,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const SplitView*>(widget());
+        auto* w = static_cast<const SplitViewWidget*>(widget());
         const auto& opts = w->options;
         bool is_horizontal = (opts.orientation == SplitOrientation::Horizontal);
 
@@ -201,7 +201,7 @@ public:
     }
 };
 
-std::unique_ptr<State> SplitView::createState() {
+std::unique_ptr<State> SplitViewWidget::createState() {
     return std::make_unique<SplitViewState>();
 }
 

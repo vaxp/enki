@@ -59,48 +59,66 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // ── Navigation Bar with Title and NotificationBell ────────────
-        auto title = text("Advanced Notification System");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced Notification System", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Dual presentation: Floating Push Toast Banners + In-App Notification Center Feed");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Dual presentation: Floating Push Toast Banners + In-App Notification Center Feed", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> t_items = {title, sub};
-        auto t_col = column(t_items);
-        t_col->gap(StyleValue::point(4.0f));
+        auto t_col = column({
+            .gap = StyleValue::point(4.0f),
+            .children = {title, sub}
+        });
 
         // Bell widget with live unread badge
-        auto bell = notificationBell(notify_mgr_);
+        auto bell = NotificationBell { .manager = notify_mgr_ };
 
-        std::vector<WidgetPtr> top_bar_items = {t_col, bell};
-        auto top_bar = row(top_bar_items);
-        top_bar->justifyContent(Justify::SpaceBetween)
-               .alignItems(Align::Center)
-               .width(1080.0f);
+        auto top_bar = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::point(1080.0f),
+            .children = {t_col, bell}
+        });
 
         // ── Helper to build trigger cards ─────────────────────────────
         auto makePushCard = [this](std::string icon, std::string title, std::string desc,
                                    std::string btn_label, Color btn_col, std::function<void()> cb) -> WidgetPtr {
-            auto ic = text(icon);
-            ic->fontSize(20.0f);
+            auto ic = text(icon, { .font_size = 20.0f });
 
-            auto tit = text(title);
-            tit->fontSize(14.5f).bold().color(0xFFF1F5F9);
+            auto tit = text(title, {
+                .color = 0xFFF1F5F9,
+                .font_size = 14.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
-            std::vector<WidgetPtr> h_items = {ic, tit};
-            auto h_row = row(h_items);
-            h_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+            auto h_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(8.0f),
+                .children = {ic, tit}
+            });
 
-            auto ds = text(desc);
-            ds->fontSize(12.0f).color(0xFF94A3B8);
+            auto ds = text(desc, {
+                .color = 0xFF94A3B8,
+                .font_size = 12.0f,
+            });
 
-            auto b_lbl = text(btn_label);
-            b_lbl->fontSize(12.5f).bold().color(0xFFFFFFFF);
+            auto b_lbl = text(btn_label, {
+                .color = 0xFFFFFFFF,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
-            auto b_box = container(b_lbl);
-            b_box->color(btn_col)
-                 .borderRadius(6.0f)
-                 .paddingSymmetric(8.0f, 16.0f);
+            auto b_box = container({
+                .color = btn_col,
+                .border_radius = BorderRadius::circular(6.0f),
+                .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                .child = b_lbl
+            });
 
             auto gd = std::make_shared<GestureDetector>(b_box);
             gd->cursor_type = SystemCursor::Pointer;
@@ -108,17 +126,19 @@ public:
                 if (cb) cb();
             };
 
-            std::vector<WidgetPtr> c_items = {h_row, ds, gd};
-            auto col = column(c_items);
-            col->gap(StyleValue::point(12.0f));
+            auto col = column({
+                .gap = StyleValue::point(12.0f),
+                .children = {h_row, ds, gd}
+            });
 
-            auto card = container(col);
-            card->color(0xFF1E293B)
-                .borderRadius(10.0f)
-                .border(0xFF334155, 1.0f)
-                .paddingAll(16.0f)
-                .width(250.0f);
-            return card;
+            return container({
+                .color = 0xFF1E293B,
+                .border_radius = BorderRadius::circular(10.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .width = StyleValue::point(250.0f),
+                .padding = StyleInsets::all(16.0f),
+                .child = col
+            });
         };
 
         // ── 4 Interactive Trigger Cards ───────────────────────────────
@@ -212,7 +232,7 @@ public:
         });
 
         // Wrap with NotificationOverlay
-        return notificationOverlay({
+        return NotificationOverlay {
             .body = container({
                 .color = 0xFF0B1120,
                 .width = StyleValue::percent(100.0f),
@@ -247,7 +267,7 @@ public:
                 })
             }),
             .manager = notify_mgr_
-        });
+        };
     }
 };
 

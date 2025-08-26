@@ -17,7 +17,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        return drawer({
+        return Drawer {
             .child = container({
                 .align = Alignment::TopLeft,
                 .padding = StyleInsets::all(20.0f),
@@ -35,7 +35,7 @@ public:
                 .background_color = 0xFF1E293B
             },
             .controller = drawer_ctrl
-        });
+        };
     }
 };
 

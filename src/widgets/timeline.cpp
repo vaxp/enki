@@ -608,18 +608,18 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* tl = static_cast<const Timeline*>(widget());
+        auto* tl = static_cast<const TimelineWidget*>(widget());
         controller_ = tl->props.controller;
     }
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* tl = static_cast<const Timeline*>(widget());
+        auto* tl = static_cast<const TimelineWidget*>(widget());
         controller_ = tl->props.controller;
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* tl = static_cast<const Timeline*>(widget());
+        auto* tl = static_cast<const TimelineWidget*>(widget());
 
         auto timeline_render = std::make_shared<RenderTimelineWidget>(
             controller_, tl->props, hovered_item_index_
@@ -680,7 +680,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Timeline::createState() {
+std::unique_ptr<State> TimelineWidget::createState() {
     return std::make_unique<TimelineState>();
 }
 

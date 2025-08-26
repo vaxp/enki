@@ -110,28 +110,48 @@ struct ContextMenuOptions {
 
 struct ContextMenuProps {
     Key key = Key::none();
-    WidgetPtr child;
+    WidgetPtr child = nullptr;
     std::vector<ContextMenuItemPtr> items;
     ContextMenuOptions options;
 };
 
-/// @brief ContextMenu widget wrapping a target child widget.
-class ContextMenu : public StatefulWidget {
+/// @brief ContextMenu widget implementation wrapping a target child widget.
+class ContextMenuWidget : public StatefulWidget {
 public:
     WidgetPtr child;
     std::vector<ContextMenuItemPtr> items;
     ContextMenuOptions options;
 
-    ContextMenu(WidgetPtr child,
-                std::vector<ContextMenuItemPtr> items,
-                ContextMenuOptions options = ContextMenuOptions())
+    ContextMenuWidget(WidgetPtr child,
+                      std::vector<ContextMenuItemPtr> items,
+                      ContextMenuOptions options = ContextMenuOptions())
         : child(std::move(child)), items(std::move(items)), options(std::move(options)) {}
+
+    ContextMenuWidget(Key k, WidgetPtr child,
+                      std::vector<ContextMenuItemPtr> items,
+                      ContextMenuOptions options = ContextMenuOptions())
+        : StatefulWidget(std::move(k)), child(std::move(child)), items(std::move(items)), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ContextMenu"; }
 };
 
-// ── Factory Helpers ────────────────────────────────────────────────
+/// ════════════════════════════════════════════════════════════════
+/// Declarative ContextMenu Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
+
+struct ContextMenu {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    std::vector<ContextMenuItemPtr> items;
+    ContextMenuOptions options;
+
+    operator WidgetPtr() const {
+        return std::make_shared<ContextMenuWidget>(key, child, items, options);
+    }
+};
+
+// ── Item Helpers ───────────────────────────────────────────────────
 
 inline std::shared_ptr<ContextMenuItem> contextMenuItem(
     std::string label,
@@ -158,18 +178,6 @@ inline std::shared_ptr<ContextMenuSubMenu> contextMenuSubMenu(
     return std::make_shared<ContextMenuSubMenu>(
         std::move(label), std::move(children), std::move(icon), disabled
     );
-}
-
-inline WidgetPtr contextMenu(WidgetPtr child,
-                             std::vector<ContextMenuItemPtr> items,
-                             ContextMenuOptions options = ContextMenuOptions()) {
-    return std::make_shared<ContextMenu>(std::move(child), std::move(items), std::move(options));
-}
-
-inline WidgetPtr contextMenu(ContextMenuProps props) {
-    auto cm = std::make_shared<ContextMenu>(std::move(props.child), std::move(props.items), std::move(props.options));
-    cm->key = props.key;
-    return cm;
 }
 
 } // namespace enki

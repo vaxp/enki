@@ -97,7 +97,7 @@ class DrawerState : public State {
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Drawer*>(widget());
+        auto* w = static_cast<const DrawerWidget*>(widget());
         is_open_ = w->initial_open;
 
         anim_.setDuration(std::chrono::milliseconds(280));
@@ -127,7 +127,7 @@ public:
         if (is_open_) return;
         is_open_ = true;
         anim_.forward();
-        auto* w = static_cast<const Drawer*>(widget());
+        auto* w = static_cast<const DrawerWidget*>(widget());
         if (w->on_open) w->on_open();
     }
 
@@ -135,12 +135,12 @@ public:
         if (!is_open_) return;
         is_open_ = false;
         anim_.reverse();
-        auto* w = static_cast<const Drawer*>(widget());
+        auto* w = static_cast<const DrawerWidget*>(widget());
         if (w->on_close) w->on_close();
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Drawer*>(widget());
+        auto* w = static_cast<const DrawerWidget*>(widget());
         const auto& opts = w->options;
         float t = anim_.value();
 
@@ -250,7 +250,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Drawer::createState() {
+std::unique_ptr<State> DrawerWidget::createState() {
     return std::make_unique<DrawerState>();
 }
 

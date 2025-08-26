@@ -71,27 +71,8 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Focus Widget
+/// Focus Widget Implementation
 /// ════════════════════════════════════════════════════════════════
-
-class Focus : public StatefulWidget {
-public:
-    WidgetPtr child;
-    std::shared_ptr<FocusNode> focus_node;
-    bool autofocus = false;
-    bool show_focus_ring = true;
-    Color focus_ring_color = 0xFF38BDF8;
-
-    std::function<void(bool has_focus)> on_focus_change;
-    std::function<void(int key, int mod)> on_key;
-
-    Focus() = default;
-    Focus(WidgetPtr child_, std::shared_ptr<FocusNode> node = nullptr, bool auto_foc = false)
-        : child(std::move(child_)), focus_node(std::move(node)), autofocus(auto_foc) {}
-
-    [[nodiscard]] std::unique_ptr<State> createState() override;
-    [[nodiscard]] std::string_view typeName() const override { return "Focus"; }
-};
 
 struct FocusProps {
     Key key = Key::none();
@@ -106,44 +87,30 @@ struct FocusProps {
     std::function<void(int key, int mod)> on_key;
 };
 
-inline std::shared_ptr<Focus> focus(
-    WidgetPtr child,
-    std::shared_ptr<FocusNode> node = nullptr,
-    bool autofocus = false) {
-    return std::make_shared<Focus>(std::move(child), std::move(node), autofocus);
-}
-
-inline std::shared_ptr<Focus> focus(FocusProps props) {
-    auto f = std::make_shared<Focus>(std::move(props.child), std::move(props.focus_node), props.autofocus);
-    f->key = std::move(props.key);
-    f->show_focus_ring = props.show_focus_ring;
-    f->focus_ring_color = props.focus_ring_color;
-    f->on_focus_change = std::move(props.on_focus_change);
-    f->on_key = std::move(props.on_key);
-    return f;
-}
-
-inline std::shared_ptr<Focus> focus(FocusProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return focus(std::move(props));
-}
-
-/// ════════════════════════════════════════════════════════════════
-/// FocusScope Widget
-/// ════════════════════════════════════════════════════════════════
-
-class FocusScope : public StatefulWidget {
+class FocusWidget : public StatefulWidget {
 public:
     WidgetPtr child;
+    std::shared_ptr<FocusNode> focus_node;
     bool autofocus = false;
+    bool show_focus_ring = true;
+    Color focus_ring_color = 0xFF38BDF8;
 
-    FocusScope() = default;
-    explicit FocusScope(WidgetPtr child_, bool auto_foc = false)
-        : child(std::move(child_)), autofocus(auto_foc) {}
+    std::function<void(bool has_focus)> on_focus_change;
+    std::function<void(int key, int mod)> on_key;
+
+    FocusWidget() = default;
+    FocusWidget(WidgetPtr child_, std::shared_ptr<FocusNode> node = nullptr, bool auto_foc = false)
+        : child(std::move(child_)), focus_node(std::move(node)), autofocus(auto_foc) {}
+    FocusWidget(Key key, WidgetPtr child_, std::shared_ptr<FocusNode> node = nullptr, bool auto_foc = false)
+        : StatefulWidget(std::move(key)), child(std::move(child_)), focus_node(std::move(node)), autofocus(auto_foc) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
-    [[nodiscard]] std::string_view typeName() const override { return "FocusScope"; }
+    [[nodiscard]] std::string_view typeName() const override { return "Focus"; }
 };
+
+/// ════════════════════════════════════════════════════════════════
+/// FocusScope Widget Implementation
+/// ════════════════════════════════════════════════════════════════
 
 struct FocusScopeProps {
     Key key = Key::none();
@@ -151,19 +118,54 @@ struct FocusScopeProps {
     bool autofocus = false;
 };
 
-inline std::shared_ptr<FocusScope> focusScope(WidgetPtr child, bool autofocus = false) {
-    return std::make_shared<FocusScope>(std::move(child), autofocus);
-}
+class FocusScopeWidget : public StatefulWidget {
+public:
+    WidgetPtr child;
+    bool autofocus = false;
 
-inline std::shared_ptr<FocusScope> focusScope(FocusScopeProps props) {
-    auto fs = std::make_shared<FocusScope>(std::move(props.child), props.autofocus);
-    fs->key = std::move(props.key);
-    return fs;
-}
+    FocusScopeWidget() = default;
+    explicit FocusScopeWidget(WidgetPtr child_, bool auto_foc = false)
+        : child(std::move(child_)), autofocus(auto_foc) {}
+    FocusScopeWidget(Key key, WidgetPtr child_, bool auto_foc = false)
+        : StatefulWidget(std::move(key)), child(std::move(child_)), autofocus(auto_foc) {}
 
-inline std::shared_ptr<FocusScope> focusScope(FocusScopeProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return focusScope(std::move(props));
-}
+    [[nodiscard]] std::unique_ptr<State> createState() override;
+    [[nodiscard]] std::string_view typeName() const override { return "FocusScope"; }
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Structs (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
+
+struct Focus {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    std::shared_ptr<FocusNode> focus_node = nullptr;
+    bool autofocus = false;
+    bool show_focus_ring = true;
+    Color focus_ring_color = 0xFF38BDF8;
+
+    std::function<void(bool has_focus)> on_focus_change = nullptr;
+    std::function<void(int key, int mod)> on_key = nullptr;
+
+    operator WidgetPtr() const {
+        auto w = std::make_shared<FocusWidget>(key, child, focus_node, autofocus);
+        w->show_focus_ring = show_focus_ring;
+        w->focus_ring_color = focus_ring_color;
+        w->on_focus_change = on_focus_change;
+        w->on_key = on_key;
+        return w;
+    }
+};
+
+struct FocusScope {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    bool autofocus = false;
+
+    operator WidgetPtr() const {
+        return std::make_shared<FocusScopeWidget>(key, child, autofocus);
+    }
+};
 
 } // namespace enki

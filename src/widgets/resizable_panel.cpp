@@ -36,7 +36,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const ResizablePanel*>(widget());
+        auto* w = static_cast<const ResizablePanelWidget*>(widget());
         current_x_ = w->options.initial_x;
         current_y_ = w->options.initial_y;
         current_width_ = w->options.initial_width;
@@ -51,10 +51,10 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const ResizablePanel*>(widget());
+        auto* w = static_cast<const ResizablePanelWidget*>(widget());
         if (w->controller) {
             w->controller->set_size_fn = [this](float width, float height) {
-                auto* sw = static_cast<const ResizablePanel*>(widget());
+                auto* sw = static_cast<const ResizablePanelWidget*>(widget());
                 current_width_ = std::clamp(width, sw->options.min_width, sw->options.max_width);
                 current_height_ = std::clamp(height, sw->options.min_height, sw->options.max_height);
                 setState([] {});
@@ -76,7 +76,7 @@ public:
                 setState([] {});
             };
             w->controller->reset_fn = [this] {
-                auto* sw = static_cast<const ResizablePanel*>(widget());
+                auto* sw = static_cast<const ResizablePanelWidget*>(widget());
                 current_x_ = sw->options.initial_x;
                 current_y_ = sw->options.initial_y;
                 current_width_ = sw->options.initial_width;
@@ -114,7 +114,7 @@ public:
 
     // ── Build Window Header Bar ───────────────────────────────────
 
-    WidgetPtr buildHeaderBar(const ResizablePanel* w) {
+    WidgetPtr buildHeaderBar(const ResizablePanelWidget* w) {
         const auto& opts = w->options;
 
         // Left: Icon + Title
@@ -163,7 +163,7 @@ public:
         if (opts.allow_close) {
             right_items.push_back(makeActionBtn("✕", 0xFFEF4444, [this] {
                 is_closed_ = true;
-                auto* sw = static_cast<const ResizablePanel*>(widget());
+                auto* sw = static_cast<const ResizablePanelWidget*>(widget());
                 if (sw->options.on_closed) sw->options.on_closed();
                 setState([] {});
             }));
@@ -190,7 +190,7 @@ public:
             header_gd->on_pan_update = [this](const DragUpdateDetails& d) {
                 current_x_ = std::max(0.0f, current_x_ + d.delta.x);
                 current_y_ = std::max(0.0f, current_y_ + d.delta.y);
-                auto* sw = static_cast<const ResizablePanel*>(widget());
+                auto* sw = static_cast<const ResizablePanelWidget*>(widget());
                 if (sw->options.on_moved) sw->options.on_moved(current_x_, current_y_);
                 setState([] {});
             };
@@ -200,7 +200,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const ResizablePanel*>(widget());
+        auto* w = static_cast<const ResizablePanelWidget*>(widget());
         const auto& opts = w->options;
 
         // ── 1. Page Body Invariant Layer ──────────────────────────────
@@ -248,7 +248,7 @@ public:
                 grip_gd->on_pan_update = [this, opts](const DragUpdateDetails& d) {
                     current_width_ = std::clamp(current_width_ + d.delta.x, opts.min_width, opts.max_width);
                     current_height_ = std::clamp(current_height_ + d.delta.y, opts.min_height, opts.max_height);
-                    auto* sw = static_cast<const ResizablePanel*>(widget());
+                    auto* sw = static_cast<const ResizablePanelWidget*>(widget());
                     if (sw->options.on_resized) sw->options.on_resized(current_width_, current_height_);
                     setState([] {});
                 };
@@ -286,7 +286,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ResizablePanel::createState() {
+std::unique_ptr<State> ResizablePanelWidget::createState() {
     return std::make_unique<ResizablePanelState>();
 }
 

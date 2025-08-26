@@ -12,7 +12,6 @@
 ///   - Left or Right placement.
 ///   - Configurable expanded/collapsed widths.
 ///   - Border between sidebar and body.
-///   - Fluent builder API.
 ///
 /// @copyright ENKI Framework — MIT License
 
@@ -65,62 +64,45 @@ struct SidebarOptions {
 };
 
 // ════════════════════════════════════════════════════════════════
-// Sidebar Widget
+// Sidebar Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-class Sidebar : public StatefulWidget {
+class SidebarWidget : public StatefulWidget {
 public:
     WidgetPtr                  sidebar_content; ///< Content inside the sidebar panel
     WidgetPtr                  body;            ///< Main content area
     SidebarOptions             options;
     std::function<void(bool)>  on_toggle;       ///< Called with new expanded state
 
-    Sidebar() = default;
-    Sidebar(WidgetPtr sidebar_content, WidgetPtr body, SidebarOptions opt = {})
+    SidebarWidget() = default;
+    SidebarWidget(WidgetPtr sidebar_content, WidgetPtr body, SidebarOptions opt = {},
+                  std::function<void(bool)> on_toggle = nullptr)
         : sidebar_content(std::move(sidebar_content)), body(std::move(body)),
-          options(std::move(opt)) {}
-
-    // Fluent API
-    Sidebar& expandedWidth(float w)    { options.expanded_width = w;    return *this; }
-    Sidebar& collapsedWidth(float w)   { options.collapsed_width = w;   return *this; }
-    Sidebar& backgroundColor(Color c)  { options.background_color = c;  return *this; }
-    Sidebar& side(SidebarSide s)       { options.side = s;              return *this; }
-    Sidebar& collapsible(bool v)       { options.collapsible = v;       return *this; }
-    Sidebar& initiallyExpanded(bool v) { options.initially_expanded = v; return *this; }
-    Sidebar& onToggle(std::function<void(bool)> fn) { on_toggle = std::move(fn); return *this; }
+          options(std::move(opt)), on_toggle(std::move(on_toggle)) {}
+    SidebarWidget(Key key, WidgetPtr sidebar_content, WidgetPtr body, SidebarOptions opt = {},
+                  std::function<void(bool)> on_toggle = nullptr)
+        : StatefulWidget(std::move(key)),
+          sidebar_content(std::move(sidebar_content)), body(std::move(body)),
+          options(std::move(opt)), on_toggle(std::move(on_toggle)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Sidebar"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Props for Declarative Syntax
+// Declarative Proxy Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-struct SidebarProps {
+struct Sidebar {
+    Key                        key = Key::none();
     WidgetPtr                  sidebar_content = nullptr;
     WidgetPtr                  body = nullptr;
     SidebarOptions             options = {};
-    std::function<void(bool)>  on_toggle;
-    Key                        key = Key::none();
+    std::function<void(bool)>  on_toggle = nullptr;
+
+    operator WidgetPtr() const {
+        return std::make_shared<SidebarWidget>(key, sidebar_content, body, options, on_toggle);
+    }
 };
-
-// ════════════════════════════════════════════════════════════════
-// Factory Functions
-// ════════════════════════════════════════════════════════════════
-
-inline std::shared_ptr<Sidebar> sidebar(WidgetPtr sidebar_content, WidgetPtr body,
-                                        SidebarOptions options = {}) {
-    return std::make_shared<Sidebar>(std::move(sidebar_content), std::move(body),
-                                    std::move(options));
-}
-
-inline std::shared_ptr<Sidebar> sidebar(SidebarProps props) {
-    auto sb = std::make_shared<Sidebar>(std::move(props.sidebar_content), std::move(props.body),
-                                        std::move(props.options));
-    if (props.on_toggle) sb->onToggle(std::move(props.on_toggle));
-    if (props.key != Key::none()) sb->key = props.key;
-    return sb;
-}
 
 } // namespace enki

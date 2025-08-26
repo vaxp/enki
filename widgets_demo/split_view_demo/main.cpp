@@ -130,9 +130,9 @@ public:
                         .clip_content = true,
                         .width = StyleValue::point(960.0f),
                         .height = StyleValue::point(420.0f),
-                        .child = splitView({
-                            .first_child = buildExplorerPane(),
-                            .second_child = buildEditorPane(),
+                        .child = SplitView {
+                            .leading = buildExplorerPane(),
+                            .trailing = buildEditorPane(),
                             .options = {
                                 .orientation = current_orientation_,
                                 .initial_ratio = 0.5f,
@@ -145,7 +145,7 @@ public:
                                 }
                             },
                             .controller = split_ctrl_
-                        })
+                        }
                     }),
                     container({
                         .color = 0xFF1E293B,

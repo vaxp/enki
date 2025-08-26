@@ -100,7 +100,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const ComboBox*>(widget());
+        auto* w = static_cast<const ComboBoxWidget*>(widget());
         if (w->props.controller) {
             w->props.controller->select_fn = [this](const std::string& id) {
                 selected_id_ = id;
@@ -142,7 +142,7 @@ public:
 
     void selectItem(const ComboBoxItem& it) {
         if (it.is_disabled) return;
-        auto* w = static_cast<const ComboBox*>(widget());
+        auto* w = static_cast<const ComboBoxWidget*>(widget());
 
         if (w->props.mode == ComboBoxMode::Single) {
             selected_id_ = it.id;
@@ -166,7 +166,7 @@ public:
     }
 
     void removeMultiTag(const std::string& id) {
-        auto* w = static_cast<const ComboBox*>(widget());
+        auto* w = static_cast<const ComboBoxWidget*>(widget());
         multi_selected_ids_.erase(id);
         if (w->props.on_multi_changed) {
             std::vector<ComboBoxItem> selected_items;
@@ -187,7 +187,7 @@ public:
 
     // ── Build Floating Dropdown Menu Panel ────────────────────────
 
-    WidgetPtr buildFloatingMenu(const ComboBox* w) {
+    WidgetPtr buildFloatingMenu(const ComboBoxWidget* w) {
         const auto& opts = w->props;
 
         std::vector<WidgetPtr> menu_rows;
@@ -296,7 +296,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const ComboBox*>(widget());
+        auto* w = static_cast<const ComboBoxWidget*>(widget());
         const auto& opts = w->props;
 
         // ── 1. Invariant Page Body (100% dimensions) ──────────────────
@@ -335,7 +335,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ComboBox::createState() {
+std::unique_ptr<State> ComboBoxWidget::createState() {
     return std::make_unique<ComboBoxState>();
 }
 

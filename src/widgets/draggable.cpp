@@ -132,11 +132,11 @@ public:
     }
 };
 
-std::unique_ptr<RenderObject> DragOverlay::createRenderObject(BuildContext&) {
+std::unique_ptr<RenderObject> DragOverlayWidget::createRenderObject(BuildContext&) {
     return std::make_unique<RenderDragOverlay>();
 }
 
-void DragOverlay::updateRenderObject(BuildContext&, RenderObject&) {}
+void DragOverlayWidget::updateRenderObject(BuildContext&, RenderObject&) {}
 
 // ════════════════════════════════════════════════════════════════
 // DragManager Implementation
@@ -214,7 +214,7 @@ private:
 
 public:
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Draggable*>(widget());
+        auto* w = static_cast<const DraggableWidget*>(widget());
 
         WidgetPtr display_child;
         if (is_dragging_) {
@@ -255,7 +255,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Draggable::createState() {
+std::unique_ptr<State> DraggableWidget::createState() {
     return std::make_unique<DraggableState>();
 }
 
@@ -269,7 +269,7 @@ private:
 
 public:
     WidgetPtr build(BuildContext& context) override {
-        auto* w = static_cast<const DragTarget*>(widget());
+        auto* w = static_cast<const DragTargetWidget*>(widget());
 
         WidgetPtr target_content;
         if (w->builder) {
@@ -290,7 +290,7 @@ public:
     }
 };
 
-std::unique_ptr<State> DragTarget::createState() {
+std::unique_ptr<State> DragTargetWidget::createState() {
     return std::make_unique<DragTargetState>();
 }
 

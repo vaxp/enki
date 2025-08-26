@@ -27,7 +27,7 @@ class SidebarState : public State {
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Sidebar*>(widget());
+        auto* w = static_cast<const SidebarWidget*>(widget());
         is_expanded_ = w->options.initially_expanded;
 
         anim_.setDuration(std::chrono::milliseconds(220));
@@ -47,7 +47,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Sidebar*>(widget());
+        auto* w = static_cast<const SidebarWidget*>(widget());
         const auto& opts = w->options;
 
         float t     = anim_.value();
@@ -142,7 +142,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Sidebar::createState() {
+std::unique_ptr<State> SidebarWidget::createState() {
     return std::make_unique<SidebarState>();
 }
 

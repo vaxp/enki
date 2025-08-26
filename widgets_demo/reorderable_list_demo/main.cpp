@@ -65,7 +65,7 @@ static WidgetPtr buildTaskCard(const TaskItem& t, int rank, float card_w) {
                             .padding = StyleInsets::symmetric(2.0f, 6.0f),
                             .child = text(t.tag, { .color = t.tag_color, .font_size = 10.5f, .font_weight = FontWeight::Bold })
                         }),
-                        reorderableDragHandle()
+                        ReorderableDragHandle {}
                     }
                 })
             }
@@ -125,7 +125,7 @@ public:
                             .gap = StyleValue::point(14.0f),
                             .children = {
                                 text("📋  Sprint Priority Backlog  (Drag Any Row to Reorder)", { .color = 0xFF38BDF8, .font_size = 14.5f, .font_weight = FontWeight::Bold }),
-                                reorderableList({
+                                ReorderableList {
                                     .children = std::move(cards),
                                     .item_height = ITEM_H,
                                     .gap = ITEM_GAP,
@@ -138,7 +138,7 @@ public:
                                                  + "  ➔  #" + std::to_string(new_idx + 1);
                                         setState([]{});
                                     }
-                                })
+                                }
                             }
                         })
                     }),

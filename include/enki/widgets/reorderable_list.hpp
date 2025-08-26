@@ -37,16 +37,18 @@ struct ReorderableListProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// ReorderableList Widget (MultiChildRenderObjectWidget)
+/// ReorderableList Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class ReorderableList : public MultiChildRenderObjectWidget {
+class ReorderableListWidget : public MultiChildRenderObjectWidget {
 public:
     ReorderableListProps props;
 
-    ReorderableList() : MultiChildRenderObjectWidget(Key::none(), {}) {}
-    explicit ReorderableList(ReorderableListProps p)
+    ReorderableListWidget() : MultiChildRenderObjectWidget(Key::none(), {}) {}
+    explicit ReorderableListWidget(ReorderableListProps p)
         : MultiChildRenderObjectWidget(p.key, p.children), props(std::move(p)) {}
+    ReorderableListWidget(Key key, ReorderableListProps p)
+        : MultiChildRenderObjectWidget(std::move(key), p.children), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
@@ -54,37 +56,61 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// ReorderableDragHandle Helper
+/// ReorderableDragHandle Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class ReorderableDragHandle : public StatelessWidget {
+class ReorderableDragHandleWidget : public StatelessWidget {
 public:
     WidgetPtr child;
 
-    explicit ReorderableDragHandle(WidgetPtr child_ = nullptr)
+    explicit ReorderableDragHandleWidget(WidgetPtr child_ = nullptr)
         : child(std::move(child_)) {}
+    ReorderableDragHandleWidget(Key key, WidgetPtr child_ = nullptr)
+        : StatelessWidget(std::move(key)), child(std::move(child_)) {}
 
     WidgetPtr build(BuildContext&) override;
     [[nodiscard]] std::string_view typeName() const override { return "ReorderableDragHandle"; }
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Convenience Factory Helpers
+/// Declarative Proxy Structs (C++20 Designated Initializers)
 /// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<ReorderableList> reorderableList(ReorderableListProps props = {}) {
-    return std::make_shared<ReorderableList>(std::move(props));
-}
+struct ReorderableList {
+    Key key = Key::none();
+    std::vector<WidgetPtr> children;
 
-inline std::shared_ptr<ReorderableList> reorderableList(
-    std::vector<WidgetPtr> children) {
-    ReorderableListProps props;
-    props.children = std::move(children);
-    return std::make_shared<ReorderableList>(std::move(props));
-}
+    float item_height = 56.0f;
+    float gap = 10.0f;
+    float width = 480.0f;
 
-inline std::shared_ptr<ReorderableDragHandle> reorderableDragHandle(WidgetPtr child = nullptr) {
-    return std::make_shared<ReorderableDragHandle>(std::move(child));
-}
+    bool show_drop_indicator = true;
+    Color drop_indicator_color = 0xFF38BDF8;
+
+    std::function<void(int old_index, int new_index)> on_reorder = nullptr;
+
+    operator WidgetPtr() const {
+        ReorderableListProps p;
+        p.key = key;
+        p.children = children;
+        p.item_height = item_height;
+        p.gap = gap;
+        p.width = width;
+        p.show_drop_indicator = show_drop_indicator;
+        p.drop_indicator_color = drop_indicator_color;
+        p.on_reorder = on_reorder;
+
+        return std::make_shared<ReorderableListWidget>(key, std::move(p));
+    }
+};
+
+struct ReorderableDragHandle {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    operator WidgetPtr() const {
+        return std::make_shared<ReorderableDragHandleWidget>(key, child);
+    }
+};
 
 } // namespace enki

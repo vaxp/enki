@@ -10,7 +10,7 @@ namespace enki {
 // GridTileBar::build
 // ════════════════════════════════════════════════════════════════
 
-WidgetPtr GridTileBar::build(BuildContext& ctx) {
+WidgetPtr GridTileBarWidget::build(BuildContext& ctx) {
     std::vector<WidgetPtr> row_children;
 
     if (props.leading_widget) {
@@ -64,7 +64,7 @@ WidgetPtr GridTileBar::build(BuildContext& ctx) {
 // GridTile::build
 // ════════════════════════════════════════════════════════════════
 
-WidgetPtr GridTile::build(BuildContext& ctx) {
+WidgetPtr GridTileWidget::build(BuildContext& ctx) {
     std::vector<WidgetPtr> stack_children;
 
     // Child fills the entire tile (Stack expand)

@@ -91,7 +91,7 @@ public:
         // 1. TopCenter Default Popup
         auto top_btn = std::make_shared<DemoButton>("✨", "TopCenter Popup");
 
-        auto top_popup = popup({
+        auto top_popup = Popup {
             .child = top_btn,
             .builder = [](BuildContext&, std::shared_ptr<NativePopup>) {
                 return column({
@@ -104,12 +104,12 @@ public:
             .options = {
                 .placement = PopupPlacement::TopCenter
             }
-        });
+        };
 
         // 2. BottomRight Placement Popup
         auto bottom_btn = std::make_shared<DemoButton>("🔽", "BottomRight Popup", 0xFF1E293B, 0xFF334155);
 
-        auto bottom_popup = popup({
+        auto bottom_popup = Popup {
             .child = bottom_btn,
             .builder = [](BuildContext&, std::shared_ptr<NativePopup>) {
                 return column({
@@ -125,12 +125,12 @@ public:
                 .border_color = 0xFF10B981,
                 .content_size = Size{220.0f, 85.0f}
             }
-        });
+        };
 
         // 3. Follow Cursor Popup (Hover Trigger)
         auto hover_btn = std::make_shared<DemoButton>("🎯", "Hover (FollowCursor)", 0xFF1E293B, 0xFF334155);
 
-        auto cursor_popup = popup({
+        auto cursor_popup = Popup {
             .child = hover_btn,
             .builder = [](BuildContext&, std::shared_ptr<NativePopup>) {
                 return column({
@@ -147,12 +147,12 @@ public:
                 .border_color = 0xFFF59E0B,
                 .content_size = Size{200.0f, 65.0f}
             }
-        });
+        };
 
         // 4. Center Screen Modal Popup
         auto modal_btn = std::make_shared<DemoButton>("🔲", "Center Screen Modal", 0xFF3B82F6, 0xFF60A5FA);
 
-        auto modal_popup = popup({
+        auto modal_popup = Popup {
             .child = modal_btn,
             .builder = [](BuildContext& ctx, std::shared_ptr<NativePopup> popup_instance) {
                 return column({
@@ -178,7 +178,7 @@ public:
                 .padding = EdgeInsets::all(20.0f),
                 .content_size = Size{300.0f, 150.0f}
             }
-        });
+        };
 
         // Assemble Demo Layout
         return container({

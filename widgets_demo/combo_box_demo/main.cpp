@@ -35,42 +35,54 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // ── Main Page Header ──────────────────────────────────────────
-        auto title = text("Advanced ComboBox & Searchable Select Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced ComboBox & Searchable Select Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Rich form input (Category 3. Input / Forms), single & multi-select tag modes, option grouping, and floating overlay");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Rich form input (Category 3. Input / Forms), single & multi-select tag modes, option grouping, and floating overlay", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center).gap(StyleValue::point(6.0f));
+        auto title_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {title, sub},
+        });
 
         // ── 1. Card 1: Single-Select Cloud Region Selector ────────────
-        auto c1_title = text("1. Single-Select: Cloud Deployment Region");
-        c1_title->fontSize(14.5f).bold().color(0xFF38BDF8);
+        auto c1_title = text("1. Single-Select: Cloud Deployment Region", {
+            .color = 0xFF38BDF8,
+            .font_size = 14.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c1_sub = text("Select your primary Kubernetes datacenter location:");
-        c1_sub->fontSize(12.0f).color(0xFF94A3B8);
+        auto c1_sub = text("Select your primary Kubernetes datacenter location:", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
         // Input Trigger Box
-        auto reg_txt = text(region_label_);
-        reg_txt->fontSize(13.0f).color(0xFFFFFFFF);
+        auto reg_txt = text(region_label_, { .color = 0xFFFFFFFF, .font_size = 13.0f });
+        auto chv_txt = text("⌄", { .color = 0xFF94A3B8, .font_size = 14.0f, .font_weight = FontWeight::Bold });
 
-        auto chv_txt = text("⌄");
-        chv_txt->fontSize(14.0f).bold().color(0xFF94A3B8);
+        auto input1_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {reg_txt, chv_txt},
+        });
 
-        std::vector<WidgetPtr> input1_items = {reg_txt, chv_txt};
-        auto input1_row = row(input1_items);
-        input1_row->justifyContent(Justify::SpaceBetween)
-                  .alignItems(Align::Center)
-                  .width(StyleValue::percent(100.0f));
-
-        auto input1_box = container(input1_row);
-        input1_box->color(0xFF0F172A)
-                  .border(0xFF334155, 1.0f)
-                  .borderRadius(8.0f)
-                  .paddingSymmetric(10.0f, 14.0f)
-                  .width(360.0f);
+        auto input1_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(360.0f),
+            .padding = StyleInsets::symmetric(10.0f, 14.0f),
+            .child = input1_row,
+        });
 
         auto input1_gd = std::make_shared<GestureDetector>(input1_box);
         input1_gd->cursor_type = SystemCursor::Pointer;
@@ -78,42 +90,48 @@ public:
             region_ctrl_->toggle();
         };
 
-        std::vector<WidgetPtr> card1_items = {c1_title, c1_sub, input1_gd};
-        auto card1_col = column(card1_items);
-        card1_col->gap(StyleValue::point(12.0f));
-
-        auto card1 = container(card1_col);
-        card1->color(0xFF1E293B)
-             .borderRadius(12.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(20.0f)
-             .width(420.0f);
+        auto card1 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(12.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(420.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .gap = StyleValue::point(12.0f),
+                .children = {c1_title, c1_sub, input1_gd},
+            }),
+        });
 
         // ── 2. Card 2: Multi-Select Tech Stack Selector ───────────────
-        auto c2_title = text("2. Multi-Select: Tech Stack & Libraries");
-        c2_title->fontSize(14.5f).bold().color(0xFF10B981);
+        auto c2_title = text("2. Multi-Select: Tech Stack & Libraries", {
+            .color = 0xFF10B981,
+            .font_size = 14.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c2_sub = text("Select packages to bundle into the runtime build:");
-        c2_sub->fontSize(12.0f).color(0xFF94A3B8);
+        auto c2_sub = text("Select packages to bundle into the runtime build:", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
-        auto tech_txt = text("⚡ Skia, Vulkan, Anu Layout (Click to edit)");
-        tech_txt->fontSize(13.0f).color(0xFF38BDF8);
+        auto tech_txt = text("⚡ Skia, Vulkan, Anu Layout (Click to edit)", { .color = 0xFF38BDF8, .font_size = 13.0f });
+        auto chv2_txt = text("⌄", { .color = 0xFF94A3B8, .font_size = 14.0f, .font_weight = FontWeight::Bold });
 
-        auto chv2_txt = text("⌄");
-        chv2_txt->fontSize(14.0f).bold().color(0xFF94A3B8);
+        auto input2_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {tech_txt, chv2_txt},
+        });
 
-        std::vector<WidgetPtr> input2_items = {tech_txt, chv2_txt};
-        auto input2_row = row(input2_items);
-        input2_row->justifyContent(Justify::SpaceBetween)
-                  .alignItems(Align::Center)
-                  .width(StyleValue::percent(100.0f));
-
-        auto input2_box = container(input2_row);
-        input2_box->color(0xFF0F172A)
-                  .border(0xFF334155, 1.0f)
-                  .borderRadius(8.0f)
-                  .paddingSymmetric(10.0f, 14.0f)
-                  .width(360.0f);
+        auto input2_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(360.0f),
+            .padding = StyleInsets::symmetric(10.0f, 14.0f),
+            .child = input2_row,
+        });
 
         auto input2_gd = std::make_shared<GestureDetector>(input2_box);
         input2_gd->cursor_type = SystemCursor::Pointer;
@@ -121,43 +139,50 @@ public:
             tech_ctrl_->toggle();
         };
 
-        std::vector<WidgetPtr> card2_items = {c2_title, c2_sub, input2_gd};
-        auto card2_col = column(card2_items);
-        card2_col->gap(StyleValue::point(12.0f));
+        auto card2 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(12.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(420.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .gap = StyleValue::point(12.0f),
+                .children = {c2_title, c2_sub, input2_gd},
+            }),
+        });
 
-        auto card2 = container(card2_col);
-        card2->color(0xFF1E293B)
-             .borderRadius(12.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(20.0f)
-             .width(420.0f);
-
-        std::vector<WidgetPtr> cards_list = {card1, card2};
-        auto cards_row = row(cards_list);
-        cards_row->gap(StyleValue::point(20.0f)).justifyContent(Justify::Center);
+        auto cards_row = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(20.0f),
+            .children = {card1, card2},
+        });
 
         // ── HUD / Status Box ──────────────────────────────────────────
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
-
-        auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(860.0f);
+        auto hud_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(860.0f),
+            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+            .child = row({
+                .children = {
+                    text("💡 " + hud_msg_, { .color = 0xFF38BDF8, .font_size = 12.5f }),
+                },
+            }),
+        });
 
         // ── Assemble Page Body ────────────────────────────────────────
-        std::vector<WidgetPtr> page_items = {title_col, cards_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(24.0f)).alignItems(Align::Center);
-
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(24.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
+        auto background_page = container({
+            .color = 0xFF0B1120,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(24.0f),
+                .children = {title_col, cards_row, hud_box},
+            }),
+        });
 
         // ── Setup ComboBox 1 Options & Items (Cloud Regions) ──────────
         std::vector<ComboBoxItem> region_items = {
@@ -166,23 +191,7 @@ public:
             ComboBoxItem("eu-central-1", "Europe (Frankfurt)", "🇩🇪", "28 ms • 32 Nodes", "Europe").setBadge("EU", 0xFF38BDF8),
             ComboBoxItem("eu-west-1", "Europe (Ireland)", "🇮🇪", "31 ms • 16 Nodes", "Europe"),
             ComboBoxItem("ap-northeast-1", "Asia Pacific (Tokyo)", "🇯🇵", "68 ms • 20 Nodes", "Asia Pacific"),
-            ComboBoxItem("ap-southeast-1", "Asia Pacific (Singapore)", "🇸🇬", "74 ms • 14 Nodes", "Asia Pacific")
-        };
-
-        ComboBoxProps reg_opts;
-        reg_opts.items = region_items;
-        reg_opts.body = background_page;
-        reg_opts.controller = region_ctrl_;
-        reg_opts.mode = ComboBoxMode::Single;
-        reg_opts.width = 360.0f;
-        reg_opts.input_height = 42.0f;
-        reg_opts.anchor_x = 178.0f; // Calibrated X of Card 1 input
-        reg_opts.anchor_y = 168.0f; // Calibrated Y of Card 1 input top
-        reg_opts.on_selected = [this](const ComboBoxItem& it) {
-            selected_region_ = it.id;
-            region_label_ = it.icon + " " + it.label;
-            hud_msg_ = "Selected Region: " + it.label + " (" + it.subtitle + ")";
-            setState([] {});
+            ComboBoxItem("ap-southeast-1", "Asia Pacific (Singapore)", "🇸🇬", "74 ms • 14 Nodes", "Asia Pacific"),
         };
 
         // ── Setup ComboBox 2 Options & Items (Tech Stack) ─────────────
@@ -192,33 +201,47 @@ public:
             ComboBoxItem("rust", "Rust FFI Bindings", "🦀", "High-performance memory safety", "Languages"),
             ComboBoxItem("cpp20", "Modern C++20 Core", "⚡", "Standard template modules", "Languages"),
             ComboBoxItem("wayland", "Wayland Native Protocol", "🌐", "X11 & Wayland compositing", "Display Drivers"),
-            ComboBoxItem("vulkan", "Vulkan Compute Shaders", "🚀", "SPIR-V GPU pipeline", "Display Drivers")
+            ComboBoxItem("vulkan", "Vulkan Compute Shaders", "🚀", "SPIR-V GPU pipeline", "Display Drivers"),
         };
 
-        ComboBoxProps tech_opts;
-        tech_opts.items = tech_items;
+        // combo1 wraps background_page
+        WidgetPtr combo1 = ComboBox {
+            .items = std::move(region_items),
+            .body = background_page,
+            .controller = region_ctrl_,
+            .mode = ComboBoxMode::Single,
+            .width = 360.0f,
+            .input_height = 42.0f,
+            .anchor_x = 178.0f,
+            .anchor_y = 168.0f,
+            .on_selected = [this](const ComboBoxItem& it) {
+                selected_region_ = it.id;
+                region_label_ = it.icon + " " + it.label;
+                hud_msg_ = "Selected Region: " + it.label + " (" + it.subtitle + ")";
+                setState([] {});
+            },
+        };
+
         // combo2 wraps combo1 as its body
-        auto combo1 = comboBox(std::move(reg_opts));
-        tech_opts.body = combo1;
-        tech_opts.controller = tech_ctrl_;
-        tech_opts.mode = ComboBoxMode::Multi;
-        tech_opts.width = 360.0f;
-        tech_opts.input_height = 42.0f;
-        tech_opts.anchor_x = 618.0f; // Calibrated X of Card 2 input
-        tech_opts.anchor_y = 168.0f; // Calibrated Y of Card 2 input top
-        tech_opts.on_multi_changed = [this](const std::vector<ComboBoxItem>& items) {
-            std::string summary = "Active Packages (" + std::to_string(items.size()) + "): ";
-            for (size_t i = 0; i < items.size(); ++i) {
-                if (i > 0) summary += ", ";
-                summary += items[i].label;
-            }
-            hud_msg_ = summary;
-            setState([] {});
+        return ComboBox {
+            .items = std::move(tech_items),
+            .body = combo1,
+            .controller = tech_ctrl_,
+            .mode = ComboBoxMode::Multi,
+            .width = 360.0f,
+            .input_height = 42.0f,
+            .anchor_x = 618.0f,
+            .anchor_y = 168.0f,
+            .on_multi_changed = [this](const std::vector<ComboBoxItem>& items) {
+                std::string summary = "Active Packages (" + std::to_string(items.size()) + "): ";
+                for (size_t i = 0; i < items.size(); ++i) {
+                    if (i > 0) summary += ", ";
+                    summary += items[i].label;
+                }
+                hud_msg_ = summary;
+                setState([] {});
+            },
         };
-
-        auto combo2 = comboBox(std::move(tech_opts));
-
-        return combo2;
     }
 };
 

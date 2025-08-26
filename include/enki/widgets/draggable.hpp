@@ -58,10 +58,10 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Draggable Widget
+/// Draggable Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class Draggable : public StatefulWidget {
+class DraggableWidget : public StatefulWidget {
 public:
     std::string tag = "";
     std::string preview_label = "";
@@ -74,10 +74,15 @@ public:
     std::function<void()> on_drag_end;
     std::function<void()> on_drag_completed;
 
-    Draggable() = default;
-    Draggable(std::string tag_, std::any data_, WidgetPtr child_, WidgetPtr feedback_ = nullptr,
-              WidgetPtr child_when_dragging_ = nullptr, std::string preview_lbl_ = "")
+    DraggableWidget() = default;
+    DraggableWidget(std::string tag_, std::any data_, WidgetPtr child_, WidgetPtr feedback_ = nullptr,
+                    WidgetPtr child_when_dragging_ = nullptr, std::string preview_lbl_ = "")
         : tag(std::move(tag_)), preview_label(std::move(preview_lbl_)),
+          data(std::move(data_)), child(std::move(child_)),
+          feedback(std::move(feedback_)), child_when_dragging(std::move(child_when_dragging_)) {}
+    DraggableWidget(Key key, std::string tag_, std::any data_, WidgetPtr child_, WidgetPtr feedback_ = nullptr,
+                    WidgetPtr child_when_dragging_ = nullptr, std::string preview_lbl_ = "")
+        : StatefulWidget(std::move(key)), tag(std::move(tag_)), preview_label(std::move(preview_lbl_)),
           data(std::move(data_)), child(std::move(child_)),
           feedback(std::move(feedback_)), child_when_dragging(std::move(child_when_dragging_)) {}
 
@@ -85,54 +90,11 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "Draggable"; }
 };
 
-inline std::shared_ptr<Draggable> draggable(
-    std::string tag,
-    std::any data,
-    WidgetPtr child,
-    WidgetPtr feedback = nullptr,
-    WidgetPtr child_when_dragging = nullptr,
-    std::string preview_label = "") {
-    return std::make_shared<Draggable>(std::move(tag), std::move(data), std::move(child),
-                                      std::move(feedback), std::move(child_when_dragging),
-                                      std::move(preview_label));
-}
-
-struct DraggableProps {
-    Key key = Key::none();
-    WidgetPtr child = nullptr;
-
-    std::string tag = "";
-    std::string preview_label = "";
-    std::any data;
-    WidgetPtr feedback;
-    WidgetPtr child_when_dragging;
-
-    std::function<void()> on_drag_started;
-    std::function<void()> on_drag_end;
-    std::function<void()> on_drag_completed;
-};
-
-inline std::shared_ptr<Draggable> draggable(DraggableProps props) {
-    auto d = std::make_shared<Draggable>(std::move(props.tag), std::move(props.data), std::move(props.child),
-                                         std::move(props.feedback), std::move(props.child_when_dragging),
-                                         std::move(props.preview_label));
-    d->key = std::move(props.key);
-    d->on_drag_started = std::move(props.on_drag_started);
-    d->on_drag_end = std::move(props.on_drag_end);
-    d->on_drag_completed = std::move(props.on_drag_completed);
-    return d;
-}
-
-inline std::shared_ptr<Draggable> draggable(DraggableProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return draggable(std::move(props));
-}
-
 /// ════════════════════════════════════════════════════════════════
-/// DragTarget Widget
+/// DragTarget Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class DragTarget : public StatefulWidget {
+class DragTargetWidget : public StatefulWidget {
 public:
     std::string accepted_tag = "";
     using TargetBuilder = std::function<WidgetPtr(BuildContext& context, bool is_hovered, const std::any& candidate_data)>;
@@ -142,57 +104,87 @@ public:
     std::function<void(const std::any& data)> on_accept;
     std::function<void()> on_leave;
 
-    DragTarget() = default;
-    DragTarget(TargetBuilder builder_, std::function<void(const std::any&)> on_accept_ = nullptr,
-               std::string accepted_tag_ = "")
+    DragTargetWidget() = default;
+    DragTargetWidget(TargetBuilder builder_, std::function<void(const std::any&)> on_accept_ = nullptr,
+                     std::string accepted_tag_ = "")
         : accepted_tag(std::move(accepted_tag_)), builder(std::move(builder_)),
+          on_accept(std::move(on_accept_)) {}
+    DragTargetWidget(Key key, TargetBuilder builder_, std::function<void(const std::any&)> on_accept_ = nullptr,
+                     std::string accepted_tag_ = "")
+        : StatefulWidget(std::move(key)), accepted_tag(std::move(accepted_tag_)), builder(std::move(builder_)),
           on_accept(std::move(on_accept_)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DragTarget"; }
 };
 
-inline std::shared_ptr<DragTarget> dragTarget(
-    DragTarget::TargetBuilder builder,
-    std::function<void(const std::any&)> on_accept = nullptr,
-    std::string accepted_tag = "") {
-    return std::make_shared<DragTarget>(std::move(builder), std::move(on_accept), std::move(accepted_tag));
-}
-
-struct DragTargetProps {
-    Key key = Key::none();
-    std::string accepted_tag = "";
-    DragTarget::TargetBuilder builder;
-
-    std::function<bool(const std::any& data)> on_will_accept;
-    std::function<void(const std::any& data)> on_accept;
-    std::function<void()> on_leave;
-};
-
-inline std::shared_ptr<DragTarget> dragTarget(DragTargetProps props) {
-    auto dt = std::make_shared<DragTarget>(std::move(props.builder), std::move(props.on_accept), std::move(props.accepted_tag));
-    dt->key = std::move(props.key);
-    dt->on_will_accept = std::move(props.on_will_accept);
-    dt->on_leave = std::move(props.on_leave);
-    return dt;
-}
-
 /// ════════════════════════════════════════════════════════════════
-/// DragOverlay Widget (Direct Canvas Fast Renderer)
+/// DragOverlay Widget Implementation (Direct Canvas Fast Renderer)
 /// ════════════════════════════════════════════════════════════════
 
-class DragOverlay : public SingleChildRenderObjectWidget {
+class DragOverlayWidget : public SingleChildRenderObjectWidget {
 public:
-    explicit DragOverlay(WidgetPtr child)
+    explicit DragOverlayWidget(WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)) {}
+    DragOverlayWidget(Key key, WidgetPtr child)
+        : SingleChildRenderObjectWidget(std::move(key), std::move(child)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override;
     void updateRenderObject(BuildContext&, RenderObject&) override;
     [[nodiscard]] std::string_view typeName() const override { return "DragOverlay"; }
 };
 
-inline std::shared_ptr<DragOverlay> dragOverlay(WidgetPtr child) {
-    return std::make_shared<DragOverlay>(std::move(child));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Structs (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
+
+struct Draggable {
+    Key key = Key::none();
+    std::string tag = "";
+    std::string preview_label = "";
+    std::any data;
+    WidgetPtr child = nullptr;
+    WidgetPtr feedback = nullptr;
+    WidgetPtr child_when_dragging = nullptr;
+
+    std::function<void()> on_drag_started = nullptr;
+    std::function<void()> on_drag_end = nullptr;
+    std::function<void()> on_drag_completed = nullptr;
+
+    operator WidgetPtr() const {
+        auto w = std::make_shared<DraggableWidget>(key, tag, data, child, feedback, child_when_dragging, preview_label);
+        w->on_drag_started = on_drag_started;
+        w->on_drag_end = on_drag_end;
+        w->on_drag_completed = on_drag_completed;
+        return w;
+    }
+};
+
+struct DragTarget {
+    Key key = Key::none();
+    std::string accepted_tag = "";
+    using TargetBuilder = std::function<WidgetPtr(BuildContext& context, bool is_hovered, const std::any& candidate_data)>;
+    TargetBuilder builder = nullptr;
+
+    std::function<bool(const std::any& data)> on_will_accept = nullptr;
+    std::function<void(const std::any& data)> on_accept = nullptr;
+    std::function<void()> on_leave = nullptr;
+
+    operator WidgetPtr() const {
+        auto w = std::make_shared<DragTargetWidget>(key, builder, on_accept, accepted_tag);
+        w->on_will_accept = on_will_accept;
+        w->on_leave = on_leave;
+        return w;
+    }
+};
+
+struct DragOverlay {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    operator WidgetPtr() const {
+        return std::make_shared<DragOverlayWidget>(key, child);
+    }
+};
 
 } // namespace enki

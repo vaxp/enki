@@ -213,7 +213,7 @@ public:
 class ListTileState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const ListTile*>(widget());
+        auto* w = static_cast<const ListTileWidget*>(widget());
         const auto& opts = w->props;
 
         // ── Build content row ──────────────────────────────────
@@ -304,7 +304,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ListTile::createState() {
+std::unique_ptr<State> ListTileWidget::createState() {
     return std::make_unique<ListTileState>();
 }
 
