@@ -11,13 +11,16 @@ using namespace enki;
 
 class TableDemoState : public State {
     static WidgetPtr cell(const std::string& s, bool hdr = false) {
-        auto t = std::make_shared<Text>(s);
-        t->fontSize(hdr ? 12.0f : 13.0f)
-          .color(hdr ? 0xFFB0C4D8 : 0xFFE2E8F0);
-        if (hdr) t->bold();
-        auto wrap = container(t);
-        wrap->padding(EdgeInsets::symmetric(10.0f, 12.0f));
-        return wrap;
+        auto t = text({
+            .text = s,
+            .color = hdr ? 0xFFB0C4D8 : 0xFFE2E8F0,
+            .font_size = hdr ? 12.0f : 13.0f,
+            .font_weight = hdr ? FontWeight::Bold : FontWeight::Normal,
+        });
+        return container({
+            .padding = StyleInsets::symmetric(10.0f, 12.0f),
+            .child = t,
+        });
     }
 public:
     WidgetPtr build(BuildContext& ctx) override {
@@ -46,52 +49,73 @@ public:
             const auto& d = kData[i];
             Color trend_color = std::string_view(d.trend).starts_with("▲") ? 0xFF10B981 :
                                 std::string_view(d.trend).starts_with("▼") ? 0xFFEF4444 : 0xFF8B9BB4;
-            auto trend_t = std::make_shared<Text>(d.trend);
-            trend_t->fontSize(13.0f).color(trend_color);
-            auto trend_wrap = container(trend_t);
-            trend_wrap->padding(EdgeInsets::symmetric(10.0f, 12.0f));
+            auto trend_t = text({
+                .text = d.trend,
+                .color = trend_color,
+                .font_size = 13.0f,
+            });
+            auto trend_wrap = container({
+                .padding = StyleInsets::symmetric(10.0f, 12.0f),
+                .child = trend_t,
+            });
 
             rows.push_back(TableRow({
                 cell(d.rank), cell(d.lang), cell(d.usage), trend_wrap, cell(d.type)
             }));
         }
 
-        auto t_widget = table(std::move(rows));
-        t_widget->columnWidths({
-            {0, FixedColumnWidth(40.0f)},
-            {1, FlexColumnWidth(2.0f)},
-            {2, FixedColumnWidth(70.0f)},
-            {3, FixedColumnWidth(80.0f)},
-            {4, FlexColumnWidth(1.2f)},
-        });
-        t_widget->border(TableBorder::symmetric(0x1AFFFFFF, 1.0f));
-        t_widget->defaultVerticalAlignment(TableCellVerticalAlignment::Middle);
+        auto t_widget = Table {
+            .rows = std::move(rows),
+            .column_widths = {
+                {0, FixedColumnWidth(40.0f)},
+                {1, FlexColumnWidth(2.0f)},
+                {2, FixedColumnWidth(70.0f)},
+                {3, FixedColumnWidth(80.0f)},
+                {4, FlexColumnWidth(1.2f)},
+            },
+            .border = TableBorder::symmetric(0x1AFFFFFF, 1.0f),
+            .default_vertical_alignment = TableCellVerticalAlignment::Middle,
+        };
 
         auto scroll = scrollView(
             ScrollOptions{.direction=Axis::Vertical,.show_scrollbar=true},
             t_widget
         );
-        auto scroll_flex = std::make_shared<FlexItem>(scroll);
-        scroll_flex->flexGrow(1.0f).flexShrink(1.0f);
+        auto scroll_flex = flexItem({.flex_grow = 1.0f, .flex_shrink = 1.0f}, scroll);
 
-        auto title = std::make_shared<Text>("Table Demo — Programming Languages");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
-        auto sub = std::make_shared<Text>("FixedColumnWidth · FlexColumnWidth · TableBorder · per-row decoration");
-        sub->fontSize(12.0f).color(0xFF8B9BB4);
-        auto hdr_col = column({title, sub});
-        hdr_col->gap(StyleValue::point(4.0f));
-        auto hdr = container(hdr_col);
-        hdr->padding(EdgeInsets::symmetric(14.0f, 18.0f));
-        hdr->color(0xFF0D1117);
-        hdr->width(StyleValue::percent(100.0f));
+        auto title = text({
+            .text = "Table Demo — Programming Languages",
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
+        auto sub = text({
+            .text = "FixedColumnWidth · FlexColumnWidth · TableBorder · per-row decoration",
+            .color = 0xFF8B9BB4,
+            .font_size = 12.0f,
+        });
+        auto hdr_col = column({
+            .gap = StyleValue::point(4.0f),
+            .children = {title, sub}
+        });
+        auto hdr = container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(14.0f, 18.0f),
+            .child = hdr_col,
+        });
 
-        auto root_col = column({hdr, scroll_flex});
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->height(StyleValue::percent(100.0f));
-        auto root = container(root_col);
-        root->color(0xFF0D1117);
-        root->width(StyleValue::percent(100.0f));
-        root->height(StyleValue::percent(100.0f));
+        auto root_col = column({
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {hdr, scroll_flex},
+        });
+        auto root = container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = root_col,
+        });
         return root;
     }
 };

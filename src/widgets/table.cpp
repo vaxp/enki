@@ -95,7 +95,7 @@ void TableBorderWidget::updateRenderObject(BuildContext& ctx, RenderObject& ro) 
     rt.setBorder(border);
 }
 
-WidgetPtr Table::build(BuildContext& ctx) {
+WidgetPtr TableWidget::build(BuildContext& ctx) {
     std::vector<WidgetPtr> row_widgets;
     row_widgets.reserve(props.rows.size());
 

@@ -1,9 +1,5 @@
 ### Least to Most Dependent Widgets (Filtered: Only Mixed Widgets)
 
-- **image**: (Used by 1 widgets) -> avatar
-- **table**: (Used by 1 widgets) -> data_table
-- **text_field**: (Used by 1 widgets) -> form
-- **divider**: (Used by 3 widgets) -> data_table, list_view, context_menu
 - **list_view**: (Used by 3 widgets) -> tree_view, data_table, grid_view
 - **icon**: (Used by 5 widgets) -> navigation_rail, navigation_bar, tab_bar, sidebar
 - **scroll_view**: (Used by 8 widgets) -> notification, tree_view, data_table, list_view, grid_view

@@ -585,15 +585,14 @@ public:
             bodyContent = buildShellShowcaseView();
         } else {
             // TextField Demo Tab
-            TextFieldProps opt;
-            opt.style.font_size = 18.0f;
-            opt.style.color = 0xFFFFFFFF;
-            opt.hint_text = "Type here (Supports Arabic, UTF-8, Key Repeat)...";
-            opt.cursor_color = 0xFF3B82F6;
-            opt.selection_color = 0x503B82F6;
-            opt.auto_focus = true;
-            
-            auto tf = std::make_shared<TextField>(text_ctrl_, opt);
+            auto tf = TextField {
+                .controller = text_ctrl_,
+                .style = TextStyle { .color = 0xFFFFFFFF, .font_size = 18.0f },
+                .hint_text = "Type here (Supports Arabic, UTF-8, Key Repeat)...",
+                .auto_focus = true,
+                .cursor_color = 0xFF3B82F6,
+                .selection_color = 0x503B82F6,
+            };
             
             auto tf_box = container(tf);
             tf_box->color(0xFF1E293B)

@@ -232,19 +232,19 @@ public:
 // Widget implementations
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> Divider::createRenderObject(BuildContext&) {
+std::unique_ptr<RenderObject> DividerWidget::createRenderObject(BuildContext&) {
     return std::make_unique<RenderDivider>(options);
 }
 
-void Divider::updateRenderObject(BuildContext&, RenderObject& ro) {
+void DividerWidget::updateRenderObject(BuildContext&, RenderObject& ro) {
     static_cast<RenderDivider&>(ro).updateOptions(options);
 }
 
-std::unique_ptr<RenderObject> VerticalDivider::createRenderObject(BuildContext&) {
+std::unique_ptr<RenderObject> VerticalDividerWidget::createRenderObject(BuildContext&) {
     return std::make_unique<RenderVerticalDivider>(options);
 }
 
-void VerticalDivider::updateRenderObject(BuildContext&, RenderObject& ro) {
+void VerticalDividerWidget::updateRenderObject(BuildContext&, RenderObject& ro) {
     static_cast<RenderVerticalDivider&>(ro).updateOptions(options);
 }
 

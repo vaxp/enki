@@ -9,13 +9,19 @@ WidgetPtr AvatarWidget::build(BuildContext& ctx) {
 
     // 1. Content (Image or Initials)
     if (options.image_data) {
-        auto img_widget = image(options.image_data);
-        img_widget->fit(BoxFit::Cover).size(diameter, diameter);
-        content = img_widget;
+        content = image({
+            .image = options.image_data,
+            .width = StyleValue::point(diameter),
+            .height = StyleValue::point(diameter),
+            .fit = BoxFit::Cover,
+        });
     } else if (!options.image_path.empty()) {
-        auto img_widget = imageAsset(options.image_path);
-        img_widget->fit(BoxFit::Cover).size(diameter, diameter);
-        content = img_widget;
+        content = image({
+            .source_path = options.image_path,
+            .width = StyleValue::point(diameter),
+            .height = StyleValue::point(diameter),
+            .fit = BoxFit::Cover,
+        });
     } else {
         auto text_widget = text(options.initials);
         // Calculate font size based on radius (rough heuristic: 40% of diameter)

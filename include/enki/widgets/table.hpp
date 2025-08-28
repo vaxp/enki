@@ -15,11 +15,12 @@
 ///     TableBorder lines are drawn by the RenderTable during paint.
 ///
 /// Architecture:
-///   Table (SingleChildRenderObjectWidget)
-///     └── RenderTable
-///           ├── [Row 0] → Anu Flexbox Row → [Cell 0] [Cell 1] ... [Cell N]
-///           ├── [Row 1] → Anu Flexbox Row → ...
-///           └── ...
+///   TableWidget (StatelessWidget)
+///     └── TableBorderWidget (SingleChildRenderObjectWidget)
+///           └── RenderTable
+///                 ├── [Row 0] → Anu Flexbox Row → [Cell 0] [Cell 1] ... [Cell N]
+///                 ├── [Row 1] → Anu Flexbox Row → ...
+///                 └── ...
 ///   (RenderTable draws border lines in paint phase using Canvas::drawLine)
 ///
 /// @copyright ENKI Framework — MIT License
@@ -142,17 +143,16 @@ struct TableBorder {
 
 /// @brief A row in the Table, containing one WidgetPtr per column.
 struct TableRow {
-    std::vector<WidgetPtr> cells;            ///< One widget per column. May be nullptr (empty cell).
-    std::optional<BoxDecoration> decoration; ///< Optional row background/border styling.
+    std::vector<WidgetPtr> cells = {};            ///< One widget per column. May be nullptr (empty cell).
+    std::optional<BoxDecoration> decoration;      ///< Optional row background/border styling.
     TableCellVerticalAlignment   vertical_alignment = TableCellVerticalAlignment::Middle;
 
     TableRow() = default;
     explicit TableRow(std::vector<WidgetPtr> cells) : cells(std::move(cells)) {}
     TableRow(std::vector<WidgetPtr> cells, BoxDecoration dec)
         : cells(std::move(cells)), decoration(std::move(dec)) {}
-
-    TableRow& setDecoration(BoxDecoration d) { decoration = std::move(d); return *this; }
-    TableRow& align(TableCellVerticalAlignment a) { vertical_alignment = a; return *this; }
+    TableRow(std::vector<WidgetPtr> cells, BoxDecoration dec, TableCellVerticalAlignment align)
+        : cells(std::move(cells)), decoration(std::move(dec)), vertical_alignment(align) {}
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -187,27 +187,9 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Table Widget
+// TableBorderWidget
 // ════════════════════════════════════════════════════════════════
 
-/// @brief A fixed-layout table with declarative rows and configurable column widths.
-///
-/// Usage:
-/// @code
-///   table({
-///       TableRow({ text("Name"),   text("Size"),   text("Date") })
-///           .setDecoration(BoxDecoration(0xFF1E2937)),   // header row
-///       TableRow({ text("file.txt"), text("12 KB"), text("2024-01-15") }),
-///       TableRow({ text("photo.jpg"), text("3.4 MB"), text("2024-01-10") }),
-///   })
-///   ->columnWidths({
-///       {0, FlexColumnWidth(2)},    // Name column: 2x flex
-///       {1, FixedColumnWidth(80)},  // Size column: fixed 80px
-///       {2, FixedColumnWidth(100)}, // Date column: fixed 100px
-///   })
-///   ->border(TableBorder::symmetric())
-///   ->defaultVerticalAlignment(TableCellVerticalAlignment::Middle);
-/// @endcode
 class TableBorderWidget : public SingleChildRenderObjectWidget {
 public:
     TableBorder border;
@@ -221,6 +203,10 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "TableBorderWidget"; }
 };
 
+// ════════════════════════════════════════════════════════════════
+// TableProps & TableWidget Implementation
+// ════════════════════════════════════════════════════════════════
+
 struct TableProps {
     Key key = Key::none();
     std::vector<TableRow> rows;
@@ -230,45 +216,57 @@ struct TableProps {
     TableCellVerticalAlignment default_vertical_alignment = TableCellVerticalAlignment::Middle;
 };
 
-class Table : public StatelessWidget {
+class TableWidget : public StatelessWidget {
 public:
     TableProps props;
 
-    Table() = default;
-    explicit Table(TableProps p) : props(std::move(p)) {}
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    Table& columnWidths(std::vector<std::pair<int, TableColumnWidth>> map) {
-        props.column_widths_map = std::move(map);
-        return *this;
-    }
-    Table& defaultColumnWidth(TableColumnWidth def) {
-        props.default_column_width = std::move(def);
-        return *this;
-    }
-    Table& border(TableBorder b) { props.table_border = std::move(b); return *this; }
-    Table& defaultVerticalAlignment(TableCellVerticalAlignment a) {
-        props.default_vertical_alignment = a;
-        return *this;
-    }
+    TableWidget() = default;
+    explicit TableWidget(TableProps p) : StatelessWidget(p.key), props(std::move(p)) {}
+    TableWidget(Key k, TableProps p) : StatelessWidget(std::move(k)), props(std::move(p)) {}
 
     WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "Table"; }
 };
 
 // ════════════════════════════════════════════════════════════════
+// Declarative Table Struct (C++20 Designated Initializers)
+// ════════════════════════════════════════════════════════════════
+
+struct Table {
+    Key key = Key::none();
+    std::vector<TableRow> rows = {};
+    std::vector<std::pair<int, TableColumnWidth>> column_widths_map = {};
+    std::vector<std::pair<int, TableColumnWidth>> column_widths = {};
+    TableColumnWidth default_column_width = FlexColumnWidth(1.0f);
+    TableBorder table_border = {};
+    TableBorder border = {};
+    TableCellVerticalAlignment default_vertical_alignment = TableCellVerticalAlignment::Middle;
+
+    operator WidgetPtr() const {
+        TableProps p;
+        p.key = key;
+        p.rows = rows;
+        p.column_widths_map = !column_widths.empty() ? column_widths : column_widths_map;
+        p.default_column_width = default_column_width;
+        p.table_border = (table_border != TableBorder{}) ? table_border : border;
+        p.default_vertical_alignment = default_vertical_alignment;
+        return std::make_shared<TableWidget>(key, std::move(p));
+    }
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Table> table(TableProps props = {}) {
-    return std::make_shared<Table>(std::move(props));
+inline std::shared_ptr<TableWidget> table(TableProps props = {}) {
+    auto k = props.key;
+    return std::make_shared<TableWidget>(k, std::move(props));
 }
 
-inline std::shared_ptr<Table> table(std::vector<TableRow> rows) {
+inline std::shared_ptr<TableWidget> table(std::vector<TableRow> rows) {
     TableProps props;
     props.rows = std::move(rows);
-    return std::make_shared<Table>(std::move(props));
+    return std::make_shared<TableWidget>(std::move(props));
 }
 
 } // namespace enki

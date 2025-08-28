@@ -81,7 +81,7 @@ public:
                                             .border = Border(0xFF334155, 1.0f),
                                             .width = StyleValue::point(340.0f),
                                             .padding = StyleInsets::symmetric(8.0f, 12.0f),
-                                            .child = std::make_shared<TextField>(dest_ctrl_, TextFieldProps{ .hint_text = "Enter Destination..." })
+                                            .child = TextField { .controller = dest_ctrl_, .hint_text = "Enter Destination..." }
                                         }),
 
                                         text("Passengers & Class:", { .color = 0xFF94A3B8, .font_size = 11.5f, .font_weight = FontWeight::Bold }),
@@ -91,7 +91,7 @@ public:
                                             .border = Border(0xFF334155, 1.0f),
                                             .width = StyleValue::point(340.0f),
                                             .padding = StyleInsets::symmetric(8.0f, 12.0f),
-                                            .child = std::make_shared<TextField>(pass_ctrl_, TextFieldProps{ .hint_text = "Enter Passengers..." })
+                                            .child = TextField { .controller = pass_ctrl_, .hint_text = "Enter Passengers..." }
                                         }),
 
                                         text("Departure Date (Single Date Dropdown):", { .color = 0xFF94A3B8, .font_size = 11.5f, .font_weight = FontWeight::Bold }),

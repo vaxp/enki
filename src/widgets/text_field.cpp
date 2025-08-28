@@ -179,7 +179,7 @@ class TextFieldState : public State {
 public:
     void initState() override {
         State::initState();
-        auto* tf = static_cast<const TextField*>(widget());
+        auto* tf = static_cast<const TextFieldWidget*>(widget());
         controller_ = tf->controller;
         is_focused_ = tf->options.auto_focus;
         if (is_focused_) g_focused_textfield = this;
@@ -189,7 +189,7 @@ public:
             text_input_conn_ = Platform::instance()->onTextInput().connect([this](std::string_view text) {
                 if (g_focused_textfield != this) return;
                 
-                auto* current_tf = static_cast<const TextField*>(widget());
+                auto* current_tf = static_cast<const TextFieldWidget*>(widget());
                 if (current_tf->options.read_only) return;
                 
                 // Ignore control characters
@@ -224,7 +224,7 @@ public:
     // NEW: Handle Widget updates to retain correct controller instance
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* tf = static_cast<const TextField*>(widget());
+        auto* tf = static_cast<const TextFieldWidget*>(widget());
         controller_ = tf->controller;
     }
 
@@ -238,7 +238,7 @@ public:
     }
 
     void handleKey(int key, int mods) {
-        auto* tf = static_cast<const TextField*>(widget());
+        auto* tf = static_cast<const TextFieldWidget*>(widget());
         
         // XKB Keysyms
         const int KEY_BACKSPACE = 0xff08;
@@ -360,7 +360,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* tf = static_cast<const TextField*>(widget());
+        auto* tf = static_cast<const TextFieldWidget*>(widget());
         
         if (is_focused_ && Platform::instance()) {
             double current_time = Platform::instance()->getTime();
@@ -439,7 +439,7 @@ public:
     }
 };
 
-std::unique_ptr<State> TextField::createState() {
+std::unique_ptr<State> TextFieldWidget::createState() {
     return std::make_unique<TextFieldState>();
 }
 

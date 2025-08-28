@@ -144,7 +144,7 @@ public:
             }
         };
 
-        auto tf = std::make_shared<TextField>(controller_, tf_opts);
+        auto tf = std::make_shared<TextFieldWidget>(controller_, tf_opts);
 
         auto tf_box = container(tf);
         tf_box->color(0xFF0F172A)
