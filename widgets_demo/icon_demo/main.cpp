@@ -28,70 +28,69 @@ public:
     }
 
     WidgetPtr build(BuildContext& context) override {
-        // SVG Icons Row
-        auto svg_label_text = text("SVG Icons");
-        svg_label_text->fontSize(18.0f).color(0xFF94A3B8);
-        auto svg_label = container(std::static_pointer_cast<Widget>(svg_label_text));
-        svg_label->margin(StyleInsets::symmetric(0.0f, 10.0f));
-        
-        std::vector<WidgetPtr> svg_icons;
-        svg_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::SVG::play())->size(32.0f)->color(0xFF10B981)));
-        svg_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::SVG::check())->size(48.0f)->color(0xFF3B82F6)));
-        svg_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::SVG::play())->size(64.0f)->color(0xFFEF4444)));
-        auto svg_row = row(svg_icons);
-        svg_row->gap(20.0f).alignItems(Align::Center);
-        
-        std::vector<WidgetPtr> svg_section_children;
-        svg_section_children.push_back(std::static_pointer_cast<Widget>(svg_label));
-        svg_section_children.push_back(std::static_pointer_cast<Widget>(svg_row));
-        auto svg_section = column(svg_section_children);
+        // SVG Icons Section
+        auto svg_section = column({
+            .children = {
+                container({
+                    .margin = StyleInsets::symmetric(0.0f, 10.0f),
+                    .child = text("SVG Icons", { .color = 0xFF94A3B8, .font_size = 18.0f })
+                }),
+                row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(20.0f),
+                    .children = {
+                        Icon { .data = Icons::SVG::play(),  .size = 32.0f, .color = 0xFF10B981 },
+                        Icon { .data = Icons::SVG::check(), .size = 48.0f, .color = 0xFF3B82F6 },
+                        Icon { .data = Icons::SVG::play(),  .size = 64.0f, .color = 0xFFEF4444 },
+                    }
+                })
+            }
+        });
 
-        // Material Icons Row
-        auto font_label_text = text("Material Icons (Font)");
-        font_label_text->fontSize(18.0f).color(0xFF94A3B8);
-        auto font_label = container(std::static_pointer_cast<Widget>(font_label_text));
-        font_label->margin(StyleInsets::symmetric(0.0f, 20.0f));
-        
-        std::vector<WidgetPtr> font_icons;
-        font_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::Material::favorite())->size(32.0f)->color(0xFFEC4899)));
-        font_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::Material::home())->size(48.0f)->color(0xFF8B5CF6)));
-        font_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::Material::settings())->size(64.0f)->color(0xFF6366F1)));
-        font_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::Material::search())->size(48.0f)->color(0xFFF59E0B)));
-        font_icons.push_back(std::static_pointer_cast<Widget>(icon(Icons::Material::add())->size(32.0f)->color(0xFF10B981)));
-        auto font_row = row(font_icons);
-        font_row->gap(20.0f).alignItems(Align::Center);
-        
-        std::vector<WidgetPtr> font_section_children;
-        font_section_children.push_back(std::static_pointer_cast<Widget>(font_label));
-        font_section_children.push_back(std::static_pointer_cast<Widget>(font_row));
-        auto font_section = column(font_section_children);
-
-        auto title = text("ENKI Icon Widget");
-        title->fontSize(28.0f).bold().color(0xFFFFFFFF);
-        
-        auto subtitle_text = text("Zero calculations. 100% Anu Layout. Native SVG & Fonts.");
-        subtitle_text->fontSize(14.0f).color(0xFF94A3B8);
-        
-        auto subtitle = container(std::static_pointer_cast<Widget>(subtitle_text));
-        subtitle->margin(StyleInsets::symmetric(0.0f, 20.0f));
-
-        std::vector<WidgetPtr> main_children;
-        main_children.push_back(std::static_pointer_cast<Widget>(title));
-        main_children.push_back(std::static_pointer_cast<Widget>(subtitle));
-        main_children.push_back(std::static_pointer_cast<Widget>(svg_section));
-        main_children.push_back(std::static_pointer_cast<Widget>(font_section));
+        // Material Icons Section
+        auto font_section = column({
+            .children = {
+                container({
+                    .margin = StyleInsets::symmetric(0.0f, 20.0f),
+                    .child = text("Material Icons (Font)", { .color = 0xFF94A3B8, .font_size = 18.0f })
+                }),
+                row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(20.0f),
+                    .children = {
+                        Icon { .data = Icons::Material::favorite(), .size = 32.0f, .color = 0xFFEC4899 },
+                        Icon { .data = Icons::Material::home(),     .size = 48.0f, .color = 0xFF8B5CF6 },
+                        Icon { .data = Icons::Material::settings(), .size = 64.0f, .color = 0xFF6366F1 },
+                        Icon { .data = Icons::Material::search(),   .size = 48.0f, .color = 0xFFF59E0B },
+                        Icon { .data = Icons::Material::add(),      .size = 32.0f, .color = 0xFF10B981 },
+                    }
+                })
+            }
+        });
 
         // Main Layout
-        auto main_col = column(main_children);
-        
-        main_col->alignItems(Align::Center).justifyContent(Justify::Center)
-                .width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+        auto main_col = column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {
+                text("ENKI Icon Widget", { .color = 0xFFFFFFFF, .font_size = 28.0f, .font_weight = FontWeight::Bold }),
+                container({
+                    .margin = StyleInsets::symmetric(0.0f, 20.0f),
+                    .child = text("Zero calculations. 100% Anu Layout. Native SVG & Fonts.", { .color = 0xFF94A3B8, .font_size = 14.0f })
+                }),
+                svg_section,
+                font_section
+            }
+        });
 
-        auto bg = container(std::static_pointer_cast<Widget>(main_col));
-        bg->color(0xFF0F172A) // Dark background
-          .width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
-
-        return bg;
+        return container({
+            .color = 0xFF0F172A,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = main_col
+        });
     }
 };
 

@@ -21,9 +21,14 @@ void test_svg_data() {
 
 void test_widget_properties() {
     std::cout << "Testing Icon Widget properties..." << std::endl;
-    auto ic = icon(Icons::Material::home())->size(48.0f)->color(0xFF00FF00);
-    assert(ic->size_val == 48.0f);
-    assert(ic->color_val == Color(0xFF00FF00));
+    WidgetPtr ic = Icon {
+        .icon = Icons::Material::home(),
+        .size = 48.0f,
+        .color = 0xFF00FF00,
+    };
+    auto* iw = static_cast<IconWidget*>(ic.get());
+    assert(iw->size_val == 48.0f);
+    assert(iw->color_val == Color(0xFF00FF00));
 }
 
 int main() {
