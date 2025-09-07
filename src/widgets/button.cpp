@@ -257,7 +257,7 @@ public:
         press_anim.setDuration(std::chrono::milliseconds(250));
         press_anim.addListener([this] { setState([]{}); });
 
-        auto* btn = static_cast<const Button*>(this->widget());
+        auto* btn = static_cast<const ButtonWidget*>(this->widget());
         if (!btn->options.custom_shader.empty()) {
             start_time = getCurrentTimeSeconds();
             shader_ticker = createTicker([this]() {
@@ -296,7 +296,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* btn = static_cast<const Button*>(this->widget());
+        auto* btn = static_cast<const ButtonWidget*>(this->widget());
 
         // Extract raw RippleStates to pass to the render object
         std::vector<RippleState> rip_states;
@@ -350,7 +350,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Button::createState() {
+std::unique_ptr<State> ButtonWidget::createState() {
     return std::make_unique<ButtonState>();
 }
 

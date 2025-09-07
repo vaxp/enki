@@ -11,7 +11,7 @@ using namespace enki;
 void test_default_initialization() {
     std::cout << "Testing Default Initialization..." << std::endl;
     auto t = text("Click Me");
-    auto btn = std::dynamic_pointer_cast<Button>(button(t));
+    auto btn = std::dynamic_pointer_cast<ButtonWidget>(button(t));
 
     assert(btn != nullptr);
     assert(btn->typeName() == "Button");
@@ -29,7 +29,7 @@ void test_custom_options() {
     opt.custom_shader = "void main() {}";
 
     bool clicked = false;
-    auto btn = std::dynamic_pointer_cast<Button>(button(text("Submit"), [&]() { clicked = true; }, opt));
+    auto btn = std::dynamic_pointer_cast<ButtonWidget>(button(text("Submit"), [&]() { clicked = true; }, opt));
 
     assert(btn->disabled == false);
     assert(btn->options.normal_color == 0xFFFF0000);
@@ -43,9 +43,32 @@ void test_custom_options() {
     std::cout << "  ✓ Custom Options passed." << std::endl;
 }
 
+void test_declarative_syntax() {
+    std::cout << "Testing Declarative Syntax..." << std::endl;
+    bool clicked = false;
+    WidgetPtr w = Button {
+        .child = text("Declarative Button"),
+        .on_pressed = [&]() { clicked = true; },
+        .normal_color = 0xFF10B981,
+        .border_radius = 12.0f,
+    };
+
+    auto btn = std::dynamic_pointer_cast<ButtonWidget>(w);
+    assert(btn != nullptr);
+    assert(btn->disabled == false);
+    assert(btn->options.normal_color == 0xFF10B981);
+    assert(btn->options.border_radius == 12.0f);
+
+    if (btn->on_pressed) {
+        btn->on_pressed();
+    }
+    assert(clicked == true);
+    std::cout << "  ✓ Declarative Syntax passed." << std::endl;
+}
+
 void test_create_state() {
     std::cout << "Testing Create State..." << std::endl;
-    auto btn = std::dynamic_pointer_cast<Button>(button(text("Test")));
+    auto btn = std::dynamic_pointer_cast<ButtonWidget>(button(text("Test")));
     auto state = btn->createState();
     assert(state != nullptr);
     std::cout << "  ✓ Create State passed." << std::endl;
@@ -58,6 +81,7 @@ int main() {
 
     test_default_initialization();
     test_custom_options();
+    test_declarative_syntax();
     test_create_state();
 
     std::cout << "========================================" << std::endl;
