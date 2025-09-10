@@ -221,32 +221,37 @@ public:
         // Position the drawer absolutely within the stack
         WidgetPtr positioned_drawer;
         {
-            auto pos = std::make_shared<Positioned>(drawer_box);
-            pos->style.top    = StyleValue::point(0.0f);
-            pos->style.bottom = StyleValue::point(0.0f);
-
             if (opts.side == DrawerSide::Left) {
                 float left_val = drawer_width * (t - 1.0f);
-                pos->style.left  = StyleValue::point(left_val);
-                pos->style.width = StyleValue::point(drawer_width);
+                positioned_drawer = Positioned {
+                    .child = drawer_box,
+                    .top = StyleValue::point(0.0f),
+                    .bottom = StyleValue::point(0.0f),
+                    .left = StyleValue::point(left_val),
+                    .width = StyleValue::point(drawer_width),
+                };
             } else {
                 float right_off = drawer_width * (t - 1.0f);
-                pos->style.right = StyleValue::point(right_off);
-                pos->style.width = StyleValue::point(drawer_width);
+                positioned_drawer = Positioned {
+                    .child = drawer_box,
+                    .top = StyleValue::point(0.0f),
+                    .right = StyleValue::point(right_off),
+                    .bottom = StyleValue::point(0.0f),
+                    .width = StyleValue::point(drawer_width),
+                };
             }
-            positioned_drawer = pos;
         }
 
         // ── Stack: body + scrim + drawer ───────────────────────
-        auto root_stack = std::make_shared<Stack>(std::vector<WidgetPtr>{
-            body_widget,
-            scrim,
-            positioned_drawer,
-        });
-        root_stack->style.width  = StyleValue::percent(100.0f);
-        root_stack->style.height = StyleValue::percent(100.0f);
-
-        return root_stack;
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {
+                body_widget,
+                scrim,
+                positioned_drawer,
+            }
+        };
     }
 };
 

@@ -300,11 +300,11 @@ public:
         }
 
         if (t <= 0.001f && !is_loading_) {
-            std::vector<WidgetPtr> stack_items = {body_widget};
-            auto root = stack(stack_items);
-            root->style.width = StyleValue::percent(100.0f);
-            root->style.height = StyleValue::percent(100.0f);
-            return root;
+            return Stack {
+                .width  = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = { body_widget },
+            };
         }
 
         // ── 2. Loading Scrim Backdrop ─────────────────────────────────
@@ -313,26 +313,26 @@ public:
         // ── 3. Centered Loading Modal Card ────────────────────────────
         auto card = buildLoadingCard(opts);
 
-        std::vector<WidgetPtr> center_items = {card};
-        auto center_col = column(center_items);
-        center_col->justifyContent(Justify::Center)
-                  .alignItems(Align::Center)
-                  .width(StyleValue::percent(100.0f))
-                  .height(StyleValue::percent(100.0f));
+        auto center_col = column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = { card },
+        });
 
         auto pos_center = Positioned::fill(center_col);
 
         // ── 4. Stack Composition: Body + Scrim + Centered Card ────────
-        std::vector<WidgetPtr> stack_items = {
-            body_widget,
-            scrim,
-            pos_center
+        return Stack {
+            .width  = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {
+                body_widget,
+                scrim,
+                pos_center,
+            }
         };
-
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
     }
 };
 

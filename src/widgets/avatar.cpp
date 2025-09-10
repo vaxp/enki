@@ -60,11 +60,15 @@ WidgetPtr AvatarWidget::build(BuildContext& ctx) {
              .border(options.badge_border_color, options.badge_border_width);
              
         float offset = options.radius * 0.146f;
-        auto pos_badge = positioned(badge);
-        pos_badge->bottom(offset).right(offset);
+        auto pos_badge = Positioned {
+            .child = badge,
+            .right = StyleValue::point(offset),
+            .bottom = StyleValue::point(offset),
+        };
         
-        std::vector<WidgetPtr> stack_children = { bg_container, pos_badge };
-        return stack(stack_children);
+        return Stack {
+            .children = { bg_container, pos_badge }
+        };
     }
 
     return bg_container;
@@ -126,21 +130,25 @@ WidgetPtr AvatarGroupWidget::build(BuildContext& ctx) {
     
     // Now push to stack in reverse
     for (auto it = positioned_items.rbegin(); it != positioned_items.rend(); ++it) {
-        auto pos = positioned(it->second);
-        pos->left(it->first).top(0.0f);
-        stack_children.push_back(pos);
+        stack_children.push_back(Positioned {
+            .child = it->second,
+            .top = StyleValue::point(0.0f),
+            .left = StyleValue::point(it->first),
+        });
     }
 
-    auto s = stack(stack_children);
     float max_d = 48.0f;
     if (auto av = std::dynamic_pointer_cast<AvatarWidget>(avatars[0])) {
         max_d = av->options.radius * 2.0f;
     }
     
-    auto box = container(s);
-    box->width(total_width).height(max_d);
-    
-    return box;
+    return container({
+        .width = StyleValue::point(total_width),
+        .height = StyleValue::point(max_d),
+        .child = Stack {
+            .children = std::move(stack_children),
+        }
+    });
 }
 
 } // namespace enki

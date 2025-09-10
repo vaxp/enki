@@ -262,10 +262,11 @@ public:
 
         // When closed and animation finished, render just the stack with body
         if (t <= 0.001f && !is_open_) {
-            auto root_stack = stack({body_widget});
-            root_stack->style.width  = StyleValue::percent(100.0f);
-            root_stack->style.height = StyleValue::percent(100.0f);
-            return root_stack;
+            return Stack {
+                .width  = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = { body_widget },
+            };
         }
 
         // ── 2. Scrim Overlay ──────────────────────────────────────────
@@ -388,13 +389,13 @@ public:
                  .clip(true);
 
         // Positioned sheet panel sliding up from bottom
-        auto pos_sheet = std::make_shared<Positioned>(sheet_box);
-        pos_sheet->style.left   = StyleValue::point(0.0f);
-        pos_sheet->style.right  = StyleValue::point(0.0f);
-
-        // Slide up offset strictly proportional to sheet height:
-        pos_sheet->style.bottom = StyleValue::percent((t - 1.0f) * height_pct);
-        pos_sheet->style.height = StyleValue::percent(height_pct);
+        auto pos_sheet = Positioned {
+            .child = sheet_box,
+            .right = StyleValue::point(0.0f),
+            .bottom = StyleValue::percent((t - 1.0f) * height_pct),
+            .left = StyleValue::point(0.0f),
+            .height = StyleValue::percent(height_pct),
+        };
 
         // ── 4. Stack Composition: Body + Scrim + Sheet ────────────────
         std::vector<WidgetPtr> stack_items;
@@ -404,11 +405,11 @@ public:
         }
         stack_items.push_back(pos_sheet);
 
-        auto root_stack = stack(stack_items);
-        root_stack->style.width  = StyleValue::percent(100.0f);
-        root_stack->style.height = StyleValue::percent(100.0f);
-
-        return root_stack;
+        return Stack {
+            .width  = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(stack_items),
+        };
     }
 };
 

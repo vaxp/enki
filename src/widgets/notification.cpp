@@ -443,10 +443,11 @@ public:
             auto toasts_col = column(toast_cards);
             toasts_col->gap(StyleValue::point(10.0f));
 
-            auto pos_toasts = std::make_shared<Positioned>(toasts_col);
-            pos_toasts->style.top = StyleValue::point(20.0f);
-            pos_toasts->style.right = StyleValue::point(20.0f);
-            stack_items.push_back(pos_toasts);
+            stack_items.push_back(Positioned {
+                .child = toasts_col,
+                .top = StyleValue::point(20.0f),
+                .right = StyleValue::point(20.0f),
+            });
         }
 
         // ── 3. In-App Notification Center Drawer ──────────────────────
@@ -458,18 +459,20 @@ public:
             stack_items.push_back(scrim);
 
             auto center_panel = buildNotificationCenter(w->manager);
-            auto pos_center = std::make_shared<Positioned>(center_panel);
-            pos_center->style.top = StyleValue::point(0.0f);
-            pos_center->style.bottom = StyleValue::point(0.0f);
-            pos_center->style.right = StyleValue::point(0.0f);
-            pos_center->style.width = StyleValue::point(380.0f);
-            stack_items.push_back(pos_center);
+            stack_items.push_back(Positioned {
+                .child = center_panel,
+                .top = StyleValue::point(0.0f),
+                .right = StyleValue::point(0.0f),
+                .bottom = StyleValue::point(0.0f),
+                .width = StyleValue::point(380.0f),
+            });
         }
 
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(stack_items),
+        };
     }
 };
 

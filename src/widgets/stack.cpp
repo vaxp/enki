@@ -91,14 +91,14 @@ bool RenderPositioned::hitTestChildren(HitTestResult& result, Point localPoint) 
 }
 
 // ════════════════════════════════════════════════════════════════
-// Positioned Widget Implementation
+// PositionedWidget Implementation
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> Positioned::createRenderObject(BuildContext& ctx) {
+std::unique_ptr<RenderObject> PositionedWidget::createRenderObject(BuildContext& ctx) {
     return std::make_unique<RenderPositioned>(style);
 }
 
-void Positioned::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
+void PositionedWidget::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
     if (auto* rp = dynamic_cast<RenderPositioned*>(&renderObject)) {
         rp->setStyle(style);
     }
@@ -267,14 +267,14 @@ bool RenderStack::hitTestChildren(HitTestResult& result, Point localPoint) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// Stack Widget Implementation
+// StackWidget Implementation
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> Stack::createRenderObject(BuildContext& ctx) {
+std::unique_ptr<RenderObject> StackWidget::createRenderObject(BuildContext& ctx) {
     return std::make_unique<RenderStack>(style);
 }
 
-void Stack::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
+void StackWidget::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
     if (auto* rs = dynamic_cast<RenderStack*>(&renderObject)) {
         rs->setStyle(style);
     }
