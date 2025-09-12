@@ -181,8 +181,9 @@ int main() {
     config.width       = 750;
     config.height      = 550;
     config.resizable   = true;
-    config.vsync       = true;
-    config.target_fps  = 60;
+    config.vsync       = false;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0F172A;
 
     return runApp(std::make_shared<SpinnerDemoApp>(), config);

@@ -85,7 +85,10 @@ int main() {
     config.title = "ENKI FloatingActionButton Demo";
     config.width = 600;
     config.height = 600;
-    config.target_fps = 60;
+    config.target_fps = 0;
+    config.resizable = true;
+    config.vsync = false;
+    config.show_performance_overlay = true;
     
     return runApp(std::make_shared<FABDemoWidget>(), config);
 }

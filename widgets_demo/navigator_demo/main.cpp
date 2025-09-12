@@ -72,7 +72,7 @@ int main() {
     AppConfig config;
     config.title = "Enki - Navigator Demo";
     config.width = 600;
-    config.height = 400;
+    config.height = 400;    
     
     return runApp(std::make_shared<NavigatorDemoApp>(), config);
 }

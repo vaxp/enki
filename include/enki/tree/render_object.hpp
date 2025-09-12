@@ -155,6 +155,14 @@ public:
     /// @return true if this render object needs repaint.
     [[nodiscard]] bool needsPaint() const { return needs_paint_; }
 
+    /// @return true if this object OR any descendant needs repaint.
+    /// Used by the render loop to skip paint entirely when nothing changed.
+    [[nodiscard]] bool subtreeNeedsPaint() const;
+
+    /// Clear the paint dirty flag on this object and all descendants.
+    /// Called by the render loop after a successful paint pass.
+    void clearPaintFlag();
+
     // ── Hit Testing ────────────────────────────────────────────
 
     /// Test whether a point hits this render object.

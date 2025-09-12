@@ -175,7 +175,8 @@ int main() {
     cfg.height      = 700;
     cfg.resizable   = true;
     cfg.vsync       = false;
-    cfg.target_fps  = 60;
+    cfg.target_fps  = 0;
+    cfg.show_performance_overlay = true;
     cfg.clear_color = 0xFF0B1120;
 
     return runApp(std::make_shared<ReorderableListDemoApp>(), cfg);

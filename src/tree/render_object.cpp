@@ -70,8 +70,25 @@ void RenderObject::markNeedsLayout() {
 
 void RenderObject::markNeedsPaint() {
     needs_paint_ = true;
-    // Paint propagation doesn't go up — the repaint boundary
-    // will be handled by the rendering pipeline.
+    // Propagate up so ancestors know their subtree needs repaint
+    if (parent_) {
+        parent_->markNeedsPaint();
+    }
+}
+
+bool RenderObject::subtreeNeedsPaint() const {
+    if (needs_paint_) return true;
+    for (auto* child : children_) {
+        if (child->subtreeNeedsPaint()) return true;
+    }
+    return false;
+}
+
+void RenderObject::clearPaintFlag() {
+    needs_paint_ = false;
+    for (auto* child : children_) {
+        child->clearPaintFlag();
+    }
 }
 
 bool RenderObject::hitTest(HitTestResult& result, Point localPoint) {
@@ -200,9 +217,27 @@ size_t RenderObject::depth() const {
 // ════════════════════════════════════════════════════════════════
 
 void RenderBox::syncLayout() {
-    // Simply use the default sync logic
-    RenderObject::syncLayout();
-    needs_paint_ = true;
+    // Read new size and position from Anu
+    float new_w = ANUNodeLayoutGetWidth(anu_node_);
+    float new_h = ANUNodeLayoutGetHeight(anu_node_);
+    float new_x = ANUNodeLayoutGetLeft(anu_node_);
+    float new_y = ANUNodeLayoutGetTop(anu_node_);
+
+    // Only mark paint dirty when geometry actually changed
+    bool geometry_changed = (new_w != size_.width  || new_h != size_.height ||
+                             new_x != offset_.x    || new_y != offset_.y);
+
+    size_.width  = new_w;  size_.height = new_h;
+    offset_.x    = new_x;  offset_.y    = new_y;
+    needs_layout_ = false;
+
+    if (geometry_changed) {
+        markNeedsPaint();
+    }
+
+    for (auto* child : children_) {
+        child->syncLayout();
+    }
 }
 
 bool RenderBox::hitTestSelf(Point localPoint) const {

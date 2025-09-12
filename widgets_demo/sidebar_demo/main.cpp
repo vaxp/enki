@@ -42,6 +42,8 @@ int main() {
     config.title       = "Enki Engine — Sidebar Demo";
     config.width       = 1000;
     config.height      = 700;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0F172A;
     return runApp(std::make_shared<SidebarDemoApp>(), config);
 }

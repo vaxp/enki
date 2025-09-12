@@ -639,7 +639,9 @@ int main() {
     config.width       = 1060;
     config.height      = 650;
     config.resizable   = true;
-    config.vsync       = true;
+    config.vsync       = false;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0B0F19;
 
     return runApp(std::make_shared<WidgetsDemoApp>(), config);

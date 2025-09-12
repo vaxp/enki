@@ -58,5 +58,7 @@ int main() {
     config.width       = 1000;
     config.height      = 700;
     config.clear_color = 0xFF0F172A;
+    config.target_fps = 0;
+    config.show_performance_overlay = true;
     return runApp(std::make_shared<NavigationRailDemoApp>(), config);
 }
