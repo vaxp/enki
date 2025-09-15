@@ -197,8 +197,12 @@ public:
             // Group Header (if new group category)
             if (!item.group.empty() && item.group != last_group) {
                 last_group = item.group;
-                auto g_txt = text(item.group);
-                g_txt->fontSize(10.5f).bold().color(0xFF94A3B8);
+                auto g_txt = text({
+                    .text = item.group,
+                    .color = 0xFF94A3B8,
+                    .font_size = 10.5f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 auto g_box = container(g_txt);
                 g_box->paddingSymmetric(4.0f, 10.0f)
@@ -210,24 +214,32 @@ public:
             // Item Row Left: Icon + Label + Subtitle
             std::vector<WidgetPtr> left_items;
             if (!item.icon.empty()) {
-                auto ic = text(item.icon);
-                ic->fontSize(14.0f);
+                auto ic = text({
+                    .text = item.icon,
+                    .font_size = 14.0f,
+                });
                 left_items.push_back(ic);
             }
 
             std::vector<WidgetPtr> txt_col_items;
-            auto lbl = text(item.label);
-            lbl->fontSize(12.5f).bold();
-
             bool is_selected = (opts.mode == ComboBoxMode::Single && selected_id_ == item.id) ||
                                (opts.mode == ComboBoxMode::Multi && multi_selected_ids_.count(item.id) > 0);
 
-            lbl->color(item.is_disabled ? 0xFF64748B : (is_selected ? 0xFF38BDF8 : opts.text_color));
+            Color lbl_col = item.is_disabled ? 0xFF64748B : (is_selected ? 0xFF38BDF8 : opts.text_color);
+            auto lbl = text({
+                .text = item.label,
+                .color = lbl_col,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
             txt_col_items.push_back(lbl);
 
             if (!item.subtitle.empty()) {
-                auto sub = text(item.subtitle);
-                sub->fontSize(11.0f).color(item.is_disabled ? 0xFF475569 : 0xFF94A3B8);
+                auto sub = text({
+                    .text = item.subtitle,
+                    .color = item.is_disabled ? 0xFF475569 : 0xFF94A3B8,
+                    .font_size = 11.0f,
+                });
                 txt_col_items.push_back(sub);
             }
 
@@ -241,8 +253,12 @@ public:
             // Item Row Right: Badge or Checkmark ✓
             std::vector<WidgetPtr> right_items;
             if (!item.badge.empty()) {
-                auto b_txt = text(item.badge);
-                b_txt->fontSize(10.0f).bold().color(item.badge_color);
+                auto b_txt = text({
+                    .text = item.badge,
+                    .color = item.badge_color,
+                    .font_size = 10.0f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 auto b_box = container(b_txt);
                 b_box->color(0x2238BDF8).borderRadius(4.0f).paddingSymmetric(2.0f, 6.0f);
@@ -250,8 +266,12 @@ public:
             }
 
             if (is_selected) {
-                auto chk = text("✓");
-                chk->fontSize(13.0f).bold().color(0xFF38BDF8);
+                auto chk = text({
+                    .text = "✓",
+                    .color = 0xFF38BDF8,
+                    .font_size = 13.0f,
+                    .font_weight = FontWeight::Bold,
+                });
                 right_items.push_back(chk);
             }
 

@@ -930,8 +930,11 @@ public:
             auto seg_row = row(segment_boxes);
             seg_row->gap(StyleValue::point(4.0f));
 
-            auto st_txt = text(strength_label);
-            st_txt->fontSize(11.0f).color(bar_color);
+            auto st_txt = text({
+                .text = strength_label,
+                .color = bar_color,
+                .font_size = 11.0f,
+            });
 
             std::vector<WidgetPtr> meter_items = {seg_row, st_txt};
             auto meter_col = column(meter_items);
@@ -946,11 +949,18 @@ public:
             const std::string& pwd = controller_->getPassword();
 
             auto buildRuleRow = [](bool passed, const std::string& label) -> WidgetPtr {
-                auto ic = text(passed ? "✓ " : "• ");
-                ic->fontSize(11.5f).bold().color(passed ? 0xFF10B981 : 0xFF64748B);
+                auto ic = text({
+                    .text = passed ? "✓ " : "• ",
+                    .color = passed ? 0xFF10B981 : 0xFF64748B,
+                    .font_size = 11.5f,
+                    .font_weight = FontWeight::Bold,
+                });
 
-                auto lbl = text(label);
-                lbl->fontSize(11.5f).color(passed ? 0xFFE2E8F0 : 0xFF94A3B8);
+                auto lbl = text({
+                    .text = label,
+                    .color = passed ? 0xFFE2E8F0 : 0xFF94A3B8,
+                    .font_size = 11.5f,
+                });
 
                 std::vector<WidgetPtr> items = {ic, lbl};
                 auto r = row(items);

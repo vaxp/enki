@@ -151,8 +151,11 @@ public:
         const auto& opts = w->props;
 
         auto makeNavArrow = [](std::string sym, std::function<void()> cb) -> WidgetPtr {
-            auto t = text(sym);
-            t->fontSize(13.0f).color(0xFF94A3B8);
+            auto t = text({
+                .text = sym,
+                .color = 0xFF94A3B8,
+                .font_size = 13.0f,
+            });
             auto b = container(t);
             b->paddingSymmetric(4.0f, 8.0f).borderRadius(4.0f);
 
@@ -184,8 +187,12 @@ public:
             title_str = std::to_string(view_year_ - 5) + " — " + std::to_string(view_year_ + 6);
         }
 
-        auto title_txt = text(title_str);
-        title_txt->fontSize(13.5f).bold().color(opts.text_color);
+        auto title_txt = text({
+            .text = title_str,
+            .color = opts.text_color,
+            .font_size = 13.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto title_box = container(title_txt);
         title_box->paddingSymmetric(4.0f, 10.0f).borderRadius(6.0f);
@@ -215,8 +222,12 @@ public:
         // Weekday header row (Mo, Tu, We...)
         std::vector<WidgetPtr> wd_items;
         for (int i = 0; i < 7; ++i) {
-            auto wd_txt = text(kWeekdaysShort[i]);
-            wd_txt->fontSize(11.0f).bold().color(opts.muted_text_color);
+            auto wd_txt = text({
+                .text = kWeekdaysShort[i],
+                .color = opts.muted_text_color,
+                .font_size = 11.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto wd_row = row(std::vector<WidgetPtr>{wd_txt});
             wd_row->justifyContent(Justify::Center).alignItems(Align::Center).width(36.0f);
@@ -282,15 +293,21 @@ public:
                     }
                 }
 
-                auto d_txt = text(std::to_string(cur_date.day));
-                d_txt->fontSize(12.0f);
+                Color d_color = opts.text_color;
+                FontWeight d_weight = FontWeight::Normal;
                 if (is_selected) {
-                    d_txt->bold().color(0xFFFFFFFF);
+                    d_color = 0xFFFFFFFF;
+                    d_weight = FontWeight::Bold;
                 } else if (!is_current_month) {
-                    d_txt->color(0xFF475569); // Dimmed
-                } else {
-                    d_txt->color(opts.text_color);
+                    d_color = 0xFF475569; // Dimmed
                 }
+
+                auto d_txt = text({
+                    .text = std::to_string(cur_date.day),
+                    .color = d_color,
+                    .font_size = 12.0f,
+                    .font_weight = d_weight,
+                });
 
                 auto d_row = row(std::vector<WidgetPtr>{d_txt});
                 d_row->justifyContent(Justify::Center)
@@ -359,8 +376,12 @@ public:
                 int m_num = m_idx + 1;
                 bool is_active = (view_month_ == m_num);
 
-                auto m_txt = text(kMonthShort[m_idx]);
-                m_txt->fontSize(12.5f).bold().color(is_active ? 0xFFFFFFFF : 0xFFCBD5E1);
+                auto m_txt = text({
+                    .text = kMonthShort[m_idx],
+                    .color = is_active ? 0xFFFFFFFF : 0xFFCBD5E1,
+                    .font_size = 12.5f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 auto m_row_center = row(std::vector<WidgetPtr>{m_txt});
                 m_row_center->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
@@ -403,8 +424,12 @@ public:
                 int y_num = start_year + (r * 3 + c);
                 bool is_active = (view_year_ == y_num);
 
-                auto y_txt = text(std::to_string(y_num));
-                y_txt->fontSize(12.5f).bold().color(is_active ? 0xFFFFFFFF : 0xFFCBD5E1);
+                auto y_txt = text({
+                    .text = std::to_string(y_num),
+                    .color = is_active ? 0xFFFFFFFF : 0xFFCBD5E1,
+                    .font_size = 12.5f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 auto y_row_center = row(std::vector<WidgetPtr>{y_txt});
                 y_row_center->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
@@ -439,8 +464,11 @@ public:
     // ── Build Quick Presets ───────────────────────────────────────
     WidgetPtr buildQuickPresets(const DatePickerWidget* w) {
         auto makePreset = [this](std::string label, std::function<void()> cb) -> WidgetPtr {
-            auto t = text(label);
-            t->fontSize(11.0f).color(0xFF38BDF8);
+            auto t = text({
+                .text = label,
+                .color = 0xFF38BDF8,
+                .font_size = 11.0f,
+            });
             auto b = container(t);
             b->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(4.0f, 8.0f);
 
@@ -545,11 +573,18 @@ public:
             }
         }
 
-        auto input_txt = text(display_str);
-        input_txt->fontSize(13.0f).bold().color(0xFFFFFFFF);
+        auto input_txt = text({
+            .text = display_str,
+            .color = 0xFFFFFFFF,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto chev_txt = text(is_popup_open_ ? "⌃" : "⌄");
-        chev_txt->fontSize(13.0f).color(0xFF94A3B8);
+        auto chev_txt = text({
+            .text = is_popup_open_ ? "⌃" : "⌄",
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
         std::vector<WidgetPtr> in_items = {input_txt, chev_txt};
         auto in_row = row(in_items);

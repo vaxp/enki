@@ -123,8 +123,10 @@ public:
         std::vector<WidgetPtr> left_items;
 
         if (!opts.icon.empty()) {
-            auto ic_txt = text(opts.icon);
-            ic_txt->fontSize(16.0f);
+            auto ic_txt = text({
+                .text = opts.icon,
+                .font_size = 16.0f,
+            });
 
             auto ic_box = container(ic_txt);
             ic_box->paddingAll(4.0f);
@@ -133,14 +135,21 @@ public:
 
         std::vector<WidgetPtr> text_col_items;
         if (!opts.title.empty()) {
-            auto t_txt = text(opts.title);
-            t_txt->fontSize(13.0f).bold().color(opts.title_color);
+            auto t_txt = text({
+                .text = opts.title,
+                .color = opts.title_color,
+                .font_size = 13.0f,
+                .font_weight = FontWeight::Bold,
+            });
             text_col_items.push_back(t_txt);
         }
 
         if (!opts.message.empty()) {
-            auto m_txt = text(opts.message);
-            m_txt->fontSize(12.0f).color(opts.message_color);
+            auto m_txt = text({
+                .text = opts.message,
+                .color = opts.message_color,
+                .font_size = 12.0f,
+            });
             text_col_items.push_back(m_txt);
         }
 
@@ -156,8 +165,13 @@ public:
 
         if (opts.action.has_value()) {
             const auto& act = opts.action.value();
-            auto act_txt = text(act.label);
-            act_txt->fontSize(12.0f).bold().color(act.is_danger ? 0xFFEF4444 : opts.accent_color);
+            Color act_color = act.is_danger ? 0xFFEF4444 : opts.accent_color;
+            auto act_txt = text({
+                .text = act.label,
+                .color = act_color,
+                .font_size = 12.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto act_box = container(act_txt);
             act_box->color(0x2238BDF8)
@@ -174,8 +188,12 @@ public:
         }
 
         if (opts.show_close_button) {
-            auto cls_txt = text("✕");
-            cls_txt->fontSize(12.0f).bold().color(0xFF94A3B8);
+            auto cls_txt = text({
+                .text = "✕",
+                .color = 0xFF94A3B8,
+                .font_size = 12.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto cls_box = container(cls_txt);
             cls_box->paddingAll(4.0f);

@@ -946,8 +946,11 @@ public:
 
             std::ostringstream ss_info;
             ss_info << "Showing " << start_item << "–" << end_item << " of " << tot_items << " entries";
-            auto info_txt = text(ss_info.str());
-            info_txt->fontSize(12.0f).color(0xFF94A3B8);
+            auto info_txt = text({
+                .text = ss_info.str(),
+                .color = 0xFF94A3B8,
+                .font_size = 12.0f,
+            });
 
             // First [⏮]
             auto btn_first = button(text("⏮"), [this] {
@@ -964,8 +967,11 @@ public:
             // Page label [ Page 1 of 5 ]
             std::ostringstream ss_page;
             ss_page << "Page " << (cur_p + 1) << " of " << tot_p;
-            auto page_lbl = text(ss_page.str());
-            page_lbl->fontSize(12.0f).color(0xFFF1F5F9);
+            auto page_lbl = text({
+                .text = ss_page.str(),
+                .color = 0xFFF1F5F9,
+                .font_size = 12.0f,
+            });
 
             // Next [▶]
             auto btn_next = button(text("▶"), [this] {

@@ -9,8 +9,10 @@ using namespace enki;
 void test_richtext_interactive_spans() {
     bool clicked = false;
     
-    auto s = span("Click me!");
-    s->onClick([&clicked]() { clicked = true; });
+    auto s = span({
+        .text = "Click me!",
+        .on_click = [&clicked]() { clicked = true; },
+    });
     
     auto rt = richText(s);
     auto element = rt->createElement();

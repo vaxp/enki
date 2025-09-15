@@ -139,11 +139,18 @@ public:
 // ════════════════════════════════════════════════════════════════
 
 WidgetPtr DockAppState::buildHeader() {
-    auto title_text = text("⚡ ENKI TASKBAR DOCK");
-    title_text->fontSize(14.0f).bold().color(Theme::primary);
+    auto title_text = text({
+        .text = "⚡ ENKI TASKBAR DOCK",
+        .color = Theme::primary,
+        .font_size = 14.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto sub_text = text("Native Foreign Toplevel Management (wlr-foreign-toplevel & EWMH)");
-    sub_text->fontSize(10.5f).color(Theme::text_secondary);
+    auto sub_text = text({
+        .text = "Native Foreign Toplevel Management (wlr-foreign-toplevel & EWMH)",
+        .color = Theme::text_secondary,
+        .font_size = 10.5f,
+    });
 
     auto header_left = column({
         title_text,
@@ -155,8 +162,12 @@ WidgetPtr DockAppState::buildHeader() {
     std::string active_name = active_window ? active_window->appId() : "None";
     if (active_name.empty()) active_name = "Window";
 
-    auto active_badge_lbl = text("ACTIVE APP: " + active_name);
-    active_badge_lbl->fontSize(10.5f).bold().color(Theme::accent_green);
+    auto active_badge_lbl = text({
+        .text = "ACTIVE APP: " + active_name,
+        .color = Theme::accent_green,
+        .font_size = 10.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto active_badge = container(active_badge_lbl);
     active_badge->padding(EdgeInsets::symmetric(5.0f, 12.0f))
@@ -165,8 +176,12 @@ WidgetPtr DockAppState::buildHeader() {
                 .border(Theme::accent_green, 1.0f);
 
     // Window count badge
-    auto count_lbl = text(std::to_string(windows.size()) + " Running");
-    count_lbl->fontSize(11.0f).bold().color(Theme::text_primary);
+    auto count_lbl = text({
+        .text = std::to_string(windows.size()) + " Running",
+        .color = Theme::text_primary,
+        .font_size = 11.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto count_badge = container(count_lbl);
     count_badge->padding(EdgeInsets::symmetric(5.0f, 12.0f))
@@ -202,12 +217,20 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
     std::string app_name = tl->appId().empty() ? "Application" : tl->appId();
     if (app_name.length() > 18) app_name = app_name.substr(0, 15) + "...";
 
-    auto app_text = text(app_name);
-    app_text->fontSize(12.0f).bold().color(is_active ? Theme::primary : Theme::text_primary);
+    auto app_text = text({
+        .text = app_name,
+        .color = is_active ? Theme::primary : Theme::text_primary,
+        .font_size = 12.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     // Close button (Dedicated GestureDetector)
-    auto close_x = text("✕");
-    close_x->fontSize(11.0f).bold().color(Theme::accent_rose);
+    auto close_x = text({
+        .text = "✕",
+        .color = Theme::accent_rose,
+        .font_size = 11.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto close_box = container(close_x);
     close_box->padding(EdgeInsets::symmetric(2.0f, 6.0f))
@@ -230,38 +253,41 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
     std::string win_title = tl->title().empty() ? "(Untitled Window)" : tl->title();
     if (win_title.length() > 22) win_title = win_title.substr(0, 19) + "...";
 
-    auto title_widget = text(win_title);
-    title_widget->fontSize(10.5f).color(Theme::text_secondary);
+    auto title_widget = text({
+        .text = win_title,
+        .color = Theme::text_secondary,
+        .font_size = 10.5f,
+    });
 
     // Badges Row
     std::vector<WidgetPtr> badges;
 
     if (is_active) {
-        auto b = text("ACTIVE"); b->fontSize(8.5f).bold().color(Theme::accent_green);
+        auto b = text({ .text = "ACTIVE", .color = Theme::accent_green, .font_size = 8.5f, .font_weight = FontWeight::Bold });
         auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x2810B981).borderRadius(4.0f);
         badges.push_back(bc);
         badges.push_back(sizedBox(4.0f, 0));
     }
     if (tl->isMinimized()) {
-        auto b = text("MIN"); b->fontSize(8.5f).bold().color(Theme::accent_amber);
+        auto b = text({ .text = "MIN", .color = Theme::accent_amber, .font_size = 8.5f, .font_weight = FontWeight::Bold });
         auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x28F59E0B).borderRadius(4.0f);
         badges.push_back(bc);
         badges.push_back(sizedBox(4.0f, 0));
     }
     if (tl->isMaximized()) {
-        auto b = text("MAX"); b->fontSize(8.5f).bold().color(Theme::primary);
+        auto b = text({ .text = "MAX", .color = Theme::primary, .font_size = 8.5f, .font_weight = FontWeight::Bold });
         auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x280284C7).borderRadius(4.0f);
         badges.push_back(bc);
         badges.push_back(sizedBox(4.0f, 0));
     }
     if (tl->isFullscreen()) {
-        auto b = text("FULL"); b->fontSize(8.5f).bold().color(Theme::accent_purple);
+        auto b = text({ .text = "FULL", .color = Theme::accent_purple, .font_size = 8.5f, .font_weight = FontWeight::Bold });
         auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x28A855F7).borderRadius(4.0f);
         badges.push_back(bc);
     }
 
     if (badges.empty()) {
-        auto b = text("NORMAL"); b->fontSize(8.5f).color(Theme::text_muted);
+        auto b = text({ .text = "NORMAL", .color = Theme::text_muted, .font_size = 8.5f });
         auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x18FFFFFF).borderRadius(4.0f);
         badges.push_back(bc);
     }
@@ -304,14 +330,23 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
 }
 
 WidgetPtr DockAppState::buildEmptyState() {
-    auto empty_icon = text("🔍");
-    empty_icon->fontSize(22.0f);
+    auto empty_icon = text({
+        .text = "🔍",
+        .font_size = 22.0f,
+    });
 
-    auto empty_title = text("No External Windows Detected");
-    empty_title->fontSize(13.0f).bold().color(Theme::text_primary);
+    auto empty_title = text({
+        .text = "No External Windows Detected",
+        .color = Theme::text_primary,
+        .font_size = 13.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto empty_desc = text("Listening for zwlr_foreign_toplevel & X11 EWMH events in real time...");
-    empty_desc->fontSize(10.5f).color(Theme::text_muted);
+    auto empty_desc = text({
+        .text = "Listening for zwlr_foreign_toplevel & X11 EWMH events in real time...",
+        .color = Theme::text_muted,
+        .font_size = 10.5f,
+    });
 
     auto empty_col = column(Justify::Center, Align::Center, {
         empty_icon,
@@ -348,8 +383,11 @@ WidgetPtr DockAppState::build(BuildContext&) {
     auto cards_row = row(Justify::Start, Align::Center, std::move(card_widgets));
 
     // Footer Hint
-    auto hint_text = text("💡 Gestures: Left-Click = Activate & Focus  |  Right-Click = Minimize/Restore  |  Double-Click = Maximize  |  ✕ = Close");
-    hint_text->fontSize(10.0f).color(Theme::text_secondary);
+    auto hint_text = text({
+        .text = "💡 Gestures: Left-Click = Activate & Focus  |  Right-Click = Minimize/Restore  |  Double-Click = Maximize  |  ✕ = Close",
+        .color = Theme::text_secondary,
+        .font_size = 10.0f,
+    });
 
     auto main_col = column({
         buildHeader(),

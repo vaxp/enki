@@ -114,13 +114,21 @@ public:
 
         // 1. Label Row (with required asterisk)
         if (!opts.label.empty()) {
-            auto lbl = text(opts.label);
-            lbl->fontSize(12.5f).bold().color(0xFFE2E8F0);
+            auto lbl = text({
+                .text = opts.label,
+                .color = 0xFFE2E8F0,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             std::vector<WidgetPtr> lbl_items = {lbl};
             if (opts.required) {
-                auto ast = text("*");
-                ast->fontSize(12.5f).bold().color(0xFFEF4444);
+                auto ast = text({
+                    .text = "*",
+                    .color = 0xFFEF4444,
+                    .font_size = 12.5f,
+                    .font_weight = FontWeight::Bold,
+                });
                 lbl_items.push_back(ast);
             }
 
@@ -162,19 +170,27 @@ public:
 
         // 3. Error Banner or Helper Text
         if (!error_text_.empty()) {
-            auto err_icon = text("⚠️");
-            err_icon->fontSize(11.0f);
+            auto err_icon = text({
+                .text = "⚠️",
+                .font_size = 11.0f,
+            });
 
-            auto err_msg = text(error_text_);
-            err_msg->fontSize(11.5f).color(0xFFEF4444);
+            auto err_msg = text({
+                .text = error_text_,
+                .color = 0xFFEF4444,
+                .font_size = 11.5f,
+            });
 
             std::vector<WidgetPtr> err_items = {err_icon, err_msg};
             auto err_row = row(err_items);
             err_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
             col_items.push_back(err_row);
         } else if (!opts.helper_text.empty()) {
-            auto hlp = text(opts.helper_text);
-            hlp->fontSize(11.0f).color(0xFF64748B);
+            auto hlp = text({
+                .text = opts.helper_text,
+                .color = 0xFF64748B,
+                .font_size = 11.0f,
+            });
             col_items.push_back(hlp);
         }
 
@@ -270,13 +286,20 @@ public:
             }
         };
 
-        auto lbl = text(opts.label);
-        lbl->fontSize(12.5f).color(0xFFE2E8F0);
+        auto lbl = text({
+            .text = opts.label,
+            .color = 0xFFE2E8F0,
+            .font_size = 12.5f,
+        });
 
         std::vector<WidgetPtr> row_items = {cb, lbl};
         if (opts.required) {
-            auto ast = text("*");
-            ast->fontSize(12.5f).bold().color(0xFFEF4444);
+            auto ast = text({
+                .text = "*",
+                .color = 0xFFEF4444,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
             row_items.push_back(ast);
         }
 
@@ -286,11 +309,16 @@ public:
         std::vector<WidgetPtr> col_items = {cb_row};
 
         if (!error_text_.empty()) {
-            auto err_icon = text("⚠️");
-            err_icon->fontSize(11.0f);
+            auto err_icon = text({
+                .text = "⚠️",
+                .font_size = 11.0f,
+            });
 
-            auto err_msg = text(error_text_);
-            err_msg->fontSize(11.5f).color(0xFFEF4444);
+            auto err_msg = text({
+                .text = error_text_,
+                .color = 0xFFEF4444,
+                .font_size = 11.5f,
+            });
 
             std::vector<WidgetPtr> err_items = {err_icon, err_msg};
             auto err_row = row(err_items);

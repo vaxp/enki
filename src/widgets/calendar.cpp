@@ -185,18 +185,23 @@ public:
         }
 
         // Day Number Text
-        auto day_txt = text(std::to_string(date.day));
-        day_txt->fontSize(12.5f);
-
+        Color day_color = opts.day_color;
+        FontWeight day_weight = FontWeight::Normal;
         if (is_selected) {
-            day_txt->bold().color(0xFFFFFFFF);
+            day_color = 0xFFFFFFFF;
+            day_weight = FontWeight::Bold;
         } else if (!is_current_month) {
-            day_txt->color(opts.adjacent_day_color);
+            day_color = opts.adjacent_day_color;
         } else if (is_today) {
-            day_txt->bold().color(opts.today_ring_color);
-        } else {
-            day_txt->color(opts.day_color);
+            day_color = opts.today_ring_color;
+            day_weight = FontWeight::Bold;
         }
+        auto day_txt = text({
+            .text = std::to_string(date.day),
+            .color = day_color,
+            .font_size = 12.5f,
+            .font_weight = day_weight,
+        });
 
         std::vector<WidgetPtr> cell_col_items = {day_txt};
 
@@ -248,13 +253,21 @@ public:
 
         // ── 1. Month Header Bar ───────────────────────────────────────
         std::string month_str = std::string(getMonthName(view_month_)) + " " + std::to_string(view_year_);
-        auto month_txt = text(month_str);
-        month_txt->fontSize(15.0f).bold().color(opts.title_color);
+        auto month_txt = text({
+            .text = month_str,
+            .color = opts.title_color,
+            .font_size = 15.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         // Header Navigation Buttons (◀ Today ▶)
         auto makeNavBtn = [](std::string sym, std::function<void()> cb) -> WidgetPtr {
-            auto t = text(sym);
-            t->fontSize(12.0f).bold().color(0xFF94A3B8);
+            auto t = text({
+                .text = sym,
+                .color = 0xFF94A3B8,
+                .font_size = 12.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto b = container(t);
             b->color(0xFF0F172A)
@@ -294,8 +307,12 @@ public:
         std::vector<WidgetPtr> weekday_items;
 
         for (const auto* day_name : weekdays) {
-            auto t = text(day_name);
-            t->fontSize(11.0f).bold().color(opts.weekday_color);
+            auto t = text({
+                .text = day_name,
+                .color = opts.weekday_color,
+                .font_size = 11.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             std::vector<WidgetPtr> t_items = {t};
             auto tc = column(t_items);

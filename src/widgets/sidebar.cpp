@@ -63,7 +63,8 @@ public:
                 std::string icon = is_expanded_ ? "◀" : "▶";
                 Color icon_col   = toggle_hovered_ ? opts.toggle_hover_color : opts.toggle_color;
 
-                auto icon_t = std::make_shared<Text>(icon, TextStyle{
+                auto icon_t = text({
+                    .text = icon,
                     .color = icon_col,
                     .font_size = 14.0f,
                 });

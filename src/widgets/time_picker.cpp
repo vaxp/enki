@@ -122,8 +122,11 @@ public:
     WidgetPtr buildStepperColumn(std::string value_str, std::string label_str,
                                  std::function<void()> on_up, std::function<void()> on_down) {
         // Up arrow button
-        auto up_txt = text("▲");
-        up_txt->fontSize(11.0f).color(0xFF94A3B8);
+        auto up_txt = text({
+            .text = "▲",
+            .color = 0xFF94A3B8,
+            .font_size = 11.0f,
+        });
         auto up_row = row(std::vector<WidgetPtr>{up_txt});
         up_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
         auto up_box = container(up_row);
@@ -133,16 +136,23 @@ public:
         up_gd->on_tap_up = [on_up](const TapUpDetails&) { if (on_up) on_up(); };
 
         // Value Display Card
-        auto val_txt = text(value_str);
-        val_txt->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto val_txt = text({
+            .text = value_str,
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto val_row = row(std::vector<WidgetPtr>{val_txt});
         val_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
         auto val_box = container(val_row);
         val_box->color(0xFF0F172A).border(0xFF0284C7, 1.5f).borderRadius(6.0f).paddingSymmetric(8.0f, 6.0f).width(54.0f);
 
         // Down arrow button
-        auto down_txt = text("▼");
-        down_txt->fontSize(11.0f).color(0xFF94A3B8);
+        auto down_txt = text({
+            .text = "▼",
+            .color = 0xFF94A3B8,
+            .font_size = 11.0f,
+        });
         auto down_row = row(std::vector<WidgetPtr>{down_txt});
         down_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
         auto down_box = container(down_row);
@@ -152,8 +162,12 @@ public:
         down_gd->on_tap_up = [on_down](const TapUpDetails&) { if (on_down) on_down(); };
 
         // Subtitle Label
-        auto lbl_txt = text(label_str);
-        lbl_txt->fontSize(10.0f).bold().color(0xFF64748B);
+        auto lbl_txt = text({
+            .text = label_str,
+            .color = 0xFF64748B,
+            .font_size = 10.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto lbl_row = row(std::vector<WidgetPtr>{lbl_txt});
         lbl_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
 
@@ -166,8 +180,12 @@ public:
     // ── Build AM / PM Segmented Switch ────────────────────────────
     WidgetPtr buildAmPmSwitch() {
         auto makePill = [this](std::string label, bool active, bool is_pm_val) -> WidgetPtr {
-            auto t = text(label);
-            t->fontSize(12.5f).bold().color(active ? 0xFFFFFFFF : 0xFF94A3B8);
+            auto t = text({
+                .text = label,
+                .color = active ? 0xFFFFFFFF : 0xFF94A3B8,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto r = row(std::vector<WidgetPtr>{t});
             r->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
@@ -199,8 +217,11 @@ public:
     // ── Build Quick Presets Bar ───────────────────────────────────
     WidgetPtr buildQuickPresets() {
         auto makePreset = [this](std::string label, int h, int m, bool pm) -> WidgetPtr {
-            auto t = text(label);
-            t->fontSize(11.0f).color(0xFF38BDF8);
+            auto t = text({
+                .text = label,
+                .color = 0xFF38BDF8,
+                .font_size = 11.0f,
+            });
             auto b = container(t);
             b->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(4.0f, 8.0f);
 
@@ -233,8 +254,12 @@ public:
         bool is_24h = (opts.format == TimeFormat::TwentyFourHour);
 
         // Header Title
-        auto t_title = text("🕒 Select Time");
-        t_title->fontSize(13.5f).bold().color(0xFFFFFFFF);
+        auto t_title = text({
+            .text = "🕒 Select Time",
+            .color = 0xFFFFFFFF,
+            .font_size = 13.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
         std::ostringstream ss_h, ss_m, ss_s;
         ss_h << std::setw(2) << std::setfill('0') << time_.hour;
@@ -246,8 +271,12 @@ public:
             [this, is_24h] { stepHour(1, is_24h); },
             [this, is_24h] { stepHour(-1, is_24h); });
 
-        auto colon_txt1 = text(":");
-        colon_txt1->fontSize(22.0f).bold().color(0xFF94A3B8);
+        auto colon_txt1 = text({
+            .text = ":",
+            .color = 0xFF94A3B8,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto colon_box1 = container(colon_txt1);
         colon_box1->paddingSymmetric(18.0f, 4.0f);
 
@@ -258,8 +287,12 @@ public:
         std::vector<WidgetPtr> stepper_items = {col_hour, colon_box1, col_min};
 
         if (opts.show_seconds) {
-            auto colon_txt2 = text(":");
-            colon_txt2->fontSize(22.0f).bold().color(0xFF94A3B8);
+            auto colon_txt2 = text({
+                .text = ":",
+                .color = 0xFF94A3B8,
+                .font_size = 22.0f,
+                .font_weight = FontWeight::Bold,
+            });
             auto colon_box2 = container(colon_txt2);
             colon_box2->paddingSymmetric(18.0f, 4.0f);
 
@@ -319,11 +352,18 @@ public:
             display_str = "🕒 " + time_.format24h(opts.show_seconds);
         }
 
-        auto input_txt = text(display_str);
-        input_txt->fontSize(13.0f).bold().color(0xFFFFFFFF);
+        auto input_txt = text({
+            .text = display_str,
+            .color = 0xFFFFFFFF,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto chev_txt = text(is_popup_open_ ? "⌃" : "⌄");
-        chev_txt->fontSize(13.0f).color(0xFF94A3B8);
+        auto chev_txt = text({
+            .text = is_popup_open_ ? "⌃" : "⌄",
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
         std::vector<WidgetPtr> in_items = {input_txt, chev_txt};
         auto in_row = row(in_items);

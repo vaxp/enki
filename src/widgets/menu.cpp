@@ -216,16 +216,23 @@ public:
             lead_text = itm.icon;
         }
 
-        auto lead_w = text(lead_text);
-        lead_w->fontSize(12.0f).bold().color(lead_color);
+        auto lead_w = text({
+            .text = lead_text,
+            .color = lead_color,
+            .font_size = 12.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto lead_box = container(lead_w);
         lead_box->width(20.0f).align(Alignment::Center);
 
         // 2. Label Text
-        auto label_w = text(itm.label);
-        label_w->fontSize(13.0f)
-               .color(itm.enabled ? (hovered_ ? 0xFFFFFFFF : opt.text_color) : opt.disabled_color);
+        Color lbl_color = itm.enabled ? (hovered_ ? 0xFFFFFFFF : opt.text_color) : opt.disabled_color;
+        auto label_w = text({
+            .text = itm.label,
+            .color = lbl_color,
+            .font_size = 13.0f,
+        });
 
         // 3. Trailing Shortcut / Submenu arrow
         std::string trail_text = "";
@@ -235,8 +242,11 @@ public:
             trail_text = itm.shortcut;
         }
 
-        auto trail_w = text(trail_text);
-        trail_w->fontSize(11.0f).color(opt.text_sec_color);
+        auto trail_w = text({
+            .text = trail_text,
+            .color = opt.text_sec_color,
+            .font_size = 11.0f,
+        });
 
         // Build item Row
         auto item_row = row({lead_box, label_w});
@@ -331,9 +341,13 @@ public:
     WidgetPtr build(BuildContext&) override {
         auto* btn = static_cast<const MenuBarButton*>(widget());
 
-        auto label_w = text(btn->label);
-        label_w->fontSize(13.0f).bold()
-               .color((hovered_ || btn->is_active) ? 0xFFFFFFFF : btn->options.text_color);
+        Color lbl_bar_color = (hovered_ || btn->is_active) ? 0xFFFFFFFF : btn->options.text_color;
+        auto label_w = text({
+            .text = btn->label,
+            .color = lbl_bar_color,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto box = container(label_w);
         Color bg = btn->is_active ? btn->options.item_hover_color : (hovered_ ? 0x30FFFFFF : 0x00000000);

@@ -25,8 +25,11 @@ static bool approxEqual(float a, float b, float epsilon = 1.0f) {
 void test_text_basic_measurement() {
     std::cout << "Testing Text Intrinsic Measurement..." << std::endl;
 
-    auto t = text("Hello ENKI Shell Typography");
-    t->fontSize(16.0f).color(0xFFFFFFFF);
+    auto t = text({
+        .text = "Hello ENKI Shell Typography",
+        .color = 0xFFFFFFFF,
+        .font_size = 16.0f,
+    });
 
     auto c = container(t);
     auto el = c->createElement();
@@ -56,8 +59,10 @@ void test_text_multiline_wrapping() {
     std::cout << "Testing Multiline Text Wrapping..." << std::endl;
 
     std::string longText = "This is a very long text paragraph designed to test automatic line wrapping across multiple lines when constrained by narrow parent width.";
-    auto t1 = text(longText);
-    t1->fontSize(14.0f);
+    auto t1 = text({
+        .text = longText,
+        .font_size = 14.0f,
+    });
     auto c1 = container(t1);
 
     auto el1 = c1->createElement();
@@ -73,8 +78,10 @@ void test_text_multiline_wrapping() {
     float singleLineWidth = rp1->size().width;
 
     // Now constrain parent width to 150px
-    auto t2 = text(longText);
-    t2->fontSize(14.0f);
+    auto t2 = text({
+        .text = longText,
+        .font_size = 14.0f,
+    });
     auto c2 = container(t2);
     c2->width(150.0f);
 
@@ -103,10 +110,12 @@ void test_text_overflow_max_lines() {
     std::cout << "Testing Text Overflow & MaxLines..." << std::endl;
 
     std::string longText = "First line of text that continues to second and third line when wrapped inside small container";
-    auto t = text(longText);
-    t->fontSize(14.0f)
-     .maxLines(1)
-     .ellipsis();
+    auto t = text({
+        .text = longText,
+        .font_size = 14.0f,
+        .overflow = TextOverflow::Ellipsis,
+        .max_lines = 1,
+    });
 
     auto c = container(t);
     c->width(100.0f);
@@ -134,9 +143,9 @@ void test_text_overflow_max_lines() {
 void test_richtext_spans() {
     std::cout << "Testing RichText Spans..." << std::endl;
 
-    auto rootSpan = span("Welcome to ", TextStyle().setColor(0xFF888888).setFontSize(14.0f), {
-        span("ENKI ", TextStyle().setColor(0xFF3B82F6).bold().setFontSize(16.0f)),
-        span("Desktop Shell", TextStyle().setColor(0xFF10B981).italic().setFontSize(14.0f))
+    auto rootSpan = span("Welcome to ", TextStyle{ .color = 0xFF888888, .font_size = 14.0f }, {
+        span("ENKI ", TextStyle{ .color = 0xFF3B82F6, .font_size = 16.0f, .font_weight = FontWeight::Bold }),
+        span("Desktop Shell", TextStyle{ .color = 0xFF10B981, .font_size = 14.0f, .font_style = FontStyle::Italic })
     });
 
     auto rt = richText(rootSpan);
@@ -164,11 +173,17 @@ void test_richtext_spans() {
 void test_text_flexbox_integration() {
     std::cout << "Testing Text Inside Flexbox Tree..." << std::endl;
 
-    auto title = text("Title Text");
-    title->fontSize(18.0f).bold();
+    auto title = text({
+        .text = "Title Text",
+        .font_size = 18.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto subtitle = text("Subtitle Description");
-    subtitle->fontSize(12.0f).color(0xFFAAAAAA);
+    auto subtitle = text({
+        .text = "Subtitle Description",
+        .color = 0xFFAAAAAA,
+        .font_size = 12.0f,
+    });
 
     std::vector<WidgetPtr> colChildren = {title, subtitle};
     auto card = container(column(colChildren));
@@ -201,10 +216,12 @@ void test_text_paint_rendering() {
     auto wrapper = createCanvasWrapper(skSurface->getCanvas());
     PaintContext ctx(*wrapper);
 
-    auto t = text("Renderable Text");
-    t->fontSize(20.0f)
-     .color(0xFF00FF00)
-     .shadow(0x80000000, {0, 2}, 4.0f);
+    auto t = text({
+        .text = "Renderable Text",
+        .color = 0xFF00FF00,
+        .font_size = 20.0f,
+        .shadows = { BoxShadow(0x80000000, {0, 2}, 4.0f) },
+    });
 
     auto el = t->createElement();
     el->mount(nullptr, 0);
@@ -271,44 +288,56 @@ void test_text_render_snapshot_png() {
     PaintContext ctx(*wrapper);
 
     // Build rich hierarchy showcase
-    auto title = text("⚡ ENKI ENGINE — TYPOGRAPHY & SKPARAGRAPH DEMO");
-    title->fontSize(22.0f).bold().color(0xFFFFFFFF).shadow(0x8038BDF8, {0, 0}, 8.0f);
+    auto title = text({
+        .text = "⚡ ENKI ENGINE — TYPOGRAPHY & SKPARAGRAPH DEMO",
+        .color = 0xFFFFFFFF,
+        .font_size = 22.0f,
+        .font_weight = FontWeight::Bold,
+        .shadows = { BoxShadow(0x8038BDF8, {0, 0}, 8.0f) },
+    });
 
-    auto sub = text("SkParagraph Text Layout + HarfBuzz Font Shaping + Anu Flexbox Integration");
-    sub->fontSize(12.0f).color(0xFF818CF8);
+    auto sub = text({
+        .text = "SkParagraph Text Layout + HarfBuzz Font Shaping + Anu Flexbox Integration",
+        .color = 0xFF818CF8,
+        .font_size = 12.0f,
+    });
 
-    auto dispL = text("Display Large — 28px Bold Glow Headline");
-    dispL->fontSize(28.0f).bold().color(0xFF38BDF8).shadow(0x8038BDF8, {0, 0}, 12.0f);
+    auto dispL = text({
+        .text = "Display Large — 28px Bold Glow Headline",
+        .color = 0xFF38BDF8,
+        .font_size = 28.0f,
+        .font_weight = FontWeight::Bold,
+        .shadows = { BoxShadow(0x8038BDF8, {0, 0}, 12.0f) },
+    });
 
-    auto richDemoSpan = span("ENKI Framework delivers ", TextStyle().setColor(0xFFCBD5E1).setFontSize(15.0f), {
-        span("blazing-fast ", TextStyle().setColor(0xFF38BDF8).bold().setFontSize(15.0f)),
-        span("desktop shell typography. Combining ", TextStyle().setColor(0xFFCBD5E1).setFontSize(15.0f)),
-        span("Skia GPU Rasterization ", TextStyle().setColor(0xFF34D399).bold().setFontSize(15.0f)),
-        span("with ", TextStyle().setColor(0xFFCBD5E1).setFontSize(15.0f)),
-        span("Anu Flexbox Layout ", TextStyle().setColor(0xFFF59E0B).bold().setFontSize(15.0f)),
-        span("and ", TextStyle().setColor(0xFFCBD5E1).setFontSize(15.0f)),
-        span("HarfBuzz text shaping!", TextStyle().setColor(0xFFEC4899).bold().italic().setFontSize(15.0f))
+    auto richDemoSpan = span("ENKI Framework delivers ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 15.0f }, {
+        span("blazing-fast ", TextStyle{ .color = 0xFF38BDF8, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+        span("desktop shell typography. Combining ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 15.0f }),
+        span("Skia GPU Rasterization ", TextStyle{ .color = 0xFF34D399, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+        span("with ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 15.0f }),
+        span("Anu Flexbox Layout ", TextStyle{ .color = 0xFFF59E0B, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+        span("and ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 15.0f }),
+        span("HarfBuzz text shaping!", TextStyle{ .color = 0xFFEC4899, .font_size = 15.0f, .font_weight = FontWeight::Bold, .font_style = FontStyle::Italic })
     });
     auto richDemo = richText(richDemoSpan);
 
-    auto arabicDemo = text("محرك رسم فائق السرعة يدعم اللغة العربية والخطوط المخصصة بالكامل");
-    arabicDemo->fontSize(15.0f).bold().color(0xFF34D399);
+    auto arabicDemo = text({
+        .text = "محرك رسم فائق السرعة يدعم اللغة العربية والخطوط المخصصة بالكامل",
+        .color = 0xFF34D399,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto codeSpan = span("", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f), {
-        span("// Syntax Highlighting with SkParagraph Spans\n", TextStyle().setColor(0xFF64748B).italic()),
-        span("auto ", TextStyle().setColor(0xFF818CF8).bold()),
-        span("label ", TextStyle().setColor(0xFFFBBF24).bold()),
-        span("= ", TextStyle().setColor(0xFF94A3B8)),
-        span("text", TextStyle().setColor(0xFF38BDF8)),
-        span("(\"", TextStyle().setColor(0xFFE2E8F0)),
-        span("Hello World!", TextStyle().setColor(0xFF34D399)),
-        span("\")->", TextStyle().setColor(0xFFE2E8F0)),
-        span("fontSize", TextStyle().setColor(0xFFFBBF24)),
-        span("(", TextStyle().setColor(0xFFE2E8F0)),
-        span("18.0f", TextStyle().setColor(0xFFA78BFA)),
-        span(")->", TextStyle().setColor(0xFFE2E8F0)),
-        span("bold", TextStyle().setColor(0xFFFBBF24)),
-        span("();", TextStyle().setColor(0xFFE2E8F0))
+    auto codeSpan = span("", TextStyle{ .color = 0xFFE2E8F0, .font_size = 13.0f }, {
+        span("// Syntax Highlighting with SkParagraph Spans\n", TextStyle{ .color = 0xFF64748B, .font_style = FontStyle::Italic }),
+        span("auto ", TextStyle{ .color = 0xFF818CF8, .font_weight = FontWeight::Bold }),
+        span("label ", TextStyle{ .color = 0xFFFBBF24, .font_weight = FontWeight::Bold }),
+        span("= ", TextStyle{ .color = 0xFF94A3B8 }),
+        span("text", TextStyle{ .color = 0xFF38BDF8 }),
+        span("({", TextStyle{ .color = 0xFFE2E8F0 }),
+        span(".text = \"Hello World!\", ", TextStyle{ .color = 0xFF34D399 }),
+        span(".font_size = 18.0f", TextStyle{ .color = 0xFFA78BFA }),
+        span("});", TextStyle{ .color = 0xFFE2E8F0 })
     });
     auto codeDemo = richText(codeSpan);
 

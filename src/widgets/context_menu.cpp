@@ -210,10 +210,11 @@ public:
         }
 
         // Label Text
-        auto label_text = text(
-            label_str,
-            TextStyle().setColor(text_col).setFontSize(opt.font_size)
-        );
+        auto label_text = text({
+            .text = label_str,
+            .color = text_col,
+            .font_size = opt.font_size,
+        });
         row_elements.push_back(label_text);
 
         // Flexible Spacer
@@ -223,12 +224,12 @@ public:
 
         // Trailing Shortcut / Submenu arrow
         if (!shortcut_str.empty()) {
-            auto shortcut_text = text(
-                shortcut_str,
-                TextStyle()
-                    .setColor(is_disabled ? opt.disabled_color : opt.shortcut_color)
-                    .setFontSize(opt.font_size - 1.0f)
-            );
+            Color shortcut_color = is_disabled ? opt.disabled_color : opt.shortcut_color;
+            auto shortcut_text = text({
+                .text = shortcut_str,
+                .color = shortcut_color,
+                .font_size = opt.font_size - 1.0f,
+            });
             row_elements.push_back(shortcut_text);
         }
 

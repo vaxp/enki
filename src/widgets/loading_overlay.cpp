@@ -176,8 +176,12 @@ public:
             }
             case LoadingIndicatorStyle::ProgressRing: {
                 int pct = static_cast<int>(std::clamp(opts.progress, 0.0f, 1.0f) * 100.0f);
-                auto pct_txt = text(std::to_string(pct) + "%");
-                pct_txt->fontSize(11.0f).bold().color(opts.title_color);
+                auto pct_txt = text({
+                    .text = std::to_string(pct) + "%",
+                    .color = opts.title_color,
+                    .font_size = 11.0f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 return ProgressRing {
                     .value = opts.progress,
@@ -228,14 +232,21 @@ public:
         // 2. Title + Message
         std::vector<WidgetPtr> text_items;
         if (!opts.title.empty()) {
-            auto t_txt = text(opts.title);
-            t_txt->fontSize(15.0f).bold().color(opts.title_color);
+            auto t_txt = text({
+                .text = opts.title,
+                .color = opts.title_color,
+                .font_size = 15.0f,
+                .font_weight = FontWeight::Bold,
+            });
             text_items.push_back(t_txt);
         }
 
         if (!opts.message.empty()) {
-            auto m_txt = text(opts.message);
-            m_txt->fontSize(12.5f).color(opts.message_color);
+            auto m_txt = text({
+                .text = opts.message,
+                .color = opts.message_color,
+                .font_size = 12.5f,
+            });
             text_items.push_back(m_txt);
         }
 
@@ -245,8 +256,12 @@ public:
 
         // 3. Optional Cancel Button
         if (opts.allow_cancel) {
-            auto c_lbl = text(opts.cancel_label);
-            c_lbl->fontSize(12.0f).bold().color(0xFFEF4444);
+            auto c_lbl = text({
+                .text = opts.cancel_label,
+                .color = 0xFFEF4444,
+                .font_size = 12.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto c_box = container(c_lbl);
             c_box->color(0x22EF4444)

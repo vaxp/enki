@@ -92,9 +92,11 @@ class TreeViewState : public State {
             WidgetPtr arrow;
             if (!is_leaf || data.loading) {
                 // Build a small rotatable arrow via container with text symbol
-                auto arrow_sym = std::make_shared<Text>(is_expanded ? "▾" : "▸");
-                arrow_sym->fontSize(theme.arrow_size)
-                          .color(data.disabled ? theme.disabled_color : theme.arrow_color);
+                auto arrow_sym = text({
+                    .text = is_expanded ? "▾" : "▸",
+                    .color = data.disabled ? theme.disabled_color : theme.arrow_color,
+                    .font_size = theme.arrow_size,
+                });
 
                 auto arrow_wrap = container(arrow_sym);
                 arrow_wrap->width(theme.indent_width);

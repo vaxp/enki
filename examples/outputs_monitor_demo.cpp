@@ -147,33 +147,50 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
     std::string scale_str = fmtScale(out->scaleFactor(), out->fractionalScale());
 
     // Name line
-    auto name_text = text(out->name().empty() ? "Unknown" : out->name());
-    name_text->fontSize(13.0f).bold().color(selected ? Theme::primary : Theme::text_primary);
+    auto name_text = text({
+        .text = out->name().empty() ? "Unknown" : out->name(),
+        .color = selected ? Theme::primary : Theme::text_primary,
+        .font_size = 13.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     // Primary badge
     WidgetPtr badge_row;
     if (is_primary) {
-        auto b = text("PRIMARY");
-        b->fontSize(9.0f).bold().color(Theme::accent_green);
+        auto b = text({
+            .text = "PRIMARY",
+            .color = Theme::accent_green,
+            .font_size = 9.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto bc = container(b);
         bc->padding(EdgeInsets::symmetric(2.0f, 7.0f)).color(0x2010B981).borderRadius(6.0f);
         badge_row = bc;
     }
 
     // Resolution
-    auto res_label = text(phys_str);
-    res_label->fontSize(11.0f).color(Theme::accent_cyan);
+    auto res_label = text({
+        .text = phys_str,
+        .color = Theme::accent_cyan,
+        .font_size = 11.0f,
+    });
 
     // Scale
-    auto scale_label = text("Scale: " + scale_str);
-    scale_label->fontSize(11.0f).color(Theme::accent_purple);
+    auto scale_label = text({
+        .text = "Scale: " + scale_str,
+        .color = Theme::accent_purple,
+        .font_size = 11.0f,
+    });
 
     // Description
     std::string desc = out->description();
     if (desc.empty()) desc = out->make() + " " + out->model();
     if (desc.empty()) desc = "Monitor";
-    auto desc_text = text(desc);
-    desc_text->fontSize(10.5f).color(Theme::text_secondary);
+    auto desc_text = text({
+        .text = desc,
+        .color = Theme::text_secondary,
+        .font_size = 10.5f,
+    });
 
     // Physical size
     std::string phys_mm_str;
@@ -188,12 +205,18 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
     } else {
         phys_mm_str = "Physical size: N/A";
     }
-    auto phys_text = text(phys_mm_str);
-    phys_text->fontSize(10.5f).color(Theme::text_muted);
+    auto phys_text = text({
+        .text = phys_mm_str,
+        .color = Theme::text_muted,
+        .font_size = 10.5f,
+    });
 
     // Rotation
-    auto rot_text = text("Rotation: " + fmtTransform(out->transform()));
-    rot_text->fontSize(10.5f).color(Theme::text_muted);
+    auto rot_text = text({
+        .text = "Rotation: " + fmtTransform(out->transform()),
+        .color = Theme::text_muted,
+        .font_size = 10.5f,
+    });
 
     // Card body
     std::vector<WidgetPtr> body_items;
@@ -231,8 +254,12 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
 // ── Mode Panel ────────────────────────────────────────────────────
 
 WidgetPtr MonitorDemoState::buildModePanel(const std::shared_ptr<Output>& out) {
-    auto title = text("Available Modes (" + out->name() + ")");
-    title->fontSize(12.0f).bold().color(Theme::text_secondary);
+    auto title = text({
+        .text = "Available Modes (" + out->name() + ")",
+        .color = Theme::text_secondary,
+        .font_size = 12.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     std::vector<WidgetPtr> rows;
     rows.push_back(title);
@@ -248,14 +275,20 @@ WidgetPtr MonitorDemoState::buildModePanel(const std::shared_ptr<Output>& out) {
         if (m.is_current)   label += "  \u2190 current";
         if (m.is_preferred && !m.is_current) label += "  \u2605";
 
-        auto lbl = text(label);
-        lbl->fontSize(11.0f).color(m.is_current ? Theme::accent_green : Theme::text_muted);
+        auto lbl = text({
+            .text = label,
+            .color = m.is_current ? Theme::accent_green : Theme::text_muted,
+            .font_size = 11.0f,
+        });
         rows.push_back(lbl);
         ++shown;
     }
     if (static_cast<int>(modes.size()) > shown) {
-        auto more = text("\u2026 and " + std::to_string(modes.size() - shown) + " more");
-        more->fontSize(10.5f).color(Theme::text_muted);
+        auto more = text({
+            .text = "\u2026 and " + std::to_string(modes.size() - shown) + " more",
+            .color = Theme::text_muted,
+            .font_size = 10.5f,
+        });
         rows.push_back(more);
     }
 
@@ -274,14 +307,21 @@ WidgetPtr MonitorDemoState::buildModePanel(const std::shared_ptr<Output>& out) {
 WidgetPtr MonitorDemoState::build(BuildContext&) {
     // Left: output cards
     std::vector<WidgetPtr> cards;
-    auto list_title = text("Connected Monitors");
-    list_title->fontSize(12.0f).bold().color(Theme::text_secondary);
+    auto list_title = text({
+        .text = "Connected Monitors",
+        .color = Theme::text_secondary,
+        .font_size = 12.0f,
+        .font_weight = FontWeight::Bold,
+    });
     cards.push_back(list_title);
     cards.push_back(sizedBox(0.0f, 8.0f));
 
     if (outputs.empty()) {
-        auto empty_label = text("No outputs detected");
-        empty_label->fontSize(12.0f).color(Theme::text_muted);
+        auto empty_label = text({
+            .text = "No outputs detected",
+            .color = Theme::text_muted,
+            .font_size = 12.0f,
+        });
         auto empty_box = container(empty_label);
         empty_box->width(360.0f).paddingAll(20.0f).color(Theme::bg_card).borderRadius(12.0f);
         cards.push_back(empty_box);
@@ -300,8 +340,11 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
     if (!outputs.empty() && selected_idx < static_cast<int>(outputs.size())) {
         right_panel = buildModePanel(outputs[selected_idx]);
     } else {
-        auto ph = text("Select a monitor");
-        ph->fontSize(12.0f).color(Theme::text_muted);
+        auto ph = text({
+            .text = "Select a monitor",
+            .color = Theme::text_muted,
+            .font_size = 12.0f,
+        });
         auto ph_box = container(ph);
         ph_box->width(260.0f).paddingAll(20.0f).color(Theme::bg_card).borderRadius(12.0f);
         right_panel = ph_box;
@@ -314,18 +357,31 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
     });
 
     // Header
-    auto title = text("\u2b1b  Output & Monitor Manager");
-    title->fontSize(17.0f).bold().color(Theme::primary);
+    auto title = text({
+        .text = "\u2b1b  Output & Monitor Manager",
+        .color = Theme::primary,
+        .font_size = 17.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto sub = text("Live display topology \u2014 Wayland: wl_output + zxdg_output_v1  |  X11: XRandR");
-    sub->fontSize(10.5f).color(Theme::text_muted);
+    auto sub = text({
+        .text = "Live display topology \u2014 Wayland: wl_output + zxdg_output_v1  |  X11: XRandR",
+        .color = Theme::text_muted,
+        .font_size = 10.5f,
+    });
 
     // Status bar
     std::string count_str = std::to_string(outputs.size()) + " output(s) connected";
-    auto log_label = text(log_msg);
-    log_label->fontSize(10.5f).color(Theme::text_secondary);
-    auto count_label = text(count_str);
-    count_label->fontSize(10.5f).color(Theme::text_muted);
+    auto log_label = text({
+        .text = log_msg,
+        .color = Theme::text_secondary,
+        .font_size = 10.5f,
+    });
+    auto count_label = text({
+        .text = count_str,
+        .color = Theme::text_muted,
+        .font_size = 10.5f,
+    });
 
     auto status_inner = row(Justify::SpaceBetween, Align::Center, { log_label, count_label });
     auto status_box = container(status_inner);

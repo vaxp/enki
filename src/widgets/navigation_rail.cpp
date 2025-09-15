@@ -59,7 +59,8 @@ public:
         // ── Toggle button ───────────────────────────────────────
         {
             std::string icon = is_expanded_ ? "◀" : "▶";
-            auto icon_t = std::make_shared<Text>(icon, TextStyle{
+            auto icon_t = text({
+                .text = icon,
                 .color = opts.inactive_color,
                 .font_size = 14.0f,
             });
@@ -97,7 +98,8 @@ public:
             if (t > 0.01f && !item.label.empty()) {
                 // Alpha-fade the label based on expansion progress
                 uint8_t alpha = static_cast<uint8_t>(std::clamp(t * 2.0f - 0.4f, 0.0f, 1.0f) * 255);
-                auto faded_label = std::make_shared<Text>(item.label, TextStyle{
+                auto faded_label = text({
+                    .text = item.label,
                     .color = (text_col & 0x00FFFFFF) | (static_cast<uint32_t>(alpha) << 24),
                     .font_size = opts.label_font_size,
                     .font_weight = active ? FontWeight::Bold : FontWeight::Normal,
@@ -129,7 +131,8 @@ public:
             // Badge — shown inline (no absolute positioning needed here)
             WidgetPtr item_widget = item_box;
             if (!item.badge.empty()) {
-                auto badge_t = std::make_shared<Text>(item.badge, TextStyle{
+                auto badge_t = text({
+                    .text = item.badge,
                     .color = opts.badge_text_color,
                     .font_size = 9.0f,
                 });

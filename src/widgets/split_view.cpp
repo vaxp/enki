@@ -75,8 +75,11 @@ public:
 
         WidgetPtr grip_widget = nullptr;
         if (opts.show_handle_grip) {
-            auto grip_txt = text(is_horizontal ? "⋮" : "⋯");
-            grip_txt->fontSize(11.0f).color(is_hovered_ ? 0xFFFFFFFF : 0xFF64748B);
+            auto grip_txt = text({
+                .text = is_horizontal ? "⋮" : "⋯",
+                .color = is_hovered_ ? 0xFFFFFFFF : 0xFF64748B,
+                .font_size = 11.0f,
+            });
             grip_widget = grip_txt;
         }
 

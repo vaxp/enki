@@ -112,33 +112,6 @@ struct TextStyle {
     float                      decoration_thickness = 1.0f;            ///< Thickness of decoration line.
     std::vector<BoxShadow>     shadows;                                ///< Text shadows.
 
-    // ── Fluent Builders ────────────────────────────────────────
-
-    TextStyle& setColor(Color c) { color = c; return *this; }
-    TextStyle& setFontSize(float s) { font_size = s; return *this; }
-    TextStyle& setFontWeight(FontWeight w) { font_weight = w; return *this; }
-    TextStyle& bold() { font_weight = FontWeight::Bold; return *this; }
-    TextStyle& setFontStyle(FontStyle s) { font_style = s; return *this; }
-    TextStyle& italic() { font_style = FontStyle::Italic; return *this; }
-    TextStyle& setFontFamily(std::string family) { font_family = std::move(family); return *this; }
-    TextStyle& addFontFamily(std::string family) { font_families.push_back(std::move(family)); return *this; }
-    TextStyle& setLetterSpacing(float s) { letter_spacing = s; return *this; }
-    TextStyle& setWordSpacing(float s) { word_spacing = s; return *this; }
-    TextStyle& setHeight(float h) { height = h; return *this; }
-    TextStyle& setDecoration(TextDecoration d, Color c = 0xFFFFFFFF, TextDecorationStyle s = TextDecorationStyle::Solid, float thickness = 1.0f) {
-        decoration = d;
-        decoration_color = c;
-        decoration_style = s;
-        decoration_thickness = thickness;
-        return *this;
-    }
-    TextStyle& underline(Color c = 0xFFFFFFFF) { return setDecoration(TextDecoration::Underline, c); }
-    TextStyle& lineThrough(Color c = 0xFFFFFFFF) { return setDecoration(TextDecoration::LineThrough, c); }
-    TextStyle& addShadow(Color color, Point offset, float blurRadius) {
-        shadows.push_back(BoxShadow(color, offset, blurRadius, 0));
-        return *this;
-    }
-
     bool operator==(const TextStyle& o) const {
         return color == o.color &&
                font_size == o.font_size &&
@@ -152,7 +125,8 @@ struct TextStyle {
                decoration == o.decoration &&
                decoration_color == o.decoration_color &&
                decoration_style == o.decoration_style &&
-               decoration_thickness == o.decoration_thickness;
+               decoration_thickness == o.decoration_thickness &&
+               shadows == o.shadows;
     }
     bool operator!=(const TextStyle& o) const { return !(*this == o); }
 };
@@ -173,26 +147,42 @@ public:
     virtual void build(ParagraphBuilderContext& builder, const TextStyle& inheritedStyle) const = 0;
 };
 
+/// @brief Declarative props for TextSpan creation.
+struct TextSpanProps {
+    std::string                              text = "";
+    std::optional<TextStyle>                 style = std::nullopt;
+    std::vector<std::shared_ptr<InlineSpan>> children = {};
+    TextSpanCallback                         on_click = nullptr;
+    TextSpanHoverCallback                    on_hover = nullptr;
+};
+
 /// @brief An immutable text span with its own style and optional nested children spans.
 class TextSpan : public InlineSpan, public std::enable_shared_from_this<TextSpan> {
 public:
-    std::string text;
-    std::optional<TextStyle> style;
+    std::string                              text;
+    std::optional<TextStyle>                 style;
     std::vector<std::shared_ptr<InlineSpan>> children;
-    
-    TextSpanCallback on_click;
-    TextSpanHoverCallback on_hover;
+    TextSpanCallback                         on_click;
+    TextSpanHoverCallback                    on_hover;
 
     TextSpan(std::string text = "",
              std::optional<TextStyle> style = std::nullopt,
-             std::vector<std::shared_ptr<InlineSpan>> children = {})
-        : text(std::move(text)), style(std::move(style)), children(std::move(children)) {}
+             std::vector<std::shared_ptr<InlineSpan>> children = {},
+             TextSpanCallback on_click = nullptr,
+             TextSpanHoverCallback on_hover = nullptr)
+        : text(std::move(text)), style(std::move(style)), children(std::move(children)),
+          on_click(std::move(on_click)), on_hover(std::move(on_hover)) {}
 
-    TextSpan& onClick(TextSpanCallback cb) { on_click = std::move(cb); return *this; }
-    TextSpan& onHover(TextSpanHoverCallback cb) { on_hover = std::move(cb); return *this; }
+    explicit TextSpan(TextSpanProps props)
+        : text(std::move(props.text)), style(std::move(props.style)), children(std::move(props.children)),
+          on_click(std::move(props.on_click)), on_hover(std::move(props.on_hover)) {}
 
     void build(ParagraphBuilderContext& builder, const TextStyle& inheritedStyle) const override;
 };
+
+inline std::shared_ptr<TextSpan> span(TextSpanProps props) {
+    return std::make_shared<TextSpan>(std::move(props));
+}
 
 inline std::shared_ptr<TextSpan> span(std::string text, std::optional<TextStyle> style = std::nullopt, std::vector<std::shared_ptr<InlineSpan>> children = {}) {
     return std::make_shared<TextSpan>(std::move(text), std::move(style), std::move(children));
@@ -292,29 +282,6 @@ public:
     Text(std::string text, TextStyle s, Key key = Key::none())
         : SingleChildRenderObjectWidget(std::move(key)), data(std::move(text)), style(std::move(s)) {}
 
-    // ── Fluent Configuration ───────────────────────────────────
-
-    Text& setStyle(TextStyle s) { style = std::move(s); return *this; }
-    Text& color(Color c) { style.color = c; return *this; }
-    Text& fontSize(float s) { style.font_size = s; return *this; }
-    Text& fontWeight(FontWeight w) { style.font_weight = w; return *this; }
-    Text& bold() { style.font_weight = FontWeight::Bold; return *this; }
-    Text& italic() { style.font_style = FontStyle::Italic; return *this; }
-    Text& fontFamily(std::string f) { style.font_family = std::move(f); return *this; }
-    Text& letterSpacing(float s) { style.letter_spacing = s; return *this; }
-    Text& height(float h) { style.height = h; return *this; }
-    Text& shadow(Color c, Point offset = {0, 2}, float blurRadius = 4.0f) {
-        style.addShadow(c, offset, blurRadius);
-        return *this;
-    }
-
-    Text& textAlign(TextAlign a) { text_align = a; return *this; }
-    Text& textDirection(TextDirection d) { text_direction = d; return *this; }
-    Text& textOverflow(TextOverflow o) { overflow = o; return *this; }
-    Text& ellipsis() { overflow = TextOverflow::Ellipsis; return *this; }
-    Text& maxLines(size_t m) { max_lines = m; return *this; }
-    Text& softWrap(bool w) { soft_wrap = w; return *this; }
-
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
     [[nodiscard]] std::string_view typeName() const override { return "Text"; }
@@ -337,14 +304,6 @@ public:
 
     explicit RichText(std::shared_ptr<InlineSpan> span, Key key = Key::none())
         : SingleChildRenderObjectWidget(std::move(key)), text_span(std::move(span)) {}
-
-    RichText& defaultStyle(TextStyle s) { default_style = std::move(s); return *this; }
-    RichText& textAlign(TextAlign a) { text_align = a; return *this; }
-    RichText& textDirection(TextDirection d) { text_direction = d; return *this; }
-    RichText& textOverflow(TextOverflow o) { overflow = o; return *this; }
-    RichText& ellipsis() { overflow = TextOverflow::Ellipsis; return *this; }
-    RichText& maxLines(size_t m) { max_lines = m; return *this; }
-    RichText& softWrap(bool w) { soft_wrap = w; return *this; }
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
@@ -447,5 +406,5 @@ inline std::shared_ptr<RichText> richText(RichTextProps props) {
     if (props.soft_wrap) r->soft_wrap = *props.soft_wrap;
     return r;
 }
-
+ 
 } // namespace enki

@@ -44,7 +44,8 @@ public:
         }
 
         bool bold = w->active && w->options.bold_active;
-        auto t = std::make_shared<Text>(w->label, TextStyle{
+        auto t = text({
+            .text = w->label,
             .color = col,
             .font_size = w->options.font_size,
             .font_weight = bold ? FontWeight::Bold : FontWeight::Normal,
@@ -97,9 +98,10 @@ WidgetPtr BreadcrumbWidget::build(BuildContext&) {
 
         // Separator between items
         if (i < n - 1) {
-            auto sep = std::make_shared<Text>(options.separator, TextStyle{
-                .color      = options.separator_color,
-                .font_size  = options.separator_font_size,
+            auto sep = text({
+                .text = options.separator,
+                .color = options.separator_color,
+                .font_size = options.separator_font_size,
             });
 
             auto sep_box = container(sep);

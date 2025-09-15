@@ -462,10 +462,18 @@ public:
     // ── Build Color Inputs & Format Switcher ──────────────────────
     WidgetPtr buildFormatInputs() {
         auto makeInputPill = [](std::string label, std::string val) -> WidgetPtr {
-            auto l = text(label);
-            l->fontSize(9.5f).bold().color(0xFF64748B);
-            auto v = text(val);
-            v->fontSize(11.5f).bold().color(0xFFFFFFFF);
+            auto l = text({
+                .text = label,
+                .color = 0xFF64748B,
+                .font_size = 9.5f,
+                .font_weight = FontWeight::Bold,
+            });
+            auto v = text({
+                .text = val,
+                .color = 0xFFFFFFFF,
+                .font_size = 11.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto c = column(std::vector<WidgetPtr>{v, l});
             c->alignItems(Align::Center).gap(StyleValue::point(2.0f));
@@ -478,8 +486,12 @@ public:
         std::vector<WidgetPtr> fields;
 
         if (current_format_ == ColorFormat::HEX) {
-            auto hex_txt = text(colorToHex(current_color_));
-            hex_txt->fontSize(12.5f).bold().color(0xFFFFFFFF);
+            auto hex_txt = text({
+                .text = colorToHex(current_color_),
+                .color = 0xFFFFFFFF,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
             auto hex_box = container(hex_txt);
             hex_box->color(0xFF0F172A).border(0xFF0284C7, 1.0f).borderRadius(6.0f).paddingSymmetric(6.0f, 14.0f);
             fields.push_back(hex_box);
@@ -500,8 +512,12 @@ public:
         // Format Switcher Button
         std::string mode_lbl = (current_format_ == ColorFormat::HEX) ? "HEX" :
                                (current_format_ == ColorFormat::RGBA) ? "RGBA" : "HSV";
-        auto sw_txt = text(mode_lbl + " ⮂");
-        sw_txt->fontSize(11.0f).bold().color(0xFF38BDF8);
+        auto sw_txt = text({
+            .text = mode_lbl + " ⮂",
+            .color = 0xFF38BDF8,
+            .font_size = 11.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto sw_box = container(sw_txt);
         sw_box->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(6.0f, 8.0f);
 
@@ -552,8 +568,11 @@ public:
         auto new_box = container();
         new_box->color(current_color_).width(24.0f).height(24.0f).borderRadius(4.0f);
 
-        auto arr = text("➔");
-        arr->fontSize(11.0f).color(0xFF94A3B8);
+        auto arr = text({
+            .text = "➔",
+            .color = 0xFF94A3B8,
+            .font_size = 11.0f,
+        });
 
         std::vector<WidgetPtr> items = {old_box, arr, new_box};
         auto r = row(items);
@@ -566,8 +585,12 @@ public:
         const auto& opts = w->props;
 
         // Header Title & Comparison
-        auto t_txt = text("🎨 Color Inspector");
-        t_txt->fontSize(13.0f).bold().color(0xFFFFFFFF);
+        auto t_txt = text({
+            .text = "🎨 Color Inspector",
+            .color = 0xFFFFFFFF,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         std::vector<WidgetPtr> head_items = {t_txt};
         if (opts.show_comparison) {
@@ -620,11 +643,18 @@ public:
         auto color_dot = container();
         color_dot->color(current_color_).borderRadius(6.0f).width(20.0f).height(20.0f).border(0xFF475569, 1.0f);
 
-        auto hex_txt = text(colorToHex(current_color_));
-        hex_txt->fontSize(12.5f).bold().color(0xFFFFFFFF);
+        auto hex_txt = text({
+            .text = colorToHex(current_color_),
+            .color = 0xFFFFFFFF,
+            .font_size = 12.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto chev_txt = text(is_popup_open_ ? "⌃" : "⌄");
-        chev_txt->fontSize(12.0f).color(0xFF94A3B8);
+        auto chev_txt = text({
+            .text = is_popup_open_ ? "⌃" : "⌄",
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
         std::vector<WidgetPtr> in_items = {color_dot, hex_txt, chev_txt};
         auto in_row = row(in_items);
