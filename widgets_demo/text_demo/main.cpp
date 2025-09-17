@@ -98,10 +98,12 @@ inline WidgetPtr tabButton(std::string labelStr, bool active, std::function<void
     s.padding = StyleInsets::symmetric(8.0f, 18.0f);
     s.margin = StyleInsets::only(0, 10.0f, 0, 0);
 
-    auto btnText = text(labelStr);
-    btnText->fontSize(13.0f)
-           .color(active ? 0xFFFFFFFF : 0xFF94A3B8);
-    if (active) btnText->bold();
+    auto btnText = text({
+        .text = labelStr,
+        .color = active ? 0xFFFFFFFF : 0xFF94A3B8,
+        .font_size = 13.0f,
+        .font_weight = active ? FontWeight::Bold : FontWeight::Normal,
+    });
 
     return std::make_shared<Clickable>(Key::string(labelStr), dec, s, btnText, std::move(onClick));
 }
@@ -111,11 +113,18 @@ inline WidgetPtr tabButton(std::string labelStr, bool active, std::function<void
 // ════════════════════════════════════════════════════════════════
 
 inline std::shared_ptr<Container> typographyCard(std::string titleStr, std::string descStr, WidgetPtr content) {
-    auto titleWidget = text(titleStr);
-    titleWidget->fontSize(15.0f).bold().color(0xFFF1F5F9);
+    auto titleWidget = text({
+        .text = titleStr,
+        .color = 0xFFF1F5F9,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto descWidget = text(std::move(descStr));
-    descWidget->fontSize(12.0f).color(0xFF64748B);
+    auto descWidget = text({
+        .text = std::move(descStr),
+        .color = 0xFF64748B,
+        .font_size = 12.0f,
+    });
 
     auto headerCol = column({
         titleWidget,
@@ -144,26 +153,53 @@ inline std::shared_ptr<Container> typographyCard(std::string titleStr, std::stri
 
 WidgetPtr buildHierarchyView() {
     // 1. Typographic Scale Card
-    auto dispL = text("Display Large — 30px Bold Glow");
-    dispL->fontSize(30.0f).bold().color(0xFF38BDF8).shadow(0x8038BDF8, {0, 0}, 12.0f);
+    auto dispL = text({
+        .text = "Display Large — 30px Bold Glow",
+        .color = 0xFF38BDF8,
+        .font_size = 30.0f,
+        .font_weight = FontWeight::Bold,
+        .shadows = { BoxShadow(0x8038BDF8, {0, 0}, 12.0f) },
+    });
 
-    auto dispM = text("Headline Medium — 22px Bold");
-    dispM->fontSize(22.0f).bold().color(0xFFFFFFFF);
+    auto dispM = text({
+        .text = "Headline Medium — 22px Bold",
+        .color = 0xFFFFFFFF,
+        .font_size = 22.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto titleL = text("Title Large — 18px SemiBold Primary");
-    titleL->fontSize(18.0f).fontWeight(FontWeight::SemiBold).color(0xFFE2E8F0);
+    auto titleL = text({
+        .text = "Title Large — 18px SemiBold Primary",
+        .color = 0xFFE2E8F0,
+        .font_size = 18.0f,
+        .font_weight = FontWeight::SemiBold,
+    });
 
-    auto bodyL = text("Body Large — 15px Regular: Fast hardware accelerated text rendering via SkParagraph.");
-    bodyL->fontSize(15.0f).color(0xFFCBD5E1);
+    auto bodyL = text({
+        .text = "Body Large — 15px Regular: Fast hardware accelerated text rendering via SkParagraph.",
+        .color = 0xFFCBD5E1,
+        .font_size = 15.0f,
+    });
 
-    auto bodyM = text("Body Medium — 13px Muted: Clean typographic hierarchy with subpixel glyph positioning.");
-    bodyM->fontSize(13.0f).color(0xFF94A3B8);
+    auto bodyM = text({
+        .text = "Body Medium — 13px Muted: Clean typographic hierarchy with subpixel glyph positioning.",
+        .color = 0xFF94A3B8,
+        .font_size = 13.0f,
+    });
 
-    auto caption = text("CAPTION / OVERLINE — 11px Bold Letter Spaced");
-    caption->fontSize(11.0f).bold().letterSpacing(1.5f).color(0xFF818CF8);
+    auto caption = text({
+        .text = "CAPTION / OVERLINE — 11px Bold Letter Spaced",
+        .color = 0xFF818CF8,
+        .font_size = 11.0f,
+        .font_weight = FontWeight::Bold,
+        .letter_spacing = 1.5f,
+    });
 
-    auto mono = text("Code Mono — const auto textNode = make_paragraph(); // 12px");
-    mono->fontSize(12.0f).color(0xFF34D399);
+    auto mono = text({
+        .text = "Code Mono — const auto textNode = make_paragraph(); // 12px",
+        .color = 0xFF34D399,
+        .font_size = 12.0f,
+    });
 
     auto scaleCol = column({
         dispL,
@@ -182,26 +218,13 @@ WidgetPtr buildHierarchyView() {
     );
 
     // 2. Font Weights Card
-    auto w100 = text("Thin (100) — Elegant ultra-light weight");
-    w100->fontSize(14.0f).fontWeight(FontWeight::Thin).color(0xFFE2E8F0);
-
-    auto w300 = text("Light (300) — Subtly light text");
-    w300->fontSize(14.0f).fontWeight(FontWeight::Light).color(0xFFE2E8F0);
-
-    auto w400 = text("Regular (400) — Standard body text");
-    w400->fontSize(14.0f).fontWeight(FontWeight::Regular).color(0xFFE2E8F0);
-
-    auto w500 = text("Medium (500) — Slightly emphasized body");
-    w500->fontSize(14.0f).fontWeight(FontWeight::Medium).color(0xFFE2E8F0);
-
-    auto w600 = text("SemiBold (600) — Section headers & UI buttons");
-    w600->fontSize(14.0f).fontWeight(FontWeight::SemiBold).color(0xFFE2E8F0);
-
-    auto w700 = text("Bold (700) — Strong prominent titles");
-    w700->fontSize(14.0f).fontWeight(FontWeight::Bold).color(0xFFE2E8F0);
-
-    auto w900 = text("Black (900) — Maximum emphasis impactful headlines");
-    w900->fontSize(14.0f).fontWeight(FontWeight::Black).color(0xFFE2E8F0);
+    auto w100 = text({ .text = "Thin (100) — Elegant ultra-light weight", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Thin });
+    auto w300 = text({ .text = "Light (300) — Subtly light text", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Light });
+    auto w400 = text({ .text = "Regular (400) — Standard body text", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Regular });
+    auto w500 = text({ .text = "Medium (500) — Slightly emphasized body", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Medium });
+    auto w600 = text({ .text = "SemiBold (600) — Section headers & UI buttons", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::SemiBold });
+    auto w700 = text({ .text = "Bold (700) — Strong prominent titles", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Bold });
+    auto w900 = text({ .text = "Black (900) — Maximum emphasis impactful headlines", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Black });
 
     auto weightsCol = column({
         w100, w300, w400, w500, w600, w700, w900
@@ -214,25 +237,52 @@ WidgetPtr buildHierarchyView() {
     );
 
     // 3. Decorations & Shadows Card
-    auto dec1 = text("Solid Underline in Neon Cyan");
-    dec1->fontSize(14.0f).color(0xFFFFFFFF).setStyle(
-        TextStyle().setColor(0xFFFFFFFF).setFontSize(14.0f).setDecoration(TextDecoration::Underline, 0xFF38BDF8, TextDecorationStyle::Solid, 2.0f)
-    );
+    auto dec1 = text({
+        .text = "Solid Underline in Neon Cyan",
+        .style = TextStyle{
+            .color = 0xFFFFFFFF,
+            .font_size = 14.0f,
+            .decoration = TextDecoration::Underline,
+            .decoration_color = 0xFF38BDF8,
+            .decoration_style = TextDecorationStyle::Solid,
+            .decoration_thickness = 2.0f,
+        }
+    });
 
-    auto dec2 = text("Wavy Underline in Warning Amber");
-    dec2->fontSize(14.0f).color(0xFFFFFFFF).setStyle(
-        TextStyle().setColor(0xFFFFFFFF).setFontSize(14.0f).setDecoration(TextDecoration::Underline, 0xFFF59E0B, TextDecorationStyle::Wavy, 1.5f)
-    );
+    auto dec2 = text({
+        .text = "Wavy Underline in Warning Amber",
+        .style = TextStyle{
+            .color = 0xFFFFFFFF,
+            .font_size = 14.0f,
+            .decoration = TextDecoration::Underline,
+            .decoration_color = 0xFFF59E0B,
+            .decoration_style = TextDecorationStyle::Wavy,
+            .decoration_thickness = 1.5f,
+        }
+    });
 
-    auto dec3 = text("Line Through / Strikethrough in Danger Rose");
-    dec3->fontSize(14.0f).color(0xFFFFFFFF).setStyle(
-        TextStyle().setColor(0xFF94A3B8).setFontSize(14.0f).setDecoration(TextDecoration::LineThrough, 0xFFF43F5E, TextDecorationStyle::Solid, 2.0f)
-    );
+    auto dec3 = text({
+        .text = "Line Through / Strikethrough in Danger Rose",
+        .style = TextStyle{
+            .color = 0xFF94A3B8,
+            .font_size = 14.0f,
+            .decoration = TextDecoration::LineThrough,
+            .decoration_color = 0xFFF43F5E,
+            .decoration_style = TextDecorationStyle::Solid,
+            .decoration_thickness = 2.0f,
+        }
+    });
 
-    auto dec4 = text("Cyberpunk Glowing Neon Multi-Shadow");
-    dec4->fontSize(16.0f).bold().color(0xFFEC4899)
-        .shadow(0xFFFF007F, {0, 0}, 10.0f)
-        .shadow(0xFF8B5CF6, {0, 4}, 16.0f);
+    auto dec4 = text({
+        .text = "Cyberpunk Glowing Neon Multi-Shadow",
+        .color = 0xFFEC4899,
+        .font_size = 16.0f,
+        .font_weight = FontWeight::Bold,
+        .shadows = {
+            BoxShadow(0xFFFF007F, {0, 0}, 10.0f),
+            BoxShadow(0xFF8B5CF6, {0, 4}, 16.0f)
+        }
+    });
 
     auto decCol = column({
         dec1, dec2, dec3, dec4
@@ -257,26 +307,23 @@ WidgetPtr buildHierarchyView() {
 
 WidgetPtr buildRichTextView() {
     // 1. Code Syntax Highlighting Block
-    auto codeSpan = span("", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f), {
-        span("// ENKI UI Tree Builder Example\n", TextStyle().setColor(0xFF64748B).italic().setFontSize(13.0f)),
-        span("auto ", TextStyle().setColor(0xFF818CF8).bold().setFontSize(13.0f)),
-        span("buildCard", TextStyle().setColor(0xFFFBBF24).bold().setFontSize(13.0f)),
-        span("() -> ", TextStyle().setColor(0xFF94A3B8).setFontSize(13.0f)),
-        span("WidgetPtr ", TextStyle().setColor(0xFF38BDF8).bold().setFontSize(13.0f)),
-        span("{\n    ", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f)),
-        span("return ", TextStyle().setColor(0xFFF43F5E).bold().setFontSize(13.0f)),
-        span("container", TextStyle().setColor(0xFF38BDF8).setFontSize(13.0f)),
-        span("(\n        ", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f)),
-        span("text", TextStyle().setColor(0xFF38BDF8).setFontSize(13.0f)),
-        span("(\"", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f)),
-        span("Hello SkParagraph Engine!", TextStyle().setColor(0xFF34D399).setFontSize(13.0f)),
-        span("\")\n            ->", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f)),
-        span("fontSize", TextStyle().setColor(0xFFFBBF24).setFontSize(13.0f)),
-        span("(", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f)),
-        span("18.0f", TextStyle().setColor(0xFFA78BFA).setFontSize(13.0f)),
-        span(")\n            .", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f)),
-        span("bold", TextStyle().setColor(0xFFFBBF24).setFontSize(13.0f)),
-        span("()\n    );\n}", TextStyle().setColor(0xFFE2E8F0).setFontSize(13.0f))
+    auto codeSpan = span({
+        .text = "",
+        .style = TextStyle{ .color = 0xFFE2E8F0, .font_size = 13.0f },
+        .children = {
+            span("// ENKI UI Tree Builder Example\n", TextStyle{ .color = 0xFF64748B, .font_size = 13.0f, .font_style = FontStyle::Italic }),
+            span("auto ", TextStyle{ .color = 0xFF818CF8, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+            span("buildCard", TextStyle{ .color = 0xFFFBBF24, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+            span("() -> ", TextStyle{ .color = 0xFF94A3B8, .font_size = 13.0f }),
+            span("WidgetPtr ", TextStyle{ .color = 0xFF38BDF8, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+            span("{\n    ", TextStyle{ .color = 0xFFE2E8F0, .font_size = 13.0f }),
+            span("return ", TextStyle{ .color = 0xFFF43F5E, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+            span("container", TextStyle{ .color = 0xFF38BDF8, .font_size = 13.0f }),
+            span("(\n        ", TextStyle{ .color = 0xFFE2E8F0, .font_size = 13.0f }),
+            span("text", TextStyle{ .color = 0xFF38BDF8, .font_size = 13.0f }),
+            span("({ .text = \"Hello SkParagraph Engine!\", .font_size = 18.0f })\n", TextStyle{ .color = 0xFF34D399, .font_size = 13.0f }),
+            span("    );\n}", TextStyle{ .color = 0xFFE2E8F0, .font_size = 13.0f })
+        }
     });
 
     auto codeWidget = richText(codeSpan);
@@ -293,15 +340,19 @@ WidgetPtr buildRichTextView() {
     );
 
     // 2. Formatted Article / Mixed Badges Card
-    auto articleSpan = span("ENKI Framework delivers ", TextStyle().setColor(0xFFCBD5E1).setFontSize(14.0f), {
-        span("blazing-fast ", TextStyle().setColor(0xFF38BDF8).bold().setFontSize(14.0f)),
-        span("desktop shell performance. Combining ", TextStyle().setColor(0xFFCBD5E1).setFontSize(14.0f)),
-        span("Skia GPU Rasterization ", TextStyle().setColor(0xFF34D399).bold().setFontSize(14.0f)),
-        span("with ", TextStyle().setColor(0xFFCBD5E1).setFontSize(14.0f)),
-        span("Anu Flexbox Layout ", TextStyle().setColor(0xFFF59E0B).bold().setFontSize(14.0f)),
-        span("and ", TextStyle().setColor(0xFFCBD5E1).setFontSize(14.0f)),
-        span("HarfBuzz text shaping", TextStyle().setColor(0xFFEC4899).bold().italic().setFontSize(14.0f)),
-        span(" allows building fluid 120 FPS Wayland/X11 desktops with zero stutter.", TextStyle().setColor(0xFFCBD5E1).setFontSize(14.0f))
+    auto articleSpan = span({
+        .text = "ENKI Framework delivers ",
+        .style = TextStyle{ .color = 0xFFCBD5E1, .font_size = 14.0f },
+        .children = {
+            span("blazing-fast ", TextStyle{ .color = 0xFF38BDF8, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("desktop shell performance. Combining ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 14.0f }),
+            span("Skia GPU Rasterization ", TextStyle{ .color = 0xFF34D399, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("with ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 14.0f }),
+            span("Anu Flexbox Layout ", TextStyle{ .color = 0xFFF59E0B, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("and ", TextStyle{ .color = 0xFFCBD5E1, .font_size = 14.0f }),
+            span("HarfBuzz text shaping", TextStyle{ .color = 0xFFEC4899, .font_size = 14.0f, .font_weight = FontWeight::Bold, .font_style = FontStyle::Italic }),
+            span(" allows building fluid 120 FPS Wayland/X11 desktops with zero stutter.", TextStyle{ .color = 0xFFCBD5E1, .font_size = 14.0f })
+        }
     });
 
     auto articleWidget = richText(articleSpan);
@@ -318,15 +369,19 @@ WidgetPtr buildRichTextView() {
     );
 
     // 3. BiDi & Unicode Multilingual Card
-    auto multiSpan = span("", TextStyle().setColor(0xFFFFFFFF).setFontSize(14.0f), {
-        span("English: ", TextStyle().setColor(0xFF818CF8).bold().setFontSize(14.0f)),
-        span("Modern Linux Desktop Shell\n", TextStyle().setColor(0xFFE2E8F0).setFontSize(14.0f)),
-        span("Arabic (العربية): ", TextStyle().setColor(0xFF34D399).bold().setFontSize(14.0f)),
-        span("محرك رسم فائق السرعة يدعم اللغة العربية بالكامل\n", TextStyle().setColor(0xFFF1F5F9).setFontSize(14.0f)),
-        span("Japanese (日本語): ", TextStyle().setColor(0xFFFBBF24).bold().setFontSize(14.0f)),
-        span("次世代のデスクトップ環境向けレンダリングエンジン\n", TextStyle().setColor(0xFFE2E8F0).setFontSize(14.0f)),
-        span("Symbols & Emojis: ", TextStyle().setColor(0xFFEC4899).bold().setFontSize(14.0f)),
-        span("⚡ 🚀 🎨 💎 🐧 🛡️ 🎧 🌌", TextStyle().setFontSize(16.0f))
+    auto multiSpan = span({
+        .text = "",
+        .style = TextStyle{ .color = 0xFFFFFFFF, .font_size = 14.0f },
+        .children = {
+            span("English: ", TextStyle{ .color = 0xFF818CF8, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("Modern Linux Desktop Shell\n", TextStyle{ .color = 0xFFE2E8F0, .font_size = 14.0f }),
+            span("Arabic (العربية): ", TextStyle{ .color = 0xFF34D399, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("محرك رسم فائق السرعة يدعم اللغة العربية بالكامل\n", TextStyle{ .color = 0xFFF1F5F9, .font_size = 14.0f }),
+            span("Japanese (日本語): ", TextStyle{ .color = 0xFFFBBF24, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("次世代のデスクトップ環境向けレンダリングエンジン\n", TextStyle{ .color = 0xFFE2E8F0, .font_size = 14.0f }),
+            span("Symbols & Emojis: ", TextStyle{ .color = 0xFFEC4899, .font_size = 14.0f, .font_weight = FontWeight::Bold }),
+            span("⚡ 🚀 🎨 💎 🐧 🛡️ 🎧 🌌", TextStyle{ .font_size = 16.0f })
+        }
     });
 
     auto multiWidget = richText(multiSpan);
@@ -357,24 +412,18 @@ WidgetPtr buildWrappingView() {
     std::string sampleLong = "The Anu Flexbox layout engine measures SkParagraph intrinsic geometry dynamically and wraps text smoothly across multiple lines.";
 
     // 1. Constrained Cards Comparison
-    auto t1 = text(sampleLong);
-    t1->fontSize(12.0f).color(0xFF94A3B8);
-    auto h1 = text("Width: 200px");
-    h1->fontSize(11.0f).bold().color(0xFF38BDF8);
+    auto t1 = text({ .text = sampleLong, .color = 0xFF94A3B8, .font_size = 12.0f });
+    auto h1 = text({ .text = "Width: 200px", .color = 0xFF38BDF8, .font_size = 11.0f, .font_weight = FontWeight::Bold });
     auto card1 = container(column({h1, t1}));
     card1->width(200.0f).color(0x200F172A).borderRadius(8.0f).paddingAll(10.0f).border(0x4038BDF8, 1.0f);
 
-    auto t2 = text(sampleLong);
-    t2->fontSize(12.0f).color(0xFF94A3B8);
-    auto h2 = text("Width: 280px");
-    h2->fontSize(11.0f).bold().color(0xFF34D399);
+    auto t2 = text({ .text = sampleLong, .color = 0xFF94A3B8, .font_size = 12.0f });
+    auto h2 = text({ .text = "Width: 280px", .color = 0xFF34D399, .font_size = 11.0f, .font_weight = FontWeight::Bold });
     auto card2 = container(column({h2, t2}));
     card2->width(280.0f).color(0x200F172A).borderRadius(8.0f).paddingAll(10.0f).border(0x4034D399, 1.0f).margin(EdgeInsets::only(0, 0, 0, 12.0f));
 
-    auto t3 = text(sampleLong);
-    t3->fontSize(12.0f).color(0xFF94A3B8);
-    auto h3 = text("Width: 420px");
-    h3->fontSize(11.0f).bold().color(0xFFFBBF24);
+    auto t3 = text({ .text = sampleLong, .color = 0xFF94A3B8, .font_size = 12.0f });
+    auto h3 = text({ .text = "Width: 420px", .color = 0xFFFBBF24, .font_size = 11.0f, .font_weight = FontWeight::Bold });
     auto card3 = container(column({h3, t3}));
     card3->width(420.0f).color(0x200F172A).borderRadius(8.0f).paddingAll(10.0f).border(0x40FBBF24, 1.0f).margin(EdgeInsets::only(0, 0, 0, 12.0f));
 
@@ -389,17 +438,25 @@ WidgetPtr buildWrappingView() {
     );
 
     // 2. MaxLines and Ellipsis Card
-    auto e1 = text("This is a single line that overflows and gets an ellipsis at the exact boundary of its container without breaking layout.");
-    e1->fontSize(13.0f).maxLines(1).ellipsis().color(0xFFE2E8F0);
-    auto eh1 = text("maxLines(1) + ellipsis()");
-    eh1->fontSize(11.0f).bold().color(0xFF818CF8);
+    auto e1 = text({
+        .text = "This is a single line that overflows and gets an ellipsis at the exact boundary of its container without breaking layout.",
+        .color = 0xFFE2E8F0,
+        .font_size = 13.0f,
+        .overflow = TextOverflow::Ellipsis,
+        .max_lines = 1,
+    });
+    auto eh1 = text({ .text = "maxLines(1) + ellipsis()", .color = 0xFF818CF8, .font_size = 11.0f, .font_weight = FontWeight::Bold });
     auto e1Box = container(column({eh1, e1}));
     e1Box->width(400.0f).color(0x251E293B).borderRadius(8.0f).paddingAll(10.0f).margin(EdgeInsets::only(0, 0, 8.0f, 0));
 
-    auto e2 = text("This is a two-line clamped paragraph. When text exceeds the second line, SkParagraph neatly truncates the string and appends a clean three-dot ellipsis character at the trailing end.");
-    e2->fontSize(13.0f).maxLines(2).ellipsis().color(0xFFCBD5E1);
-    auto eh2 = text("maxLines(2) + ellipsis()");
-    eh2->fontSize(11.0f).bold().color(0xFF34D399);
+    auto e2 = text({
+        .text = "This is a two-line clamped paragraph. When text exceeds the second line, SkParagraph neatly truncates the string and appends a clean three-dot ellipsis character at the trailing end.",
+        .color = 0xFFCBD5E1,
+        .font_size = 13.0f,
+        .overflow = TextOverflow::Ellipsis,
+        .max_lines = 2,
+    });
+    auto eh2 = text({ .text = "maxLines(2) + ellipsis()", .color = 0xFF34D399, .font_size = 11.0f, .font_weight = FontWeight::Bold });
     auto e2Box = container(column({eh2, e2}));
     e2Box->width(400.0f).color(0x251E293B).borderRadius(8.0f).paddingAll(10.0f);
 
@@ -415,14 +472,26 @@ WidgetPtr buildWrappingView() {
     );
 
     // 3. Text Alignments Card
-    auto aLeft = text("Left Aligned Text: Elements align to the leading edge of the layout container.");
-    aLeft->fontSize(12.0f).textAlign(TextAlign::Left).color(0xFF94A3B8);
+    auto aLeft = text({
+        .text = "Left Aligned Text: Elements align to the leading edge of the layout container.",
+        .color = 0xFF94A3B8,
+        .font_size = 12.0f,
+        .text_align = TextAlign::Left,
+    });
 
-    auto aCenter = text("Center Aligned Text: Symmetrically centered text for banners and titles.");
-    aCenter->fontSize(12.0f).textAlign(TextAlign::Center).color(0xFF38BDF8);
+    auto aCenter = text({
+        .text = "Center Aligned Text: Symmetrically centered text for banners and titles.",
+        .color = 0xFF38BDF8,
+        .font_size = 12.0f,
+        .text_align = TextAlign::Center,
+    });
 
-    auto aRight = text("Right Aligned Text: Useful for timestamps, status values, and numerical columns.");
-    aRight->fontSize(12.0f).textAlign(TextAlign::Right).color(0xFFFBBF24);
+    auto aRight = text({
+        .text = "Right Aligned Text: Useful for timestamps, status values, and numerical columns.",
+        .color = 0xFFFBBF24,
+        .font_size = 12.0f,
+        .text_align = TextAlign::Right,
+    });
 
     auto alignCol = column({
         aLeft, aCenter, aRight
@@ -447,19 +516,22 @@ WidgetPtr buildWrappingView() {
 
 WidgetPtr buildShellShowcaseView() {
     // 1. Notification Toast Card
-    auto notifIconText = text("🔔");
-    notifIconText->fontSize(18.0f);
+    auto notifIconText = text({ .text = "🔔", .font_size = 18.0f });
     auto notifIcon = container(notifIconText);
     notifIcon->size(38.0f, 38.0f)
              .color(0x303B82F6)
              .borderRadius(10.0f)
              .align(Alignment::Center);
 
-    auto notifAppName = text("SYSTEM NOTIFICATION");
-    notifAppName->fontSize(10.0f).bold().letterSpacing(1.0f).color(0xFF818CF8);
+    auto notifAppName = text({
+        .text = "SYSTEM NOTIFICATION",
+        .color = 0xFF818CF8,
+        .font_size = 10.0f,
+        .font_weight = FontWeight::Bold,
+        .letter_spacing = 1.0f,
+    });
 
-    auto notifTime = text("Just now");
-    notifTime->fontSize(10.0f).color(0xFF64748B);
+    auto notifTime = text({ .text = "Just now", .color = 0xFF64748B, .font_size = 10.0f });
 
     auto notifHeaderRow = row({
         notifAppName,
@@ -467,11 +539,20 @@ WidgetPtr buildShellShowcaseView() {
         notifTime
     });
 
-    auto notifTitle = text("System Update 2.4.0 Available");
-    notifTitle->fontSize(14.0f).bold().color(0xFFFFFFFF);
+    auto notifTitle = text({
+        .text = "System Update 2.4.0 Available",
+        .color = 0xFFFFFFFF,
+        .font_size = 14.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto notifBody = text("New Skia GPU pipeline and Wayland Fractional Scaling improvements are ready to install.");
-    notifBody->fontSize(12.0f).color(0xFF94A3B8).maxLines(2).ellipsis();
+    auto notifBody = text({
+        .text = "New Skia GPU pipeline and Wayland Fractional Scaling improvements are ready to install.",
+        .color = 0xFF94A3B8,
+        .font_size = 12.0f,
+        .overflow = TextOverflow::Ellipsis,
+        .max_lines = 2,
+    });
 
     auto notifCol = column({
         notifHeaderRow,
@@ -498,8 +579,7 @@ WidgetPtr buildShellShowcaseView() {
              .margin(EdgeInsets::only(0, 0, 14.0f, 0));
 
     // 2. Media Player Shell Card
-    auto albumArtText = text("🎵");
-    albumArtText->fontSize(24.0f);
+    auto albumArtText = text({ .text = "🎵", .font_size = 24.0f });
     auto albumArt = container(albumArtText);
     albumArt->size(54.0f, 54.0f)
             .color(0x30EC4899)
@@ -507,14 +587,17 @@ WidgetPtr buildShellShowcaseView() {
             .border(0x50EC4899, 1.0f)
             .align(Alignment::Center);
 
-    auto trackTitle = text("Resonance (Slowed + Reverb)");
-    trackTitle->fontSize(15.0f).bold().color(0xFFFFFFFF).shadow(0x60EC4899, {0, 2}, 6.0f);
+    auto trackTitle = text({
+        .text = "Resonance (Slowed + Reverb)",
+        .color = 0xFFFFFFFF,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+        .shadows = { BoxShadow(0x60EC4899, {0, 2}, 6.0f) },
+    });
 
-    auto trackArtist = text("HOME — Odyssey (Deluxe Remaster)");
-    trackArtist->fontSize(12.0f).color(0xFFF472B6);
+    auto trackArtist = text({ .text = "HOME — Odyssey (Deluxe Remaster)", .color = 0xFFF472B6, .font_size = 12.0f });
 
-    auto trackTime = text("02:45 / 03:32");
-    trackTime->fontSize(11.0f).color(0xFF94A3B8);
+    auto trackTime = text({ .text = "02:45 / 03:32", .color = 0xFF94A3B8, .font_size = 11.0f });
 
     auto mediaInfoCol = column({
         trackTitle,
@@ -541,24 +624,18 @@ WidgetPtr buildShellShowcaseView() {
              .margin(EdgeInsets::only(0, 0, 14.0f, 0));
 
     // 3. Quick System Monitor Card
-    auto cpuLabel = text("CPU LOAD");
-    cpuLabel->fontSize(10.0f).bold().letterSpacing(1.0f).color(0xFF64748B);
-    auto cpuVal = text("18.4%");
-    cpuVal->fontSize(20.0f).bold().color(0xFF34D399);
+    auto cpuLabel = text({ .text = "CPU LOAD", .color = 0xFF64748B, .font_size = 10.0f, .font_weight = FontWeight::Bold, .letter_spacing = 1.0f });
+    auto cpuVal = text({ .text = "18.4%", .color = 0xFF34D399, .font_size = 20.0f, .font_weight = FontWeight::Bold });
     auto cpuStat = container(column({cpuLabel, cpuVal}));
     cpuStat->color(0x250F172A).borderRadius(10.0f).paddingAll(12.0f).flexGrow(1.0f);
 
-    auto ramLabel = text("MEMORY USED");
-    ramLabel->fontSize(10.0f).bold().letterSpacing(1.0f).color(0xFF64748B);
-    auto ramVal = text("4.2 / 32 GB");
-    ramVal->fontSize(20.0f).bold().color(0xFF38BDF8);
+    auto ramLabel = text({ .text = "MEMORY USED", .color = 0xFF64748B, .font_size = 10.0f, .font_weight = FontWeight::Bold, .letter_spacing = 1.0f });
+    auto ramVal = text({ .text = "4.2 / 32 GB", .color = 0xFF38BDF8, .font_size = 20.0f, .font_weight = FontWeight::Bold });
     auto ramStat = container(column({ramLabel, ramVal}));
     ramStat->color(0x250F172A).borderRadius(10.0f).paddingAll(12.0f).margin(EdgeInsets::only(0, 0, 0, 10.0f)).flexGrow(1.0f);
 
-    auto gpuLabel = text("GPU ENGINE");
-    gpuLabel->fontSize(10.0f).bold().letterSpacing(1.0f).color(0xFF64748B);
-    auto gpuVal = text("Vulkan 120 FPS");
-    gpuVal->fontSize(18.0f).bold().color(0xFFFBBF24);
+    auto gpuLabel = text({ .text = "GPU ENGINE", .color = 0xFF64748B, .font_size = 10.0f, .font_weight = FontWeight::Bold, .letter_spacing = 1.0f });
+    auto gpuVal = text({ .text = "Vulkan 120 FPS", .color = 0xFFFBBF24, .font_size = 18.0f, .font_weight = FontWeight::Bold });
     auto gpuStat = container(column({gpuLabel, gpuVal}));
     gpuStat->color(0x250F172A).borderRadius(10.0f).paddingAll(12.0f).margin(EdgeInsets::only(0, 0, 0, 10.0f)).flexGrow(1.0f);
 
@@ -589,14 +666,26 @@ public:
 
     WidgetPtr build(BuildContext& ctx) override {
         // 1. Header Bar
-        auto title = text("⚡ ENKI ENGINE — ADVANCED TYPOGRAPHY DEMO");
-        title->fontSize(18.0f).bold().color(0xFFFFFFFF).shadow(0x8038BDF8, {0, 0}, 8.0f);
+        auto title = text({
+            .text = "⚡ ENKI ENGINE — ADVANCED TYPOGRAPHY DEMO",
+            .color = 0xFFFFFFFF,
+            .font_size = 18.0f,
+            .font_weight = FontWeight::Bold,
+            .shadows = { BoxShadow(0x8038BDF8, {0, 0}, 8.0f) },
+        });
 
-        auto sub = text("SkParagraph Text Layout + HarfBuzz Font Shaping + Anu Flexbox Integration");
-        sub->fontSize(12.0f).color(0xFF818CF8);
+        auto sub = text({
+            .text = "SkParagraph Text Layout + HarfBuzz Font Shaping + Anu Flexbox Integration",
+            .color = 0xFF818CF8,
+            .font_size = 12.0f,
+        });
 
-        auto badgeText = text("● SKPARAGRAPH GPU READY");
-        badgeText->fontSize(10.0f).bold().color(0xFF34D399);
+        auto badgeText = text({
+            .text = "● SKPARAGRAPH GPU READY",
+            .color = 0xFF34D399,
+            .font_size = 10.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto badge = container(badgeText);
         badge->color(0x2010B981)

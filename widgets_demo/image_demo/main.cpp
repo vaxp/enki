@@ -106,14 +106,18 @@ private:
     // ── 1. Top Header ──────────────────────────────────────────
 
     WidgetPtr buildHeader() {
-        auto title_t = text("ENKI ⚡ Image Engine & BoxFit Showcase");
-        title_t->fontSize(22.0f)
-                .bold()
-                .color(Style::text_white);
+        auto title_t = text({
+            .text = "ENKI ⚡ Image Engine & BoxFit Showcase",
+            .color = Style::text_white,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto subtitle_t = text("Hardware-Accelerated Skia Pipeline • Zero-Copy ImageCache • Realtime Geometric Clipping");
-        subtitle_t->fontSize(12.0f)
-                   .color(Style::text_muted);
+        auto subtitle_t = text({
+            .text = "Hardware-Accelerated Skia Pipeline • Zero-Copy ImageCache • Realtime Geometric Clipping",
+            .color = Style::text_muted,
+            .font_size = 12.0f,
+        });
 
         WidgetPtr badge1 = buildBadge("Skia GL Pipeline", Style::cyan_neon);
         WidgetPtr badge2 = buildBadge("Thread-safe LRU Cache", Style::primary_light);
@@ -150,8 +154,12 @@ private:
     }
 
     WidgetPtr buildBadge(const std::string& label, Color color) {
-        auto t = text(label);
-        t->fontSize(11.0f).color(color).bold();
+        auto t = text({
+            .text = label,
+            .color = color,
+            .font_size = 11.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto b = container(t);
         b->padding(EdgeInsets::symmetric(4.0f, 10.0f))
@@ -164,8 +172,12 @@ private:
     // ── 2. Left Control Panel ──────────────────────────────────
 
     WidgetPtr buildControlPanel() {
-        auto title = text("⚙️ BoxFit Switcher");
-        title->fontSize(14.0f).bold().color(Style::text_white);
+        auto title = text({
+            .text = "⚙️ BoxFit Switcher",
+            .color = Style::text_white,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         std::vector<WidgetPtr> fit_buttons;
         fit_buttons.push_back(title);
@@ -193,8 +205,12 @@ private:
         }
 
         fit_buttons.push_back(sizedBox(0, 8.0f));
-        auto img_title = text("🖼️ Source Asset");
-        img_title->fontSize(14.0f).bold().color(Style::text_white);
+        auto img_title = text({
+            .text = "🖼️ Source Asset",
+            .color = Style::text_white,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
         fit_buttons.push_back(img_title);
         fit_buttons.push_back(sizedBox(0, 8.0f));
 
@@ -205,8 +221,12 @@ private:
             std::string short_name = "Img " + std::to_string(i + 1);
             if (assets[i].find("vaxp") != std::string::npos) short_name = "Logo";
 
-            auto t = text(short_name);
-            t->fontSize(11.0f).color(active ? Style::text_white : Style::text_muted).bold();
+            auto t = text({
+                .text = short_name,
+                .color = active ? Style::text_white : Style::text_muted,
+                .font_size = 11.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto b = container(t);
             b->padding(EdgeInsets::symmetric(6.0f, 10.0f))
@@ -238,10 +258,12 @@ private:
     }
 
     WidgetPtr buildInteractiveButton(const std::string& label, bool active, std::function<void()> onClick) {
-        auto t = text(label);
-        t->fontSize(12.0f)
-         .color(active ? Style::text_white : Style::text_muted)
-         .bold();
+        auto t = text({
+            .text = label,
+            .color = active ? Style::text_white : Style::text_muted,
+            .font_size = 12.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto btn = container(t);
         btn->padding(EdgeInsets::symmetric(8.0f, 12.0f))
@@ -342,8 +364,12 @@ private:
     // ── 4. Right Panel: Avatars & Gallery Grid ─────────────────
 
     WidgetPtr buildGalleryAndAvatarsPanel() {
-        auto title1 = text("👤 Circular Avatars (Stack)");
-        title1->fontSize(13.0f).bold().color(Style::text_white);
+        auto title1 = text({
+            .text = "👤 Circular Avatars (Stack)",
+            .color = Style::text_white,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto avatar1 = image({
             .source_path = "assets/1.png",
@@ -408,8 +434,12 @@ private:
             w_av3
         });
 
-        auto title2 = text("🎨 Multi-Asset Responsive Grid");
-        title2->fontSize(13.0f).bold().color(Style::text_white);
+        auto title2 = text({
+            .text = "🎨 Multi-Asset Responsive Grid",
+            .color = Style::text_white,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         WidgetPtr card1 = buildGalleryCard("assets/1.png", "Neon Cyber", Style::cyan_neon);
         WidgetPtr card2 = buildGalleryCard("assets/2.png", "Cosmic Core", Style::purple_neon);
@@ -455,8 +485,12 @@ private:
             .border_radius = BorderRadius::circular(8.0f),
         });
 
-        auto t = text(label);
-        t->fontSize(10.0f).bold().color(Style::text_white);
+        auto t = text({
+            .text = label,
+            .color = Style::text_white,
+            .font_size = 10.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         WidgetPtr w_img = img;
         WidgetPtr w_t = t;

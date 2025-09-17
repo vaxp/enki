@@ -23,11 +23,18 @@ class SpinnerDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
         // Title Header
-        auto title = text("Advanced Loading Spinners");
-        title->fontSize(26.0f).bold().color(0xFFFFFFFF);
+        auto title = text({
+            .text = "Advanced Loading Spinners",
+            .color = 0xFFFFFFFF,
+            .font_size = 26.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto subtitle = text("Spokes, OrbitDots, DualArc, and SkSL Shader Injection in ENKI");
-        subtitle->fontSize(14.0f).color(0xFF94A3B8);
+        auto subtitle = text({
+            .text = "Spokes, OrbitDots, DualArc, and SkSL Shader Injection in ENKI",
+            .color = 0xFF94A3B8,
+            .font_size = 14.0f,
+        });
 
         std::vector<WidgetPtr> header_items = {title, subtitle};
         auto header = column(header_items);
@@ -85,19 +92,19 @@ public:
         };
 
         // Row of Spinners
-        std::vector<WidgetPtr> s1 = {spin_spokes, text("Spokes (iOS)", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> s1 = {spin_spokes, text({ .text = "Spokes (iOS)", .color = 0xFF94A3B8, .font_size = 12.0f })};
         auto col_s1 = column(s1);
         col_s1->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
-        std::vector<WidgetPtr> s2 = {spin_dots, text("OrbitDots (Material)", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> s2 = {spin_dots, text({ .text = "OrbitDots (Material)", .color = 0xFF94A3B8, .font_size = 12.0f })};
         auto col_s2 = column(s2);
         col_s2->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
-        std::vector<WidgetPtr> s3 = {spin_dual, text("DualArc Glow", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> s3 = {spin_dual, text({ .text = "DualArc Glow", .color = 0xFF94A3B8, .font_size = 12.0f })};
         auto col_s3 = column(s3);
         col_s3->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
-        std::vector<WidgetPtr> s4 = {spin_shader, text("SkSL Vortex Shader", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> s4 = {spin_shader, text({ .text = "SkSL Vortex Shader", .color = 0xFF94A3B8, .font_size = 12.0f })};
         auto col_s4 = column(s4);
         col_s4->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
@@ -109,8 +116,11 @@ public:
         card_spinners->color(0xFF1E293B).borderRadius(12.0f).paddingAll(24.0f).width(StyleValue::percent(100.0f));
 
         // Interactive Controls
-        auto size_txt = text("Adjust Spinner Size: " + std::to_string(static_cast<int>(size_)) + "px", TextStyle{
-            .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
+        auto size_txt = text({
+            .text = "Adjust Spinner Size: " + std::to_string(static_cast<int>(size_)) + "px",
+            .color = 0xFFF1F5F9,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
         });
         auto sz_slider = Slider {
             .value = size_,
@@ -122,8 +132,11 @@ public:
             .max_value = 96.0f
         };
 
-        auto speed_txt = text("Adjust Rotation Speed: " + std::to_string(speed_).substr(0, 4) + "x", TextStyle{
-            .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
+        auto speed_txt = text({
+            .text = "Adjust Rotation Speed: " + std::to_string(speed_).substr(0, 4) + "x",
+            .color = 0xFFF1F5F9,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
         });
         auto sp_slider = Slider {
             .value = speed_,

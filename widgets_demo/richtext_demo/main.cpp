@@ -13,40 +13,66 @@ class RichTextDemoState : public State {
 
 public:
     WidgetPtr build(BuildContext&) override {
-        auto title = text("RichText Demo");
-        title->fontSize(24.0f).bold().color(0xFFF1F5F9);
+        auto title = text({
+            .text = "RichText Demo",
+            .color = 0xFFF1F5F9,
+            .font_size = 24.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         // Create interactive spans
-        auto interactive_link = span("Clickable Link");
-        interactive_link->style = TextStyle().setColor(link_hovered ? 0xFF7DD3FC : 0xFF38BDF8).underline(link_hovered ? 0xFF7DD3FC : 0xFF38BDF8);
-        interactive_link->onClick([]() {
-            std::cout << "Link was clicked!\n";
-        }).onHover([this](bool hovered) {
-            setState([this, hovered]() { link_hovered = hovered; });
+        auto interactive_link = span({
+            .text = "Clickable Link",
+            .style = TextStyle{
+                .color = link_hovered ? 0xFF7DD3FC : 0xFF38BDF8,
+                .decoration = TextDecoration::Underline,
+                .decoration_color = link_hovered ? 0xFF7DD3FC : 0xFF38BDF8,
+            },
+            .on_click = []() {
+                std::cout << "Link was clicked!\n";
+            },
+            .on_hover = [this](bool hovered) {
+                setState([this, hovered]() { link_hovered = hovered; });
+            },
         });
 
-        auto interactive_user = span("@vaxp");
-        interactive_user->style = TextStyle().setColor(user_hovered ? 0xFFFBCFE8 : 0xFFF472B6).bold();
-        interactive_user->onClick([]() {
-            std::cout << "User mention clicked!\n";
-        }).onHover([this](bool hovered) {
-            setState([this, hovered]() { user_hovered = hovered; });
+        auto interactive_user = span({
+            .text = "@vaxp",
+            .style = TextStyle{
+                .color = user_hovered ? 0xFFFBCFE8 : 0xFFF472B6,
+                .font_weight = FontWeight::Bold,
+            },
+            .on_click = []() {
+                std::cout << "User mention clicked!\n";
+            },
+            .on_hover = [this](bool hovered) {
+                setState([this, hovered]() { user_hovered = hovered; });
+            },
         });
 
-        auto combined_span = span("", std::nullopt, {
-            span("Welcome to the "),
-            span("ENKI Framework", TextStyle().bold()),
-            span(". This is a demonstration of the "),
-            interactive_link,
-            span(" feature which allows you to embed interactive and styled text right within a paragraph! "),
-            span("Special thanks to "),
-            interactive_user,
-            span(" for testing this out.")
+        auto combined_span = span({
+            .text = "",
+            .children = {
+                span("Welcome to the "),
+                span("ENKI Framework", TextStyle{ .font_weight = FontWeight::Bold }),
+                span(". This is a demonstration of the "),
+                interactive_link,
+                span(" feature which allows you to embed interactive and styled text right within a paragraph! "),
+                span("Special thanks to "),
+                interactive_user,
+                span(" for testing this out.")
+            }
         });
 
-        auto rt = richText(combined_span);
-        rt->defaultStyle(TextStyle().setColor(0xFF94A3B8).setFontSize(16.0f).setHeight(1.5f));
-        rt->maxLines(4);
+        auto rt = richText({
+            .text_span = combined_span,
+            .default_style = TextStyle{
+                .color = 0xFF94A3B8,
+                .font_size = 16.0f,
+                .height = 1.5f,
+            },
+            .max_lines = 4,
+        });
 
         auto root = column({title, rt});
         root->padding(StyleInsets{40.0f, 40.0f, 40.0f, 40.0f}).gap(20.0f);

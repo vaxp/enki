@@ -81,11 +81,18 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // ── Main Page Header ──────────────────────────────────────────
-        auto title = text("Advanced LoadingOverlay Feedback Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text({
+            .text = "Advanced LoadingOverlay Feedback Suite",
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Non-blocking page overlay, 4 indicator styles (Spinner, ProgressRing, ProgressBar, Dots), cancelable actions, and live tracking");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text({
+            .text = "Non-blocking page overlay, 4 indicator styles (Spinner, ProgressRing, ProgressBar, Dots), cancelable actions, and live tracking",
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
         std::vector<WidgetPtr> title_items = {title, sub};
         auto title_col = column(title_items);
@@ -94,21 +101,34 @@ public:
         // ── Helper to build trigger cards ─────────────────────────────
         auto makeLoaderCard = [this](std::string icon, std::string title, std::string desc,
                                      std::string btn_label, Color btn_col, std::function<void()> cb) -> WidgetPtr {
-            auto ic = text(icon);
-            ic->fontSize(20.0f);
+            auto ic = text({
+                .text = icon,
+                .font_size = 20.0f,
+            });
 
-            auto tit = text(title);
-            tit->fontSize(14.5f).bold().color(0xFFF1F5F9);
+            auto tit = text({
+                .text = title,
+                .color = 0xFFF1F5F9,
+                .font_size = 14.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             std::vector<WidgetPtr> h_items = {ic, tit};
             auto h_row = row(h_items);
             h_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
 
-            auto ds = text(desc);
-            ds->fontSize(12.0f).color(0xFF94A3B8);
+            auto ds = text({
+                .text = desc,
+                .color = 0xFF94A3B8,
+                .font_size = 12.0f,
+            });
 
-            auto b_lbl = text(btn_label);
-            b_lbl->fontSize(12.5f).bold().color(0xFFFFFFFF);
+            auto b_lbl = text({
+                .text = btn_label,
+                .color = 0xFFFFFFFF,
+                .font_size = 12.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto b_box = container(b_lbl);
             b_box->color(btn_col)
@@ -205,8 +225,11 @@ public:
         act_row->justifyContent(Justify::Center);
 
         // ── HUD / Status Box ──────────────────────────────────────────
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
+        auto hud_txt = text({
+            .text = "💡 " + hud_msg_,
+            .color = 0xFF38BDF8,
+            .font_size = 12.5f,
+        });
 
         auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
         auto hud_box = container(hud_row);
