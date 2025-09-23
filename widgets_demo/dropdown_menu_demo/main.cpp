@@ -61,15 +61,16 @@ public:
             .child = lbl,
         });
 
-        auto gd = std::make_shared<GestureDetector>(box);
-        gd->cursor_type = SystemCursor::Pointer;
-        gd->on_tap_up = [ctrl](const TapUpDetails&) {
-            if (ctrl) ctrl->toggle();
-        };
-        gd->on_hover_enter = [box](const PointerEvent&) {
-            box->border(0xFF64748B, 1.0f);
-        };
-        return gd;
+        return gestureDetector({
+            .child = box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [ctrl](const TapUpDetails&) {
+                if (ctrl) ctrl->toggle();
+            },
+            .on_hover_enter = [box](const PointerEvent&) {
+                box->border(0xFF64748B, 1.0f);
+            },
+        });
     }
 
     // ── Page Body ─────────────────────────────────────────────────

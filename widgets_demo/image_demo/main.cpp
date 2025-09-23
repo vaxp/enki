@@ -234,11 +234,13 @@ private:
              .color(active ? Style::primary : Style::bg_card_light)
              .border(active ? Style::cyan_neon : Style::border_subtle, 1.0f);
 
-            auto gd = gestureDetector(b);
-            gd->onTap([this, idx = i]() {
-                setState([this, idx]() {
-                    current_image = assets[idx];
-                });
+            auto gd = gestureDetector({
+                .child = b,
+                .on_tap = [this, idx = i]() {
+                    setState([this, idx]() {
+                        current_image = assets[idx];
+                    });
+                },
             });
             asset_btns.push_back(gd);
         }
@@ -271,9 +273,10 @@ private:
            .color(active ? Style::primary : Style::bg_card_light)
            .border(active ? Style::cyan_neon : Style::border_subtle, 1.0f);
 
-        auto gd = gestureDetector(btn);
-        gd->onTap(std::move(onClick));
-        return gd;
+        return gestureDetector({
+            .child = btn,
+            .on_tap = std::move(onClick),
+        });
     }
 
     // ── 3. Center Hero Preview Card ────────────────────────────
@@ -507,13 +510,14 @@ private:
             .border(accent, 1.0f)
             .size(126.0f, 106.0f);
 
-        auto gd = gestureDetector(card);
-        gd->onTap([this, asset_path]() {
-            setState([this, asset_path]() {
-                current_image = asset_path;
-            });
+        return gestureDetector({
+            .child = card,
+            .on_tap = [this, asset_path]() {
+                setState([this, asset_path]() {
+                    current_image = asset_path;
+                });
+            },
         });
-        return gd;
     }
 };
 

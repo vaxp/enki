@@ -243,12 +243,15 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
 
     // Wrap in GestureDetector
     int cap_idx = idx;
-    auto gd = gestureDetector(Key::string("out_card_" + std::to_string(idx)), card_box);
-    gd->onTap([this, cap_idx]() {
-        setState([this, cap_idx]() { selected_idx = cap_idx; });
-    }).cursor(SystemCursor::Pointer).hitTestBehavior(HitTestBehavior::Opaque);
-
-    return gd;
+    return gestureDetector({
+        .key = Key::string("out_card_" + std::to_string(idx)),
+        .child = card_box,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this, cap_idx]() {
+            setState([this, cap_idx]() { selected_idx = cap_idx; });
+        },
+    });
 }
 
 // ── Mode Panel ────────────────────────────────────────────────────

@@ -155,16 +155,22 @@ private:
                    .borderRadius(8.0f)
                    .border(Style::cyan_neon, is_hovered ? 1.5f : 0.0f);
 
-        auto btn_inc = gestureDetector(Key::string("btn_inc"), btn_inc_box);
-        btn_inc->onTap([this]() {
-            setState([this]() {
-                click_counter++;
-            });
-        }).onHoverEnter([this](const auto&) {
-            setState([this]() { is_hovered = true; });
-        }).onHoverExit([this](const auto&) {
-            setState([this]() { is_hovered = false; });
-        }).cursor(SystemCursor::Pointer);
+        auto btn_inc = gestureDetector({
+            .key = Key::string("btn_inc"),
+            .child = btn_inc_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this]() {
+                setState([this]() {
+                    click_counter++;
+                });
+            },
+            .on_hover_enter = [this](const auto&) {
+                setState([this]() { is_hovered = true; });
+            },
+            .on_hover_exit = [this](const auto&) {
+                setState([this]() { is_hovered = false; });
+            },
+        });
 
         auto btn_add_text = text({
             .text = "+ Add 12 Items",
@@ -176,12 +182,16 @@ private:
                    .color(Style::bg_card)
                    .borderRadius(8.0f)
                    .border(Style::border_subtle, 1.0f);
-        auto btn_add = gestureDetector(Key::string("btn_add"), btn_add_box);
-        btn_add->onTap([this]() {
-            setState([this]() {
-                stress_item_count = std::min(stress_item_count + 12, 120);
-            });
-        }).cursor(SystemCursor::Pointer);
+        auto btn_add = gestureDetector({
+            .key = Key::string("btn_add"),
+            .child = btn_add_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this]() {
+                setState([this]() {
+                    stress_item_count = std::min(stress_item_count + 12, 120);
+                });
+            },
+        });
 
         auto btn_reset_text = text({
             .text = "Reset Grid",
@@ -193,13 +203,17 @@ private:
                      .color(Style::bg_card)
                      .borderRadius(8.0f)
                      .border(Style::border_subtle, 1.0f);
-        auto btn_reset = gestureDetector(Key::string("btn_reset"), btn_reset_box);
-        btn_reset->onTap([this]() {
-            setState([this]() {
-                stress_item_count = 24;
-                click_counter = 0;
-            });
-        }).cursor(SystemCursor::Pointer);
+        auto btn_reset = gestureDetector({
+            .key = Key::string("btn_reset"),
+            .child = btn_reset_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this]() {
+                setState([this]() {
+                    stress_item_count = 24;
+                    click_counter = 0;
+                });
+            },
+        });
 
         return row(Justify::Start, Align::Center, {
             btn_inc,

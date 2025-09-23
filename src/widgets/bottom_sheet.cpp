@@ -345,33 +345,32 @@ public:
         hdr_col->gap(StyleValue::point(8.0f))
                .width(StyleValue::percent(100.0f));
 
-        auto hdr_detector = std::make_shared<GestureDetector>(hdr_col);
-        hdr_detector->cursor_type = opts.show_drag_handle ? SystemCursor::ResizeVertical : SystemCursor::Default;
-
-        hdr_detector->on_pan_start = [this, opts](const DragStartDetails& e) {
-            if (!opts.enable_drag) return;
-            is_dragging_ = true;
-            drag_start_y_ = e.global_position.y;
-            drag_start_fraction_ = current_fraction_;
-        };
-
-        hdr_detector->on_pan_update = [this, opts](const DragUpdateDetails& e) {
-            if (!is_dragging_) return;
-            float vh = 720.0f;
-            float delta_y = drag_start_y_ - e.global_position.y;
-            float new_frac = std::clamp(drag_start_fraction_ + (delta_y / vh), 0.05f, 0.95f);
-            current_fraction_ = new_frac;
-            if (opts.on_drag_progress) {
-                opts.on_drag_progress(current_fraction_);
-            }
-            setState([] {});
-        };
-
-        hdr_detector->on_pan_end = [this](const DragEndDetails&) {
-            if (!is_dragging_) return;
-            is_dragging_ = false;
-            snapToNearest(current_fraction_);
-        };
+        auto hdr_detector = gestureDetector({
+            .child = hdr_col,
+            .cursor_type = opts.show_drag_handle ? SystemCursor::ResizeVertical : SystemCursor::Default,
+            .on_pan_start = [this, opts](const DragStartDetails& e) {
+                if (!opts.enable_drag) return;
+                is_dragging_ = true;
+                drag_start_y_ = e.global_position.y;
+                drag_start_fraction_ = current_fraction_;
+            },
+            .on_pan_update = [this, opts](const DragUpdateDetails& e) {
+                if (!is_dragging_) return;
+                float vh = 720.0f;
+                float delta_y = drag_start_y_ - e.global_position.y;
+                float new_frac = std::clamp(drag_start_fraction_ + (delta_y / vh), 0.05f, 0.95f);
+                current_fraction_ = new_frac;
+                if (opts.on_drag_progress) {
+                    opts.on_drag_progress(current_fraction_);
+                }
+                setState([] {});
+            },
+            .on_pan_end = [this](const DragEndDetails&) {
+                if (!is_dragging_) return;
+                is_dragging_ = false;
+                snapToNearest(current_fraction_);
+            },
+        });
 
         // D. Combine Panel
         std::vector<WidgetPtr> sheet_kids = {hdr_detector};

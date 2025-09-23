@@ -300,23 +300,24 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* pop_widget = static_cast<const Popover*>(widget());
 
-        auto gesture = gestureDetector(pop_widget->child);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
+        GestureDetectorProps props;
+        props.child = pop_widget->child;
+        props.hit_test_behavior = HitTestBehavior::Translucent;
 
         if (pop_widget->options.trigger == PopoverTrigger::Click) {
-            gesture->onTapUp([this](const TapUpDetails&) {
+            props.on_tap_up = [this](const TapUpDetails&) {
                 togglePopover();
-            });
+            };
         } else if (pop_widget->options.trigger == PopoverTrigger::Hover) {
-            gesture->onHoverEnter([this](const PointerEvent&) {
+            props.on_hover_enter = [this](const PointerEvent&) {
                 showPopoverNow();
-            });
-            gesture->onHoverExit([this](const PointerEvent&) {
+            };
+            props.on_hover_exit = [this](const PointerEvent&) {
                 hidePopoverNow();
-            });
+            };
         }
 
-        return gesture;
+        return gestureDetector(std::move(props));
     }
 };
 

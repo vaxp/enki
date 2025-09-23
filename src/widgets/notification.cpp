@@ -56,14 +56,14 @@ WidgetPtr NotificationBellWidget::build(BuildContext&) {
        .borderRadius(8.0f)
        .paddingSymmetric(6.0f, 12.0f);
 
-    auto gd = std::make_shared<GestureDetector>(box);
-    gd->cursor_type = SystemCursor::Pointer;
     auto mgr = manager;
-    gd->on_tap_up = [mgr](const TapUpDetails&) {
-        if (mgr) mgr->toggleCenter();
-    };
-
-    return gd;
+    return gestureDetector({
+        .child = box,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap_up = [mgr](const TapUpDetails&) {
+            if (mgr) mgr->toggleCenter();
+        },
+    });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -220,14 +220,16 @@ public:
                 auto b_box = container(b_txt);
                 b_box->color(bg).border(border, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f);
 
-                auto gd = std::make_shared<GestureDetector>(b_box);
-                gd->cursor_type = SystemCursor::Pointer;
                 auto act_copy = act;
                 auto id_copy = item.id;
-                gd->on_tap_up = [mgr, act_copy, id_copy](const TapUpDetails&) {
-                    if (act_copy.on_click) act_copy.on_click();
-                    if (mgr) mgr->dismissPushToast(id_copy);
-                };
+                auto gd = gestureDetector({
+                    .child = b_box,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [mgr, act_copy, id_copy](const TapUpDetails&) {
+                        if (act_copy.on_click) act_copy.on_click();
+                        if (mgr) mgr->dismissPushToast(id_copy);
+                    },
+                });
                 act_btns.push_back(gd);
             }
             auto act_row = row(act_btns);
@@ -247,12 +249,14 @@ public:
         });
         auto cls_box = container(cls_txt);
         cls_box->paddingAll(4.0f);
-        auto cls_btn = std::make_shared<GestureDetector>(cls_box);
-        cls_btn->cursor_type = SystemCursor::Pointer;
         auto item_id = item.id;
-        cls_btn->on_tap_up = [mgr, item_id](const TapUpDetails&) {
-            if (mgr) mgr->dismissPushToast(item_id);
-        };
+        auto cls_btn = gestureDetector({
+            .child = cls_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [mgr, item_id](const TapUpDetails&) {
+                if (mgr) mgr->dismissPushToast(item_id);
+            },
+        });
 
         std::vector<WidgetPtr> main_row_items = {ic_box, text_col, cls_btn};
         auto main_row = row(main_row_items);
@@ -301,11 +305,13 @@ public:
         });
         auto mark_box = container(mark_txt);
         mark_box->paddingAll(4.0f);
-        auto mark_btn = std::make_shared<GestureDetector>(mark_box);
-        mark_btn->cursor_type = SystemCursor::Pointer;
-        mark_btn->on_tap_up = [mgr](const TapUpDetails&) {
-            if (mgr) mgr->markAllAsRead();
-        };
+        auto mark_btn = gestureDetector({
+            .child = mark_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [mgr](const TapUpDetails&) {
+                if (mgr) mgr->markAllAsRead();
+            },
+        });
 
         // Header Action: Clear all
         auto clr_txt = text({
@@ -315,11 +321,13 @@ public:
         });
         auto clr_box = container(clr_txt);
         clr_box->paddingAll(4.0f);
-        auto clr_btn = std::make_shared<GestureDetector>(clr_box);
-        clr_btn->cursor_type = SystemCursor::Pointer;
-        clr_btn->on_tap_up = [mgr](const TapUpDetails&) {
-            if (mgr) mgr->clearAll();
-        };
+        auto clr_btn = gestureDetector({
+            .child = clr_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [mgr](const TapUpDetails&) {
+                if (mgr) mgr->clearAll();
+            },
+        });
 
         // Close ✕
         auto cls_txt = text({
@@ -330,11 +338,13 @@ public:
         });
         auto cls_box = container(cls_txt);
         cls_box->paddingAll(4.0f);
-        auto cls_btn = std::make_shared<GestureDetector>(cls_box);
-        cls_btn->cursor_type = SystemCursor::Pointer;
-        cls_btn->on_tap_up = [mgr](const TapUpDetails&) {
-            if (mgr) mgr->closeCenter();
-        };
+        auto cls_btn = gestureDetector({
+            .child = cls_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [mgr](const TapUpDetails&) {
+                if (mgr) mgr->closeCenter();
+            },
+        });
 
         std::vector<WidgetPtr> h_right = {mark_btn, clr_btn, cls_btn};
         auto h_right_row = row(h_right);
@@ -360,13 +370,14 @@ public:
              .borderRadius(6.0f)
              .paddingSymmetric(4.0f, 10.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, cat](const TapUpDetails&) {
-                selected_category_ = cat;
-                setState([] {});
-            };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, cat](const TapUpDetails&) {
+                    selected_category_ = cat;
+                    setState([] {});
+                },
+            });
         };
 
         std::vector<WidgetPtr> tab_items = {
@@ -437,12 +448,14 @@ public:
                         .paddingAll(10.0f)
                         .width(StyleValue::percent(100.0f));
 
-                auto gd = std::make_shared<GestureDetector>(item_box);
-                gd->cursor_type = SystemCursor::Pointer;
                 auto id_copy = item.id;
-                gd->on_tap_up = [mgr, id_copy](const TapUpDetails&) {
-                    if (mgr) mgr->markAsRead(id_copy);
-                };
+                auto gd = gestureDetector({
+                    .child = item_box,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [mgr, id_copy](const TapUpDetails&) {
+                        if (mgr) mgr->markAsRead(id_copy);
+                    },
+                });
                 list_rows.push_back(gd);
             }
         }

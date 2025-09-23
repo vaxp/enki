@@ -784,48 +784,45 @@ public:
             cursor_pos_, selection_start_, selection_end_, hovered_clear_, spinner_angle_
         );
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = SystemCursor::Text;
+        auto detector = gestureDetector({
+            .child = search_box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Text,
+            .on_tap_down = [this](const TapDownDetails& e) {
+                focus();
 
-        detector->on_hover_enter = [this](const PointerEvent&) { setState([this] { is_hovered_ = true; }); };
-        detector->on_hover_exit  = [this](const PointerEvent&) { setState([this] { is_hovered_ = false; hovered_clear_ = false; }); };
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findSearchFieldBox(ro)) {
+                        if (box->isHitClearButton(e.local_position.x, e.local_position.y)) {
+                            controller_->clear();
+                            cursor_pos_ = 0;
+                            selection_start_ = 0;
+                            selection_end_ = 0;
+                            triggerQueryUpdate();
+                            return;
+                        }
 
-        detector->on_hover_move = [this](const PointerEvent& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findSearchFieldBox(ro)) {
-                    bool clr = box->isHitClearButton(e.localPosition.x, e.localPosition.y);
-                    if (clr != hovered_clear_) {
-                        hovered_clear_ = clr;
-                        setState([] {});
+                        cursor_pos_ = box->getIndexAtCoordinate(e.local_position.x);
+                        selection_start_ = cursor_pos_;
+                        selection_end_ = cursor_pos_;
                     }
                 }
-            }
-        };
-
-        detector->on_tap_down = [this](const TapDownDetails& e) {
-            focus();
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findSearchFieldBox(ro)) {
-                    if (box->isHitClearButton(e.local_position.x, e.local_position.y)) {
-                        controller_->clear();
-                        cursor_pos_ = 0;
-                        selection_start_ = 0;
-                        selection_end_ = 0;
-                        triggerQueryUpdate();
-                        return;
+                setState([] {});
+            },
+            .on_hover_enter = [this](const PointerEvent&) { setState([this] { is_hovered_ = true; }); },
+            .on_hover_exit  = [this](const PointerEvent&) { setState([this] { is_hovered_ = false; hovered_clear_ = false; }); },
+            .on_hover_move = [this](const PointerEvent& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findSearchFieldBox(ro)) {
+                        bool clr = box->isHitClearButton(e.localPosition.x, e.localPosition.y);
+                        if (clr != hovered_clear_) {
+                            hovered_clear_ = clr;
+                            setState([] {});
+                        }
                     }
-
-                    cursor_pos_ = box->getIndexAtCoordinate(e.local_position.x);
-                    selection_start_ = cursor_pos_;
-                    selection_end_ = cursor_pos_;
                 }
-            }
-            setState([] {});
-        };
-
-        detector->child = search_box;
+            },
+        });
 
         // Build Suggestions Dropdown Overlay if active and visible
         const auto& suggestions = controller_->getSuggestions();
@@ -914,21 +911,21 @@ public:
                         .borderRadius(6.0f)
                         .paddingSymmetric(6.0f, 10.0f);
 
-                auto item_detector = std::make_shared<GestureDetector>();
-                item_detector->hit_test_behavior = HitTestBehavior::Opaque;
-                item_detector->cursor_type       = SystemCursor::Pointer;
-                item_detector->on_tap = [this, item, sf] {
-                    controller_->addRecentSearch(item.title);
-                    controller_->setQuery(item.title);
-                    cursor_pos_ = item.title.length();
-                    selection_start_ = cursor_pos_;
-                    selection_end_ = cursor_pos_;
-                    if (sf->props.on_suggestion_selected) sf->props.on_suggestion_selected(item);
-                    if (sf->props.on_submitted) sf->props.on_submitted(item.title);
-                    setState([] {});
-                };
-
-                item_detector->child = item_box;
+                auto item_detector = gestureDetector({
+                    .child = item_box,
+                    .hit_test_behavior = HitTestBehavior::Opaque,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap = [this, item, sf] {
+                        controller_->addRecentSearch(item.title);
+                        controller_->setQuery(item.title);
+                        cursor_pos_ = item.title.length();
+                        selection_start_ = cursor_pos_;
+                        selection_end_ = cursor_pos_;
+                        if (sf->props.on_suggestion_selected) sf->props.on_suggestion_selected(item);
+                        if (sf->props.on_submitted) sf->props.on_submitted(item.title);
+                        setState([] {});
+                    },
+                });
                 pop_items.push_back(item_detector);
             }
         }
@@ -968,19 +965,19 @@ public:
                 r_box->borderRadius(6.0f)
                      .paddingSymmetric(6.0f, 10.0f);
 
-                auto r_det = std::make_shared<GestureDetector>();
-                r_det->hit_test_behavior = HitTestBehavior::Opaque;
-                r_det->cursor_type       = SystemCursor::Pointer;
-                r_det->on_tap = [this, r_query, sf] {
-                    controller_->setQuery(r_query);
-                    cursor_pos_ = r_query.length();
-                    selection_start_ = cursor_pos_;
-                    selection_end_ = cursor_pos_;
-                    triggerQueryUpdate();
-                    if (sf->props.on_submitted) sf->props.on_submitted(r_query);
-                };
-
-                r_det->child = r_box;
+                auto r_det = gestureDetector({
+                    .child = r_box,
+                    .hit_test_behavior = HitTestBehavior::Opaque,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap = [this, r_query, sf] {
+                        controller_->setQuery(r_query);
+                        cursor_pos_ = r_query.length();
+                        selection_start_ = cursor_pos_;
+                        selection_end_ = cursor_pos_;
+                        triggerQueryUpdate();
+                        if (sf->props.on_submitted) sf->props.on_submitted(r_query);
+                    },
+                });
                 pop_items.push_back(r_det);
             }
         }

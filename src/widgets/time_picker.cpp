@@ -131,9 +131,11 @@ public:
         up_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
         auto up_box = container(up_row);
         up_box->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f).width(54.0f);
-        auto up_gd = std::make_shared<GestureDetector>(up_box);
-        up_gd->cursor_type = SystemCursor::Pointer;
-        up_gd->on_tap_up = [on_up](const TapUpDetails&) { if (on_up) on_up(); };
+        auto up_gd = gestureDetector({
+            .child = up_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [on_up](const TapUpDetails&) { if (on_up) on_up(); },
+        });
 
         // Value Display Card
         auto val_txt = text({
@@ -157,9 +159,11 @@ public:
         down_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
         auto down_box = container(down_row);
         down_box->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f).width(54.0f);
-        auto down_gd = std::make_shared<GestureDetector>(down_box);
-        down_gd->cursor_type = SystemCursor::Pointer;
-        down_gd->on_tap_up = [on_down](const TapUpDetails&) { if (on_down) on_down(); };
+        auto down_gd = gestureDetector({
+            .child = down_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [on_down](const TapUpDetails&) { if (on_down) on_down(); },
+        });
 
         // Subtitle Label
         auto lbl_txt = text({
@@ -197,12 +201,13 @@ public:
              .paddingSymmetric(10.0f, 12.0f)
              .width(52.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, is_pm_val](const TapUpDetails&) {
-                toggleAmPm(is_pm_val);
-            };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, is_pm_val](const TapUpDetails&) {
+                    toggleAmPm(is_pm_val);
+                },
+            });
         };
 
         auto pill_am = makePill("AM", !time_.is_pm, false);
@@ -225,16 +230,17 @@ public:
             auto b = container(t);
             b->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(4.0f, 8.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, h, m, pm](const TapUpDetails&) {
-                time_.hour = h;
-                time_.minute = m;
-                time_.is_pm = pm;
-                notifyChanged();
-                setState([] {});
-            };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, h, m, pm](const TapUpDetails&) {
+                    time_.hour = h;
+                    time_.minute = m;
+                    time_.is_pm = pm;
+                    notifyChanged();
+                    setState([] {});
+                },
+            });
         };
 
         auto p_now = makePreset("Now", 8, 30, true);
@@ -378,12 +384,14 @@ public:
                  .paddingSymmetric(10.0f, 14.0f)
                  .width(280.0f);
 
-        auto input_gd = std::make_shared<GestureDetector>(input_box);
-        input_gd->cursor_type = SystemCursor::Pointer;
-        input_gd->on_tap_up = [this](const TapUpDetails&) {
-            is_popup_open_ = !is_popup_open_;
-            setState([] {});
-        };
+        auto input_gd = gestureDetector({
+            .child = input_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                is_popup_open_ = !is_popup_open_;
+                setState([] {});
+            },
+        });
 
         std::vector<WidgetPtr> col_items = {input_gd};
         if (is_popup_open_) {

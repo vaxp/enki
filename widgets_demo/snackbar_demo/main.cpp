@@ -71,12 +71,13 @@ public:
                 .child = b_row
             });
 
-            auto gd = std::make_shared<GestureDetector>(box);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) {
-                if (cb) cb();
-            };
-            return gd;
+            return gestureDetector({
+                .child = box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) {
+                    if (cb) cb();
+                },
+            });
         };
 
         // ── 1. Semantic Feedback Buttons ──────────────────────────────
@@ -204,14 +205,15 @@ public:
                 .child = t_lbl
             });
 
-            auto gd = std::make_shared<GestureDetector>(box);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, p, label](const TapUpDetails&) {
-                current_placement_ = p;
-                hud_msg_ = "Changed toast placement to: " + label;
-                setState([] {});
-            };
-            return gd;
+            return gestureDetector({
+                .child = box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, p, label](const TapUpDetails&) {
+                    current_placement_ = p;
+                    hud_msg_ = "Changed toast placement to: " + label;
+                    setState([] {});
+                },
+            });
         };
 
         auto pos_r1 = row({

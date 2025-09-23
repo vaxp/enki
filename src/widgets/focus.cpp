@@ -84,13 +84,13 @@ public:
             box->border(w->focus_ring_color, 2.0f).borderRadius(8.0f);
         }
 
-        auto gd = std::make_shared<GestureDetector>(box);
-        gd->cursor_type = SystemCursor::Pointer;
-        gd->on_tap_up = [this](const TapUpDetails&) {
-            if (node_) node_->requestFocus();
-        };
-
-        return gd;
+        return gestureDetector({
+            .child = box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                if (node_) node_->requestFocus();
+            },
+        });
     }
 };
 

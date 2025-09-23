@@ -213,12 +213,16 @@ WidgetPtr GestureDemoState::buildSidebar() {
                    .border(border_col, 1.0f);
 
         int tab_index = static_cast<int>(i);
-        auto gd = gestureDetector(Key::string("nav_tab_" + std::to_string(i)), btn_content);
-        gd->onTap([this, tab_index]() {
-            setState([this, tab_index]() {
-                current_tab = tab_index;
-            });
-        }).cursor(SystemCursor::Pointer);
+        auto gd = gestureDetector({
+            .key = Key::string("nav_tab_" + std::to_string(i)),
+            .child = btn_content,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this, tab_index]() {
+                setState([this, tab_index]() {
+                    current_tab = tab_index;
+                });
+            },
+        });
 
         tab_widgets.push_back(gd);
     }
@@ -361,14 +365,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
                    .borderRadius(12.0f)
                    .border(Style::border_subtle, 1.0f);
 
-    auto single_tap_gd = gestureDetector(Key::string("single_tap_target"), single_tap_card);
-    single_tap_gd->onTap([this]() {
-        setState([this]() {
-            single_tap_count++;
-            logEvent("Single Tap detected (Count = " + std::to_string(single_tap_count) + ")");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto single_tap_gd = gestureDetector({
+        .key = Key::string("single_tap_target"),
+        .child = single_tap_card,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this]() {
+            setState([this]() {
+                single_tap_count++;
+                logEvent("Single Tap detected (Count = " + std::to_string(single_tap_count) + ")");
+            });
+        },
+    });
 
     // 2. Double Tap Card
     auto double_btn_text = text({
@@ -412,18 +420,23 @@ WidgetPtr GestureDemoState::buildTapsTab() {
                    .borderRadius(12.0f)
                    .border(Style::border_subtle, 1.0f);
 
-    auto double_tap_gd = gestureDetector(Key::string("double_tap_target"), double_tap_card);
-    double_tap_gd->onDoubleTap([this]() {
-        setState([this]() {
-            double_tap_count++;
-            logEvent("⚡ DOUBLE TAP triggered! (Count = " + std::to_string(double_tap_count) + ")");
-        });
-    }).onTap([this]() {
-        setState([this]() {
-            logEvent("Tap 1 received — tap again quickly for double tap!");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto double_tap_gd = gestureDetector({
+        .key = Key::string("double_tap_target"),
+        .child = double_tap_card,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this]() {
+            setState([this]() {
+                logEvent("Tap 1 received — tap again quickly for double tap!");
+            });
+        },
+        .on_double_tap = [this]() {
+            setState([this]() {
+                double_tap_count++;
+                logEvent("⚡ DOUBLE TAP triggered! (Count = " + std::to_string(double_tap_count) + ")");
+            });
+        },
+    });
 
     // 3. Right Click (Secondary Tap) Card
     auto sec_btn_text = text({
@@ -467,14 +480,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
                 .borderRadius(12.0f)
                 .border(Style::border_subtle, 1.0f);
 
-    auto sec_tap_gd = gestureDetector(Key::string("sec_tap_target"), sec_tap_card);
-    sec_tap_gd->onSecondaryTap([this]() {
-        setState([this]() {
-            secondary_tap_count++;
-            logEvent("🖱️ Right Click (Secondary Tap) detected (Count = " + std::to_string(secondary_tap_count) + ")");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto sec_tap_gd = gestureDetector({
+        .key = Key::string("sec_tap_target"),
+        .child = sec_tap_card,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_secondary_tap = [this]() {
+            setState([this]() {
+                secondary_tap_count++;
+                logEvent("🖱️ Right Click (Secondary Tap) detected (Count = " + std::to_string(secondary_tap_count) + ")");
+            });
+        },
+    });
 
     // 4. Long Press Card
     auto lp_btn_text = text({
@@ -518,14 +535,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
                    .borderRadius(12.0f)
                    .border(Style::border_subtle, 1.0f);
 
-    auto long_press_gd = gestureDetector(Key::string("long_press_target"), long_press_card);
-    long_press_gd->onLongPress([this]() {
-        setState([this]() {
-            long_press_count++;
-            logEvent("⏱️ LONG PRESS activated after 400ms! (Count = " + std::to_string(long_press_count) + ")");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto long_press_gd = gestureDetector({
+        .key = Key::string("long_press_target"),
+        .child = long_press_card,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_long_press = [this]() {
+            setState([this]() {
+                long_press_count++;
+                logEvent("⏱️ LONG PRESS activated after 400ms! (Count = " + std::to_string(long_press_count) + ")");
+            });
+        },
+    });
 
     // Event History Panel
     std::vector<WidgetPtr> log_widgets;
@@ -660,27 +681,33 @@ WidgetPtr GestureDemoState::buildPanTab() {
             .border(is_dragging_card ? Style::secondary : Style::primary_light, is_dragging_card ? 2.0f : 1.0f)
             .shadow(is_dragging_card ? 0x807C4DFF : 0x40000000, {0, is_dragging_card ? 10.0f : 4.0f}, is_dragging_card ? 20.0f : 8.0f);
 
-    auto drag_gd = gestureDetector(Key::string("draggable_card"), drag_box);
-    drag_gd->onPanStart([this](const DragStartDetails&) {
-        setState([this]() {
-            is_dragging_card = true;
-            logEvent("Pan started on Draggable Card");
-        });
-    }).onPanUpdate([this](const DragUpdateDetails& d) {
-        setState([this, d]() {
-            card_offset_x = std::clamp(card_offset_x + d.delta.x, 0.0f, 380.0f);
-            card_offset_y = std::clamp(card_offset_y + d.delta.y, 0.0f, 100.0f);
-        });
-    }).onPanEnd([this](const DragEndDetails& d) {
-        setState([this, d]() {
-            is_dragging_card = false;
-            card_velocity_x  = d.velocity.x;
-            card_velocity_y  = d.velocity.y;
-            logEvent("Pan ended. Velocity: (" + std::to_string(static_cast<int>(d.velocity.x)) + ", " +
-                     std::to_string(static_cast<int>(d.velocity.y)) + ")");
-        });
-    }).cursor(SystemCursor::Move)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto drag_gd = gestureDetector({
+        .key = Key::string("draggable_card"),
+        .child = drag_box,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Move,
+        .on_pan_start = [this](const DragStartDetails&) {
+            setState([this]() {
+                is_dragging_card = true;
+                logEvent("Pan started on Draggable Card");
+            });
+        },
+        .on_pan_update = [this](const DragUpdateDetails& d) {
+            setState([this, d]() {
+                card_offset_x = std::clamp(card_offset_x + d.delta.x, 0.0f, 380.0f);
+                card_offset_y = std::clamp(card_offset_y + d.delta.y, 0.0f, 100.0f);
+            });
+        },
+        .on_pan_end = [this](const DragEndDetails& d) {
+            setState([this, d]() {
+                is_dragging_card = false;
+                card_velocity_x  = d.velocity.x;
+                card_velocity_y  = d.velocity.y;
+                logEvent("Pan ended. Velocity: (" + std::to_string(static_cast<int>(d.velocity.x)) + ", " +
+                         std::to_string(static_cast<int>(d.velocity.y)) + ")");
+            });
+        },
+    });
 
     auto canvas_container = container(drag_gd);
     canvas_container->height(200.0f)
@@ -725,19 +752,24 @@ WidgetPtr GestureDemoState::buildPanTab() {
     slider_hit_area->width(total_slider_w)
                    .height(36.0f);
 
-    auto slider_gd = gestureDetector(Key::string("custom_slider_gd"), slider_hit_area);
-    slider_gd->onPanUpdate([this, total_slider_w](const DragUpdateDetails& d) {
-        setState([this, d, total_slider_w]() {
-            slider_value = std::clamp(slider_value + (d.delta.x / total_slider_w), 0.0f, 1.0f);
-            logEvent("Slider value updated: " + std::to_string(static_cast<int>(slider_value * 100)) + "%");
-        });
-    }).onTapDown([this, total_slider_w](const TapDownDetails& d) {
-        setState([this, d, total_slider_w]() {
-            slider_value = std::clamp(d.local_position.x / total_slider_w, 0.0f, 1.0f);
-            logEvent("Slider tapped: " + std::to_string(static_cast<int>(slider_value * 100)) + "%");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto slider_gd = gestureDetector({
+        .key = Key::string("custom_slider_gd"),
+        .child = slider_hit_area,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap_down = [this, total_slider_w](const TapDownDetails& d) {
+            setState([this, d, total_slider_w]() {
+                slider_value = std::clamp(d.local_position.x / total_slider_w, 0.0f, 1.0f);
+                logEvent("Slider tapped: " + std::to_string(static_cast<int>(slider_value * 100)) + "%");
+            });
+        },
+        .on_pan_update = [this, total_slider_w](const DragUpdateDetails& d) {
+            setState([this, d, total_slider_w]() {
+                slider_value = std::clamp(slider_value + (d.delta.x / total_slider_w), 0.0f, 1.0f);
+                logEvent("Slider value updated: " + std::to_string(static_cast<int>(slider_value * 100)) + "%");
+            });
+        },
+    });
 
     auto slider_title = text({
         .text = "1D Horizontal Pan Slider",
@@ -790,15 +822,19 @@ WidgetPtr GestureDemoState::buildPanTab() {
              .borderRadius(8.0f)
              .border(Style::border_subtle, 1.0f);
 
-    auto reset_gd = gestureDetector(Key::string("reset_pan_btn"), reset_btn);
-    reset_gd->onTap([this]() {
-        setState([this]() {
-            card_offset_x = 0.0f;
-            card_offset_y = 0.0f;
-            logEvent("Draggable card position reset to center");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto reset_gd = gestureDetector({
+        .key = Key::string("reset_pan_btn"),
+        .child = reset_btn,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this]() {
+            setState([this]() {
+                card_offset_x = 0.0f;
+                card_offset_y = 0.0f;
+                logEvent("Draggable card position reset to center");
+            });
+        },
+    });
 
     return column({
         canvas_container,
@@ -883,14 +919,17 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
                     .borderRadius(12.0f)
                     .border(Style::border_subtle, 1.0f);
 
-        auto gd = gestureDetector(Key::string("cursor_box_" + std::to_string(i)), card_content);
-        gd->cursor(item.cursor)
-          .onHoverEnter([this, c_name](const PointerEvent&) {
-              setState([this, c_name]() {
-                  hovered_cursor_name = c_name;
-                  logEvent("Hovering: " + c_name);
-              });
-          });
+        auto gd = gestureDetector({
+            .key = Key::string("cursor_box_" + std::to_string(i)),
+            .child = card_content,
+            .cursor_type = item.cursor,
+            .on_hover_enter = [this, c_name](const PointerEvent&) {
+                setState([this, c_name]() {
+                    hovered_cursor_name = c_name;
+                    logEvent("Hovering: " + c_name);
+                });
+            },
+        });
 
         if (i % 2 == 0) col1.push_back(gd);
         else col2.push_back(gd);
@@ -955,13 +994,17 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
              .color(Style::accent_pink)
              .borderRadius(8.0f);
 
-    auto inner_gd = gestureDetector(Key::string("inner_child_gd"), inner_box);
-    inner_gd->onTap([this]() {
-        setState([this]() {
-            child_hits++;
-            logEvent("🎯 Child Hit! Count = " + std::to_string(child_hits));
-        });
-    }).cursor(SystemCursor::Pointer);
+    auto inner_gd = gestureDetector({
+        .key = Key::string("inner_child_gd"),
+        .child = inner_box,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this]() {
+            setState([this]() {
+                child_hits++;
+                logEvent("🎯 Child Hit! Count = " + std::to_string(child_hits));
+            });
+        },
+    });
 
     // Outer Parent Target
     auto outer_title = text({
@@ -1004,14 +1047,18 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
              .borderRadius(14.0f)
              .border(Style::primary_light, 1.0f);
 
-    auto outer_gd = gestureDetector(Key::string("outer_parent_gd"), outer_box);
-    outer_gd->onTap([this]() {
-        setState([this]() {
-            parent_hits++;
-            logEvent("Parent container hit! (Hits = " + std::to_string(parent_hits) + ")");
-        });
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(current_behavior);
+    auto outer_gd = gestureDetector({
+        .key = Key::string("outer_parent_gd"),
+        .child = outer_box,
+        .hit_test_behavior = current_behavior,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this]() {
+            setState([this]() {
+                parent_hits++;
+                logEvent("Parent container hit! (Hits = " + std::to_string(parent_hits) + ")");
+            });
+        },
+    });
 
     // Behavior Toggle Button
     auto toggle_text = text({
@@ -1026,17 +1073,21 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
               .color(Style::primary)
               .borderRadius(8.0f);
 
-    auto toggle_gd = gestureDetector(Key::string("toggle_behavior_btn"), toggle_btn);
-    toggle_gd->onTap([this]() {
-        setState([this]() {
-            if (current_behavior == HitTestBehavior::Opaque) {
-                current_behavior = HitTestBehavior::DeferToChild;
-            } else {
-                current_behavior = HitTestBehavior::Opaque;
-            }
-            logEvent("HitTestBehavior changed to " + std::string(current_behavior == HitTestBehavior::Opaque ? "Opaque" : "DeferToChild"));
-        });
-    }).cursor(SystemCursor::Pointer);
+    auto toggle_gd = gestureDetector({
+        .key = Key::string("toggle_behavior_btn"),
+        .child = toggle_btn,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [this]() {
+            setState([this]() {
+                if (current_behavior == HitTestBehavior::Opaque) {
+                    current_behavior = HitTestBehavior::DeferToChild;
+                } else {
+                    current_behavior = HitTestBehavior::Opaque;
+                }
+                logEvent("HitTestBehavior changed to " + std::string(current_behavior == HitTestBehavior::Opaque ? "Opaque" : "DeferToChild"));
+            });
+        },
+    });
 
     return column({
         outer_gd,

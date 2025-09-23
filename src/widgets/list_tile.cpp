@@ -281,17 +281,14 @@ public:
         padded->width(StyleValue::percent(100.0f));
 
         // ── Wrap in gesture detector ───────────────────────────
-        auto detector = std::make_shared<GestureDetector>(padded);
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        if (opts.enabled) {
-            detector->cursor_type = SystemCursor::Pointer;
-            auto on_tap = opts.on_tap;
-            if (on_tap) detector->on_tap = on_tap;
-            auto on_lp = opts.on_long_press;
-            if (on_lp) detector->on_long_press = on_lp;
-            auto on_st = opts.on_secondary_tap;
-            if (on_st) detector->on_secondary_tap = on_st;
-        }
+        auto detector = gestureDetector({
+            .child = padded,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = opts.enabled ? SystemCursor::Pointer : SystemCursor::Default,
+            .on_tap = opts.enabled ? opts.on_tap : nullptr,
+            .on_secondary_tap = opts.enabled ? opts.on_secondary_tap : nullptr,
+            .on_long_press = opts.enabled ? opts.on_long_press : nullptr,
+        });
 
         // ── Wrap in the custom render widget for hover/press bg ─
         auto render = std::make_shared<ListTileRenderWidget>(

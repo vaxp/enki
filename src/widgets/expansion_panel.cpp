@@ -200,13 +200,13 @@ public:
         }
 
         // GestureDetector for Header
-        auto header_gd = std::make_shared<GestureDetector>(header_box);
-        if (item.can_tap_on_header && !item.is_disabled) {
-            header_gd->cursor_type = SystemCursor::Pointer;
-            header_gd->on_tap_up = [this, index](const TapUpDetails&) {
+        auto header_gd = gestureDetector({
+            .child = header_box,
+            .cursor_type = (item.can_tap_on_header && !item.is_disabled) ? SystemCursor::Pointer : SystemCursor::Default,
+            .on_tap_up = (item.can_tap_on_header && !item.is_disabled) ? GestureTapUpCallback([this, index](const TapUpDetails&) {
                 togglePanel(index);
-            };
-        }
+            }) : nullptr,
+        });
 
         std::vector<WidgetPtr> panel_col_items = {header_gd};
 

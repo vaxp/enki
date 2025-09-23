@@ -198,14 +198,14 @@ public:
         }
 
         // GestureDetector for Header
-        auto header_gd = std::make_shared<GestureDetector>(header_box);
-        if (!item.is_disabled) {
-            header_gd->cursor_type = SystemCursor::Pointer;
-            auto item_id = item.id;
-            header_gd->on_tap_up = [this, item_id](const TapUpDetails&) {
+        auto item_id = item.id;
+        auto header_gd = gestureDetector({
+            .child = header_box,
+            .cursor_type = !item.is_disabled ? SystemCursor::Pointer : SystemCursor::Default,
+            .on_tap_up = !item.is_disabled ? GestureTapUpCallback([this, item_id](const TapUpDetails&) {
                 toggleSection(item_id);
-            };
-        }
+            }) : nullptr,
+        });
 
         std::vector<WidgetPtr> section_col_items = {header_gd};
 

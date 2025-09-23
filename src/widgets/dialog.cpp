@@ -232,16 +232,16 @@ public:
 
             // Close button ✕
             if (opts.show_close_button) {
-                auto close_btn = std::make_shared<GestureDetector>(
-                    container({
+                auto close_btn = gestureDetector({
+                    .child = container({
                         .padding = StyleInsets::all(6.0f),
                         .child = text("✕", { .color = 0xFF94A3B8, .font_size = 14.0f, .font_weight = FontWeight::Bold })
-                    })
-                );
-                close_btn->cursor_type = SystemCursor::Pointer;
-                close_btn->on_tap_up = [this](const TapUpDetails&) {
-                    closeDialog();
-                };
+                    }),
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [this](const TapUpDetails&) {
+                        closeDialog();
+                    },
+                });
                 header_items.push_back(close_btn);
             }
 
@@ -297,20 +297,20 @@ public:
                     txt_col = 0xFF94A3B8;
                 }
 
-                auto btn_gd = std::make_shared<GestureDetector>(
-                    container({
+                auto btn_gd = gestureDetector({
+                    .child = container({
                         .color = bg_col,
                         .border_radius = BorderRadius::circular(6.0f),
                         .border = Border(border_col, 1.0f),
                         .padding = StyleInsets::symmetric(8.0f, 18.0f),
                         .child = text(act.label, { .color = txt_col, .font_size = 13.0f, .font_weight = FontWeight::Bold })
-                    })
-                );
-                btn_gd->cursor_type = SystemCursor::Pointer;
-                btn_gd->on_tap_up = [this, act](const TapUpDetails&) {
-                    if (act.on_click) act.on_click();
-                    closeDialog();
-                };
+                    }),
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [this, act](const TapUpDetails&) {
+                        if (act.on_click) act.on_click();
+                        closeDialog();
+                    },
+                });
                 action_buttons.push_back(btn_gd);
             }
 

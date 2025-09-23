@@ -73,21 +73,23 @@ public:
                            .width(StyleValue::percent(100.0f))
                            .align(Alignment::Center);
 
-                auto toggle_det = std::make_shared<GestureDetector>(toggle_box);
-                toggle_det->hit_test_behavior = HitTestBehavior::Opaque;
-                toggle_det->cursor_type       = SystemCursor::Pointer;
-                toggle_det->on_tap = [this, w] {
-                    is_expanded_ = !is_expanded_;
-                    if (is_expanded_) anim_.forward();
-                    else              anim_.reverse();
-                    if (w->on_toggle) w->on_toggle(is_expanded_);
-                };
-                toggle_det->on_hover_enter = [this](const PointerEvent&) {
-                    setState([this] { toggle_hovered_ = true; });
-                };
-                toggle_det->on_hover_exit = [this](const PointerEvent&) {
-                    setState([this] { toggle_hovered_ = false; });
-                };
+                auto toggle_det = gestureDetector({
+                    .child = toggle_box,
+                    .hit_test_behavior = HitTestBehavior::Opaque,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap = [this, w] {
+                        is_expanded_ = !is_expanded_;
+                        if (is_expanded_) anim_.forward();
+                        else              anim_.reverse();
+                        if (w->on_toggle) w->on_toggle(is_expanded_);
+                    },
+                    .on_hover_enter = [this](const PointerEvent&) {
+                        setState([this] { toggle_hovered_ = true; });
+                    },
+                    .on_hover_exit = [this](const PointerEvent&) {
+                        setState([this] { toggle_hovered_ = false; });
+                    },
+                });
                 panel_children.push_back(toggle_det);
             }
 

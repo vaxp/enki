@@ -263,47 +263,43 @@ public:
            .borderRadius(5.0f)
            .paddingSymmetric(5.0f, 8.0f);
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type       = itm.enabled ? SystemCursor::Pointer : SystemCursor::Default;
+        return gestureDetector({
+            .child = box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = itm.enabled ? SystemCursor::Pointer : SystemCursor::Default,
+            .on_tap = [this, w] {
+                if (!w->item.enabled) return;
 
-        detector->on_hover_enter = [this, w](const PointerEvent&) {
-            if (!w->item.enabled) return;
-            setState([this] { hovered_ = true; });
-
-            if (w->item.type == MenuItemType::Submenu) {
-                Rect bounds{0, 0, 180.0f, 30.0f};
-                if (auto* ro = context().element()->findRenderObject()) {
-                    bounds = ro->globalBounds();
+                if (w->item.type == MenuItemType::Action) {
+                    if (w->item.on_selected) w->item.on_selected();
+                    if (w->close_all_callback) w->close_all_callback();
+                    else if (w->parent_popup) w->parent_popup->close();
+                } else if (w->item.type == MenuItemType::Checkbox) {
+                    if (w->item.on_toggle) w->item.on_toggle(!w->item.checked);
+                    if (w->close_all_callback) w->close_all_callback();
+                    else if (w->parent_popup) w->parent_popup->close();
+                } else if (w->item.type == MenuItemType::Radio) {
+                    if (w->item.on_selected) w->item.on_selected();
+                    if (w->close_all_callback) w->close_all_callback();
+                    else if (w->parent_popup) w->parent_popup->close();
                 }
-                openSubmenu(bounds);
-            }
-        };
+            },
+            .on_hover_enter = [this, w](const PointerEvent&) {
+                if (!w->item.enabled) return;
+                setState([this] { hovered_ = true; });
 
-        detector->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] { hovered_ = false; });
-        };
-
-        detector->on_tap = [this, w] {
-            if (!w->item.enabled) return;
-
-            if (w->item.type == MenuItemType::Action) {
-                if (w->item.on_selected) w->item.on_selected();
-                if (w->close_all_callback) w->close_all_callback();
-                else if (w->parent_popup) w->parent_popup->close();
-            } else if (w->item.type == MenuItemType::Checkbox) {
-                if (w->item.on_toggle) w->item.on_toggle(!w->item.checked);
-                if (w->close_all_callback) w->close_all_callback();
-                else if (w->parent_popup) w->parent_popup->close();
-            } else if (w->item.type == MenuItemType::Radio) {
-                if (w->item.on_selected) w->item.on_selected();
-                if (w->close_all_callback) w->close_all_callback();
-                else if (w->parent_popup) w->parent_popup->close();
-            }
-        };
-
-        detector->child = box;
-        return detector;
+                if (w->item.type == MenuItemType::Submenu) {
+                    Rect bounds{0, 0, 180.0f, 30.0f};
+                    if (auto* ro = context().element()->findRenderObject()) {
+                        bounds = ro->globalBounds();
+                    }
+                    openSubmenu(bounds);
+                }
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] { hovered_ = false; });
+            },
+        });
     }
 };
 
@@ -355,33 +351,29 @@ public:
            .borderRadius(6.0f)
            .paddingSymmetric(5.0f, 10.0f);
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type       = SystemCursor::Pointer;
-
-        detector->on_hover_enter = [this, btn](const PointerEvent&) {
-            setState([this] { hovered_ = true; });
-            if (btn->on_hover_active) {
-                Rect b{0, 0, 80.0f, 30.0f};
-                if (auto* ro = context().element()->findRenderObject()) b = ro->globalBounds();
-                btn->on_hover_active(b);
-            }
-        };
-
-        detector->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] { hovered_ = false; });
-        };
-
-        detector->on_tap = [this, btn] {
-            if (btn->on_open) {
-                Rect b{0, 0, 80.0f, 30.0f};
-                if (auto* ro = context().element()->findRenderObject()) b = ro->globalBounds();
-                btn->on_open(b);
-            }
-        };
-
-        detector->child = box;
-        return detector;
+        return gestureDetector({
+            .child = box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this, btn] {
+                if (btn->on_open) {
+                    Rect b{0, 0, 80.0f, 30.0f};
+                    if (auto* ro = context().element()->findRenderObject()) b = ro->globalBounds();
+                    btn->on_open(b);
+                }
+            },
+            .on_hover_enter = [this, btn](const PointerEvent&) {
+                setState([this] { hovered_ = true; });
+                if (btn->on_hover_active) {
+                    Rect b{0, 0, 80.0f, 30.0f};
+                    if (auto* ro = context().element()->findRenderObject()) b = ro->globalBounds();
+                    btn->on_hover_active(b);
+                }
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] { hovered_ = false; });
+            },
+        });
     }
 };
 
@@ -614,18 +606,16 @@ public:
     WidgetPtr build(BuildContext&) override {
         auto* menu_widget = static_cast<const MenuWidget*>(widget());
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type       = SystemCursor::Pointer;
-
-        detector->on_tap = [this] {
-            Rect b{0, 0, 100.0f, 32.0f};
-            if (auto* ro = context().element()->findRenderObject()) b = ro->globalBounds();
-            openMenu(b);
-        };
-
-        detector->child = menu_widget->child;
-        return detector;
+        return gestureDetector({
+            .child = menu_widget->child,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this] {
+                Rect b{0, 0, 100.0f, 32.0f};
+                if (auto* ro = context().element()->findRenderObject()) b = ro->globalBounds();
+                openMenu(b);
+            },
+        });
     }
 };
 

@@ -396,67 +396,64 @@ public:
     WidgetPtr buildSVCanvas() {
         auto sv_render = std::make_shared<ColorSVBoxWidget>(hue_, saturation_, value_);
 
-        auto gd = std::make_shared<GestureDetector>(sv_render);
-        gd->cursor_type = SystemCursor::Crosshair;
-
         auto handle_touch = [this](Point local_pt) {
             saturation_ = std::clamp(local_pt.x / 240.0f, 0.0f, 1.0f);
             value_ = std::clamp(1.0f - (local_pt.y / 130.0f), 0.0f, 1.0f);
             updateColorFromHSV();
         };
 
-        gd->on_tap_up = [handle_touch](const TapUpDetails& d) {
-            handle_touch(d.local_position);
-        };
-        gd->on_pan_update = [handle_touch](const DragUpdateDetails& d) {
-            handle_touch(d.local_position);
-        };
-
-        return gd;
+        return gestureDetector({
+            .child = sv_render,
+            .cursor_type = SystemCursor::Crosshair,
+            .on_tap_up = [handle_touch](const TapUpDetails& d) {
+                handle_touch(d.local_position);
+            },
+            .on_pan_update = [handle_touch](const DragUpdateDetails& d) {
+                handle_touch(d.local_position);
+            },
+        });
     }
 
     // ── Build Hue Bar Slider ──────────────────────────────────────
     WidgetPtr buildHueSlider() {
         auto hue_render = std::make_shared<HueBarWidget>(hue_);
 
-        auto gd = std::make_shared<GestureDetector>(hue_render);
-        gd->cursor_type = SystemCursor::Pointer;
-
         auto handle_touch = [this](Point local_pt) {
             hue_ = std::clamp((local_pt.x / 240.0f) * 360.0f, 0.0f, 360.0f);
             updateColorFromHSV();
         };
 
-        gd->on_tap_up = [handle_touch](const TapUpDetails& d) {
-            handle_touch(d.local_position);
-        };
-        gd->on_pan_update = [handle_touch](const DragUpdateDetails& d) {
-            handle_touch(d.local_position);
-        };
-
-        return gd;
+        return gestureDetector({
+            .child = hue_render,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [handle_touch](const TapUpDetails& d) {
+                handle_touch(d.local_position);
+            },
+            .on_pan_update = [handle_touch](const DragUpdateDetails& d) {
+                handle_touch(d.local_position);
+            },
+        });
     }
 
     // ── Build Alpha Bar Slider ────────────────────────────────────
     WidgetPtr buildAlphaSlider() {
         auto alpha_render = std::make_shared<AlphaBarWidget>(current_color_, alpha_);
 
-        auto gd = std::make_shared<GestureDetector>(alpha_render);
-        gd->cursor_type = SystemCursor::Pointer;
-
         auto handle_touch = [this](Point local_pt) {
             alpha_ = static_cast<uint8_t>(std::clamp((local_pt.x / 240.0f) * 255.0f, 0.0f, 255.0f));
             updateColorFromHSV();
         };
 
-        gd->on_tap_up = [handle_touch](const TapUpDetails& d) {
-            handle_touch(d.local_position);
-        };
-        gd->on_pan_update = [handle_touch](const DragUpdateDetails& d) {
-            handle_touch(d.local_position);
-        };
-
-        return gd;
+        return gestureDetector({
+            .child = alpha_render,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [handle_touch](const TapUpDetails& d) {
+                handle_touch(d.local_position);
+            },
+            .on_pan_update = [handle_touch](const DragUpdateDetails& d) {
+                handle_touch(d.local_position);
+            },
+        });
     }
 
     // ── Build Color Inputs & Format Switcher ──────────────────────
@@ -521,14 +518,16 @@ public:
         auto sw_box = container(sw_txt);
         sw_box->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(6.0f, 8.0f);
 
-        auto sw_gd = std::make_shared<GestureDetector>(sw_box);
-        sw_gd->cursor_type = SystemCursor::Pointer;
-        sw_gd->on_tap_up = [this](const TapUpDetails&) {
-            if (current_format_ == ColorFormat::HEX) current_format_ = ColorFormat::RGBA;
-            else if (current_format_ == ColorFormat::RGBA) current_format_ = ColorFormat::HSV;
-            else current_format_ = ColorFormat::HEX;
-            setState([] {});
-        };
+        auto sw_gd = gestureDetector({
+            .child = sw_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                if (current_format_ == ColorFormat::HEX) current_format_ = ColorFormat::RGBA;
+                else if (current_format_ == ColorFormat::RGBA) current_format_ = ColorFormat::HSV;
+                else current_format_ = ColorFormat::HEX;
+                setState([] {});
+            },
+        });
 
         fields.push_back(sw_gd);
 
@@ -544,13 +543,15 @@ public:
             auto b = container();
             b->color(sw_color).borderRadius(10.0f).width(20.0f).height(20.0f).border(0xFF334155, 1.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, sw_color](const TapUpDetails&) {
-                current_color_ = sw_color;
-                RGBtoHSV(current_color_, hue_, saturation_, value_, alpha_);
-                updateColorFromHSV();
-            };
+            auto gd = gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, sw_color](const TapUpDetails&) {
+                    current_color_ = sw_color;
+                    RGBtoHSV(current_color_, hue_, saturation_, value_, alpha_);
+                    updateColorFromHSV();
+                },
+            });
 
             swatch_boxes.push_back(gd);
         }
@@ -669,12 +670,14 @@ public:
                  .paddingSymmetric(8.0f, 12.0f)
                  .width(180.0f);
 
-        auto input_gd = std::make_shared<GestureDetector>(input_box);
-        input_gd->cursor_type = SystemCursor::Pointer;
-        input_gd->on_tap_up = [this](const TapUpDetails&) {
-            is_popup_open_ = !is_popup_open_;
-            setState([] {});
-        };
+        auto input_gd = gestureDetector({
+            .child = input_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                is_popup_open_ = !is_popup_open_;
+                setState([] {});
+            },
+        });
 
         std::vector<WidgetPtr> col_items = {input_gd};
         if (is_popup_open_) {

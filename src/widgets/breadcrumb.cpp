@@ -55,18 +55,19 @@ public:
             return t;
         }
 
-        auto det = std::make_shared<GestureDetector>(t);
-        det->hit_test_behavior = HitTestBehavior::Opaque;
-        det->cursor_type       = SystemCursor::Pointer;
         auto fn = w->on_tap;
-        det->on_tap = [fn] { if (fn) fn(); };
-        det->on_hover_enter = [this](const PointerEvent&) {
-            setState([this] { hovered_ = true; });
-        };
-        det->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] { hovered_ = false; });
-        };
-        return det;
+        return gestureDetector({
+            .child = t,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [fn] { if (fn) fn(); },
+            .on_hover_enter = [this](const PointerEvent&) {
+                setState([this] { hovered_ = true; });
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] { hovered_ = false; });
+            },
+        });
     }
 };
 

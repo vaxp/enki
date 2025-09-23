@@ -175,23 +175,21 @@ public:
             return render_widget;
         }
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = SystemCursor::Pointer;
-
-        detector->on_hover_enter = [this](const PointerEvent&) { setState([this] { hovered_ = true; }); };
-        detector->on_hover_exit  = [this](const PointerEvent&) { setState([this] { hovered_ = false; }); };
-
         auto on_changed = w->on_changed;
         bool current_value = w->value;
-        detector->on_tap = [on_changed, current_value] {
-            if (on_changed) {
-                on_changed(!current_value);
-            }
-        };
 
-        detector->child = render_widget;
-        return detector;
+        return gestureDetector({
+            .child = render_widget,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [on_changed, current_value] {
+                if (on_changed) {
+                    on_changed(!current_value);
+                }
+            },
+            .on_hover_enter = [this](const PointerEvent&) { setState([this] { hovered_ = true; }); },
+            .on_hover_exit  = [this](const PointerEvent&) { setState([this] { hovered_ = false; }); },
+        });
     }
 };
 

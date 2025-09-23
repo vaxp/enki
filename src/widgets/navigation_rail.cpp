@@ -69,14 +69,16 @@ public:
                        .width(StyleValue::percent(100.0f))
                        .align(Alignment::Center);
 
-            auto toggle_det = std::make_shared<GestureDetector>(toggle_box);
-            toggle_det->hit_test_behavior = HitTestBehavior::Opaque;
-            toggle_det->cursor_type       = SystemCursor::Pointer;
-            toggle_det->on_tap = [this] {
-                is_expanded_ = !is_expanded_;
-                if (is_expanded_) expand_anim_.forward();
-                else              expand_anim_.reverse();
-            };
+            auto toggle_det = gestureDetector({
+                .child = toggle_box,
+                .hit_test_behavior = HitTestBehavior::Opaque,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap = [this] {
+                    is_expanded_ = !is_expanded_;
+                    if (is_expanded_) expand_anim_.forward();
+                    else              expand_anim_.reverse();
+                },
+            });
             items_col.push_back(toggle_det);
         }
 
@@ -152,18 +154,20 @@ public:
 
             int idx = i;
             auto on_sel = w->on_item_selected;
-            auto det = std::make_shared<GestureDetector>(item_widget);
-            det->hit_test_behavior = HitTestBehavior::Opaque;
-            det->cursor_type       = SystemCursor::Pointer;
-            det->on_tap = [on_sel, idx] {
-                if (on_sel) on_sel(idx);
-            };
-            det->on_hover_enter = [this, idx](const PointerEvent&) {
-                setState([this, idx] { hovered_index_ = idx; });
-            };
-            det->on_hover_exit = [this](const PointerEvent&) {
-                setState([this] { hovered_index_ = -1; });
-            };
+            auto det = gestureDetector({
+                .child = item_widget,
+                .hit_test_behavior = HitTestBehavior::Opaque,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap = [on_sel, idx] {
+                    if (on_sel) on_sel(idx);
+                },
+                .on_hover_enter = [this, idx](const PointerEvent&) {
+                    setState([this, idx] { hovered_index_ = idx; });
+                },
+                .on_hover_exit = [this](const PointerEvent&) {
+                    setState([this] { hovered_index_ = -1; });
+                },
+            });
 
             items_col.push_back(det);
         }

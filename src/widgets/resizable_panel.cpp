@@ -150,12 +150,13 @@ public:
             auto b = container(t);
             b->paddingSymmetric(2.0f, 6.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) {
-                if (cb) cb();
-            };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) {
+                    if (cb) cb();
+                },
+            });
         };
 
         std::vector<WidgetPtr> right_items;
@@ -194,19 +195,20 @@ public:
                   .width(StyleValue::percent(100.0f));
 
         // Drag to move header gesture
-        auto header_gd = std::make_shared<GestureDetector>(header_box);
         if (opts.allow_drag_move && !is_maximized_) {
-            header_gd->cursor_type = SystemCursor::Move;
-            header_gd->on_pan_update = [this](const DragUpdateDetails& d) {
-                current_x_ = std::max(0.0f, current_x_ + d.delta.x);
-                current_y_ = std::max(0.0f, current_y_ + d.delta.y);
-                auto* sw = static_cast<const ResizablePanelWidget*>(widget());
-                if (sw->options.on_moved) sw->options.on_moved(current_x_, current_y_);
-                setState([] {});
-            };
+            return gestureDetector({
+                .child = header_box,
+                .cursor_type = SystemCursor::Move,
+                .on_pan_update = [this](const DragUpdateDetails& d) {
+                    current_x_ = std::max(0.0f, current_x_ + d.delta.x);
+                    current_y_ = std::max(0.0f, current_y_ + d.delta.y);
+                    auto* sw = static_cast<const ResizablePanelWidget*>(widget());
+                    if (sw->options.on_moved) sw->options.on_moved(current_x_, current_y_);
+                    setState([] {});
+                },
+            });
         }
-
-        return header_gd;
+        return header_box;
     }
 
     WidgetPtr build(BuildContext&) override {
@@ -256,15 +258,17 @@ public:
                 auto grip_box = container(grip_txt);
                 grip_box->paddingAll(4.0f);
 
-                auto grip_gd = std::make_shared<GestureDetector>(grip_box);
-                grip_gd->cursor_type = SystemCursor::ResizeHorizontal;
-                grip_gd->on_pan_update = [this, opts](const DragUpdateDetails& d) {
-                    current_width_ = std::clamp(current_width_ + d.delta.x, opts.min_width, opts.max_width);
-                    current_height_ = std::clamp(current_height_ + d.delta.y, opts.min_height, opts.max_height);
-                    auto* sw = static_cast<const ResizablePanelWidget*>(widget());
-                    if (sw->options.on_resized) sw->options.on_resized(current_width_, current_height_);
-                    setState([] {});
-                };
+                auto grip_gd = gestureDetector({
+                    .child = grip_box,
+                    .cursor_type = SystemCursor::ResizeHorizontal,
+                    .on_pan_update = [this, opts](const DragUpdateDetails& d) {
+                        current_width_ = std::clamp(current_width_ + d.delta.x, opts.min_width, opts.max_width);
+                        current_height_ = std::clamp(current_height_ + d.delta.y, opts.min_height, opts.max_height);
+                        auto* sw = static_cast<const ResizablePanelWidget*>(widget());
+                        if (sw->options.on_resized) sw->options.on_resized(current_width_, current_height_);
+                        setState([] {});
+                    },
+                });
 
                 auto grip_row = row(std::vector<WidgetPtr>{grip_gd});
                 grip_row->justifyContent(Justify::End).width(StyleValue::percent(100.0f));

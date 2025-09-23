@@ -120,19 +120,21 @@ public:
         // ── Helper to make trigger cards ──────────────────────────────
         auto makeCard = [this](std::string icon, std::string heading, std::string desc,
                               std::string btn_label, Color btn_col, std::string mode) -> WidgetPtr {
-            auto gd = std::make_shared<GestureDetector>(container({
-                .color = btn_col,
-                .border_radius = BorderRadius::circular(6.0f),
-                .padding = StyleInsets::symmetric(8.0f, 16.0f),
-                .child = text(btn_label, { .color = 0xFFFFFFFF, .font_size = 12.5f, .font_weight = FontWeight::Bold })
-            }));
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, mode, heading](const TapUpDetails&) {
-                current_dialog_mode_ = mode;
-                hud_msg_ = "Opened: " + heading;
-                dialog_ctrl_->show();
-                setState([] {});
-            };
+            auto gd = gestureDetector({
+                .child = container({
+                    .color = btn_col,
+                    .border_radius = BorderRadius::circular(6.0f),
+                    .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                    .child = text(btn_label, { .color = 0xFFFFFFFF, .font_size = 12.5f, .font_weight = FontWeight::Bold })
+                }),
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, mode, heading](const TapUpDetails&) {
+                    current_dialog_mode_ = mode;
+                    hud_msg_ = "Opened: " + heading;
+                    dialog_ctrl_->show();
+                    setState([] {});
+                },
+            });
 
             return container({
                 .color = 0xFF1E293B,

@@ -125,27 +125,29 @@ public:
             .child = text("🚀 Submit & Create Account", { .color = 0xFFFFFFFF, .font_size = 12.5f, .font_weight = FontWeight::Bold })
         });
 
-        auto sub_gd = std::make_shared<GestureDetector>(sub_btn_box);
-        sub_gd->cursor_type = SystemCursor::Pointer;
-        sub_gd->on_tap_up = [this](const TapUpDetails&) {
-            bool valid = form_state_->validate();
-            form_valid_ = valid;
-            if (valid) {
-                submitted_json_ = "{\n"
-                                  "  \"status\": \"SUCCESS (200 OK)\",\n"
-                                  "  \"user\": {\n"
-                                  "    \"name\": \"" + name_ctrl_->text + "\",\n"
-                                  "    \"email\": \"" + email_ctrl_->text + "\",\n"
-                                  "    \"terms_accepted\": true\n"
-                                  "  }\n"
-                                  "}";
-                hud_msg_ = "🎉 Form validated successfully! Account payload dispatched.";
-            } else {
-                submitted_json_ = "{\n  \"status\": \"VALIDATION_ERROR\",\n  \"error\": \"One or more fields failed validation\"\n}";
-                hud_msg_ = "⚠️ Validation failed! Please correct the highlighted errors in the form.";
-            }
-            setState([] {});
-        };
+        auto sub_gd = gestureDetector({
+            .child = sub_btn_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                bool valid = form_state_->validate();
+                form_valid_ = valid;
+                if (valid) {
+                    submitted_json_ = "{\n"
+                                      "  \"status\": \"SUCCESS (200 OK)\",\n"
+                                      "  \"user\": {\n"
+                                      "    \"name\": \"" + name_ctrl_->text + "\",\n"
+                                      "    \"email\": \"" + email_ctrl_->text + "\",\n"
+                                      "    \"terms_accepted\": true\n"
+                                      "  }\n"
+                                      "}";
+                    hud_msg_ = "🎉 Form validated successfully! Account payload dispatched.";
+                } else {
+                    submitted_json_ = "{\n  \"status\": \"VALIDATION_ERROR\",\n  \"error\": \"One or more fields failed validation\"\n}";
+                    hud_msg_ = "⚠️ Validation failed! Please correct the highlighted errors in the form.";
+                }
+                setState([] {});
+            },
+        });
 
         auto rst_btn_box = container({
             .color = 0xFF1E293B,
@@ -155,14 +157,16 @@ public:
             .child = text("🔄 Reset Form", { .color = 0xFFCBD5E1, .font_size = 12.5f, .font_weight = FontWeight::Bold })
         });
 
-        auto rst_gd = std::make_shared<GestureDetector>(rst_btn_box);
-        rst_gd->cursor_type = SystemCursor::Pointer;
-        rst_gd->on_tap_up = [this](const TapUpDetails&) {
-            form_state_->reset();
-            submitted_json_ = "{\n  \"status\": \"Form Reset\"\n}";
-            hud_msg_ = "Form fields and validation errors reset.";
-            setState([] {});
-        };
+        auto rst_gd = gestureDetector({
+            .child = rst_btn_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                form_state_->reset();
+                submitted_json_ = "{\n  \"status\": \"Form Reset\"\n}";
+                hud_msg_ = "Form fields and validation errors reset.";
+                setState([] {});
+            },
+        });
 
         auto btn_row = row({
             .align_items = Align::Center,

@@ -270,12 +270,14 @@ public:
                  .paddingSymmetric(6.0f, 16.0f)
                  .margin(EdgeInsets(6.0f, 0.0f, 0.0f, 0.0f));
 
-            auto c_btn = std::make_shared<GestureDetector>(c_box);
-            c_btn->cursor_type = SystemCursor::Pointer;
-            c_btn->on_tap_up = [this, opts](const TapUpDetails&) {
-                if (opts.on_cancel) opts.on_cancel();
-                hideOverlay();
-            };
+            auto c_btn = gestureDetector({
+                .child = c_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, opts](const TapUpDetails&) {
+                    if (opts.on_cancel) opts.on_cancel();
+                    hideOverlay();
+                },
+            });
             card_elements.push_back(c_btn);
         }
 

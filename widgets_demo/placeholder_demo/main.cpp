@@ -104,13 +104,15 @@ public:
             .child = t_btn
         });
 
-        auto gd_btn = std::make_shared<GestureDetector>(b_btn);
-        gd_btn->cursor_type = SystemCursor::Pointer;
-        gd_btn->on_tap_up = [this](const TapUpDetails&) {
-            is_loading_mode_ = !is_loading_mode_;
-            hud_msg_ = is_loading_mode_ ? "Showing animated skeleton loading state" : "Showing simulated loaded content";
-            setState([] {});
-        };
+        auto gd_btn = gestureDetector({
+            .child = b_btn,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                is_loading_mode_ = !is_loading_mode_;
+                hud_msg_ = is_loading_mode_ ? "Showing animated skeleton loading state" : "Showing simulated loaded content";
+                setState([] {});
+            },
+        });
 
         auto head_row = row({
             .justify_content = Justify::SpaceBetween,

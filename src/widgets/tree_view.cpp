@@ -105,19 +105,20 @@ class TreeViewState : public State {
 
                 if (!data.disabled && theme.animate_arrow) {
                     auto node_id = data.id;
-                    auto det = std::make_shared<GestureDetector>(arrow_wrap);
-                    det->hit_test_behavior = HitTestBehavior::Opaque;
-                    det->cursor_type = SystemCursor::Pointer;
-                    det->on_tap = [this, node_id, w]() {
-                        bool expanding = expanded_.count(node_id) == 0;
-                        setState([this, node_id, expanding]() {
-                            if (expanding) expanded_.insert(node_id);
-                            else           expanded_.erase(node_id);
-                        });
-                        if (expanding && w->props.on_node_expanded)   w->props.on_node_expanded(node_id);
-                        if (!expanding && w->props.on_node_collapsed) w->props.on_node_collapsed(node_id);
-                    };
-                    arrow = det;
+                    arrow = gestureDetector({
+                        .child = arrow_wrap,
+                        .hit_test_behavior = HitTestBehavior::Opaque,
+                        .cursor_type = SystemCursor::Pointer,
+                        .on_tap = [this, node_id, w]() {
+                            bool expanding = expanded_.count(node_id) == 0;
+                            setState([this, node_id, expanding]() {
+                                if (expanding) expanded_.insert(node_id);
+                                else           expanded_.erase(node_id);
+                            });
+                            if (expanding && w->props.on_node_expanded)   w->props.on_node_expanded(node_id);
+                            if (!expanding && w->props.on_node_collapsed) w->props.on_node_collapsed(node_id);
+                        },
+                    });
                 } else {
                     arrow = arrow_wrap;
                 }
@@ -170,35 +171,36 @@ class TreeViewState : public State {
         WidgetPtr row_widget;
         if (!data.disabled) {
             auto node_id = data.id;
-            auto det = std::make_shared<GestureDetector>(row_bg);
-            det->hit_test_behavior = HitTestBehavior::Opaque;
-            det->cursor_type = SystemCursor::Pointer;
-            det->on_tap = [this, node_id, w]() {
-                // Toggle expand on label click if configured
-                if (w->props.toggle_on_label && expanded_.count(node_id) == 0) {
-                    setState([this, node_id]{ expanded_.insert(node_id); });
-                    if (w->props.on_node_expanded) w->props.on_node_expanded(node_id);
-                } else if (w->props.toggle_on_label) {
-                    setState([this, node_id]{ expanded_.erase(node_id); });
-                    if (w->props.on_node_collapsed) w->props.on_node_collapsed(node_id);
-                }
-                // Selection
-                setState([this, node_id, w]() {
-                    if (w->props.multi_select) {
-                        if (selected_.count(node_id)) selected_.erase(node_id);
-                        else selected_.insert(node_id);
-                        if (w->props.on_selection_changed) w->props.on_selection_changed(selected_);
-                    } else {
-                        selected_.clear();
-                        selected_.insert(node_id);
-                        if (w->props.on_node_selected) w->props.on_node_selected(node_id);
+            auto det = gestureDetector({
+                .child = row_bg,
+                .hit_test_behavior = HitTestBehavior::Opaque,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap = [this, node_id, w]() {
+                    // Toggle expand on label click if configured
+                    if (w->props.toggle_on_label && expanded_.count(node_id) == 0) {
+                        setState([this, node_id]{ expanded_.insert(node_id); });
+                        if (w->props.on_node_expanded) w->props.on_node_expanded(node_id);
+                    } else if (w->props.toggle_on_label) {
+                        setState([this, node_id]{ expanded_.erase(node_id); });
+                        if (w->props.on_node_collapsed) w->props.on_node_collapsed(node_id);
                     }
-                });
-            };
-            if (w->props.on_node_context_menu) {
-                auto ctx_cb = w->props.on_node_context_menu;
-                det->on_secondary_tap = [ctx_cb, node_id]() { ctx_cb(node_id, {0,0}); };
-            }
+                    // Selection
+                    setState([this, node_id, w]() {
+                        if (w->props.multi_select) {
+                            if (selected_.count(node_id)) selected_.erase(node_id);
+                            else selected_.insert(node_id);
+                            if (w->props.on_selection_changed) w->props.on_selection_changed(selected_);
+                        } else {
+                            selected_.clear();
+                            selected_.insert(node_id);
+                            if (w->props.on_node_selected) w->props.on_node_selected(node_id);
+                        }
+                    });
+                },
+                .on_secondary_tap = w->props.on_node_context_menu
+                    ? [ctx_cb = w->props.on_node_context_menu, node_id]() { ctx_cb(node_id, {0,0}); }
+                    : std::function<void()>{},
+            });
             row_widget = det;
         } else {
             row_widget = row_bg;
