@@ -244,13 +244,17 @@ public:
         if (title_col_children.size() == 1) {
             title_col = title_col_children[0];
         } else {
-            auto col = std::make_shared<Column>(std::move(title_col_children));
-            col->justifyContent(Justify::Center);
-            title_col = col;
+            title_col = column({
+                .justify_content = Justify::Center,
+                .children = std::move(title_col_children),
+            });
         }
 
-        auto title_wrapper = std::make_shared<FlexItem>(title_col);
-        title_wrapper->flexGrow(1.0f).flexShrink(1.0f);
+        auto title_wrapper = flexItem({
+            .flex_grow = 1.0f,
+            .flex_shrink = 1.0f,
+            .child = title_col,
+        });
         row_children.push_back(title_wrapper);
 
         // Trailing
@@ -271,8 +275,10 @@ public:
             ? opts.min_height_two_line
             : (opts.visual_density == VisualDensity::Compact ? opts.dense_min_height : opts.min_height);
 
-        auto content_row = std::make_shared<Row>(std::move(row_children));
-        content_row->alignItems(Align::Center);
+        auto content_row = row({
+            .align_items = Align::Center,
+            .children = std::move(row_children),
+        });
 
         // Apply content padding
         auto padded = container(content_row);

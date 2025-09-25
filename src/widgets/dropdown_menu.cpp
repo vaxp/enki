@@ -238,12 +238,18 @@ public:
             });
             txt_col_items.push_back(sub);
         }
-        auto txt_col = column(txt_col_items);
-        txt_col->gap(StyleValue::point(1.0f));
+        auto txt_col = column({
+            .gap = StyleValue::point(1.0f),
+            .children = std::move(txt_col_items),
+        });
         left.push_back(txt_col);
 
-        auto left_row = row(left);
-        left_row->gap(StyleValue::point(7.0f)).alignItems(Align::Center).flex(1.0f);
+        auto left_row = row({
+            .align_items = Align::Center,
+            .flex = 1.0f,
+            .gap = StyleValue::point(7.0f),
+            .children = std::move(left),
+        });
 
         // Right: badge + shortcut
         std::vector<WidgetPtr> right;
@@ -266,14 +272,18 @@ public:
             });
             right.push_back(sc);
         }
-        auto right_row = row(right);
-        right_row->gap(StyleValue::point(5.0f)).alignItems(Align::Center);
+        auto right_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(5.0f),
+            .children = std::move(right),
+        });
 
-        std::vector<WidgetPtr> full_items = {left_row, right_row};
-        auto full_row = row(full_items);
-        full_row->justifyContent(Justify::SpaceBetween)
-                .alignItems(Align::Center)
-                .width(StyleValue::percent(100.0f));
+        auto full_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {left_row, right_row},
+        });
 
         bool is_hov = (hovered_idx_ == idx);
         bool is_sel = (!selected_id_.empty() && item.id == selected_id_);
@@ -328,9 +338,11 @@ public:
             idx++;
         }
 
-        auto items_col = column(list_items);
-        items_col->gap(StyleValue::point(1.0f))
-                 .width(StyleValue::percent(100.0f));
+        auto items_col = column({
+            .gap = StyleValue::point(1.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(list_items),
+        });
 
         auto menu_panel = container(items_col);
         menu_panel->color(opts.background_color)

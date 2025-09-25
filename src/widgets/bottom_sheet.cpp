@@ -292,9 +292,11 @@ public:
                 .height(5.0f);
             handle_row_items.push_back(pill);
         }
-        auto handle_row = row(handle_row_items);
-        handle_row->justifyContent(Justify::Center)
-                  .width(StyleValue::percent(100.0f));
+        auto handle_row = row({
+            .justify_content = Justify::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(handle_row_items),
+        });
 
         // B. Title & Subtitle + Close Button
         std::vector<WidgetPtr> title_items;
@@ -316,8 +318,11 @@ public:
                 title_items.push_back(sub_lbl);
             }
         }
-        auto title_col = column(title_items);
-        title_col->gap(StyleValue::point(2.0f)).flex(1.0f);
+        auto title_col = column({
+            .flex = 1.0f,
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(title_items),
+        });
 
         std::vector<WidgetPtr> top_bar_items = {title_col};
         if (opts.show_close_button) {
@@ -327,10 +332,12 @@ public:
             top_bar_items.push_back(btn_close);
         }
 
-        auto top_bar_row = row(top_bar_items);
-        top_bar_row->justifyContent(Justify::SpaceBetween)
-                   .alignItems(Align::Center)
-                   .width(StyleValue::percent(100.0f));
+        auto top_bar_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(top_bar_items),
+        });
 
         // C. Header GestureDetector for Dragging
         std::vector<WidgetPtr> hdr_stack_items;
@@ -341,9 +348,11 @@ public:
             hdr_stack_items.push_back(top_bar_row);
         }
 
-        auto hdr_col = column(hdr_stack_items);
-        hdr_col->gap(StyleValue::point(8.0f))
-               .width(StyleValue::percent(100.0f));
+        auto hdr_col = column({
+            .gap = StyleValue::point(8.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(hdr_stack_items),
+        });
 
         auto hdr_detector = gestureDetector({
             .child = hdr_col,
@@ -380,10 +389,12 @@ public:
             sheet_kids.push_back(content_box);
         }
 
-        auto sheet_col = column(sheet_kids);
-        sheet_col->gap(StyleValue::point(10.0f))
-                 .width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f));
+        auto sheet_col = column({
+            .gap = StyleValue::point(10.0f),
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(sheet_kids),
+        });
 
         auto sheet_box = container(sheet_col);
         sheet_box->color(opts.background_color)

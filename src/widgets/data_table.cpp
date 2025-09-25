@@ -92,8 +92,11 @@ class DataTableState : public State {
 
             std::vector<WidgetPtr> header_row_children;
 
-            auto lbl = std::make_shared<FlexItem>(col.label);
-            lbl->flexGrow(1.0f).flexShrink(1.0f);
+            auto lbl = flexItem({
+                .flex_grow = 1.0f,
+                .flex_shrink = 1.0f,
+                .child = col.label,
+            });
             header_row_children.push_back(lbl);
 
             // Sort arrow
@@ -103,9 +106,11 @@ class DataTableState : public State {
                     buildSortArrow(w->props.sort_ascending, theme.sort_arrow_color, theme.sort_arrow_size));
             }
 
-            auto header_content = std::make_shared<Row>(std::move(header_row_children));
-            header_content->alignItems(Align::Center);
-            header_content->width(StyleValue::percent(100.0f));
+            auto header_content = row({
+                .align_items = Align::Center,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(header_row_children),
+            });
 
             // Make sortable headers clickable
             WidgetPtr header_cell_content;
@@ -131,26 +136,25 @@ class DataTableState : public State {
 
             auto cell_wrap = container(header_cell_content);
             float cell_w = col.column_width > 0 ? col.column_width : 0.0f;
-
-            auto cell_fi = std::make_shared<FlexItem>(cell_wrap);
-            if (cell_w > 0.0f) {
-                cell_fi->width(StyleValue::point(cell_w));
-                cell_fi->flexGrow(0.0f);
-                cell_fi->flexShrink(0.0f);
-            } else {
-                cell_fi->flexGrow(col.flex_factor);
-                cell_fi->flexShrink(1.0f);
-            }
             cell_wrap->height(StyleValue::point(theme.heading_row_height));
             cell_wrap->padding(EdgeInsets::symmetric(0, theme.column_spacing * 0.5f));
             cell_wrap->align(col.numeric ? Alignment::CenterRight : Alignment::CenterLeft);
 
+            auto cell_fi = flexItem({
+                .flex_grow = (cell_w > 0.0f) ? 0.0f : col.flex_factor,
+                .flex_shrink = (cell_w > 0.0f) ? 0.0f : 1.0f,
+                .width = (cell_w > 0.0f) ? std::optional<StyleValue>(StyleValue::point(cell_w)) : std::nullopt,
+                .child = cell_wrap,
+            });
+
             cells.push_back(cell_fi);
         }
 
-        auto header_row = std::make_shared<Row>(std::move(cells));
-        header_row->alignItems(Align::Center);
-        header_row->width(StyleValue::percent(100.0f));
+        auto header_row = row({
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(cells),
+        });
 
         auto header_wrap = container(header_row);
         header_wrap->color(theme.heading_row_color);
@@ -215,19 +219,20 @@ class DataTableState : public State {
 
             if (dc.placeholder) cell_wrap->color(0x40FFFFFF);
 
-            auto cell_fi = std::make_shared<FlexItem>(cell_wrap);
-            if (cell_w > 0.0f) {
-                cell_fi->width(StyleValue::point(cell_w));
-                cell_fi->flexGrow(0.0f).flexShrink(0.0f);
-            } else {
-                cell_fi->flexGrow(col.flex_factor).flexShrink(1.0f);
-            }
+            auto cell_fi = flexItem({
+                .flex_grow = (cell_w > 0.0f) ? 0.0f : col.flex_factor,
+                .flex_shrink = (cell_w > 0.0f) ? 0.0f : 1.0f,
+                .width = (cell_w > 0.0f) ? std::optional<StyleValue>(StyleValue::point(cell_w)) : std::nullopt,
+                .child = cell_wrap,
+            });
             cells.push_back(cell_fi);
         }
 
-        auto data_row = std::make_shared<Row>(std::move(cells));
-        data_row->alignItems(Align::Center);
-        data_row->width(StyleValue::percent(100.0f));
+        auto data_row = row({
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(cells),
+        });
 
         // Row background
         Color row_bg = dr.color.value_or(
@@ -296,9 +301,11 @@ public:
             }
         }
 
-        auto table_col = std::make_shared<Column>(std::move(col_children));
-        table_col->width(StyleValue::percent(100.0f));
-        table_col->flexShrink(0.0f);
+        auto table_col = column({
+            .flex_shrink = 0.0f,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(col_children),
+        });
 
         // Wrap in horizontal scroll for wide tables
         if (w->props.horizontal_scroll) {

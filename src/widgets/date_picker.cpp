@@ -209,13 +209,12 @@ public:
             },
         });
 
-        std::vector<WidgetPtr> h_items = {btn_prev, title_gd, btn_next};
-        auto h_row = row(h_items);
-        h_row->justifyContent(Justify::SpaceBetween)
-             .alignItems(Align::Center)
-             .width(StyleValue::percent(100.0f));
-
-        return h_row;
+        return row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {btn_prev, title_gd, btn_next},
+        });
     }
 
     // ── Build Days Grid ───────────────────────────────────────────
@@ -232,14 +231,21 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto wd_row = row(std::vector<WidgetPtr>{wd_txt});
-            wd_row->justifyContent(Justify::Center).alignItems(Align::Center).width(36.0f);
+            auto wd_row = row({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .width = StyleValue::point(36.0f),
+                .children = {wd_txt},
+            });
 
             auto wd_box = container(wd_row);
             wd_items.push_back(wd_box);
         }
-        auto wd_row = row(wd_items);
-        wd_row->justifyContent(Justify::SpaceBetween).width(StyleValue::percent(100.0f));
+        auto wd_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(wd_items),
+        });
 
         // Compute 42 calendar day cells (6 rows x 7 cols)
         int days_in_cur = daysInMonth(view_year_, view_month_);
@@ -312,11 +318,13 @@ public:
                     .font_weight = d_weight,
                 });
 
-                auto d_row = row(std::vector<WidgetPtr>{d_txt});
-                d_row->justifyContent(Justify::Center)
-                     .alignItems(Align::Center)
-                     .width(StyleValue::percent(100.0f))
-                     .height(StyleValue::percent(100.0f));
+                auto d_row = row({
+                    .justify_content = Justify::Center,
+                    .align_items = Align::Center,
+                    .width = StyleValue::percent(100.0f),
+                    .height = StyleValue::percent(100.0f),
+                    .children = {d_txt},
+                });
 
                 auto d_box = container(d_row);
                 d_box->width(36.0f).height(32.0f).borderRadius(is_selected ? 16.0f : 4.0f);
@@ -359,14 +367,19 @@ public:
                 row_cells.push_back(d_gd);
             }
 
-            auto r_row = row(row_cells);
-            r_row->justifyContent(Justify::SpaceBetween).width(StyleValue::percent(100.0f));
+            auto r_row = row({
+                .justify_content = Justify::SpaceBetween,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(row_cells),
+            });
             calendar_rows.push_back(r_row);
         }
 
-        auto cal_col = column(calendar_rows);
-        cal_col->gap(StyleValue::point(4.0f)).width(StyleValue::percent(100.0f));
-        return cal_col;
+        return column({
+            .gap = StyleValue::point(4.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(calendar_rows),
+        });
     }
 
     // ── Build Months Grid ─────────────────────────────────────────
@@ -387,8 +400,12 @@ public:
                     .font_weight = FontWeight::Bold,
                 });
 
-                auto m_row_center = row(std::vector<WidgetPtr>{m_txt});
-                m_row_center->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+                auto m_row_center = row({
+                    .justify_content = Justify::Center,
+                    .align_items = Align::Center,
+                    .width = StyleValue::percent(100.0f),
+                    .children = {m_txt},
+                });
 
                 auto m_box = container(m_row_center);
                 m_box->color(is_active ? 0xFF0284C7 : 0xFF0F172A)
@@ -409,14 +426,19 @@ public:
 
                 row_items.push_back(m_gd);
             }
-            auto m_row = row(row_items);
-            m_row->justifyContent(Justify::SpaceBetween).width(StyleValue::percent(100.0f));
+            auto m_row = row({
+                .justify_content = Justify::SpaceBetween,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(row_items),
+            });
             month_rows.push_back(m_row);
         }
 
-        auto col = column(month_rows);
-        col->gap(StyleValue::point(8.0f)).width(StyleValue::percent(100.0f));
-        return col;
+        return column({
+            .gap = StyleValue::point(8.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(month_rows),
+        });
     }
 
     // ── Build Years Grid ──────────────────────────────────────────
@@ -437,8 +459,12 @@ public:
                     .font_weight = FontWeight::Bold,
                 });
 
-                auto y_row_center = row(std::vector<WidgetPtr>{y_txt});
-                y_row_center->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+                auto y_row_center = row({
+                    .justify_content = Justify::Center,
+                    .align_items = Align::Center,
+                    .width = StyleValue::percent(100.0f),
+                    .children = {y_txt},
+                });
 
                 auto y_box = container(y_row_center);
                 y_box->color(is_active ? 0xFF0284C7 : 0xFF0F172A)
@@ -459,14 +485,19 @@ public:
 
                 row_items.push_back(y_gd);
             }
-            auto y_row = row(row_items);
-            y_row->justifyContent(Justify::SpaceBetween).width(StyleValue::percent(100.0f));
+            auto y_row = row({
+                .justify_content = Justify::SpaceBetween,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(row_items),
+            });
             year_rows.push_back(y_row);
         }
 
-        auto col = column(year_rows);
-        col->gap(StyleValue::point(8.0f)).width(StyleValue::percent(100.0f));
-        return col;
+        return column({
+            .gap = StyleValue::point(8.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(year_rows),
+        });
     }
 
     // ── Build Quick Presets ───────────────────────────────────────
@@ -513,10 +544,11 @@ public:
             setState([] {});
         });
 
-        std::vector<WidgetPtr> p_items = {p_today, p_week, p_month};
-        auto p_row = row(p_items);
-        p_row->gap(StyleValue::point(6.0f)).justifyContent(Justify::Center);
-        return p_row;
+        return row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {p_today, p_week, p_month},
+        });
     }
 
     // ── Build Full Calendar Card ──────────────────────────────────
@@ -545,8 +577,11 @@ public:
             card_items.push_back(buildQuickPresets(w));
         }
 
-        auto card_col = column(card_items);
-        card_col->gap(StyleValue::point(10.0f)).width(280.0f);
+        auto card_col = column({
+            .gap = StyleValue::point(10.0f),
+            .width = StyleValue::point(280.0f),
+            .children = std::move(card_items),
+        });
 
         auto card_box = container(card_col);
         card_box->color(opts.background_color)
@@ -595,11 +630,12 @@ public:
             .font_size = 13.0f,
         });
 
-        std::vector<WidgetPtr> in_items = {input_txt, chev_txt};
-        auto in_row = row(in_items);
-        in_row->justifyContent(Justify::SpaceBetween)
-              .alignItems(Align::Center)
-              .width(StyleValue::percent(100.0f));
+        auto in_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {input_txt, chev_txt},
+        });
 
         auto input_box = container(in_row);
         input_box->color(0xFF1E293B)
@@ -623,9 +659,10 @@ public:
             col_items.push_back(cal_card);
         }
 
-        auto full_col = column(col_items);
-        full_col->gap(StyleValue::point(8.0f));
-        return full_col;
+        return column({
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(col_items),
+        });
     }
 };
 

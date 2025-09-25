@@ -76,8 +76,10 @@ public:
             }));
         }
 
-        auto content_row = row(std::move(items));
-        content_row->gap(StyleValue::point(6.0f));
+        auto content_row = row({
+            .gap = StyleValue::point(6.0f),
+            .children = std::move(items),
+        });
 
         auto box = container(content_row);
         box->color(hovered_ ? theme::surface_hover : 0x00000000)
@@ -128,12 +130,16 @@ WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) 
         auto name_t = text({.text = name, .color = theme::text_prim, .font_size = 13.0f, .font_weight = FontWeight::Bold});
         auto cat_t  = text({.text = category, .color = theme::text_sec, .font_size = 11.0f});
 
-        auto text_col = column({name_t, cat_t});
-        text_col->gap(StyleValue::point(2.0f));
+        auto text_col = column({
+            .gap = StyleValue::point(2.0f),
+            .children = { name_t, cat_t },
+        });
 
-        auto r = row({icon_t, text_col});
-        r->gap(StyleValue::point(12.0f))
-         .padding(StyleInsets::symmetric(8.0f, 12.0f));
+        auto r = row({
+            .gap = StyleValue::point(12.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .children = { icon_t, text_col },
+        });
 
         return gestureDetector({
             .child = r,
@@ -147,14 +153,16 @@ WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) 
     };
 
     auto app_list = column({
-        search_box,
-        makeAppItem("🌐", "Web Browser", "Internet"),
-        makeAppItem("💻", "Terminal Emulator", "System"),
-        makeAppItem("📁", "File Manager", "Files"),
-        makeAppItem("⚙", "Settings & Control", "Preferences"),
+        .gap = StyleValue::point(8.0f),
+        .padding = StyleInsets::all(14.0f),
+        .children = {
+            search_box,
+            makeAppItem("🌐", "Web Browser", "Internet"),
+            makeAppItem("💻", "Terminal Emulator", "System"),
+            makeAppItem("📁", "File Manager", "Files"),
+            makeAppItem("⚙", "Settings & Control", "Preferences"),
+        }
     });
-    app_list->gap(StyleValue::point(8.0f))
-            .padding(StyleInsets::all(14.0f));
 
     auto card = container(app_list);
     card->color(theme::popup_bg)
@@ -185,9 +193,11 @@ WidgetPtr buildWifiPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
             .font_size = 12.0f,
         });
 
-        auto r = row({name_t, sig_t});
-        r->justifyContent(Justify::SpaceBetween)
-         .padding(StyleInsets::symmetric(8.0f, 12.0f));
+        auto r = row({
+            .justify_content = Justify::SpaceBetween,
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .children = { name_t, sig_t },
+        });
 
         return gestureDetector({
             .child = r,
@@ -198,12 +208,15 @@ WidgetPtr buildWifiPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
     };
 
     auto col = column({
-        title,
-        makeNet("Home_Fiber_5G", "100%", true),
-        makeNet("Office_Network", "85%", false),
-        makeNet("Public_Hotspot", "40%", false),
+        .gap = StyleValue::point(10.0f),
+        .padding = StyleInsets::all(14.0f),
+        .children = {
+            title,
+            makeNet("Home_Fiber_5G", "100%", true),
+            makeNet("Office_Network", "85%", false),
+            makeNet("Public_Hotspot", "40%", false),
+        }
     });
-    col->gap(StyleValue::point(10.0f)).padding(StyleInsets::all(14.0f));
 
     auto card = container(col);
     card->color(theme::popup_bg)
@@ -259,8 +272,10 @@ public:
         auto ws2 = std::make_shared<BarButton>("2", "", nullptr);
         auto ws3 = std::make_shared<BarButton>("3", "", nullptr);
 
-        auto left_row = row({launcher_btn, ws1, ws2, ws3});
-        left_row->gap(StyleValue::point(4.0f));
+        auto left_row = row({
+            .gap = StyleValue::point(4.0f),
+            .children = { launcher_btn, ws1, ws2, ws3 },
+        });
 
         // Center: Clock
         auto time_t = text({
@@ -283,14 +298,18 @@ public:
         auto vol_btn = std::make_shared<BarButton>("🔊", "75%", nullptr);
         auto bat_btn = std::make_shared<BarButton>("🔋", "92%", nullptr);
 
-        auto right_row = row({wifi_btn, vol_btn, bat_btn});
-        right_row->gap(StyleValue::point(6.0f));
+        auto right_row = row({
+            .gap = StyleValue::point(6.0f),
+            .children = { wifi_btn, vol_btn, bat_btn },
+        });
 
         // Bar layout
-        auto bar_row = row({left_row, center_box, right_row});
-        bar_row->justifyContent(Justify::SpaceBetween)
-                .alignItems(Align::Center)
-                .padding(StyleInsets::symmetric(0.0f, 12.0f));
+        auto bar_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .padding = StyleInsets::symmetric(0.0f, 12.0f),
+            .children = { left_row, center_box, right_row },
+        });
 
         auto bar_container = container(bar_row);
         bar_container->color(theme::bar_bg)

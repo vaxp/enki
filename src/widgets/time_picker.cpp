@@ -127,8 +127,12 @@ public:
             .color = 0xFF94A3B8,
             .font_size = 11.0f,
         });
-        auto up_row = row(std::vector<WidgetPtr>{up_txt});
-        up_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+        auto up_row = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {up_txt},
+        });
         auto up_box = container(up_row);
         up_box->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f).width(54.0f);
         auto up_gd = gestureDetector({
@@ -144,8 +148,12 @@ public:
             .font_size = 22.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto val_row = row(std::vector<WidgetPtr>{val_txt});
-        val_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+        auto val_row = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {val_txt},
+        });
         auto val_box = container(val_row);
         val_box->color(0xFF0F172A).border(0xFF0284C7, 1.5f).borderRadius(6.0f).paddingSymmetric(8.0f, 6.0f).width(54.0f);
 
@@ -155,8 +163,12 @@ public:
             .color = 0xFF94A3B8,
             .font_size = 11.0f,
         });
-        auto down_row = row(std::vector<WidgetPtr>{down_txt});
-        down_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+        auto down_row = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {down_txt},
+        });
         auto down_box = container(down_row);
         down_box->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f).width(54.0f);
         auto down_gd = gestureDetector({
@@ -172,13 +184,18 @@ public:
             .font_size = 10.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto lbl_row = row(std::vector<WidgetPtr>{lbl_txt});
-        lbl_row->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+        auto lbl_row = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {lbl_txt},
+        });
 
-        std::vector<WidgetPtr> col_items = {up_gd, val_box, down_gd, lbl_row};
-        auto col = column(col_items);
-        col->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
-        return col;
+        return column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {up_gd, val_box, down_gd, lbl_row},
+        });
     }
 
     // ── Build AM / PM Segmented Switch ────────────────────────────
@@ -191,8 +208,12 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto r = row(std::vector<WidgetPtr>{t});
-            r->justifyContent(Justify::Center).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+            auto r = row({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .width = StyleValue::percent(100.0f),
+                .children = {t},
+            });
 
             auto b = container(r);
             b->color(active ? 0xFF0284C7 : 0xFF0F172A)
@@ -213,10 +234,11 @@ public:
         auto pill_am = makePill("AM", !time_.is_pm, false);
         auto pill_pm = makePill("PM", time_.is_pm, true);
 
-        std::vector<WidgetPtr> items = {pill_am, pill_pm};
-        auto col = column(items);
-        col->gap(StyleValue::point(8.0f)).justifyContent(Justify::Center);
-        return col;
+        return column({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = {pill_am, pill_pm},
+        });
     }
 
     // ── Build Quick Presets Bar ───────────────────────────────────
@@ -248,10 +270,11 @@ public:
         auto p_noon = makePreset("12:00 PM", 12, 0, true);
         auto p_eve = makePreset("06:00 PM", 6, 0, true);
 
-        std::vector<WidgetPtr> p_items = {p_now, p_morn, p_noon, p_eve};
-        auto p_row = row(p_items);
-        p_row->gap(StyleValue::point(6.0f)).justifyContent(Justify::Center);
-        return p_row;
+        return row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {p_now, p_morn, p_noon, p_eve},
+        });
     }
 
     // ── Build Time Picker Card ────────────────────────────────────
@@ -317,8 +340,12 @@ public:
             stepper_items.push_back(buildAmPmSwitch());
         }
 
-        auto steppers_row = row(stepper_items);
-        steppers_row->justifyContent(Justify::Center).alignItems(Align::Center).gap(StyleValue::point(6.0f));
+        auto steppers_row = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = std::move(stepper_items),
+        });
 
         std::vector<WidgetPtr> card_items = {t_title, steppers_row};
 
@@ -329,8 +356,11 @@ public:
             card_items.push_back(buildQuickPresets());
         }
 
-        auto card_col = column(card_items);
-        card_col->gap(StyleValue::point(14.0f)).alignItems(Align::Center);
+        auto card_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(14.0f),
+            .children = std::move(card_items),
+        });
 
         auto card_box = container(card_col);
         card_box->color(opts.background_color)
@@ -371,11 +401,12 @@ public:
             .font_size = 13.0f,
         });
 
-        std::vector<WidgetPtr> in_items = {input_txt, chev_txt};
-        auto in_row = row(in_items);
-        in_row->justifyContent(Justify::SpaceBetween)
-              .alignItems(Align::Center)
-              .width(StyleValue::percent(100.0f));
+        auto in_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {input_txt, chev_txt},
+        });
 
         auto input_box = container(in_row);
         input_box->color(0xFF1E293B)
@@ -398,9 +429,10 @@ public:
             col_items.push_back(buildTimePickerCard(w));
         }
 
-        auto full_col = column(col_items);
-        full_col->gap(StyleValue::point(8.0f));
-        return full_col;
+        return column({
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(col_items),
+        });
     }
 };
 

@@ -978,13 +978,17 @@ public:
             });
 
             std::vector<WidgetPtr> nav_items = {btn_first, btn_prev, page_lbl, btn_next, btn_last};
-            auto nav_row = row(nav_items);
-            nav_row->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
+            auto nav_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(6.0f),
+                .children = std::move(nav_items),
+            });
 
-            std::vector<WidgetPtr> bar_items = {info_txt, nav_row};
-            auto bar_row = row(bar_items);
-            bar_row->justifyContent(Justify::SpaceBetween)
-                   .alignItems(Align::Center);
+            auto bar_row = row({
+                .justify_content = Justify::SpaceBetween,
+                .align_items = Align::Center,
+                .children = { info_txt, nav_row },
+            });
 
             auto pag_container = container(bar_row);
             pag_container->color(0xFF1E293B)
@@ -995,8 +999,10 @@ public:
             main_items.push_back(pag_container);
         }
 
-        auto full_col = column(main_items);
-        full_col->gap(StyleValue::point(8.0f));
+        auto full_col = column({
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(main_items),
+        });
 
         return full_col;
     }

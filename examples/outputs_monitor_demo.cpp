@@ -220,9 +220,13 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
 
     // Card body
     std::vector<WidgetPtr> body_items;
-    auto hdr_row = row(Justify::SpaceBetween, Align::Center, {
-        name_text,
-        badge_row ? badge_row : sizedBox(0.0f, 0.0f),
+    auto hdr_row = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = {
+            name_text,
+            badge_row ? badge_row : sizedBox(0.0f, 0.0f),
+        }
     });
     body_items.push_back(hdr_row);
     body_items.push_back(desc_text);
@@ -232,7 +236,11 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
     body_items.push_back(phys_text);
     body_items.push_back(rot_text);
 
-    auto card_col = column(Justify::Start, Align::Start, std::move(body_items));
+    auto card_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Start,
+        .children = std::move(body_items),
+    });
 
     auto card_box = container(card_col);
     card_box->width(360.0f)
@@ -295,7 +303,11 @@ WidgetPtr MonitorDemoState::buildModePanel(const std::shared_ptr<Output>& out) {
         rows.push_back(more);
     }
 
-    auto col = column(Justify::Start, Align::Start, std::move(rows));
+    auto col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Start,
+        .children = std::move(rows),
+    });
     auto box = container(col);
     box->width(260.0f)
         .paddingAll(14.0f)
@@ -336,7 +348,11 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
         }
     }
 
-    auto left_col = column(Justify::Start, Align::Start, std::move(cards));
+    auto left_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Start,
+        .children = std::move(cards),
+    });
 
     // Right: mode panel
     WidgetPtr right_panel;
@@ -353,10 +369,14 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
         right_panel = ph_box;
     }
 
-    auto content_row = row(Justify::Start, Align::Start, {
-        left_col,
-        sizedBox(16.0f, 0.0f),
-        right_panel,
+    auto content_row = row({
+        .justify_content = Justify::Start,
+        .align_items = Align::Start,
+        .children = {
+            left_col,
+            sizedBox(16.0f, 0.0f),
+            right_panel,
+        }
     });
 
     // Header
@@ -386,7 +406,11 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
         .font_size = 10.5f,
     });
 
-    auto status_inner = row(Justify::SpaceBetween, Align::Center, { log_label, count_label });
+    auto status_inner = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = { log_label, count_label }
+    });
     auto status_box = container(status_inner);
     status_box->width(680.0f)
                .padding(EdgeInsets::symmetric(8.0f, 14.0f))
@@ -394,14 +418,18 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
                .borderRadius(8.0f)
                .border(Theme::border_subtle, 1.0f);
 
-    auto root_col = column(Justify::Start, Align::Start, {
-        title,
-        sizedBox(0.0f, 4.0f),
-        sub,
-        sizedBox(0.0f, 14.0f),
-        content_row,
-        sizedBox(0.0f, 14.0f),
-        status_box,
+    auto root_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Start,
+        .children = {
+            title,
+            sizedBox(0.0f, 4.0f),
+            sub,
+            sizedBox(0.0f, 14.0f),
+            content_row,
+            sizedBox(0.0f, 14.0f),
+            status_box,
+        }
     });
 
     auto root_box = container(root_col);

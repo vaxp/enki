@@ -186,7 +186,9 @@ void test_text_flexbox_integration() {
     });
 
     std::vector<WidgetPtr> colChildren = {title, subtitle};
-    auto card = container(column(colChildren));
+    auto card = container(column({
+        .children = std::move(colChildren)
+    }));
     card->padding(EdgeInsets::all(16.0f));
 
     auto el = card->createElement();
@@ -243,7 +245,9 @@ void test_text_reconcile_update() {
     std::cout << "Testing Text Reconcile Update..." << std::endl;
 
     auto t1 = text("Initial Short");
-    auto r1 = row({t1});
+    auto r1 = row({
+        .children = { t1 }
+    });
     auto el1 = r1->createElement();
     el1->mount(nullptr, 0);
 
@@ -345,12 +349,14 @@ void test_text_render_snapshot_png() {
     codeBox->color(0xFF0F172A).borderRadius(10.0f).border(0xFF1E293B, 1.0f).paddingAll(12.0f);
 
     auto mainCol = column({
-        title,
-        sub,
-        dispL,
-        richDemo,
-        arabicDemo,
-        codeBox
+        .children = {
+            title,
+            sub,
+            dispL,
+            richDemo,
+            arabicDemo,
+            codeBox
+        }
     });
 
     auto root = container(mainCol);

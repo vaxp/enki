@@ -233,9 +233,11 @@ public:
             row_elements.push_back(shortcut_text);
         }
 
-        auto item_row = row(row_elements);
-        item_row->alignItems(Align::Center)
-                .gap(StyleValue::point(10.0f));
+        auto item_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(10.0f),
+            .children = std::move(row_elements),
+        });
 
         Color bg_color = 0x00000000;
         if (is_hovered_ && !is_disabled) {
@@ -338,8 +340,10 @@ public:
                 rows.push_back(std::make_shared<ContextMenuItemRow>(item, menu_widget->options, popup));
             }
 
-            auto menu_col = column(rows);
-            menu_col->gap(StyleValue::point(2.0f));
+            auto menu_col = column({
+                .gap = StyleValue::point(2.0f),
+                .children = std::move(rows),
+            });
 
             auto inner = container(menu_col);
             inner->padding(menu_widget->options.padding);

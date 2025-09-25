@@ -144,12 +144,19 @@ public:
             title_col_items.push_back(sub_txt);
         }
 
-        auto title_col = column(title_col_items);
-        title_col->gap(StyleValue::point(2.0f)).flex(1.0f);
+        auto title_col = column({
+            .flex = 1.0f,
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(title_col_items),
+        });
         left_items.push_back(title_col);
 
-        auto left_row = row(left_items);
-        left_row->gap(StyleValue::point(10.0f)).alignItems(Align::Center).flex(1.0f);
+        auto left_row = row({
+            .align_items = Align::Center,
+            .flex = 1.0f,
+            .gap = StyleValue::point(10.0f),
+            .children = std::move(left_items),
+        });
 
         // ── 2. Header Right: Badge + Rotating Chevron ─────────────────
         std::vector<WidgetPtr> right_items;
@@ -181,15 +188,19 @@ public:
             right_items.push_back(chv_box);
         }
 
-        auto right_row = row(right_items);
-        right_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+        auto right_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(right_items),
+        });
 
         // Header Row Container
-        std::vector<WidgetPtr> h_elements = {left_row, right_row};
-        auto h_row = row(h_elements);
-        h_row->justifyContent(Justify::SpaceBetween)
-             .alignItems(Align::Center)
-             .width(StyleValue::percent(100.0f));
+        auto h_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {left_row, right_row},
+        });
 
         auto header_box = container(h_row);
         header_box->paddingSymmetric(12.0f, 16.0f)
@@ -228,11 +239,13 @@ public:
                 f_div->color(opts.divider_color).height(1.0f).width(StyleValue::percent(100.0f));
                 panel_col_items.push_back(f_div);
 
-                auto actions_row = row(item.footer_actions);
-                actions_row->justifyContent(Justify::End)
-                           .gap(StyleValue::point(10.0f))
-                           .alignItems(Align::Center)
-                           .width(StyleValue::percent(100.0f));
+                auto actions_row = row({
+                    .justify_content = Justify::End,
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(10.0f),
+                    .width = StyleValue::percent(100.0f),
+                    .children = item.footer_actions,
+                });
 
                 auto footer_box = container(actions_row);
                 footer_box->paddingSymmetric(10.0f, 16.0f)
@@ -242,8 +255,10 @@ public:
             }
         }
 
-        auto panel_col = column(panel_col_items);
-        panel_col->width(StyleValue::percent(100.0f));
+        auto panel_col = column({
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(panel_col_items),
+        });
 
         // ── 4. Card Styling & Elevation ───────────────────────────────
         auto card = container(panel_col);
@@ -267,11 +282,11 @@ public:
             panel_cards.push_back(p);
         }
 
-        auto main_col = column(panel_cards);
-        main_col->gap(StyleValue::point(opts.gap))
-                .width(StyleValue::percent(100.0f));
-
-        return main_col;
+        return column({
+            .gap = StyleValue::point(opts.gap),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(panel_cards),
+        });
     }
 };
 

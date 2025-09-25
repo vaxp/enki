@@ -86,8 +86,11 @@ public:
         std::vector<WidgetPtr> grip_items;
         if (grip_widget) grip_items.push_back(grip_widget);
 
-        auto grip_col = column(grip_items);
-        grip_col->justifyContent(Justify::Center).alignItems(Align::Center);
+        auto grip_col = column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .children = std::move(grip_items),
+        });
 
         auto handle_box = container(grip_col);
         handle_box->color(bg_col);
@@ -185,15 +188,17 @@ public:
         std::vector<WidgetPtr> split_items = {leading_pane, handle, trailing_pane};
 
         if (is_horizontal) {
-            auto root_row = row(split_items);
-            root_row->width(StyleValue::percent(100.0f))
-                    .height(StyleValue::percent(100.0f));
-            return root_row;
+            return row({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = std::move(split_items),
+            });
         } else {
-            auto root_col = column(split_items);
-            root_col->width(StyleValue::percent(100.0f))
-                    .height(StyleValue::percent(100.0f));
-            return root_col;
+            return column({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = std::move(split_items),
+            });
         }
     }
 };

@@ -47,8 +47,11 @@ WidgetPtr NotificationBellWidget::build(BuildContext&) {
         bell_items.push_back(badge_box);
     }
 
-    auto bell_row = row(bell_items);
-    bell_row->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
+    auto bell_row = row({
+        .align_items = Align::Center,
+        .gap = StyleValue::point(6.0f),
+        .children = std::move(bell_items),
+    });
 
     auto box = container(bell_row);
     box->color(unread > 0 ? 0x22EF4444 : 0xFF1E293B)
@@ -190,9 +193,11 @@ public:
             .font_size = 11.0f,
         });
 
-        std::vector<WidgetPtr> top_row_items = {title_txt, time_txt};
-        auto top_row = row(top_row_items);
-        top_row->justifyContent(Justify::SpaceBetween).alignItems(Align::Center);
+        auto top_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .children = {title_txt, time_txt},
+        });
 
         // Message text
         auto msg_txt = text({
@@ -232,13 +237,18 @@ public:
                 });
                 act_btns.push_back(gd);
             }
-            auto act_row = row(act_btns);
-            act_row->gap(StyleValue::point(6.0f));
+            auto act_row = row({
+                .gap = StyleValue::point(6.0f),
+                .children = std::move(act_btns),
+            });
             text_col_items.push_back(act_row);
         }
 
-        auto text_col = column(text_col_items);
-        text_col->gap(StyleValue::point(4.0f)).flex(1.0f);
+        auto text_col = column({
+            .flex = 1.0f,
+            .gap = StyleValue::point(4.0f),
+            .children = std::move(text_col_items),
+        });
 
         // Close button ✕
         auto cls_txt = text({
@@ -258,9 +268,11 @@ public:
             },
         });
 
-        std::vector<WidgetPtr> main_row_items = {ic_box, text_col, cls_btn};
-        auto main_row = row(main_row_items);
-        main_row->gap(StyleValue::point(10.0f)).alignItems(Align::Start);
+        auto main_row = row({
+            .align_items = Align::Start,
+            .gap = StyleValue::point(10.0f),
+            .children = {ic_box, text_col, cls_btn},
+        });
 
         auto card_box = container(main_row);
         card_box->color(0xFF1E293B)
@@ -293,9 +305,11 @@ public:
         auto badge_box = container(badge_txt);
         badge_box->color(0x2E38BDF8).borderRadius(4.0f).paddingSymmetric(2.0f, 6.0f);
 
-        std::vector<WidgetPtr> t_left = {title_lbl, badge_box};
-        auto t_left_row = row(t_left);
-        t_left_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+        auto t_left_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = {title_lbl, badge_box},
+        });
 
         // Header Action: Mark all read
         auto mark_txt = text({
@@ -346,13 +360,18 @@ public:
             },
         });
 
-        std::vector<WidgetPtr> h_right = {mark_btn, clr_btn, cls_btn};
-        auto h_right_row = row(h_right);
-        h_right_row->gap(StyleValue::point(10.0f)).alignItems(Align::Center);
+        auto h_right_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(10.0f),
+            .children = {mark_btn, clr_btn, cls_btn},
+        });
 
-        std::vector<WidgetPtr> h_items = {t_left_row, h_right_row};
-        auto h_row = row(h_items);
-        h_row->justifyContent(Justify::SpaceBetween).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+        auto h_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {t_left_row, h_right_row},
+        });
 
         // 2. Category Filter Tabs
         auto makeTab = [this](std::string label, NotificationCategory cat) -> WidgetPtr {
@@ -380,15 +399,17 @@ public:
             });
         };
 
-        std::vector<WidgetPtr> tab_items = {
-            makeTab("All", NotificationCategory::All),
-            makeTab("Security", NotificationCategory::Security),
-            makeTab("System", NotificationCategory::System),
-            makeTab("Mentions", NotificationCategory::Mentions),
-            makeTab("Updates", NotificationCategory::Updates)
-        };
-        auto tabs_row = row(tab_items);
-        tabs_row->gap(StyleValue::point(6.0f)).width(StyleValue::percent(100.0f));
+        auto tabs_row = row({
+            .gap = StyleValue::point(6.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = {
+                makeTab("All", NotificationCategory::All),
+                makeTab("Security", NotificationCategory::Security),
+                makeTab("System", NotificationCategory::System),
+                makeTab("Mentions", NotificationCategory::Mentions),
+                makeTab("Updates", NotificationCategory::Updates)
+            },
+        });
 
         // 3. Notification Items List
         std::vector<WidgetPtr> list_rows;
@@ -433,13 +454,19 @@ public:
                     .font_size = 10.5f,
                 });
 
-                std::vector<WidgetPtr> col_txt_items = {tit, msg, tm};
-                auto col_txt = column(col_txt_items);
-                col_txt->gap(StyleValue::point(2.0f)).flex(1.0f);
+                auto col_txt = column({
+                    .flex = 1.0f,
+                    .gap = StyleValue::point(2.0f),
+                    .children = {tit, msg, tm},
+                });
                 row_elements.push_back(col_txt);
 
-                auto item_row = row(row_elements);
-                item_row->gap(StyleValue::point(8.0f)).alignItems(Align::Start).width(StyleValue::percent(100.0f));
+                auto item_row = row({
+                    .align_items = Align::Start,
+                    .gap = StyleValue::point(8.0f),
+                    .width = StyleValue::percent(100.0f),
+                    .children = std::move(row_elements),
+                });
 
                 auto item_box = container(item_row);
                 item_box->color(item.is_read ? 0xFF0F172A : 0x221E293B)
@@ -471,12 +498,17 @@ public:
             list_rows.push_back(empty_box);
         }
 
-        auto list_col = column(list_rows);
-        list_col->gap(StyleValue::point(8.0f)).width(StyleValue::percent(100.0f));
+        auto list_col = column({
+            .gap = StyleValue::point(8.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(list_rows),
+        });
 
-        std::vector<WidgetPtr> panel_items = {h_row, tabs_row, list_col};
-        auto panel_col = column(panel_items);
-        panel_col->gap(StyleValue::point(14.0f)).width(StyleValue::percent(100.0f));
+        auto panel_col = column({
+            .gap = StyleValue::point(14.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = {h_row, tabs_row, list_col},
+        });
 
         auto panel_box = container(panel_col);
         panel_box->color(0xFF1E293B)
@@ -512,8 +544,10 @@ public:
             for (const auto& toast : w->manager->getActivePushToasts()) {
                 toast_cards.push_back(buildPushToastCard(toast, w->manager));
             }
-            auto toasts_col = column(toast_cards);
-            toasts_col->gap(StyleValue::point(10.0f));
+            auto toasts_col = column({
+                .gap = StyleValue::point(10.0f),
+                .children = std::move(toast_cards),
+            });
 
             stack_items.push_back(Positioned {
                 .child = toasts_col,

@@ -472,8 +472,11 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto c = column(std::vector<WidgetPtr>{v, l});
-            c->alignItems(Align::Center).gap(StyleValue::point(2.0f));
+            auto c = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(2.0f),
+                .children = {v, l},
+            });
 
             auto b = container(c);
             b->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 6.0f);
@@ -531,9 +534,12 @@ public:
 
         fields.push_back(sw_gd);
 
-        auto r = row(fields);
-        r->justifyContent(Justify::SpaceBetween).alignItems(Align::Center).width(StyleValue::percent(100.0f));
-        return r;
+        return row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(fields),
+        });
     }
 
     // ── Build Swatch Palette ──────────────────────────────────────
@@ -556,9 +562,12 @@ public:
             swatch_boxes.push_back(gd);
         }
 
-        auto pal_row = row(swatch_boxes);
-        pal_row->gap(StyleValue::point(6.0f)).justifyContent(Justify::Center).width(StyleValue::percent(100.0f));
-        return pal_row;
+        return row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(6.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(swatch_boxes),
+        });
     }
 
     // ── Build Color Comparison Swatch ─────────────────────────────
@@ -575,10 +584,11 @@ public:
             .font_size = 11.0f,
         });
 
-        std::vector<WidgetPtr> items = {old_box, arr, new_box};
-        auto r = row(items);
-        r->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
-        return r;
+        return row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {old_box, arr, new_box},
+        });
     }
 
     // ── Build Full Color Picker Card ──────────────────────────────
@@ -597,8 +607,12 @@ public:
         if (opts.show_comparison) {
             head_items.push_back(buildComparisonSwatch());
         }
-        auto head_row = row(head_items);
-        head_row->justifyContent(Justify::SpaceBetween).alignItems(Align::Center).width(StyleValue::percent(100.0f));
+        auto head_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(head_items),
+        });
 
         std::vector<WidgetPtr> card_items = {
             head_row,
@@ -619,8 +633,11 @@ public:
             card_items.push_back(buildPalette(w));
         }
 
-        auto col = column(card_items);
-        col->gap(StyleValue::point(10.0f)).width(240.0f);
+        auto col = column({
+            .gap = StyleValue::point(10.0f),
+            .width = StyleValue::point(240.0f),
+            .children = std::move(card_items),
+        });
 
         auto card_box = container(col);
         card_box->color(opts.background_color)
@@ -657,11 +674,12 @@ public:
             .font_size = 12.0f,
         });
 
-        std::vector<WidgetPtr> in_items = {color_dot, hex_txt, chev_txt};
-        auto in_row = row(in_items);
-        in_row->justifyContent(Justify::SpaceBetween)
-              .alignItems(Align::Center)
-              .width(StyleValue::percent(100.0f));
+        auto in_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {color_dot, hex_txt, chev_txt},
+        });
 
         auto input_box = container(in_row);
         input_box->color(0xFF1E293B)
@@ -684,9 +702,10 @@ public:
             col_items.push_back(buildColorPickerCard(w));
         }
 
-        auto full_col = column(col_items);
-        full_col->gap(StyleValue::point(8.0f));
-        return full_col;
+        return column({
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(col_items),
+        });
     }
 };
 

@@ -118,48 +118,54 @@ WidgetPtr TableWidget::build(BuildContext& ctx) {
                 }
             }
 
-            auto flex_item = std::make_shared<FlexItem>(cell_content);
-            
+            FlexItemProps fi_props;
+            fi_props.child = cell_content;
+
             // Apply width
             if (std::holds_alternative<FixedColumnWidth>(col_width)) {
                 float w = std::get<FixedColumnWidth>(col_width).width;
-                flex_item->flexBasis(StyleValue::point(w));
-                flex_item->flexGrow(0.0f);
-                flex_item->flexShrink(0.0f);
+                fi_props.flex_basis = StyleValue::point(w);
+                fi_props.flex_grow = 0.0f;
+                fi_props.flex_shrink = 0.0f;
             } else if (std::holds_alternative<FlexColumnWidth>(col_width)) {
                 float f = std::get<FlexColumnWidth>(col_width).flex_factor;
-                flex_item->flexBasis(StyleValue::percent(0.0f));
-                flex_item->flexGrow(f);
-                flex_item->flexShrink(1.0f);
+                fi_props.flex_basis = StyleValue::percent(0.0f);
+                fi_props.flex_grow = f;
+                fi_props.flex_shrink = 1.0f;
             } else if (std::holds_alternative<MinMaxColumnWidth>(col_width)) {
                 auto minmax = std::get<MinMaxColumnWidth>(col_width);
-                flex_item->minWidth(StyleValue::point(minmax.min_width));
-                flex_item->maxWidth(StyleValue::point(minmax.max_width));
-                flex_item->flexBasis(StyleValue::autoValue());
-                flex_item->flexGrow(1.0f);
+                fi_props.min_width = StyleValue::point(minmax.min_width);
+                fi_props.max_width = StyleValue::point(minmax.max_width);
+                fi_props.flex_basis = StyleValue::autoValue();
+                fi_props.flex_grow = 1.0f;
             } else if (std::holds_alternative<IntrinsicColumnWidth>(col_width)) {
                 float f = std::get<IntrinsicColumnWidth>(col_width).flex_factor;
-                flex_item->flexBasis(StyleValue::autoValue());
-                flex_item->flexGrow(f);
+                fi_props.flex_basis = StyleValue::autoValue();
+                fi_props.flex_grow = f;
             }
-            
-            cell_widgets.push_back(flex_item);
+
+            cell_widgets.push_back(flexItem(fi_props));
         }
 
-        auto row_widget = row(std::move(cell_widgets));
         // Apply vertical alignment to the row
-        auto align = table_row.vertical_alignment != TableCellVerticalAlignment::Middle 
+        auto align = table_row.vertical_alignment != TableCellVerticalAlignment::Middle
                         ? table_row.vertical_alignment : props.default_vertical_alignment;
-                        
+
+        Align row_align = Align::Center;
         if (align == TableCellVerticalAlignment::Top) {
-            row_widget->alignItems(Align::Start);
+            row_align = Align::Start;
         } else if (align == TableCellVerticalAlignment::Middle) {
-            row_widget->alignItems(Align::Center);
+            row_align = Align::Center;
         } else if (align == TableCellVerticalAlignment::Bottom) {
-            row_widget->alignItems(Align::End);
+            row_align = Align::End;
         } else if (align == TableCellVerticalAlignment::Fill) {
-            row_widget->alignItems(Align::Stretch);
+            row_align = Align::Stretch;
         }
+
+        auto row_widget = row({
+            .align_items = row_align,
+            .children = std::move(cell_widgets),
+        });
 
         WidgetPtr final_row = row_widget;
         if (table_row.decoration.has_value()) {
@@ -167,12 +173,14 @@ WidgetPtr TableWidget::build(BuildContext& ctx) {
             dec->decoration = *table_row.decoration;
             final_row = dec;
         }
-        
+
         row_widgets.push_back(final_row);
     }
 
-    auto col_widget = column(std::move(row_widgets));
-    col_widget->width(StyleValue::percent(100.0f));
+    auto col_widget = column({
+        .width = StyleValue::percent(100.0f),
+        .children = std::move(row_widgets),
+    });
     
     return std::make_shared<TableBorderWidget>(props.table_border, col_widget);
 }

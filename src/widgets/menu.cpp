@@ -184,8 +184,10 @@ private:
                 }
             }
 
-            auto col = column(std::move(item_widgets));
-            col->gap(StyleValue::point(2.0f));
+            auto col = column({
+                .gap = StyleValue::point(2.0f),
+                .children = std::move(item_widgets),
+            });
 
             auto inner = container(col);
             inner->padding(opt.padding);
@@ -249,13 +251,17 @@ public:
         });
 
         // Build item Row
-        auto item_row = row({lead_box, label_w});
-        item_row->gap(StyleValue::point(8.0f))
-                .alignItems(Align::Center);
+        auto item_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = { lead_box, label_w },
+        });
 
-        auto full_row = row({item_row, trail_w});
-        full_row->justifyContent(Justify::SpaceBetween)
-                .alignItems(Align::Center);
+        auto full_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .children = { item_row, trail_w },
+        });
 
         auto box = container(full_row);
         Color item_bg = (hovered_ && itm.enabled) ? opt.item_hover_color : 0x00000000;
@@ -465,8 +471,10 @@ private:
                 }
             }
 
-            auto col = column(std::move(item_widgets));
-            col->gap(StyleValue::point(2.0f));
+            auto col = column({
+                .gap = StyleValue::point(2.0f),
+                .children = std::move(item_widgets),
+            });
 
             auto inner = container(col);
             inner->padding(opt.padding);
@@ -503,9 +511,11 @@ public:
             btn_widgets.push_back(btn);
         }
 
-        auto bar_row = row(std::move(btn_widgets));
-        bar_row->gap(StyleValue::point(4.0f))
-               .alignItems(Align::Center);
+        auto bar_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(4.0f),
+            .children = std::move(btn_widgets),
+        });
 
         auto bar_box = container(bar_row);
         bar_box->color(bar->options.background_color)
@@ -584,8 +594,10 @@ private:
                 }
             }
 
-            auto col = column(std::move(item_widgets));
-            col->gap(StyleValue::point(2.0f));
+            auto col = column({
+                .gap = StyleValue::point(2.0f),
+                .children = std::move(item_widgets),
+            });
 
             auto inner = container(col);
             inner->padding(opt.padding);

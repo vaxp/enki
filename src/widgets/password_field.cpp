@@ -923,8 +923,10 @@ public:
                 segment_boxes.push_back(seg);
             }
 
-            auto seg_row = row(segment_boxes);
-            seg_row->gap(StyleValue::point(4.0f));
+            auto seg_row = row({
+                .gap = StyleValue::point(4.0f),
+                .children = std::move(segment_boxes),
+            });
 
             auto st_txt = text({
                 .text = strength_label,
@@ -932,9 +934,10 @@ public:
                 .font_size = 11.0f,
             });
 
-            std::vector<WidgetPtr> meter_items = {seg_row, st_txt};
-            auto meter_col = column(meter_items);
-            meter_col->gap(StyleValue::point(4.0f));
+            auto meter_col = column({
+                .gap = StyleValue::point(4.0f),
+                .children = {seg_row, st_txt},
+            });
 
             main_col_items.push_back(meter_col);
         }
@@ -958,10 +961,11 @@ public:
                     .font_size = 11.5f,
                 });
 
-                std::vector<WidgetPtr> items = {ic, lbl};
-                auto r = row(items);
-                r->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
-                return r;
+                return row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(4.0f),
+                    .children = {ic, lbl},
+                });
             };
 
             std::vector<WidgetPtr> rule_items;
@@ -971,8 +975,10 @@ public:
             if (rules.require_digit)     rule_items.push_back(buildRuleRow(rules.checkDigit(pwd), "Number (0-9)"));
             if (rules.require_special)   rule_items.push_back(buildRuleRow(rules.checkSpecial(pwd), "Special symbol (!@#$%...)"));
 
-            auto rules_col = column(rule_items);
-            rules_col->gap(StyleValue::point(3.0f));
+            auto rules_col = column({
+                .gap = StyleValue::point(3.0f),
+                .children = std::move(rule_items),
+            });
 
             auto rules_box = container(rules_col);
             rules_box->color(0xFF0F172A)
@@ -983,10 +989,10 @@ public:
             main_col_items.push_back(rules_box);
         }
 
-        auto full_col = column(main_col_items);
-        full_col->gap(StyleValue::point(6.0f));
-
-        return full_col;
+        return column({
+            .gap = StyleValue::point(6.0f),
+            .children = std::move(main_col_items),
+        });
     }
 };
 

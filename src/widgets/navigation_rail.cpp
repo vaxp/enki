@@ -107,17 +107,19 @@ public:
                     .font_weight = active ? FontWeight::Bold : FontWeight::Normal,
                 });
 
-                auto r = std::make_shared<Row>(std::vector<WidgetPtr>{icon_node, faded_label});
-                r->style.gap          = StyleValue::point(12.0f);
-                r->style.align_items  = Align::Center;
-                r->style.padding      = StyleInsets::only(0, 0, 0, 16.0f);
-                row_content = r;
+                row_content = row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(12.0f),
+                    .padding = StyleInsets::only(0, 0, 0, 16.0f),
+                    .children = { icon_node, faded_label },
+                });
 
             } else {
-                auto icon_row = std::make_shared<Row>(std::vector<WidgetPtr>{icon_node});
-                icon_row->style.align_items = Align::Center;
-                icon_row->style.padding = StyleInsets::only(0, 0, 0, 16.0f);
-                row_content = icon_row;
+                row_content = row({
+                    .align_items = Align::Center,
+                    .padding = StyleInsets::only(0, 0, 0, 16.0f),
+                    .children = { icon_node },
+                });
             }
 
             // Item container with indicator background
@@ -144,12 +146,10 @@ public:
                           .paddingSymmetric(1.0f, 4.0f);
 
                 // Show badge next to item in a row
-                auto row_with_badge = std::make_shared<Row>(std::vector<WidgetPtr>{
-                    item_box,
-                    badge_box,
+                item_widget = row({
+                    .align_items = Align::Center,
+                    .children = { item_box, badge_box },
                 });
-                row_with_badge->style.align_items = Align::Center;
-                item_widget = row_with_badge;
             }
 
             int idx = i;
@@ -172,12 +172,14 @@ public:
             items_col.push_back(det);
         }
 
-        auto col = std::make_shared<Column>(std::move(items_col));
-        col->style.padding = StyleInsets{opts.padding_v, 0, opts.padding_v, 0};
-        col->style.gap     = StyleValue::point(4.0f);
+        auto items_column = column({
+            .gap = StyleValue::point(4.0f),
+            .padding = StyleInsets{opts.padding_v, 0, opts.padding_v, 0},
+            .children = std::move(items_col),
+        });
 
         // Rail container
-        auto rail = container(col);
+        auto rail = container(items_column);
         rail->color(opts.background_color)
              .width(cur_w)
              .height(StyleValue::percent(100.0f))

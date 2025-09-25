@@ -111,11 +111,11 @@ WidgetPtr BreadcrumbWidget::build(BuildContext&) {
         }
     }
 
-    auto row = std::make_shared<Row>(std::move(children));
-    row->style.align_items = Align::Center;
-    row->style.gap         = StyleValue::point(options.item_spacing);
-
-    return row;
+    return row({
+        .align_items = Align::Center,
+        .gap = StyleValue::point(options.item_spacing),
+        .children = std::move(children),
+    });
 }
 
 } // namespace enki

@@ -140,12 +140,19 @@ public:
             title_col_items.push_back(sub_txt);
         }
 
-        auto title_col = column(title_col_items);
-        title_col->gap(StyleValue::point(2.0f)).flex(1.0f);
+        auto title_col = column({
+            .flex = 1.0f,
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(title_col_items),
+        });
         left_items.push_back(title_col);
 
-        auto left_row = row(left_items);
-        left_row->gap(StyleValue::point(10.0f)).alignItems(Align::Center).flex(1.0f);
+        auto left_row = row({
+            .align_items = Align::Center,
+            .flex = 1.0f,
+            .gap = StyleValue::point(10.0f),
+            .children = std::move(left_items),
+        });
 
         // ── 2. Header Right: Badge Pill + Rotating Chevron ────────────
         std::vector<WidgetPtr> right_items;
@@ -179,15 +186,19 @@ public:
             right_items.push_back(chv_box);
         }
 
-        auto right_row = row(right_items);
-        right_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+        auto right_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(right_items),
+        });
 
         // Header Row Container
-        std::vector<WidgetPtr> h_elements = {left_row, right_row};
-        auto h_row = row(h_elements);
-        h_row->justifyContent(Justify::SpaceBetween)
-             .alignItems(Align::Center)
-             .width(StyleValue::percent(100.0f));
+        auto h_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {left_row, right_row},
+        });
 
         auto header_box = container(h_row);
         header_box->paddingSymmetric(12.0f, 16.0f)
@@ -221,8 +232,10 @@ public:
             section_col_items.push_back(body_box);
         }
 
-        auto section_col = column(section_col_items);
-        section_col->width(StyleValue::percent(100.0f));
+        auto section_col = column({
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(section_col_items),
+        });
 
         // ── 4. Apply Variant Styling ──────────────────────────────────
         if (opts.variant == AccordionVariant::Separated) {
@@ -260,13 +273,18 @@ public:
             }
         }
 
-        auto main_col = column(items_list);
-        main_col->width(StyleValue::percent(100.0f));
-
         if (opts.variant == AccordionVariant::Separated) {
-            main_col->gap(StyleValue::point(opts.gap));
-            return main_col;
+            return column({
+                .gap = StyleValue::point(opts.gap),
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(items_list),
+            });
         }
+
+        auto main_col = column({
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(items_list),
+        });
 
         if (opts.variant == AccordionVariant::Bordered) {
             auto outer_box = container(main_col);
