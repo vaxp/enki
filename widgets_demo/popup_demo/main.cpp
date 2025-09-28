@@ -61,9 +61,11 @@ public:
             items.push_back(label_t);
         }
 
-        auto content_row = row(std::move(items));
-        content_row->gap(StyleValue::point(8.0f))
-                   .alignItems(Align::Center);
+        auto content_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(items),
+        });
 
         auto box = container(content_row);
         box->color(hovered_ ? btn->hover_color : btn->bg_color)

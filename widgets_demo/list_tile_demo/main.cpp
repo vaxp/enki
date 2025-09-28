@@ -191,10 +191,11 @@ public:
                 .children = {
                     header,
                     status_bar,
-                    flexItem(
-                        { .flex_grow = 1.0f, .flex_shrink = 1.0f },
-                        scroll
-                    )
+                    flexItem({
+                        .flex_grow = 1.0f,
+                        .flex_shrink = 1.0f,
+                        .child = scroll
+                    })
                 }
             })
         });
