@@ -67,8 +67,10 @@ public:
         // Apply padding via a wrapper
         WidgetPtr content;
         if (w->props.list_padding != EdgeInsets{}) {
-            auto pc = container(flex);
-            pc->padding(w->props.list_padding);
+            auto pc = container({
+                .padding = StyleInsets::only(w->props.list_padding.top, w->props.list_padding.right, w->props.list_padding.bottom, w->props.list_padding.left),
+                .child = flex,
+            });
             content = pc;
         } else {
             content = flex;

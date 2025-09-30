@@ -44,15 +44,13 @@ class DataTableState : public State {
     WidgetPtr buildCell(const WidgetPtr& child, bool numeric,
                         bool placeholder, float h,
                         float col_spacing, const DataTableTheme& theme) {
-        auto wrap = container(child);
-        wrap->height(StyleValue::point(h));
-        wrap->padding(EdgeInsets::symmetric(0, col_spacing * 0.5f));
-        wrap->align(numeric ? Alignment::CenterRight : Alignment::CenterLeft);
-        if (placeholder) {
-            // Lower opacity visually — wrap in a semi-transparent container
-            wrap->color(0x00000000); // transparent bg; placeholder handled by text style
-        }
-        return wrap;
+        return container({
+            .color = placeholder ? std::optional<Color>(0x00000000) : std::nullopt,
+            .align = numeric ? Alignment::CenterRight : Alignment::CenterLeft,
+            .height = StyleValue::point(h),
+            .padding = StyleInsets::symmetric(0.0f, col_spacing * 0.5f),
+            .child = child,
+        });
     }
 
     WidgetPtr buildHeaderRow(const DataTableWidget* w) {
@@ -78,11 +76,13 @@ class DataTableState : public State {
             
             auto cb_ptr = (WidgetPtr)cb;
 
-            auto cb_cell = container(cb_ptr);
-            cb_cell->width(theme.heading_row_height * 0.5f);
-            cb_cell->height(StyleValue::point(theme.heading_row_height));
-            cb_cell->padding(EdgeInsets::symmetric(0, theme.checkbox_h_margin));
-            cb_cell->align(Alignment::Center);
+            auto cb_cell = container({
+                .align = Alignment::Center,
+                .width = StyleValue::point(theme.heading_row_height * 0.5f),
+                .height = StyleValue::point(theme.heading_row_height),
+                .padding = StyleInsets::symmetric(0.0f, theme.checkbox_h_margin),
+                .child = cb_ptr,
+            });
             cells.push_back(cb_cell);
         }
 
@@ -134,11 +134,13 @@ class DataTableState : public State {
                 header_cell_content = header_content;
             }
 
-            auto cell_wrap = container(header_cell_content);
             float cell_w = col.column_width > 0 ? col.column_width : 0.0f;
-            cell_wrap->height(StyleValue::point(theme.heading_row_height));
-            cell_wrap->padding(EdgeInsets::symmetric(0, theme.column_spacing * 0.5f));
-            cell_wrap->align(col.numeric ? Alignment::CenterRight : Alignment::CenterLeft);
+            auto cell_wrap = container({
+                .align = col.numeric ? Alignment::CenterRight : Alignment::CenterLeft,
+                .height = StyleValue::point(theme.heading_row_height),
+                .padding = StyleInsets::symmetric(0.0f, theme.column_spacing * 0.5f),
+                .child = header_cell_content,
+            });
 
             auto cell_fi = flexItem({
                 .flex_grow = (cell_w > 0.0f) ? 0.0f : col.flex_factor,
@@ -156,10 +158,12 @@ class DataTableState : public State {
             .children = std::move(cells),
         });
 
-        auto header_wrap = container(header_row);
-        header_wrap->color(theme.heading_row_color);
-        header_wrap->padding(EdgeInsets::symmetric(0, theme.horizontal_margin));
-        header_wrap->width(StyleValue::percent(100.0f));
+        auto header_wrap = container({
+            .color = theme.heading_row_color,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(0.0f, theme.horizontal_margin),
+            .child = header_row,
+        });
         return header_wrap;
     }
 
@@ -186,11 +190,13 @@ class DataTableState : public State {
             };
             auto cb_ptr = (WidgetPtr)cb;
 
-            auto cb_cell = container(cb_ptr);
-            cb_cell->width(theme.heading_row_height * 0.5f);
-            cb_cell->height(StyleValue::point(dr.height.value_or(theme.data_row_height)));
-            cb_cell->padding(EdgeInsets::symmetric(0, theme.checkbox_h_margin));
-            cb_cell->align(Alignment::Center);
+            auto cb_cell = container({
+                .align = Alignment::Center,
+                .width = StyleValue::point(theme.heading_row_height * 0.5f),
+                .height = StyleValue::point(dr.height.value_or(theme.data_row_height)),
+                .padding = StyleInsets::symmetric(0.0f, theme.checkbox_h_margin),
+                .child = cb_ptr,
+            });
             cells.push_back(cb_cell);
         }
 
@@ -210,14 +216,14 @@ class DataTableState : public State {
                 });
             }
 
-            auto cell_wrap = container(cell_content);
             float cell_w = col.column_width > 0 ? col.column_width : 0.0f;
-
-            cell_wrap->height(StyleValue::point(dr.height.value_or(theme.data_row_height)));
-            cell_wrap->padding(EdgeInsets::symmetric(0, theme.column_spacing * 0.5f));
-            cell_wrap->align(col.numeric ? Alignment::CenterRight : Alignment::CenterLeft);
-
-            if (dc.placeholder) cell_wrap->color(0x40FFFFFF);
+            auto cell_wrap = container({
+                .color = dc.placeholder ? std::optional<Color>(0x40FFFFFF) : std::nullopt,
+                .align = col.numeric ? Alignment::CenterRight : Alignment::CenterLeft,
+                .height = StyleValue::point(dr.height.value_or(theme.data_row_height)),
+                .padding = StyleInsets::symmetric(0.0f, theme.column_spacing * 0.5f),
+                .child = cell_content,
+            });
 
             auto cell_fi = flexItem({
                 .flex_grow = (cell_w > 0.0f) ? 0.0f : col.flex_factor,
@@ -240,10 +246,12 @@ class DataTableState : public State {
                                                          : theme.data_row_color);
         if (is_selected) row_bg = theme.selected_row_color;
 
-        auto row_wrap = container(data_row);
-        row_wrap->color(row_bg);
-        row_wrap->padding(EdgeInsets::symmetric(0, theme.horizontal_margin));
-        row_wrap->width(StyleValue::percent(100.0f));
+        auto row_wrap = container({
+            .color = row_bg,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(0.0f, theme.horizontal_margin),
+            .child = data_row,
+        });
 
         // Make row tappable
         if (dr.on_tap || dr.on_select_changed || w->props.on_row_tap) {
@@ -280,10 +288,11 @@ public:
 
         // Horizontal divider after header
         {
-            auto hdiv = container();
-            hdiv->color(theme.divider_color);
-            hdiv->height(StyleValue::point(theme.divider_thickness));
-            hdiv->width(StyleValue::percent(100.0f));
+            auto hdiv = container({
+                .color = theme.divider_color,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(theme.divider_thickness),
+            });
             col_children.push_back(hdiv);
         }
 
@@ -293,10 +302,11 @@ public:
 
             bool last_row = (ri == (int)w->props.rows.size() - 1);
             if (!last_row || theme.show_bottom_border) {
-                auto div = container();
-                div->color(theme.divider_color);
-                div->height(StyleValue::point(theme.divider_thickness));
-                div->width(StyleValue::percent(100.0f));
+                auto div = container({
+                    .color = theme.divider_color,
+                    .width = StyleValue::percent(100.0f),
+                    .height = StyleValue::point(theme.divider_thickness),
+                });
                 col_children.push_back(div);
             }
         }

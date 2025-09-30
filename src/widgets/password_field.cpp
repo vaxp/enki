@@ -915,11 +915,12 @@ public:
 
             std::vector<WidgetPtr> segment_boxes;
             for (int i = 1; i <= 4; ++i) {
-                auto seg = container();
-                seg->color(i <= score ? bar_color : 0xFF334155)
-                   .borderRadius(2.0f)
-                   .height(4.0f)
-                   .flexGrow(1.0f);
+                auto seg = container({
+                    .color = i <= score ? bar_color : 0xFF334155,
+                    .border_radius = BorderRadius::circular(2.0f),
+                    .height = StyleValue::point(4.0f),
+                    .flex_grow = 1.0f,
+                });
                 segment_boxes.push_back(seg);
             }
 
@@ -980,11 +981,13 @@ public:
                 .children = std::move(rule_items),
             });
 
-            auto rules_box = container(rules_col);
-            rules_box->color(0xFF0F172A)
-                     .borderRadius(6.0f)
-                     .border(0xFF334155, 1.0f)
-                     .paddingAll(8.0f);
+            auto rules_box = container({
+                .color = 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .padding = StyleInsets::all(8.0f),
+                .child = rules_col,
+            });
 
             main_col_items.push_back(rules_box);
         }

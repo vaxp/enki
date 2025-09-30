@@ -846,8 +846,10 @@ public:
                 .children = {pos_txt, count_txt},
             });
 
-            auto footer_box = container(footer_row);
-            footer_box->paddingSymmetric(4.0f, 6.0f);
+            auto footer_box = container({
+                .padding = StyleInsets::symmetric(4.0f, 6.0f),
+                .child = footer_row,
+            });
 
             return column({
                 .children = {detector, footer_box},

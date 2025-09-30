@@ -92,16 +92,12 @@ public:
             .children = std::move(grip_items),
         });
 
-        auto handle_box = container(grip_col);
-        handle_box->color(bg_col);
-
-        if (is_horizontal) {
-            handle_box->width(opts.handle_thickness)
-                      .height(StyleValue::percent(100.0f));
-        } else {
-            handle_box->height(opts.handle_thickness)
-                      .width(StyleValue::percent(100.0f));
-        }
+        auto handle_box = container({
+            .color = bg_col,
+            .width = is_horizontal ? StyleValue::point(opts.handle_thickness) : StyleValue::percent(100.0f),
+            .height = is_horizontal ? StyleValue::percent(100.0f) : StyleValue::point(opts.handle_thickness),
+            .child = grip_col,
+        });
 
         return gestureDetector({
             .child = handle_box,
@@ -150,17 +146,14 @@ public:
         // ── 1. Leading Pane ───────────────────────────────────────────
         WidgetPtr leading_pane;
         if (w->leading) {
-            auto l_box = container(w->leading);
-            if (is_horizontal) {
-                l_box->width(StyleValue::percent(current_ratio_ * 100.0f))
-                     .height(StyleValue::percent(100.0f));
-            } else {
-                l_box->height(StyleValue::percent(current_ratio_ * 100.0f))
-                     .width(StyleValue::percent(100.0f));
-            }
+            auto l_box = container({
+                .width = is_horizontal ? StyleValue::percent(current_ratio_ * 100.0f) : StyleValue::percent(100.0f),
+                .height = is_horizontal ? StyleValue::percent(100.0f) : StyleValue::percent(current_ratio_ * 100.0f),
+                .child = w->leading,
+            });
             leading_pane = l_box;
         } else {
-            auto empty = container();
+            auto empty = container({});
             leading_pane = empty;
         }
 
@@ -170,17 +163,17 @@ public:
         // ── 3. Trailing Pane ──────────────────────────────────────────
         WidgetPtr trailing_pane;
         if (w->trailing) {
-            auto t_box = container(w->trailing);
-            t_box->flex(1.0f);
-            if (is_horizontal) {
-                t_box->height(StyleValue::percent(100.0f));
-            } else {
-                t_box->width(StyleValue::percent(100.0f));
-            }
+            auto t_box = container({
+                .width = !is_horizontal ? std::optional<StyleValue>(StyleValue::percent(100.0f)) : std::nullopt,
+                .height = is_horizontal ? std::optional<StyleValue>(StyleValue::percent(100.0f)) : std::nullopt,
+                .flex = 1.0f,
+                .child = w->trailing,
+            });
             trailing_pane = t_box;
         } else {
-            auto empty = container();
-            empty->flex(1.0f);
+            auto empty = container({
+                .flex = 1.0f,
+            });
             trailing_pane = empty;
         }
 

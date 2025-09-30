@@ -199,10 +199,12 @@ public:
             .children = { titleCol, buttonsRow }
         });
 
-        auto appRoot = container(mainCol);
-        appRoot->color(0xFF0F172A)
-               .paddingAll(40.0f)
-               .flexGrow(1.0f);
+        auto appRoot = container({
+            .color = 0xFF0F172A,
+            .padding = StyleInsets::all(40.0f),
+            .flex_grow = 1.0f,
+            .child = mainCol,
+        });
 
         return appRoot;
     }

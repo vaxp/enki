@@ -478,9 +478,13 @@ public:
                 .children = {v, l},
             });
 
-            auto b = container(c);
-            b->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 6.0f);
-            return b;
+            return container({
+                .color = 0xFF0F172A,
+                .border_radius = BorderRadius::circular(4.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(4.0f, 6.0f),
+                .child = c,
+            });
         };
 
         std::vector<WidgetPtr> fields;
@@ -492,8 +496,13 @@ public:
                 .font_size = 12.5f,
                 .font_weight = FontWeight::Bold,
             });
-            auto hex_box = container(hex_txt);
-            hex_box->color(0xFF0F172A).border(0xFF0284C7, 1.0f).borderRadius(6.0f).paddingSymmetric(6.0f, 14.0f);
+            auto hex_box = container({
+                .color = 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(0xFF0284C7, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 14.0f),
+                .child = hex_txt,
+            });
             fields.push_back(hex_box);
         } else if (current_format_ == ColorFormat::RGBA) {
             uint8_t r = (current_color_ >> 16) & 0xFF;
@@ -518,8 +527,12 @@ public:
             .font_size = 11.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto sw_box = container(sw_txt);
-        sw_box->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(6.0f, 8.0f);
+        auto sw_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(6.0f, 8.0f),
+            .child = sw_txt,
+        });
 
         auto sw_gd = gestureDetector({
             .child = sw_box,
@@ -546,8 +559,13 @@ public:
     WidgetPtr buildPalette(const ColorPickerWidget* w) {
         std::vector<WidgetPtr> swatch_boxes;
         for (Color sw_color : w->props.palette) {
-            auto b = container();
-            b->color(sw_color).borderRadius(10.0f).width(20.0f).height(20.0f).border(0xFF334155, 1.0f);
+            auto b = container({
+                .color = sw_color,
+                .border_radius = BorderRadius::circular(10.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .width = StyleValue::point(20.0f),
+                .height = StyleValue::point(20.0f),
+            });
 
             auto gd = gestureDetector({
                 .child = b,
@@ -572,11 +590,19 @@ public:
 
     // ── Build Color Comparison Swatch ─────────────────────────────
     WidgetPtr buildComparisonSwatch() {
-        auto old_box = container();
-        old_box->color(initial_color_).width(24.0f).height(24.0f).borderRadius(4.0f);
+        auto old_box = container({
+            .color = initial_color_,
+            .border_radius = BorderRadius::circular(4.0f),
+            .width = StyleValue::point(24.0f),
+            .height = StyleValue::point(24.0f),
+        });
 
-        auto new_box = container();
-        new_box->color(current_color_).width(24.0f).height(24.0f).borderRadius(4.0f);
+        auto new_box = container({
+            .color = current_color_,
+            .border_radius = BorderRadius::circular(4.0f),
+            .width = StyleValue::point(24.0f),
+            .height = StyleValue::point(24.0f),
+        });
 
         auto arr = text({
             .text = "➔",
@@ -627,8 +653,11 @@ public:
         card_items.push_back(buildFormatInputs());
 
         if (opts.show_palette && !opts.palette.empty()) {
-            auto div = container();
-            div->color(0xFF334155).height(1.0f).width(StyleValue::percent(100.0f));
+            auto div = container({
+                .color = 0xFF334155,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+            });
             card_items.push_back(div);
             card_items.push_back(buildPalette(w));
         }
@@ -639,12 +668,14 @@ public:
             .children = std::move(card_items),
         });
 
-        auto card_box = container(col);
-        card_box->color(opts.background_color)
-                .border(opts.border_color, 1.0f)
-                .borderRadius(10.0f)
-                .paddingAll(14.0f)
-                .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f));
+        auto card_box = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)},
+            .padding = StyleInsets::all(14.0f),
+            .child = col,
+        });
 
         return card_box;
     }
@@ -658,8 +689,13 @@ public:
         }
 
         // Input Popup Mode (Color Well Button)
-        auto color_dot = container();
-        color_dot->color(current_color_).borderRadius(6.0f).width(20.0f).height(20.0f).border(0xFF475569, 1.0f);
+        auto color_dot = container({
+            .color = current_color_,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF475569, 1.0f),
+            .width = StyleValue::point(20.0f),
+            .height = StyleValue::point(20.0f),
+        });
 
         auto hex_txt = text({
             .text = colorToHex(current_color_),
@@ -681,12 +717,14 @@ public:
             .children = {color_dot, hex_txt, chev_txt},
         });
 
-        auto input_box = container(in_row);
-        input_box->color(0xFF1E293B)
-                 .border(is_popup_open_ ? opts.active_color : opts.border_color, 1.0f)
-                 .borderRadius(8.0f)
-                 .paddingSymmetric(8.0f, 12.0f)
-                 .width(180.0f);
+        auto input_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(is_popup_open_ ? opts.active_color : opts.border_color, 1.0f),
+            .width = StyleValue::point(180.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .child = in_row,
+        });
 
         auto input_gd = gestureDetector({
             .child = input_box,

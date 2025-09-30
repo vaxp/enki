@@ -173,11 +173,12 @@ public:
     WidgetPtr buildItemRow(const DropdownMenuItem& item, int idx,
                            const DropdownMenuProps& opts) {
         if (item.type == DropdownMenuItemType::Divider) {
-            auto div = container();
-            div->color(opts.divider_color).height(1.0f)
-               .marginSymmetric(4.0f, 0.0f)
-               .width(StyleValue::percent(100.0f));
-            return div;
+            return container({
+                .color = opts.divider_color,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+                .margin = StyleInsets::symmetric(4.0f, 0.0f),
+            });
         }
 
         if (item.type == DropdownMenuItemType::Header) {
@@ -187,10 +188,11 @@ public:
                 .font_size = 10.5f,
                 .font_weight = FontWeight::Bold,
             });
-            auto hdr_box = container(hdr);
-            hdr_box->padding(EdgeInsets(6.0f, 10.0f, 2.0f, 10.0f))
-                   .width(StyleValue::percent(100.0f));
-            return hdr_box;
+            return container({
+                .width = StyleValue::percent(100.0f),
+                .padding = StyleInsets::only(6.0f, 10.0f, 2.0f, 10.0f),
+                .child = hdr,
+            });
         }
 
         // Left: check/radio + icon + label+subtitle
@@ -260,8 +262,12 @@ public:
                 .font_size = 9.5f,
                 .font_weight = FontWeight::Bold,
             });
-            auto bd_box = container(bd);
-            bd_box->color(item.badge_bg).borderRadius(3.0f).paddingSymmetric(2.0f, 5.0f);
+            auto bd_box = container({
+                .color = item.badge_bg,
+                .border_radius = BorderRadius::circular(3.0f),
+                .padding = StyleInsets::symmetric(2.0f, 5.0f),
+                .child = bd,
+            });
             right.push_back(bd_box);
         }
         if (!item.trailing_shortcut.empty()) {
@@ -289,10 +295,13 @@ public:
         bool is_sel = (!selected_id_.empty() && item.id == selected_id_);
         Color bg = is_hov ? opts.hover_color : (is_sel ? 0x1538BDF8 : 0x00000000);
 
-        auto item_box = container(full_row);
-        item_box->color(bg).borderRadius(4.0f)
-                .paddingSymmetric(6.0f, 10.0f)
-                .width(StyleValue::percent(100.0f));
+        auto item_box = container({
+            .color = bg,
+            .border_radius = BorderRadius::circular(4.0f),
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(6.0f, 10.0f),
+            .child = full_row,
+        });
 
         if (item.is_disabled) return item_box;
 
@@ -344,13 +353,15 @@ public:
             .children = std::move(list_items),
         });
 
-        auto menu_panel = container(items_col);
-        menu_panel->color(opts.background_color)
-                  .border(opts.border_color, 1.0f)
-                  .borderRadius(opts.border_radius)
-                  .paddingAll(6.0f)
-                  .width(opts.menu_width)
-                  .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f));
+        auto menu_panel = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f)},
+            .width = StyleValue::point(opts.menu_width),
+            .padding = StyleInsets::all(6.0f),
+            .child = items_col,
+        });
 
         // Floating panel positioned at anchor (below trigger)
         return Positioned {
@@ -369,16 +380,19 @@ public:
         // ── Body (always Positioned::fill — trigger lives INSIDE body) ──
         WidgetPtr body_fill;
         if (w->props.body) {
-            auto bx = container(w->props.body);
-            bx->flex(1.0f)
-               .width(StyleValue::percent(100.0f))
-               .height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+                .child = w->props.body,
+            });
             body_fill = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->flex(1.0f)
-                 .width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+            });
             body_fill = Positioned::fill(empty);
         }
 

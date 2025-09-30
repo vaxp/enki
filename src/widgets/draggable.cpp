@@ -221,8 +221,11 @@ public:
             if (w->child_when_dragging) {
                 display_child = w->child_when_dragging;
             } else {
-                auto placeholder = container(w->child);
-                placeholder->color(0x33334155).borderRadius(8.0f);
+                auto placeholder = container({
+                    .color = 0x33334155,
+                    .border_radius = BorderRadius::circular(8.0f),
+                    .child = w->child,
+                });
                 display_child = placeholder;
             }
         } else {

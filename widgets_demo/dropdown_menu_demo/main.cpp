@@ -67,9 +67,6 @@ public:
             .on_tap_up = [ctrl](const TapUpDetails&) {
                 if (ctrl) ctrl->toggle();
             },
-            .on_hover_enter = [box](const PointerEvent&) {
-                box->border(0xFF64748B, 1.0f);
-            },
         });
     }
 

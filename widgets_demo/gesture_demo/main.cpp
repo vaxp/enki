@@ -153,12 +153,14 @@ WidgetPtr GestureDemoState::buildSidebar() {
         .children = { t1, sizedBox(0, 4.0f), t2, sizedBox(0, 2.0f), t3 }
     });
 
-    auto logo_card = container(logo_col);
-    logo_card->paddingAll(18.0f)
-             .margin(EdgeInsets::only(0, 0, 16.0f, 0))
-             .color(0x287C4DFF)
-             .borderRadius(12.0f)
-             .border(0x507C4DFF, 1.0f);
+    auto logo_card = container({
+        .color = 0x287C4DFF,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(0x507C4DFF, 1.0f),
+        .padding = StyleInsets::all(18.0f),
+        .margin = StyleInsets::only(0, 0, 16.0f, 0),
+        .child = logo_col,
+    });
 
     tab_widgets.push_back(logo_card);
 
@@ -199,12 +201,14 @@ WidgetPtr GestureDemoState::buildSidebar() {
             .children = { tab_icon, sizedBox(12.0f, 0), tab_text_col }
         });
 
-        auto btn_content = container(tab_row);
-        btn_content->padding(EdgeInsets::symmetric(12.0f, 14.0f))
-                   .margin(EdgeInsets::only(0, 0, 8.0f, 0))
-                   .color(bg_color)
-                   .borderRadius(10.0f)
-                   .border(border_col, 1.0f);
+        auto btn_content = container({
+            .color = bg_color,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(border_col, 1.0f),
+            .padding = StyleInsets::symmetric(12.0f, 14.0f),
+            .margin = StyleInsets::only(0, 0, 8.0f, 0),
+            .child = tab_row,
+        });
 
         int tab_index = static_cast<int>(i);
         auto gd = gestureDetector({
@@ -239,22 +243,26 @@ WidgetPtr GestureDemoState::buildSidebar() {
         .children = { status_title, sizedBox(0, 4.0f), status_desc }
     });
 
-    auto status_card = container(status_col);
-    status_card->margin(EdgeInsets::only(20.0f, 0, 0, 0))
-               .paddingAll(12.0f)
-               .color(0x18FFFFFF)
-               .borderRadius(8.0f);
+    auto status_card = container({
+        .color = 0x18FFFFFF,
+        .border_radius = BorderRadius::circular(8.0f),
+        .padding = StyleInsets::all(12.0f),
+        .margin = StyleInsets::only(20.0f, 0, 0, 0),
+        .child = status_col,
+    });
 
     tab_widgets.push_back(status_card);
 
     auto sidebar_col = column({
         .children = std::move(tab_widgets)
     });
-    auto sidebar_box = container(sidebar_col);
-    sidebar_box->width(270.0f)
-               .paddingAll(16.0f)
-               .color(Style::bg_sidebar)
-               .border(Style::border_subtle, 1.0f);
+    auto sidebar_box = container({
+        .color = Style::bg_sidebar,
+        .border = Border(Style::border_subtle, 1.0f),
+        .width = StyleValue::point(270.0f),
+        .padding = StyleInsets::all(16.0f),
+        .child = sidebar_col,
+    });
 
     return sidebar_box;
 }
@@ -289,11 +297,13 @@ WidgetPtr GestureDemoState::buildHeader() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto badge = container(badge_text);
-    badge->padding(EdgeInsets::symmetric(6.0f, 14.0f))
-         .color(0x2000E676)
-         .borderRadius(20.0f)
-         .border(Style::accent_green, 1.0f);
+    auto badge = container({
+        .color = 0x2000E676,
+        .border_radius = BorderRadius::circular(20.0f),
+        .border = Border(Style::accent_green, 1.0f),
+        .padding = StyleInsets::symmetric(6.0f, 14.0f),
+        .child = badge_text,
+    });
 
     auto header_row = row({
         .justify_content = Justify::SpaceBetween,
@@ -301,12 +311,14 @@ WidgetPtr GestureDemoState::buildHeader() {
         .children = { title_col, badge }
     });
 
-    auto header_card = container(header_row);
-    header_card->padding(EdgeInsets::symmetric(16.0f, 20.0f))
-               .margin(EdgeInsets::only(0, 0, 16.0f, 0))
-               .color(Style::bg_card)
-               .borderRadius(12.0f)
-               .border(Style::border_subtle, 1.0f);
+    auto header_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .padding = StyleInsets::symmetric(16.0f, 20.0f),
+        .margin = StyleInsets::only(0, 0, 16.0f, 0),
+        .child = header_row,
+    });
 
     return header_card;
 }
@@ -324,11 +336,13 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto single_btn = container(single_btn_text);
-    single_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
-              .color(Style::primary)
-              .borderRadius(8.0f)
-              .shadow(0x507C4DFF, {0, 4}, 10.0f);
+    auto single_btn = container({
+        .color = Style::primary,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x507C4DFF, {0.0f, 4.0f}, 10.0f)},
+        .padding = StyleInsets::symmetric(12.0f, 24.0f),
+        .child = single_btn_text,
+    });
 
     auto single_title = text({
         .text = "Single Tap / Click",
@@ -349,12 +363,14 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .children = { single_title, sizedBox(0, 4.0f), single_desc, sizedBox(0, 14.0f), single_btn }
     });
 
-    auto single_tap_card = container(single_col);
-    single_tap_card->width(360.0f)
-                   .paddingAll(18.0f)
-                   .color(Style::bg_card)
-                   .borderRadius(12.0f)
-                   .border(Style::border_subtle, 1.0f);
+    auto single_tap_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .width = StyleValue::point(360.0f),
+        .padding = StyleInsets::all(18.0f),
+        .child = single_col,
+    });
 
     auto single_tap_gd = gestureDetector({
         .key = Key::string("single_tap_target"),
@@ -377,11 +393,13 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto double_btn = container(double_btn_text);
-    double_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
-              .color(Style::secondary)
-              .borderRadius(8.0f)
-              .shadow(0x5000E5FF, {0, 4}, 10.0f);
+    auto double_btn = container({
+        .color = Style::secondary,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x5000E5FF, {0.0f, 4.0f}, 10.0f)},
+        .padding = StyleInsets::symmetric(12.0f, 24.0f),
+        .child = double_btn_text,
+    });
 
     auto double_title = text({
         .text = "Double Tap (300ms)",
@@ -402,12 +420,14 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .children = { double_title, sizedBox(0, 4.0f), double_desc, sizedBox(0, 14.0f), double_btn }
     });
 
-    auto double_tap_card = container(double_col);
-    double_tap_card->width(360.0f)
-                   .paddingAll(18.0f)
-                   .color(Style::bg_card)
-                   .borderRadius(12.0f)
-                   .border(Style::border_subtle, 1.0f);
+    auto double_tap_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .width = StyleValue::point(360.0f),
+        .padding = StyleInsets::all(18.0f),
+        .child = double_col,
+    });
 
     auto double_tap_gd = gestureDetector({
         .key = Key::string("double_tap_target"),
@@ -435,11 +455,13 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto sec_btn = container(sec_btn_text);
-    sec_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
-           .color(Style::accent_pink)
-           .borderRadius(8.0f)
-           .shadow(0x50FF4081, {0, 4}, 10.0f);
+    auto sec_btn = container({
+        .color = Style::accent_pink,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x50FF4081, {0.0f, 4.0f}, 10.0f)},
+        .padding = StyleInsets::symmetric(12.0f, 24.0f),
+        .child = sec_btn_text,
+    });
 
     auto sec_title = text({
         .text = "Right Click (Secondary)",
@@ -460,12 +482,14 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .children = { sec_title, sizedBox(0, 4.0f), sec_desc, sizedBox(0, 14.0f), sec_btn }
     });
 
-    auto sec_tap_card = container(sec_col);
-    sec_tap_card->width(360.0f)
-                .paddingAll(18.0f)
-                .color(Style::bg_card)
-                .borderRadius(12.0f)
-                .border(Style::border_subtle, 1.0f);
+    auto sec_tap_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .width = StyleValue::point(360.0f),
+        .padding = StyleInsets::all(18.0f),
+        .child = sec_col,
+    });
 
     auto sec_tap_gd = gestureDetector({
         .key = Key::string("sec_tap_target"),
@@ -488,11 +512,13 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto lp_btn = container(lp_btn_text);
-    lp_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
-          .color(Style::accent_amber)
-          .borderRadius(8.0f)
-          .shadow(0x50FFAB00, {0, 4}, 10.0f);
+    auto lp_btn = container({
+        .color = Style::accent_amber,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x50FFAB00, {0.0f, 4.0f}, 10.0f)},
+        .padding = StyleInsets::symmetric(12.0f, 24.0f),
+        .child = lp_btn_text,
+    });
 
     auto lp_title = text({
         .text = "Long Press (400ms)",
@@ -513,12 +539,14 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .children = { lp_title, sizedBox(0, 4.0f), lp_desc, sizedBox(0, 14.0f), lp_btn }
     });
 
-    auto long_press_card = container(lp_col);
-    long_press_card->width(360.0f)
-                   .paddingAll(18.0f)
-                   .color(Style::bg_card)
-                   .borderRadius(12.0f)
-                   .border(Style::border_subtle, 1.0f);
+    auto long_press_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .width = StyleValue::point(360.0f),
+        .padding = StyleInsets::all(18.0f),
+        .child = lp_col,
+    });
 
     auto long_press_gd = gestureDetector({
         .key = Key::string("long_press_target"),
@@ -559,24 +587,28 @@ WidgetPtr GestureDemoState::buildTapsTab() {
                 .font_size = 11.0f,
             });
 
-            auto log_item = container(log_item_text);
-            log_item->padding(EdgeInsets::symmetric(5.0f, 10.0f))
-                    .margin(EdgeInsets::only(0, 0, 4.0f, 0))
-                    .color(Style::bg_input)
-                    .borderRadius(6.0f)
-                    .border(Style::border_subtle, 1.0f);
+            auto log_item = container({
+                .color = Style::bg_input,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(Style::border_subtle, 1.0f),
+                .padding = StyleInsets::symmetric(5.0f, 10.0f),
+                .margin = StyleInsets::only(0, 0, 4.0f, 0),
+                .child = log_item_text,
+            });
             log_widgets.push_back(log_item);
         }
     }
 
-    auto log_card = container(column({
-        .children = std::move(log_widgets)
-    }));
-    log_card->paddingAll(14.0f)
-            .margin(EdgeInsets::only(0, 14.0f, 0, 0))
-            .color(Style::bg_card)
-            .borderRadius(12.0f)
-            .border(Style::border_subtle, 1.0f);
+    auto log_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .padding = StyleInsets::all(14.0f),
+        .margin = StyleInsets::only(0, 14.0f, 0, 0),
+        .child = column({
+            .children = std::move(log_widgets)
+        }),
+    });
 
     return column({
         .children = {
@@ -650,14 +682,16 @@ WidgetPtr GestureDemoState::buildPanTab() {
         .children = { drag_header, sizedBox(0, 6.0f), drag_desc, sizedBox(0, 10.0f), drag_metrics }
     });
 
-    auto drag_box = container(drag_content);
-    drag_box->width(320.0f)
-            .paddingAll(16.0f)
-            .margin(EdgeInsets::fromLTRB(card_offset_x, card_offset_y, 0.0f, 0.0f))
-            .color(is_dragging_card ? Style::primary : Style::bg_card_hover)
-            .borderRadius(14.0f)
-            .border(is_dragging_card ? Style::secondary : Style::primary_light, is_dragging_card ? 2.0f : 1.0f)
-            .shadow(is_dragging_card ? 0x807C4DFF : 0x40000000, {0, is_dragging_card ? 10.0f : 4.0f}, is_dragging_card ? 20.0f : 8.0f);
+    auto drag_box = container({
+        .color = is_dragging_card ? Style::primary : Style::bg_card_hover,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(is_dragging_card ? Style::secondary : Style::primary_light, is_dragging_card ? 2.0f : 1.0f),
+        .box_shadow = {BoxShadow(is_dragging_card ? 0x807C4DFF : 0x40000000, Point{0.0f, is_dragging_card ? 10.0f : 4.0f}, is_dragging_card ? 20.0f : 8.0f)},
+        .width = StyleValue::point(320.0f),
+        .padding = StyleInsets::all(16.0f),
+        .margin = StyleInsets::only(card_offset_y, 0.0f, 0.0f, card_offset_x),
+        .child = drag_content,
+    });
 
     auto drag_gd = gestureDetector({
         .key = Key::string("draggable_card"),
@@ -687,12 +721,14 @@ WidgetPtr GestureDemoState::buildPanTab() {
         },
     });
 
-    auto canvas_container = container(drag_gd);
-    canvas_container->height(200.0f)
-                    .paddingAll(14.0f)
-                    .color(Style::bg_card)
-                    .borderRadius(14.0f)
-                    .border(Style::border_subtle, 1.0f);
+    auto canvas_container = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .height = StyleValue::point(200.0f),
+        .padding = StyleInsets::all(14.0f),
+        .child = drag_gd,
+    });
 
     // 2. Interactive Horizontal Slider
     float total_slider_w = 680.0f;
@@ -701,24 +737,27 @@ WidgetPtr GestureDemoState::buildPanTab() {
     float fill_w         = std::clamp(slider_value * max_travel, 0.0f, max_travel);
     float remaining_w    = std::max(0.0f, max_travel - fill_w);
 
-    auto fill_bar = container();
-    fill_bar->width(fill_w)
-            .height(8.0f)
-            .color(Style::primary)
-            .borderRadius(4.0f);
+    auto fill_bar = container({
+        .color = Style::primary,
+        .border_radius = BorderRadius::circular(4.0f),
+        .width = StyleValue::point(fill_w),
+        .height = StyleValue::point(8.0f),
+    });
 
-    auto thumb_elem = container();
-    thumb_elem->width(thumb_w)
-              .height(22.0f)
-              .color(Style::secondary)
-              .borderRadius(11.0f)
-              .shadow(0x8000E5FF, {0, 2}, 8.0f);
+    auto thumb_elem = container({
+        .color = Style::secondary,
+        .border_radius = BorderRadius::circular(11.0f),
+        .box_shadow = {BoxShadow(0x8000E5FF, Point{0.0f, 2.0f}, 8.0f)},
+        .width = StyleValue::point(thumb_w),
+        .height = StyleValue::point(22.0f),
+    });
 
-    auto remaining_bar = container();
-    remaining_bar->width(remaining_w)
-                 .height(8.0f)
-                 .color(Style::bg_input)
-                 .borderRadius(4.0f);
+    auto remaining_bar = container({
+        .color = Style::bg_input,
+        .border_radius = BorderRadius::circular(4.0f),
+        .width = StyleValue::point(remaining_w),
+        .height = StyleValue::point(8.0f),
+    });
 
     auto slider_row = row({
         .justify_content = Justify::Start,
@@ -726,9 +765,11 @@ WidgetPtr GestureDemoState::buildPanTab() {
         .children = { fill_bar, thumb_elem, remaining_bar }
     });
 
-    auto slider_hit_area = container(slider_row);
-    slider_hit_area->width(total_slider_w)
-                   .height(36.0f);
+    auto slider_hit_area = container({
+        .width = StyleValue::point(total_slider_w),
+        .height = StyleValue::point(36.0f),
+        .child = slider_row,
+    });
 
     auto slider_gd = gestureDetector({
         .key = Key::string("custom_slider_gd"),
@@ -775,13 +816,15 @@ WidgetPtr GestureDemoState::buildPanTab() {
         .font_size = 11.0f,
     });
 
-    auto slider_card = container(column({
-        .children = { slider_header, sizedBox(0, 6.0f), slider_desc, sizedBox(0, 14.0f), slider_gd }
-    }));
-    slider_card->paddingAll(18.0f)
-               .color(Style::bg_card)
-               .borderRadius(14.0f)
-               .border(Style::border_subtle, 1.0f);
+    auto slider_card = container({
+        .color = Style::bg_card,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .padding = StyleInsets::all(18.0f),
+        .child = column({
+            .children = { slider_header, sizedBox(0, 6.0f), slider_desc, sizedBox(0, 14.0f), slider_gd }
+        }),
+    });
 
     // Reset Button
     auto reset_text = text({
@@ -791,11 +834,13 @@ WidgetPtr GestureDemoState::buildPanTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto reset_btn = container(reset_text);
-    reset_btn->padding(EdgeInsets::symmetric(9.0f, 18.0f))
-             .color(Style::bg_card_hover)
-             .borderRadius(8.0f)
-             .border(Style::border_subtle, 1.0f);
+    auto reset_btn = container({
+        .color = Style::bg_card_hover,
+        .border_radius = BorderRadius::circular(8.0f),
+        .border = Border(Style::border_subtle, 1.0f),
+        .padding = StyleInsets::symmetric(9.0f, 18.0f),
+        .child = reset_text,
+    });
 
     auto reset_gd = gestureDetector({
         .key = Key::string("reset_pan_btn"),
@@ -861,11 +906,13 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
             .font_size = 18.0f,
         });
 
-        auto icon_box = container(icon_text);
-        icon_box->width(42.0f)
-                .height(42.0f)
-                .color(0x287C4DFF)
-                .borderRadius(21.0f);
+        auto icon_box = container({
+            .color = 0x287C4DFF,
+            .border_radius = BorderRadius::circular(21.0f),
+            .width = StyleValue::point(42.0f),
+            .height = StyleValue::point(42.0f),
+            .child = icon_text,
+        });
 
         auto item_title = text({
             .text = item.name,
@@ -890,13 +937,15 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
             .children = { icon_box, sizedBox(12.0f, 0), text_col }
         });
 
-        auto card_content = container(card_row);
-        card_content->width(350.0f)
-                    .paddingAll(14.0f)
-                    .margin(EdgeInsets::only(0, 0, 12.0f, 12.0f))
-                    .color(Style::bg_card)
-                    .borderRadius(12.0f)
-                    .border(Style::border_subtle, 1.0f);
+        auto card_content = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(12.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .width = StyleValue::point(350.0f),
+            .padding = StyleInsets::all(14.0f),
+            .margin = StyleInsets::only(0, 0, 12.0f, 12.0f),
+            .child = card_row,
+        });
 
         auto gd = gestureDetector({
             .key = Key::string("cursor_box_" + std::to_string(i)),
@@ -933,12 +982,14 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
         .children = { banner_label, banner_val }
     });
 
-    auto preview_banner = container(banner_row);
-    preview_banner->padding(EdgeInsets::symmetric(12.0f, 18.0f))
-                  .margin(EdgeInsets::only(0, 0, 14.0f, 0))
-                  .color(Style::bg_input)
-                  .borderRadius(10.0f)
-                  .border(Style::border_active, 1.0f);
+    auto preview_banner = container({
+        .color = Style::bg_input,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(Style::border_active, 1.0f),
+        .padding = StyleInsets::symmetric(12.0f, 18.0f),
+        .margin = StyleInsets::only(0, 0, 14.0f, 0),
+        .child = banner_row,
+    });
 
     auto c1_col = column({
         .children = std::move(col1)
@@ -971,10 +1022,12 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto inner_box = container(inner_text);
-    inner_box->padding(EdgeInsets::symmetric(12.0f, 20.0f))
-             .color(Style::accent_pink)
-             .borderRadius(8.0f);
+    auto inner_box = container({
+        .color = Style::accent_pink,
+        .border_radius = BorderRadius::circular(8.0f),
+        .padding = StyleInsets::symmetric(12.0f, 20.0f),
+        .child = inner_text,
+    });
 
     auto inner_gd = gestureDetector({
         .key = Key::string("inner_child_gd"),
@@ -1019,12 +1072,14 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
         .children = { outer_header, sizedBox(0, 6.0f), outer_desc, sizedBox(0, 16.0f), inner_gd }
     });
 
-    auto outer_box = container(outer_col);
-    outer_box->height(160.0f)
-             .paddingAll(18.0f)
-             .color(Style::bg_card_hover)
-             .borderRadius(14.0f)
-             .border(Style::primary_light, 1.0f);
+    auto outer_box = container({
+        .color = Style::bg_card_hover,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(Style::primary_light, 1.0f),
+        .height = StyleValue::point(160.0f),
+        .padding = StyleInsets::all(18.0f),
+        .child = outer_col,
+    });
 
     auto outer_gd = gestureDetector({
         .key = Key::string("outer_parent_gd"),
@@ -1047,10 +1102,12 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto toggle_btn = container(toggle_text);
-    toggle_btn->padding(EdgeInsets::symmetric(10.0f, 18.0f))
-              .color(Style::primary)
-              .borderRadius(8.0f);
+    auto toggle_btn = container({
+        .color = Style::primary,
+        .border_radius = BorderRadius::circular(8.0f),
+        .padding = StyleInsets::symmetric(10.0f, 18.0f),
+        .child = toggle_text,
+    });
 
     auto toggle_gd = gestureDetector({
         .key = Key::string("toggle_behavior_btn"),
@@ -1091,15 +1148,18 @@ WidgetPtr GestureDemoState::build(BuildContext&) {
         default: content_tab = buildTapsTab(); break;
     }
 
-    auto main_content = container(column({
-        .children = { buildHeader(), content_tab }
-    }));
-    main_content->paddingAll(20.0f)
-                .color(Style::bg_main);
+    auto main_content = container({
+        .color = Style::bg_main,
+        .padding = StyleInsets::all(20.0f),
+        .child = column({
+            .children = { buildHeader(), content_tab }
+        }),
+    });
 
-    auto divider = container();
-    divider->width(1.0f)
-           .color(Style::border_subtle);
+    auto divider = container({
+        .color = Style::border_subtle,
+        .width = StyleValue::point(1.0f),
+    });
 
     return row({
         .children = { buildSidebar(), divider, main_content }

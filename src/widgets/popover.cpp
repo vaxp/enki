@@ -278,8 +278,10 @@ public:
         active_popup_ = NativePopup::show(ctx, pop_opts, [pop_widget, dir](BuildContext& sub_ctx, std::shared_ptr<NativePopup>) {
             WidgetPtr inner_content = pop_widget->popover_builder(sub_ctx);
 
-            auto inner_container = container(inner_content);
-            inner_container->padding(pop_widget->options.padding);
+            auto inner_container = container({
+                .padding = StyleInsets::only(pop_widget->options.padding.top, pop_widget->options.padding.right, pop_widget->options.padding.bottom, pop_widget->options.padding.left),
+                .child = inner_content,
+            });
 
             return std::make_shared<PopoverBackgroundWidget>(pop_widget->options, dir, inner_container);
         });

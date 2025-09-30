@@ -253,8 +253,10 @@ std::shared_ptr<NativePopup> PopupWidget::show(
     return NativePopup::show(context, pop_opts, [options, popup_builder](BuildContext& sub_ctx, std::shared_ptr<NativePopup> popup) {
         WidgetPtr inner_content = popup_builder ? popup_builder(sub_ctx, popup) : nullptr;
 
-        auto inner_container = container(inner_content);
-        inner_container->padding(options.padding);
+        auto inner_container = container({
+            .padding = StyleInsets::only(options.padding.top, options.padding.right, options.padding.bottom, options.padding.left),
+            .child = inner_content,
+        });
 
         return std::make_shared<PopupBackgroundWidget>(options, inner_container);
     });
@@ -322,8 +324,10 @@ public:
         active_popup_ = NativePopup::show(ctx, pop_opts, [pop_widget](BuildContext& sub_ctx, std::shared_ptr<NativePopup> popup) {
             WidgetPtr inner_content = pop_widget->popup_builder ? pop_widget->popup_builder(sub_ctx, popup) : nullptr;
 
-            auto inner_container = container(inner_content);
-            inner_container->padding(pop_widget->options.padding);
+            auto inner_container = container({
+                .padding = StyleInsets::only(pop_widget->options.padding.top, pop_widget->options.padding.right, pop_widget->options.padding.bottom, pop_widget->options.padding.left),
+                .child = inner_content,
+            });
 
             return std::make_shared<PopupBackgroundWidget>(pop_widget->options, inner_container);
         });

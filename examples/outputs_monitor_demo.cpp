@@ -163,8 +163,12 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
             .font_size = 9.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto bc = container(b);
-        bc->padding(EdgeInsets::symmetric(2.0f, 7.0f)).color(0x2010B981).borderRadius(6.0f);
+        auto bc = container({
+            .color = 0x2010B981,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(2.0f, 7.0f),
+            .child = b,
+        });
         badge_row = bc;
     }
 
@@ -242,12 +246,14 @@ WidgetPtr MonitorDemoState::buildCard(const std::shared_ptr<Output>& out, int id
         .children = std::move(body_items),
     });
 
-    auto card_box = container(card_col);
-    card_box->width(360.0f)
-             .paddingAll(14.0f)
-             .color(Theme::bg_card)
-             .borderRadius(12.0f)
-             .border(selected ? Theme::border_active : Theme::border_subtle, selected ? 1.5f : 1.0f);
+    auto card_box = container({
+        .color = Theme::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(selected ? Theme::border_active : Theme::border_subtle, selected ? 1.5f : 1.0f),
+        .width = StyleValue::point(360.0f),
+        .padding = StyleInsets::all(14.0f),
+        .child = card_col,
+    });
 
     // Wrap in GestureDetector
     int cap_idx = idx;
@@ -308,12 +314,14 @@ WidgetPtr MonitorDemoState::buildModePanel(const std::shared_ptr<Output>& out) {
         .align_items = Align::Start,
         .children = std::move(rows),
     });
-    auto box = container(col);
-    box->width(260.0f)
-        .paddingAll(14.0f)
-        .color(Theme::bg_card)
-        .borderRadius(12.0f)
-        .border(Theme::border_subtle, 1.0f);
+    auto box = container({
+        .color = Theme::bg_card,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(Theme::border_subtle, 1.0f),
+        .width = StyleValue::point(260.0f),
+        .padding = StyleInsets::all(14.0f),
+        .child = col,
+    });
     return box;
 }
 
@@ -337,8 +345,13 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
             .color = Theme::text_muted,
             .font_size = 12.0f,
         });
-        auto empty_box = container(empty_label);
-        empty_box->width(360.0f).paddingAll(20.0f).color(Theme::bg_card).borderRadius(12.0f);
+        auto empty_box = container({
+            .color = Theme::bg_card,
+            .border_radius = BorderRadius::circular(12.0f),
+            .width = StyleValue::point(360.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = empty_label,
+        });
         cards.push_back(empty_box);
     } else {
         for (int i = 0; i < static_cast<int>(outputs.size()); ++i) {
@@ -364,8 +377,13 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
             .color = Theme::text_muted,
             .font_size = 12.0f,
         });
-        auto ph_box = container(ph);
-        ph_box->width(260.0f).paddingAll(20.0f).color(Theme::bg_card).borderRadius(12.0f);
+        auto ph_box = container({
+            .color = Theme::bg_card,
+            .border_radius = BorderRadius::circular(12.0f),
+            .width = StyleValue::point(260.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = ph,
+        });
         right_panel = ph_box;
     }
 
@@ -411,12 +429,14 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
         .align_items = Align::Center,
         .children = { log_label, count_label }
     });
-    auto status_box = container(status_inner);
-    status_box->width(680.0f)
-               .padding(EdgeInsets::symmetric(8.0f, 14.0f))
-               .color(Theme::bg_badge)
-               .borderRadius(8.0f)
-               .border(Theme::border_subtle, 1.0f);
+    auto status_box = container({
+        .color = Theme::bg_badge,
+        .border_radius = BorderRadius::circular(8.0f),
+        .border = Border(Theme::border_subtle, 1.0f),
+        .width = StyleValue::point(680.0f),
+        .padding = StyleInsets::symmetric(8.0f, 14.0f),
+        .child = status_inner,
+    });
 
     auto root_col = column({
         .justify_content = Justify::Start,
@@ -432,8 +452,11 @@ WidgetPtr MonitorDemoState::build(BuildContext&) {
         }
     });
 
-    auto root_box = container(root_col);
-    root_box->paddingAll(20.0f).color(Theme::bg_base);
+    auto root_box = container({
+        .color = Theme::bg_base,
+        .padding = StyleInsets::all(20.0f),
+        .child = root_col,
+    });
     return root_box;
 }
 

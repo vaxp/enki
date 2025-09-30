@@ -38,8 +38,10 @@ public:
         cells.reserve(raw_items.size());
 
         for (auto& item : raw_items) {
-            auto padded_item = container(item);
-            padded_item->padding(EdgeInsets::symmetric(row_gap / 2.0f, col_gap / 2.0f));
+            auto padded_item = container({
+                .padding = StyleInsets::symmetric(row_gap / 2.0f, col_gap / 2.0f),
+                .child = item,
+            });
 
             if (w->props.use_max_extent_delegate) {
                 // Max-extent: set basis to max extent, let Anu distribute
@@ -113,8 +115,10 @@ public:
         };
 
         if (adjusted_padding != EdgeInsets{}) {
-            auto pc = container(grid);
-            pc->padding(adjusted_padding);
+            auto pc = container({
+                .padding = StyleInsets::only(adjusted_padding.top, adjusted_padding.right, adjusted_padding.bottom, adjusted_padding.left),
+                .child = grid,
+            });
             content = pc;
         } else {
             content = grid;

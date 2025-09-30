@@ -228,9 +228,10 @@ WidgetPtr NavigatorState::build(BuildContext& ctx) {
     Color bg = w->options.background_color;
 
     if (stack_.empty()) {
-        auto bx = container();
-        bx->color(bg).flex(1.0f);
-        return bx;
+        return container({
+            .color = bg,
+            .flex = 1.0f,
+        });
     }
 
     std::vector<WidgetPtr> layers;
@@ -239,16 +240,19 @@ WidgetPtr NavigatorState::build(BuildContext& ctx) {
         WidgetPtr page_widget;
         if (ar.widget_cache) {
             // Wrap in fill container
-            auto page_box = container(ar.widget_cache);
-            page_box->flex(1.0f)
-                     .width(StyleValue::percent(100.0f))
-                     .height(StyleValue::percent(100.0f));
+            auto page_box = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+                .child = ar.widget_cache,
+            });
             page_widget = page_box;
         } else {
-            auto empty = container();
-            empty->flex(1.0f)
-                  .width(StyleValue::percent(100.0f))
-                  .height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+            });
             page_widget = empty;
         }
 
@@ -272,11 +276,13 @@ WidgetPtr NavigatorState::build(BuildContext& ctx) {
         .children = std::move(layers),
     };
 
-    auto root_box = container(root_stack);
-    root_box->color(bg)
-             .flex(1.0f)
-             .width(StyleValue::percent(100.0f))
-             .height(StyleValue::percent(100.0f));
+    auto root_box = container({
+        .color = bg,
+        .width = StyleValue::percent(100.0f),
+        .height = StyleValue::percent(100.0f),
+        .flex = 1.0f,
+        .child = root_stack,
+    });
     return root_box;
 }
 

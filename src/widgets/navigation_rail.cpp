@@ -64,10 +64,12 @@ public:
                 .color = opts.inactive_color,
                 .font_size = 14.0f,
             });
-            auto toggle_box = container(icon_t);
-            toggle_box->height(opts.header_height)
-                       .width(StyleValue::percent(100.0f))
-                       .align(Alignment::Center);
+            auto toggle_box = container({
+                .align = Alignment::Center,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(opts.header_height),
+                .child = icon_t,
+            });
 
             auto toggle_det = gestureDetector({
                 .child = toggle_box,
@@ -124,13 +126,15 @@ public:
 
             // Item container with indicator background
             Color bg_col = active ? opts.indicator_color : (hovered ? opts.hover_color : Colors::Transparent);
-            auto item_box = container(row_content);
-            item_box->color(bg_col)
-                     .borderRadius(opts.indicator_radius)
-                     .height(opts.item_height)
-                     .width(StyleValue::percent(100.0f))
-                     .paddingSymmetric(0.0f, 8.0f)
-                     .align(Alignment::CenterLeft);
+            auto item_box = container({
+                .color = bg_col,
+                .border_radius = BorderRadius::circular(opts.indicator_radius),
+                .align = Alignment::CenterLeft,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(opts.item_height),
+                .padding = StyleInsets::symmetric(0.0f, 8.0f),
+                .child = row_content,
+            });
 
             // Badge — shown inline (no absolute positioning needed here)
             WidgetPtr item_widget = item_box;
@@ -140,10 +144,12 @@ public:
                     .color = opts.badge_text_color,
                     .font_size = 9.0f,
                 });
-                auto badge_box = container(badge_t);
-                badge_box->color(opts.badge_color)
-                          .borderRadius(8.0f)
-                          .paddingSymmetric(1.0f, 4.0f);
+                auto badge_box = container({
+                    .color = opts.badge_color,
+                    .border_radius = BorderRadius::circular(8.0f),
+                    .padding = StyleInsets::symmetric(1.0f, 4.0f),
+                    .child = badge_t,
+                });
 
                 // Show badge next to item in a row
                 item_widget = row({
@@ -179,11 +185,13 @@ public:
         });
 
         // Rail container
-        auto rail = container(items_column);
-        rail->color(opts.background_color)
-             .width(cur_w)
-             .height(StyleValue::percent(100.0f))
-             .border(opts.border_color, opts.border_right_width);
+        auto rail = container({
+            .color = opts.background_color,
+            .border = Border(opts.border_color, opts.border_right_width),
+            .width = StyleValue::point(cur_w),
+            .height = StyleValue::percent(100.0f),
+            .child = items_column,
+        });
 
         return rail;
     }

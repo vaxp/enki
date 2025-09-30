@@ -124,8 +124,13 @@ public:
             .children = { col_s1, col_s2, col_s3, col_s4 }
         });
 
-        auto card_spinners = container(row_spinners);
-        card_spinners->color(0xFF1E293B).borderRadius(12.0f).paddingAll(24.0f).width(StyleValue::percent(100.0f));
+        auto card_spinners = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(12.0f),
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = row_spinners,
+        });
 
         // Interactive Controls
         auto size_txt = text({
@@ -166,8 +171,13 @@ public:
             .children = { size_txt, sz_slider, speed_txt, sp_slider }
         });
 
-        auto card_ctrl = container(col_controls);
-        card_ctrl->color(0xFF1E293B).borderRadius(12.0f).paddingAll(20.0f).width(StyleValue::percent(100.0f));
+        auto card_ctrl = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(12.0f),
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = col_controls,
+        });
 
         auto mainCol = column({
             .align_items = Align::Start,
@@ -175,10 +185,12 @@ public:
             .children = { header, card_spinners, card_ctrl }
         });
 
-        auto root = container(mainCol);
-        root->color(0xFF0F172A)
-            .paddingAll(30.0f)
-            .flexGrow(1.0f);
+        auto root = container({
+            .color = 0xFF0F172A,
+            .padding = StyleInsets::all(30.0f),
+            .flex_grow = 1.0f,
+            .child = mainCol,
+        });
 
         return root;
     }

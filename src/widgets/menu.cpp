@@ -176,8 +176,11 @@ private:
             std::vector<WidgetPtr> item_widgets;
             for (const auto& itm : items) {
                 if (itm.type == MenuItemType::Divider) {
-                    auto div = container();
-                    div->height(1.0f).color(opt.border_color).marginSymmetric(3.0f, 0);
+                    auto div = container({
+                        .color = opt.border_color,
+                        .height = StyleValue::point(1.0f),
+                        .margin = StyleInsets::symmetric(3.0f, 0.0f),
+                    });
                     item_widgets.push_back(div);
                 } else {
                     item_widgets.push_back(std::make_shared<MenuItemWidget>(itm, opt, sub_popup, close_all, nullptr));
@@ -189,8 +192,10 @@ private:
                 .children = std::move(item_widgets),
             });
 
-            auto inner = container(col);
-            inner->padding(opt.padding);
+            auto inner = container({
+                .padding = StyleInsets::only(opt.padding.top, opt.padding.right, opt.padding.bottom, opt.padding.left),
+                .child = col,
+            });
 
             return std::make_shared<MenuBackgroundWidget>(opt, inner);
         });
@@ -225,8 +230,11 @@ public:
             .font_weight = FontWeight::Bold,
         });
 
-        auto lead_box = container(lead_w);
-        lead_box->width(20.0f).align(Alignment::Center);
+        auto lead_box = container({
+            .align = Alignment::Center,
+            .width = StyleValue::point(20.0f),
+            .child = lead_w,
+        });
 
         // 2. Label Text
         Color lbl_color = itm.enabled ? (hovered_ ? 0xFFFFFFFF : opt.text_color) : opt.disabled_color;
@@ -263,11 +271,13 @@ public:
             .children = { item_row, trail_w },
         });
 
-        auto box = container(full_row);
         Color item_bg = (hovered_ && itm.enabled) ? opt.item_hover_color : 0x00000000;
-        box->color(item_bg)
-           .borderRadius(5.0f)
-           .paddingSymmetric(5.0f, 8.0f);
+        auto box = container({
+            .color = item_bg,
+            .border_radius = BorderRadius::circular(5.0f),
+            .padding = StyleInsets::symmetric(5.0f, 8.0f),
+            .child = full_row,
+        });
 
         return gestureDetector({
             .child = box,
@@ -351,11 +361,13 @@ public:
             .font_weight = FontWeight::Bold,
         });
 
-        auto box = container(label_w);
         Color bg = btn->is_active ? btn->options.item_hover_color : (hovered_ ? 0x30FFFFFF : 0x00000000);
-        box->color(bg)
-           .borderRadius(6.0f)
-           .paddingSymmetric(5.0f, 10.0f);
+        auto box = container({
+            .color = bg,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(5.0f, 10.0f),
+            .child = label_w,
+        });
 
         return gestureDetector({
             .child = box,
@@ -459,8 +471,11 @@ private:
             std::vector<WidgetPtr> item_widgets;
             for (const auto& itm : items) {
                 if (itm.type == MenuItemType::Divider) {
-                    auto div = container();
-                    div->height(1.0f).color(opt.border_color).marginSymmetric(3.0f, 0);
+                    auto div = container({
+                        .color = opt.border_color,
+                        .height = StyleValue::point(1.0f),
+                        .margin = StyleInsets::symmetric(3.0f, 0.0f),
+                    });
                     item_widgets.push_back(div);
                 } else {
                     item_widgets.push_back(std::make_shared<MenuItemWidget>(
@@ -476,8 +491,10 @@ private:
                 .children = std::move(item_widgets),
             });
 
-            auto inner = container(col);
-            inner->padding(opt.padding);
+            auto inner = container({
+                .padding = StyleInsets::only(opt.padding.top, opt.padding.right, opt.padding.bottom, opt.padding.left),
+                .child = col,
+            });
 
             return std::make_shared<MenuBackgroundWidget>(opt, inner);
         });
@@ -517,11 +534,18 @@ public:
             .children = std::move(btn_widgets),
         });
 
-        auto bar_box = container(bar_row);
-        bar_box->color(bar->options.background_color)
-               .borderRadius(bar->options.border_radius)
-               .border(bar->options.border_color, bar->options.border_width)
-               .paddingSymmetric(4.0f, 8.0f);
+        std::optional<Border> bar_border;
+        if (bar->options.border_width > 0.0f) {
+            bar_border = Border(bar->options.border_color, bar->options.border_width);
+        }
+
+        auto bar_box = container({
+            .color = bar->options.background_color,
+            .border_radius = BorderRadius::circular(bar->options.border_radius),
+            .border = bar_border,
+            .padding = StyleInsets::symmetric(4.0f, 8.0f),
+            .child = bar_row,
+        });
 
         return bar_box;
     }
@@ -577,8 +601,11 @@ private:
             std::vector<WidgetPtr> item_widgets;
             for (const auto& itm : items) {
                 if (itm.type == MenuItemType::Divider) {
-                    auto div = container();
-                    div->height(1.0f).color(opt.border_color).marginSymmetric(3.0f, 0);
+                    auto div = container({
+                        .color = opt.border_color,
+                        .height = StyleValue::point(1.0f),
+                        .margin = StyleInsets::symmetric(3.0f, 0.0f),
+                    });
                     item_widgets.push_back(div);
                 } else {
                     item_widgets.push_back(std::make_shared<MenuItemWidget>(
@@ -599,8 +626,10 @@ private:
                 .children = std::move(item_widgets),
             });
 
-            auto inner = container(col);
-            inner->padding(opt.padding);
+            auto inner = container({
+                .padding = StyleInsets::only(opt.padding.top, opt.padding.right, opt.padding.bottom, opt.padding.left),
+                .child = col,
+            });
 
             return std::make_shared<MenuBackgroundWidget>(opt, inner);
         });

@@ -101,48 +101,66 @@ public:
                             .align_items = Align::Stretch,
                             .gap = StyleValue::point(8.0f),
                             .children = {
-                                container({ .padding = StyleInsets::symmetric(8.0f, 6.0f) }, column({
-                                    .align_items = Align::Center, .gap = StyleValue::point(6.0f),
-                                    .children = {
-                                        text("Default", { .color = 0xFF64748B, .font_size = 10.0f }),
-                                        VerticalDivider { .height = 20.0f, .thickness = 1.0f, .color = 0xFF334155 }
-                                    }
-                                })),
-                                container({ .padding = StyleInsets::symmetric(8.0f, 6.0f) }, column({
-                                    .align_items = Align::Center, .gap = StyleValue::point(6.0f),
-                                    .children = {
-                                        text("Sky-400", { .color = 0xFF64748B, .font_size = 10.0f }),
-                                        VerticalDivider { .height = 20.0f, .thickness = 2.0f, .color = 0xFF38BDF8 }
-                                    }
-                                })),
-                                container({ .padding = StyleInsets::symmetric(8.0f, 6.0f) }, column({
-                                    .align_items = Align::Center, .gap = StyleValue::point(6.0f),
-                                    .children = {
-                                        text("Dashed", { .color = 0xFF64748B, .font_size = 10.0f }),
-                                        VerticalDivider { .height = 20.0f, .thickness = 1.5f, .color = 0xFF8B5CF6, .style = DividerStyle::Dashed, .dash_length = 8.0f, .dash_gap = 4.0f }
-                                    }
-                                })),
-                                container({ .padding = StyleInsets::symmetric(8.0f, 6.0f) }, column({
-                                    .align_items = Align::Center, .gap = StyleValue::point(6.0f),
-                                    .children = {
-                                        text("Dotted", { .color = 0xFF64748B, .font_size = 10.0f }),
-                                        VerticalDivider { .height = 20.0f, .thickness = 3.0f, .color = 0xFFF59E0B, .style = DividerStyle::Dotted, .dash_gap = 5.0f }
-                                    }
-                                })),
-                                container({ .padding = StyleInsets::symmetric(8.0f, 6.0f) }, column({
-                                    .align_items = Align::Center, .gap = StyleValue::point(6.0f),
-                                    .children = {
-                                        text("Gradient", { .color = 0xFF64748B, .font_size = 10.0f }),
-                                        VerticalDivider { .height = 20.0f, .thickness = 2.0f, .color = 0xFF10B981, .style = DividerStyle::Gradient }
-                                    }
-                                })),
-                                container({ .padding = StyleInsets::symmetric(8.0f, 6.0f) }, column({
-                                    .align_items = Align::Center, .gap = StyleValue::point(6.0f),
-                                    .children = {
-                                        text("Rounded", { .color = 0xFF64748B, .font_size = 10.0f }),
-                                        VerticalDivider { .height = 20.0f, .thickness = 4.0f, .color = 0xFFEC4899, .style = DividerStyle::Dashed, .dash_length = 10.0f, .dash_gap = 5.0f, .round_caps = true }
-                                    }
-                                }))
+                                container({
+                                    .padding = StyleInsets::symmetric(8.0f, 6.0f),
+                                    .child = column({
+                                        .align_items = Align::Center, .gap = StyleValue::point(6.0f),
+                                        .children = {
+                                            text("Default", { .color = 0xFF64748B, .font_size = 10.0f }),
+                                            VerticalDivider { .height = 20.0f, .thickness = 1.0f, .color = 0xFF334155 }
+                                        }
+                                    }),
+                                }),
+                                container({
+                                    .padding = StyleInsets::symmetric(8.0f, 6.0f),
+                                    .child = column({
+                                        .align_items = Align::Center, .gap = StyleValue::point(6.0f),
+                                        .children = {
+                                            text("Sky-400", { .color = 0xFF64748B, .font_size = 10.0f }),
+                                            VerticalDivider { .height = 20.0f, .thickness = 2.0f, .color = 0xFF38BDF8 }
+                                        }
+                                    }),
+                                }),
+                                container({
+                                    .padding = StyleInsets::symmetric(8.0f, 6.0f),
+                                    .child = column({
+                                        .align_items = Align::Center, .gap = StyleValue::point(6.0f),
+                                        .children = {
+                                            text("Dashed", { .color = 0xFF64748B, .font_size = 10.0f }),
+                                            VerticalDivider { .height = 20.0f, .thickness = 1.5f, .color = 0xFF8B5CF6, .style = DividerStyle::Dashed, .dash_length = 8.0f, .dash_gap = 4.0f }
+                                        }
+                                    }),
+                                }),
+                                container({
+                                    .padding = StyleInsets::symmetric(8.0f, 6.0f),
+                                    .child = column({
+                                        .align_items = Align::Center, .gap = StyleValue::point(6.0f),
+                                        .children = {
+                                            text("Dotted", { .color = 0xFF64748B, .font_size = 10.0f }),
+                                            VerticalDivider { .height = 20.0f, .thickness = 3.0f, .color = 0xFFF59E0B, .style = DividerStyle::Dotted, .dash_gap = 5.0f }
+                                        }
+                                    }),
+                                }),
+                                container({
+                                    .padding = StyleInsets::symmetric(8.0f, 6.0f),
+                                    .child = column({
+                                        .align_items = Align::Center, .gap = StyleValue::point(6.0f),
+                                        .children = {
+                                            text("Gradient", { .color = 0xFF64748B, .font_size = 10.0f }),
+                                            VerticalDivider { .height = 20.0f, .thickness = 2.0f, .color = 0xFF10B981, .style = DividerStyle::Gradient }
+                                        }
+                                    }),
+                                }),
+                                container({
+                                    .padding = StyleInsets::symmetric(8.0f, 6.0f),
+                                    .child = column({
+                                        .align_items = Align::Center, .gap = StyleValue::point(6.0f),
+                                        .children = {
+                                            text("Rounded", { .color = 0xFF64748B, .font_size = 10.0f }),
+                                            VerticalDivider { .height = 20.0f, .thickness = 4.0f, .color = 0xFFEC4899, .style = DividerStyle::Dashed, .dash_length = 10.0f, .dash_gap = 5.0f, .round_caps = true }
+                                        }
+                                    }),
+                                })
                             }
                         })
                     })

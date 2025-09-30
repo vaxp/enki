@@ -207,10 +207,12 @@ public:
             .font_size = 13.0f,
         });
 
-        auto btn_w = container(txt);
-        btn_w->paddingSymmetric(6.0f, 10.0f)
-             .color(0x00000000)
-             .borderRadius(6.0f);
+        auto btn_w = container({
+            .color = 0x00000000,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(6.0f, 10.0f),
+            .child = txt,
+        });
 
         return gestureDetector({
             .child = btn_w,
@@ -244,10 +246,12 @@ public:
             .children = std::move(sidebar_items),
         });
 
-        auto sidebar = container(sidebar_col);
-        sidebar->color(opt.sidebar_color)
-               .paddingAll(12.0f)
-               .width(160.0f);
+        auto sidebar = container({
+            .color = opt.sidebar_color,
+            .width = StyleValue::point(160.0f),
+            .padding = StyleInsets::all(12.0f),
+            .child = sidebar_col,
+        });
 
         // 2. Header Bar (Path Breadcrumb & Mode title)
         std::string mode_title = "Open File";
@@ -273,9 +277,11 @@ public:
             .children = { header_title, current_path_txt },
         });
 
-        auto header_box = container(header_col);
-        header_box->paddingSymmetric(8.0f, 12.0f)
-                  .margin(StyleInsets::only(0, 0, 8.0f, 0));
+        auto header_box = container({
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .margin = StyleInsets::only(0, 0, 8.0f, 0),
+            .child = header_col,
+        });
 
         // 3. File Entries List View
         std::vector<WidgetPtr> entry_widgets;
@@ -293,10 +299,12 @@ public:
 
             Color bg_col = (selected_path_ == entry.path) ? 0xFF1E3A8A : 0x00000000;
 
-            auto entry_box = container(entry_lbl);
-            entry_box->paddingSymmetric(6.0f, 10.0f)
-                     .color(bg_col)
-                     .borderRadius(4.0f);
+            auto entry_box = container({
+                .color = bg_col,
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(6.0f, 10.0f),
+                .child = entry_lbl,
+            });
 
             auto gesture = gestureDetector({
                 .child = entry_box,
@@ -327,9 +335,11 @@ public:
         if (content_h < 200.0f) content_h = 200.0f;
 
         auto scroll_view = scrollView(s_opt, files_col);
-        auto files_scroll = container(scroll_view);
-        files_scroll->height(content_h)
-                    .paddingAll(4.0f);
+        auto files_scroll = container({
+            .height = StyleValue::point(content_h),
+            .padding = StyleInsets::all(4.0f),
+            .child = scroll_view,
+        });
 
         // 4. Bottom Action Bar (Cancel & Confirm buttons)
         auto cancel_lbl = text({
@@ -383,8 +393,10 @@ public:
             .children = std::move(actions_children),
         });
 
-        auto actions_box = container(actions_row);
-        actions_box->paddingAll(8.0f);
+        auto actions_box = container({
+            .padding = StyleInsets::all(8.0f),
+            .child = actions_row,
+        });
 
         // Right Main Content Assembly
         std::vector<WidgetPtr> right_col_children;

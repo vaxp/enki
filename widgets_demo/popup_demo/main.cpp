@@ -67,11 +67,13 @@ public:
             .children = std::move(items),
         });
 
-        auto box = container(content_row);
-        box->color(hovered_ ? btn->hover_color : btn->bg_color)
-           .borderRadius(8.0f)
-           .border(0xFF475569, 1.0f)
-           .paddingSymmetric(10.0f, 16.0f);
+        auto box = container({
+            .color = hovered_ ? btn->hover_color : btn->bg_color,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(0xFF475569, 1.0f),
+            .padding = StyleInsets::symmetric(10.0f, 16.0f),
+            .child = content_row,
+        });
 
         return gestureDetector({
             .child = box,

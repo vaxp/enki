@@ -30,35 +30,46 @@ WidgetPtr AvatarWidget::build(BuildContext& ctx) {
             .font_weight = FontWeight::Bold,
         });
         
-        auto center_box = container(text_widget);
-        center_box->align(Alignment::Center)
-                  .width(diameter).height(diameter);
-        content = center_box;
+        content = container({
+            .align = Alignment::Center,
+            .width = StyleValue::point(diameter),
+            .height = StyleValue::point(diameter),
+            .child = text_widget,
+        });
     }
 
     // 2. Wrap in clipped container (the circle)
-    auto bg_container = container(content);
-    bg_container->width(diameter).height(diameter)
-                .borderRadius(options.radius)
-                .color(options.background_color)
-                .align(Alignment::Center)
-                .clip(true); // Ensure content doesn't bleed out of border radius
-
+    std::optional<Border> avatar_border;
     if (options.border_width > 0.0f) {
-        bg_container->border(options.border_color, options.border_width);
+        avatar_border = Border(options.border_color, options.border_width);
     }
-    
+
+    std::vector<BoxShadow> avatar_shadows;
     if (options.shadow_blur > 0.0f) {
-        bg_container->shadow(options.shadow_color, {0.0f, options.shadow_blur / 2.0f}, options.shadow_blur);
+        avatar_shadows.emplace_back(options.shadow_color, Point{0.0f, options.shadow_blur / 2.0f}, options.shadow_blur);
     }
+
+    auto bg_container = container({
+        .color = options.background_color,
+        .border_radius = BorderRadius::circular(options.radius),
+        .border = avatar_border,
+        .box_shadow = std::move(avatar_shadows),
+        .clip_content = true,
+        .align = Alignment::Center,
+        .width = StyleValue::point(diameter),
+        .height = StyleValue::point(diameter),
+        .child = content,
+    });
 
     // 3. Add Status Badge if enabled
     if (options.show_badge) {
-        auto badge = container(nullptr);
-        badge->width(options.badge_size).height(options.badge_size)
-             .borderRadius(options.badge_size / 2.0f)
-             .color(options.badge_color)
-             .border(options.badge_border_color, options.badge_border_width);
+        auto badge = container({
+            .color = options.badge_color,
+            .border_radius = BorderRadius::circular(options.badge_size / 2.0f),
+            .border = Border(options.badge_border_color, options.badge_border_width),
+            .width = StyleValue::point(options.badge_size),
+            .height = StyleValue::point(options.badge_size),
+        });
              
         float offset = options.radius * 0.146f;
         auto pos_badge = Positioned {
@@ -77,9 +88,10 @@ WidgetPtr AvatarWidget::build(BuildContext& ctx) {
 
 WidgetPtr AvatarGroupWidget::build(BuildContext& ctx) {
     if (avatars.empty()) {
-        auto empty_box = container(nullptr);
-        empty_box->width(0).height(0);
-        return empty_box;
+        return container({
+            .width = StyleValue::point(0.0f),
+            .height = StyleValue::point(0.0f),
+        });
     }
 
     std::vector<WidgetPtr> stack_children;

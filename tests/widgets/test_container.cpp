@@ -50,8 +50,10 @@ inline std::shared_ptr<FixedBox> fixedBox(float w, float h) {
 void test_container_sizing() {
     std::cout << "Testing Container Sizing & Layout..." << std::endl;
 
-    auto c = container();
-    c->size(250.0f, 120.0f);
+    auto c = container({
+        .width = 250.0f,
+        .height = 120.0f,
+    });
 
     auto el = c->createElement();
     el->mount(nullptr, 0);
@@ -74,9 +76,11 @@ void test_container_padding_margin() {
     std::cout << "Testing Container Padding & Margin..." << std::endl;
 
     auto child = fixedBox(100.0f, 50.0f);
-    auto c = container(child);
-    c->padding(EdgeInsets::all(20.0f));
-    c->margin(EdgeInsets::only(10.0f, 0.0f, 0.0f, 15.0f)); // top=10, left=15
+    auto c = container({
+        .padding = StyleInsets::all(20.0f),
+        .margin = StyleInsets::only(10.0f, 0.0f, 0.0f, 15.0f), // top=10, left=15
+        .child = child,
+    });
 
     auto el = c->createElement();
     el->mount(nullptr, 0);
@@ -91,7 +95,6 @@ void test_container_padding_margin() {
         std::cout << "child size: " << rdb->children()[0]->size().width << "x" << rdb->children()[0]->size().height << ", offset: " << rdb->children()[0]->offset().x << ", " << rdb->children()[0]->offset().y << std::endl;
     }
 
-
     std::cout << "  ✓ Padding & Margin passed." << std::endl;
 }
 
@@ -103,9 +106,12 @@ void test_container_alignment() {
 
     // Center alignment in a 300x200 container with a 100x60 child
     {
-        auto c = container(fixedBox(100.0f, 60.0f));
-        c->size(300.0f, 200.0f);
-        c->align(Alignment::Center);
+        auto c = container({
+            .align = Alignment::Center,
+            .width = 300.0f,
+            .height = 200.0f,
+            .child = fixedBox(100.0f, 60.0f),
+        });
 
         auto el = c->createElement();
         el->mount(nullptr, 0);
@@ -119,9 +125,12 @@ void test_container_alignment() {
 
     // BottomRight alignment
     {
-        auto c = container(fixedBox(100.0f, 60.0f));
-        c->size(300.0f, 200.0f);
-        c->align(Alignment::BottomRight);
+        auto c = container({
+            .align = Alignment::BottomRight,
+            .width = 300.0f,
+            .height = 200.0f,
+            .child = fixedBox(100.0f, 60.0f),
+        });
 
         auto el = c->createElement();
         el->mount(nullptr, 0);
@@ -144,9 +153,10 @@ void test_container_constraints() {
 
     // Aspect ratio 16:9 = 1.7778 inside flex layout
     {
-        auto c = container();
-        c->width(320_px);
-        c->aspectRatio(16.0f / 9.0f);
+        auto c = container({
+            .width = 320_px,
+            .aspect_ratio = 16.0f / 9.0f,
+        });
 
         auto root = column({
             .children = { c }
@@ -165,9 +175,11 @@ void test_container_constraints() {
 
     // Min & Max constraints inside flex layout
     {
-        auto c = container(fixedBox(50.0f, 50.0f));
-        c->minWidth(120_px);
-        c->minHeight(100_px);
+        auto c = container({
+            .min_width = 120_px,
+            .min_height = 100_px,
+            .child = fixedBox(50.0f, 50.0f),
+        });
 
         auto root = row({
             .align_items = Align::Start,
@@ -193,20 +205,23 @@ void test_container_constraints() {
 void test_box_decoration() {
     std::cout << "Testing BoxDecoration Properties..." << std::endl;
 
-    auto c = container();
-    c->color(0xFF1E88E5)
-     .borderRadius(16.0f)
-     .border(0xFFFFFFFF, 2.0f)
-     .shadow(0x80000000, {0, 8}, 16, 2)
-     .clip(true);
+    auto c = container({
+        .color = 0xFF1E88E5,
+        .border_radius = BorderRadius::circular(16.0f),
+        .border = Border(0xFFFFFFFF, 2.0f),
+        .box_shadow = {BoxShadow(0x80000000, {0, 8}, 16, 2)},
+        .clip_content = true,
+    });
 
-    assert(c->decoration.color == 0xFF1E88E5);
-    assert(c->decoration.border_radius.top_left == 16.0f);
-    assert(c->decoration.border.has_value());
-    assert(c->decoration.border->width == 2.0f);
-    assert(c->decoration.box_shadow.size() == 1);
-    assert(c->decoration.box_shadow[0].blur_radius == 16.0f);
-    assert(c->decoration.clip_content == true);
+    auto cw = std::dynamic_pointer_cast<ContainerWidget>(c);
+    assert(cw != nullptr);
+    assert(cw->decoration.color == 0xFF1E88E5);
+    assert(cw->decoration.border_radius.top_left == 16.0f);
+    assert(cw->decoration.border.has_value());
+    assert(cw->decoration.border->width == 2.0f);
+    assert(cw->decoration.box_shadow.size() == 1);
+    assert(cw->decoration.box_shadow[0].blur_radius == 16.0f);
+    assert(cw->decoration.clip_content == true);
 
     std::cout << "  ✓ BoxDecoration passed." << std::endl;
 }
@@ -219,8 +234,10 @@ void test_hit_testing() {
 
     // Rectangle Hit Test
     {
-        auto c = container();
-        c->size(100.0f, 100.0f);
+        auto c = container({
+            .width = 100.0f,
+            .height = 100.0f,
+        });
         auto el = c->createElement();
         el->mount(nullptr, 0);
         auto* rdb = dynamic_cast<RenderDecoratedBox*>(el->findRenderObject());
@@ -234,9 +251,11 @@ void test_hit_testing() {
 
     // Circular Hit Test
     {
-        auto c = container();
-        c->size(100.0f, 100.0f);
-        c->shape(BoxShape::Circle);
+        auto c = container({
+            .shape = BoxShape::Circle,
+            .width = 100.0f,
+            .height = 100.0f,
+        });
         auto el = c->createElement();
         el->mount(nullptr, 0);
         auto* rdb = dynamic_cast<RenderDecoratedBox*>(el->findRenderObject());
@@ -268,14 +287,16 @@ void test_painting_pipeline() {
 
     PaintContext ctx{*canvas, {20.0f, 20.0f}, Rect{0, 0, 400, 400}, 1.0f};
 
-    // Container with Gradient, Shadows, Borders, and Rounded Corners
-    auto c = container(fixedBox(80.0f, 40.0f));
-    c->size(200.0f, 100.0f);
-    c->gradient(GradientConfig::linear({0xFFFF0055, 0xFF0077FE}));
-    c->borderRadius(20.0f);
-    c->border(0xFFFFFFFF, 3.0f);
-    c->shadow(0x40000000, {0, 6}, 12, 1);
-    c->clip(true);
+    // Container with Shadows, Borders, and Rounded Corners
+    auto c = container({
+        .border_radius = BorderRadius::circular(20.0f),
+        .border = Border(0xFFFFFFFF, 3.0f),
+        .box_shadow = {BoxShadow(0x40000000, {0, 6}, 12, 1)},
+        .clip_content = true,
+        .width = 200.0f,
+        .height = 100.0f,
+        .child = fixedBox(80.0f, 40.0f),
+    });
 
     auto el = c->createElement();
     el->mount(nullptr, 0);
@@ -297,13 +318,13 @@ void test_property_leakage_and_reconciliation() {
 
     // 1. Initial container with explicit width, height, margin, padding, color
     auto c1 = container({
-        fixedBox(50.0f, 50.0f)
+        .color = 0xFFFF0000,
+        .width = 300_px,
+        .height = 200_px,
+        .padding = StyleInsets::all(15_px),
+        .margin = StyleInsets::all(25_px),
+        .child = fixedBox(50.0f, 50.0f),
     });
-    c1->width(300_px)
-      .height(200_px)
-      .margin(StyleInsets::all(25_px))
-      .padding(StyleInsets::all(15_px))
-      .color(0xFFFF0000);
 
     auto parent = column({
         .width = 500_px,
@@ -326,9 +347,9 @@ void test_property_leakage_and_reconciliation() {
 
     // 2. Update with c2 having NO margin, NO padding, NO fixed size, and different color
     auto c2 = container({
-        fixedBox(80.0f, 40.0f)
+        .color = 0xFF00FF00,
+        .child = fixedBox(80.0f, 40.0f),
     });
-    c2->color(0xFF00FF00); // Clean container, defaults should apply
 
     auto parent2 = column({
         .width = 500_px,

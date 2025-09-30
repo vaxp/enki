@@ -151,12 +151,17 @@ public:
         // ── Body ───────────────────────────────────────────────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->flex(1.0f).height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .height = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+                .child = w->body,
+            });
             body_widget = bx;
         } else {
-            auto empty = container();
-            empty->flex(1.0f).height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .height = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+            });
             body_widget = empty;
         }
 
@@ -190,8 +195,10 @@ public:
         // Build drawer content
         std::vector<WidgetPtr> drawer_kids;
         if (w->drawer_content) {
-            auto dc = container(w->drawer_content);
-            dc->flex(1.0f);
+            auto dc = container({
+                .flex = 1.0f,
+                .child = w->drawer_content,
+            });
             drawer_kids.push_back(dc);
         }
         auto drawer_col = column({
@@ -199,26 +206,31 @@ public:
             .children = std::move(drawer_kids),
         });
 
-        auto drawer_box = container(drawer_col);
-        drawer_box->color(opts.background_color)
-                   .width(drawer_width)
-                   .height(StyleValue::percent(100.0f))
-                   .clip(true);
-
+        std::optional<BorderRadius> drawer_radius;
         if (opts.border_radius > 0.0f) {
-            drawer_box->borderRadius(BorderRadius::only(
+            drawer_radius = BorderRadius::only(
                 opts.side == DrawerSide::Left ? 0.0f : opts.border_radius,
                 opts.side == DrawerSide::Left ? opts.border_radius : 0.0f,
                 opts.side == DrawerSide::Left ? opts.border_radius : 0.0f,
                 opts.side == DrawerSide::Left ? 0.0f : opts.border_radius
-            ));
+            );
         }
 
-        // Shadow on drawer panel
+        std::vector<BoxShadow> drawer_shadows;
         if (opts.shadow_blur > 0.0f) {
             float sdx = opts.side == DrawerSide::Left ? 4.0f : -4.0f;
-            drawer_box->shadow(BoxShadow(opts.shadow_color, {sdx, 0.0f}, opts.shadow_blur));
+            drawer_shadows.emplace_back(opts.shadow_color, Point{sdx, 0.0f}, opts.shadow_blur);
         }
+
+        auto drawer_box = container({
+            .color = opts.background_color,
+            .border_radius = drawer_radius,
+            .box_shadow = std::move(drawer_shadows),
+            .clip_content = true,
+            .width = StyleValue::point(drawer_width),
+            .height = StyleValue::percent(100.0f),
+            .child = drawer_col,
+        });
 
         // Position the drawer absolutely within the stack
         WidgetPtr positioned_drawer;

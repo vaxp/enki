@@ -133,8 +133,14 @@ public:
             .width = StyleValue::percent(100.0f),
             .children = {up_txt},
         });
-        auto up_box = container(up_row);
-        up_box->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f).width(54.0f);
+        auto up_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(4.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(54.0f),
+            .padding = StyleInsets::symmetric(4.0f, 10.0f),
+            .child = up_row,
+        });
         auto up_gd = gestureDetector({
             .child = up_box,
             .cursor_type = SystemCursor::Pointer,
@@ -154,8 +160,14 @@ public:
             .width = StyleValue::percent(100.0f),
             .children = {val_txt},
         });
-        auto val_box = container(val_row);
-        val_box->color(0xFF0F172A).border(0xFF0284C7, 1.5f).borderRadius(6.0f).paddingSymmetric(8.0f, 6.0f).width(54.0f);
+        auto val_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF0284C7, 1.5f),
+            .width = StyleValue::point(54.0f),
+            .padding = StyleInsets::symmetric(8.0f, 6.0f),
+            .child = val_row,
+        });
 
         // Down arrow button
         auto down_txt = text({
@@ -169,8 +181,14 @@ public:
             .width = StyleValue::percent(100.0f),
             .children = {down_txt},
         });
-        auto down_box = container(down_row);
-        down_box->color(0xFF0F172A).border(0xFF334155, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f).width(54.0f);
+        auto down_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(4.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(54.0f),
+            .padding = StyleInsets::symmetric(4.0f, 10.0f),
+            .child = down_row,
+        });
         auto down_gd = gestureDetector({
             .child = down_box,
             .cursor_type = SystemCursor::Pointer,
@@ -215,12 +233,14 @@ public:
                 .children = {t},
             });
 
-            auto b = container(r);
-            b->color(active ? 0xFF0284C7 : 0xFF0F172A)
-             .border(active ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-             .borderRadius(6.0f)
-             .paddingSymmetric(10.0f, 12.0f)
-             .width(52.0f);
+            auto b = container({
+                .color = active ? 0xFF0284C7 : 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(active ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+                .width = StyleValue::point(52.0f),
+                .padding = StyleInsets::symmetric(10.0f, 12.0f),
+                .child = r,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -249,8 +269,12 @@ public:
                 .color = 0xFF38BDF8,
                 .font_size = 11.0f,
             });
-            auto b = container(t);
-            b->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(4.0f, 8.0f);
+            auto b = container({
+                .color = 0xFF0F172A,
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                .child = t,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -306,8 +330,10 @@ public:
             .font_size = 22.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto colon_box1 = container(colon_txt1);
-        colon_box1->paddingSymmetric(18.0f, 4.0f);
+        auto colon_box1 = container({
+            .padding = StyleInsets::symmetric(18.0f, 4.0f),
+            .child = colon_txt1,
+        });
 
         auto col_min = buildStepperColumn(ss_m.str(), "MINUTE",
             [this] { stepMinute(1); },
@@ -322,8 +348,10 @@ public:
                 .font_size = 22.0f,
                 .font_weight = FontWeight::Bold,
             });
-            auto colon_box2 = container(colon_txt2);
-            colon_box2->paddingSymmetric(18.0f, 4.0f);
+            auto colon_box2 = container({
+                .padding = StyleInsets::symmetric(18.0f, 4.0f),
+                .child = colon_txt2,
+            });
 
             auto col_sec = buildStepperColumn(ss_s.str(), "SECOND",
                 [this] { stepSecond(1); },
@@ -334,8 +362,12 @@ public:
         }
 
         if (!is_24h) {
-            auto div_v = container();
-            div_v->color(0xFF334155).width(1.0f).height(74.0f).paddingSymmetric(0.0f, 6.0f);
+            auto div_v = container({
+                .color = 0xFF334155,
+                .width = StyleValue::point(1.0f),
+                .height = StyleValue::point(74.0f),
+                .padding = StyleInsets::symmetric(0.0f, 6.0f),
+            });
             stepper_items.push_back(div_v);
             stepper_items.push_back(buildAmPmSwitch());
         }
@@ -350,8 +382,11 @@ public:
         std::vector<WidgetPtr> card_items = {t_title, steppers_row};
 
         if (opts.show_quick_presets) {
-            auto div_h = container();
-            div_h->color(0xFF334155).height(1.0f).width(StyleValue::percent(100.0f));
+            auto div_h = container({
+                .color = 0xFF334155,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+            });
             card_items.push_back(div_h);
             card_items.push_back(buildQuickPresets());
         }
@@ -362,12 +397,14 @@ public:
             .children = std::move(card_items),
         });
 
-        auto card_box = container(card_col);
-        card_box->color(opts.background_color)
-                .border(opts.border_color, 1.0f)
-                .borderRadius(10.0f)
-                .paddingAll(16.0f)
-                .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f));
+        auto card_box = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)},
+            .padding = StyleInsets::all(16.0f),
+            .child = card_col,
+        });
 
         return card_box;
     }
@@ -408,12 +445,14 @@ public:
             .children = {input_txt, chev_txt},
         });
 
-        auto input_box = container(in_row);
-        input_box->color(0xFF1E293B)
-                 .border(is_popup_open_ ? opts.active_color : opts.border_color, 1.0f)
-                 .borderRadius(8.0f)
-                 .paddingSymmetric(10.0f, 14.0f)
-                 .width(280.0f);
+        auto input_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(is_popup_open_ ? opts.active_color : opts.border_color, 1.0f),
+            .width = StyleValue::point(280.0f),
+            .padding = StyleInsets::symmetric(10.0f, 14.0f),
+            .child = in_row,
+        });
 
         auto input_gd = gestureDetector({
             .child = input_box,

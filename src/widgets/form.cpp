@@ -157,17 +157,14 @@ public:
 
         auto tf = std::make_shared<TextFieldWidget>(controller_, tf_opts);
 
-        auto tf_box = container(tf);
-        tf_box->color(0xFF0F172A)
-              .borderRadius(8.0f)
-              .paddingSymmetric(4.0f, 10.0f)
-              .width(opts.width);
-
-        if (!error_text_.empty()) {
-            tf_box->border(0xFFEF4444, 1.5f);
-        } else {
-            tf_box->border(0xFF334155, 1.0f);
-        }
+        auto tf_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = !error_text_.empty() ? Border(0xFFEF4444, 1.5f) : Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(opts.width),
+            .padding = StyleInsets::symmetric(4.0f, 10.0f),
+            .child = tf,
+        });
 
         col_items.push_back(tf_box);
 

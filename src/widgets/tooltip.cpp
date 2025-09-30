@@ -339,9 +339,11 @@ public:
             msg_content = tooltip_widget->rich_message;
         }
 
-        auto inner = container(msg_content);
-        inner->padding(tooltip_widget->options.padding)
-             .align(Alignment::Center);
+        auto inner = container({
+            .align = Alignment::Center,
+            .padding = StyleInsets::only(tooltip_widget->options.padding.top, tooltip_widget->options.padding.right, tooltip_widget->options.padding.bottom, tooltip_widget->options.padding.left),
+            .child = msg_content,
+        });
 
         WidgetPtr body = std::make_shared<TooltipBackgroundWidget>(
             tooltip_widget->options, position, inner

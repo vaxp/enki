@@ -853,9 +853,11 @@ public:
                         .color = 0xFF64748B,
                         .font_size = 11.0f,
                         .font_weight = FontWeight::Bold,
-                });
-                    auto cat_box = container(cat_txt);
-                    cat_box->paddingSymmetric(4.0f, 8.0f);
+                    });
+                    auto cat_box = container({
+                        .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                        .child = cat_txt,
+                    });
                     pop_items.push_back(cat_box);
                 }
 
@@ -896,10 +898,12 @@ public:
                         .color = 0xFF94A3B8,
                         .font_size = 10.5f,
                     });
-                    auto bg_box = container(bg_t);
-                    bg_box->color(0xFF1E293B)
-                          .borderRadius(4.0f)
-                          .paddingSymmetric(2.0f, 6.0f);
+                    auto bg_box = container({
+                        .color = 0xFF1E293B,
+                        .border_radius = BorderRadius::circular(4.0f),
+                        .padding = StyleInsets::symmetric(2.0f, 6.0f),
+                        .child = bg_t,
+                    });
 
                     row_widget = row({
                         .justify_content = Justify::SpaceBetween,
@@ -908,10 +912,12 @@ public:
                     });
                 }
 
-                auto item_box = container(row_widget);
-                item_box->color(is_active ? sf->props.item_hover_color : 0x00000000)
-                        .borderRadius(6.0f)
-                        .paddingSymmetric(6.0f, 10.0f);
+                auto item_box = container({
+                    .color = is_active ? sf->props.item_hover_color : 0x00000000,
+                    .border_radius = BorderRadius::circular(6.0f),
+                    .padding = StyleInsets::symmetric(6.0f, 10.0f),
+                    .child = row_widget,
+                });
 
                 auto item_detector = gestureDetector({
                     .child = item_box,
@@ -939,8 +945,10 @@ public:
                 .font_size = 11.0f,
                 .font_weight = FontWeight::Bold,
             });
-            auto rec_header_box = container(rec_header);
-            rec_header_box->paddingSymmetric(4.0f, 8.0f);
+            auto rec_header_box = container({
+                .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                .child = rec_header,
+            });
             pop_items.push_back(rec_header_box);
 
             int rec_limit = std::min(static_cast<int>(recent.size()), 5);
@@ -964,9 +972,11 @@ public:
                     .children = {ic, r_txt},
                 });
 
-                auto r_box = container(r_row);
-                r_box->borderRadius(6.0f)
-                     .paddingSymmetric(6.0f, 10.0f);
+                auto r_box = container({
+                    .border_radius = BorderRadius::circular(6.0f),
+                    .padding = StyleInsets::symmetric(6.0f, 10.0f),
+                    .child = r_row,
+                });
 
                 auto r_det = gestureDetector({
                     .child = r_box,
@@ -990,11 +1000,13 @@ public:
             .children = std::move(pop_items),
         });
 
-        auto popup_container = container(pop_col);
-        popup_container->color(sf->props.popup_bg_color)
-                       .borderRadius(sf->props.border_radius)
-                       .border(sf->props.border_color, 1.0f)
-                       .paddingAll(6.0f);
+        auto popup_container = container({
+            .color = sf->props.popup_bg_color,
+            .border_radius = BorderRadius::circular(sf->props.border_radius),
+            .border = Border(sf->props.border_color, 1.0f),
+            .padding = StyleInsets::all(6.0f),
+            .child = pop_col,
+        });
 
         return column({
             .gap = StyleValue::point(6.0f),

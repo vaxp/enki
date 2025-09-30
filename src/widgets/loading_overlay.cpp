@@ -266,12 +266,14 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto c_box = container(c_lbl);
-            c_box->color(0x22EF4444)
-                 .border(0xFFEF4444, 1.0f)
-                 .borderRadius(6.0f)
-                 .paddingSymmetric(6.0f, 16.0f)
-                 .margin(EdgeInsets(6.0f, 0.0f, 0.0f, 0.0f));
+            auto c_box = container({
+                .color = 0x22EF4444,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(0xFFEF4444, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 16.0f),
+                .margin = StyleInsets::only(6.0f, 0.0f, 0.0f, 0.0f),
+                .child = c_lbl,
+            });
 
             auto c_btn = gestureDetector({
                 .child = c_box,
@@ -291,13 +293,15 @@ public:
             .children = std::move(card_elements),
         });
 
-        auto card_box = container(card_col);
-        card_box->color(opts.background_color)
-                .border(opts.border_color, 1.0f)
-                .borderRadius(opts.border_radius)
-                .paddingAll(24.0f)
-                .width(opts.width)
-                .shadow(BoxShadow(0x99000000, {0.0f, 12.0f}, 28.0f));
+        auto card_box = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 12.0f}, 28.0f)},
+            .width = StyleValue::point(opts.width),
+            .padding = StyleInsets::all(24.0f),
+            .child = card_col,
+        });
 
         return card_box;
     }
@@ -310,14 +314,17 @@ public:
         // ── 1. Invariant Page Body (100% dimensions) ──────────────────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->width(StyleValue::percent(100.0f))
-              .height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->body,
+            });
             body_widget = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+            });
             body_widget = Positioned::fill(empty);
         }
 

@@ -105,8 +105,10 @@ WidgetPtr BreadcrumbWidget::build(BuildContext&) {
                 .font_size = options.separator_font_size,
             });
 
-            auto sep_box = container(sep);
-            sep_box->paddingSymmetric(0.0f, options.separator_spacing);
+            auto sep_box = container({
+                .padding = StyleInsets::symmetric(0.0f, options.separator_spacing),
+                .child = sep,
+            });
             children.push_back(sep_box);
         }
     }

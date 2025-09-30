@@ -68,10 +68,12 @@ public:
                     .color = icon_col,
                     .font_size = 14.0f,
                 });
-                auto toggle_box = container(icon_t);
-                toggle_box->height(opts.toggle_size)
-                           .width(StyleValue::percent(100.0f))
-                           .align(Alignment::Center);
+                auto toggle_box = container({
+                    .align = Alignment::Center,
+                    .width = StyleValue::percent(100.0f),
+                    .height = StyleValue::point(opts.toggle_size),
+                    .child = icon_t,
+                });
 
                 auto toggle_det = gestureDetector({
                     .child = toggle_box,
@@ -95,8 +97,11 @@ public:
 
             // User-provided sidebar content
             if (w->sidebar_content) {
-                auto content_box = container(w->sidebar_content);
-                content_box->flex(1.0f).clip(true);
+                auto content_box = container({
+                    .clip_content = true,
+                    .flex = 1.0f,
+                    .child = w->sidebar_content,
+                });
                 panel_children.push_back(content_box);
             }
 
@@ -105,15 +110,18 @@ public:
                 .children = std::move(panel_children),
             });
 
-            auto panel_box = container(panel_col);
-            panel_box->color(opts.background_color)
-                      .width(cur_w)
-                      .height(StyleValue::percent(100.0f));
-
-            // Border (uniform — side-specific borders require direct style manipulation)
+            std::optional<Border> panel_border;
             if (opts.border_width > 0.0f) {
-                panel_box->border(opts.border_color, opts.border_width);
+                panel_border = Border(opts.border_color, opts.border_width);
             }
+
+            auto panel_box = container({
+                .color = opts.background_color,
+                .border = panel_border,
+                .width = StyleValue::point(cur_w),
+                .height = StyleValue::percent(100.0f),
+                .child = panel_col,
+            });
 
             panel_content = panel_box;
         }
@@ -121,12 +129,15 @@ public:
         // ── Body content ───────────────────────────────────────
         WidgetPtr body_content;
         if (w->body) {
-            auto body_box = container(w->body);
-            body_box->flex(1.0f);
+            auto body_box = container({
+                .flex = 1.0f,
+                .child = w->body,
+            });
             body_content = body_box;
         } else {
-            auto empty = container();
-            empty->flex(1.0f);
+            auto empty = container({
+                .flex = 1.0f,
+            });
             body_content = empty;
         }
 
