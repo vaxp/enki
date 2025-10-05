@@ -10,7 +10,7 @@ using namespace enki;
 class NavigationRailDemoState : public State {
     int selected_idx = 0;
 public:
-    WidgetPtr build(BuildContext& ctx) override {
+    WidgetPtr build(BuildContext&) override {
         std::string page_text;
         switch (selected_idx) {
             case 0: page_text = "Dashboard Content"; break;
@@ -19,29 +19,30 @@ public:
             case 3: page_text = "System Settings"; break;
         }
 
-        return container({
-            .color = 0xFF0F172A,
-            .child = row({
-                .height = StyleValue::percent(100.0f),
-                .children = {
-                    NavigationRail {
-                        .items = {
-                            {"Dashboard", Icons::Material::dashboard(), ""},
-                            {"Analytics", Icons::Material::analytics(), "2"},
-                            {"Users",     Icons::Material::people(), ""},
-                            {"Settings",  Icons::Material::settings(), ""}
-                        },
-                        .selected_index = selected_idx,
-                        .on_item_selected = [this](int i) {
-                            setState([this, i] { selected_idx = i; });
-                        }
+        return row({
+            .align_items = Align::Stretch,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {
+                NavigationRail {
+                    .items = {
+                        {"Dashboard", Icons::Material::dashboard(), ""},
+                        {"Analytics", Icons::Material::analytics(), "2"},
+                        {"Users",     Icons::Material::people(), ""},
+                        {"Settings",  Icons::Material::settings(), ""}
                     },
-                    container({
-                        .flex_grow = 1.0f,
-                        .child = centerBox(text(page_text, { .color = 0xFFFFFFFF, .font_size = 20.0f }))
-                    })
-                }
-            })
+                    .selected_index = selected_idx,
+                    .on_item_selected = [this](int i) {
+                        setState([this, i] { selected_idx = i; });
+                    }
+                },
+                container({
+                    .color = 0xFF0F172A,
+                    .height = StyleValue::percent(100.0f),
+                    .flex = 1.0f,
+                    .child = centerBox(text(page_text, { .color = 0xFFFFFFFF, .font_size = 20.0f }))
+                })
+            }
         });
     }
 };
@@ -57,8 +58,9 @@ int main() {
     config.title       = "Enki Engine — NavigationRail Demo";
     config.width       = 1000;
     config.height      = 700;
-    config.clear_color = 0xFF0F172A;
-    config.target_fps = 0;
+    config.target_fps  = 0;
+    config.vsync       = false;
     config.show_performance_overlay = true;
+    config.clear_color = 0xFF0F172A;
     return runApp(std::make_shared<NavigationRailDemoApp>(), config);
 }
