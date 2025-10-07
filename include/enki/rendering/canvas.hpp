@@ -23,6 +23,7 @@ public:
     virtual void restore() = 0;
     virtual void saveLayerAlpha(float alpha, const Rect* bounds = nullptr) = 0;
     virtual void saveLayer(const Rect* bounds, const Paint* paint) = 0;
+    virtual void saveLayerWithBackdrop(const Rect* bounds, const Paint* paint, const ImageFilter* backdrop) = 0;
     
     // Transformations
     virtual void translate(float dx, float dy) = 0;
@@ -30,6 +31,8 @@ public:
     virtual void rotate(float degrees) = 0;
     virtual void clipRect(const Rect& rect) = 0;
     virtual void clipRRect(const Rect& rect, const BorderRadius& radius) = 0;
+    virtual void clipOval(const Rect& rect) = 0;
+    virtual void clipPath(const Path& path) = 0;
     virtual void concat(const float matrix[9]) = 0;
     virtual void skew(float sx, float sy) = 0;
 

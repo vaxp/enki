@@ -52,6 +52,16 @@ class ColorFilter {
 public:
     virtual ~ColorFilter() = default;
     virtual void* getNativeHandle() const = 0;
+
+    static std::shared_ptr<ColorFilter> mode(Color color, BlendMode mode);
+    static std::shared_ptr<ColorFilter> matrix(const float matrix[20]);
+    static std::shared_ptr<ColorFilter> matrix(const std::vector<float>& matrix);
+    static std::shared_ptr<ColorFilter> grayscale();
+    static std::shared_ptr<ColorFilter> sepia();
+    static std::shared_ptr<ColorFilter> invert();
+    static std::shared_ptr<ColorFilter> tint(Color color, float strength = 1.0f);
+    static std::shared_ptr<ColorFilter> srgbToLinearGamma();
+    static std::shared_ptr<ColorFilter> linearToSrgbGamma();
 };
 
 /// Gradient shader generators for rich desktop UI effects.

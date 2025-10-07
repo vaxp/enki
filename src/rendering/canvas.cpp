@@ -153,6 +153,25 @@ public:
         }
         canvas_->saveLayer(bounds ? &sk_rect : nullptr, paint ? &sk_paint : nullptr);
     }
+
+    void saveLayerWithBackdrop(const Rect* bounds, const Paint* paint, const ImageFilter* backdrop) override {
+        SkRect sk_rect;
+        if (bounds) {
+            sk_rect = SkRect::MakeXYWH(bounds->x, bounds->y, bounds->width, bounds->height);
+        }
+        SkPaint sk_paint;
+        if (paint) {
+            sk_paint = toSkPaint(*paint);
+        }
+        const SkImageFilter* sk_backdrop = backdrop ? static_cast<const SkImageFilter*>(backdrop->getNativeHandle()) : nullptr;
+        SkCanvas::SaveLayerRec rec(
+            bounds ? &sk_rect : nullptr,
+            paint ? &sk_paint : nullptr,
+            sk_backdrop,
+            0
+        );
+        canvas_->saveLayer(rec);
+    }
     
     void translate(float dx, float dy) override { canvas_->translate(dx, dy); }
     void scale(float sx, float sy) override { canvas_->scale(sx, sy); }
@@ -183,6 +202,19 @@ public:
         SkRRect rrect;
         rrect.setRectRadii(sk_rect, radii);
         canvas_->clipRRect(rrect, true);
+    }
+
+    void clipOval(const Rect& rect) override {
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
+        SkRRect rrect;
+        rrect.setOval(sk_rect);
+        canvas_->clipRRect(rrect, true);
+    }
+
+    void clipPath(const Path& path) override {
+        if (auto* sk_path = static_cast<const SkPath*>(path.getNativeHandle())) {
+            canvas_->clipPath(*sk_path, true);
+        }
     }
 
     void clear(Color color) override {
