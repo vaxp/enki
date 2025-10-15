@@ -84,10 +84,10 @@
 
 ## 18. Feedback & Status — Extended (4 widgets)
 
-- [ ] **Skeleton** — Shimmer placeholder boxes rendered while async data loads (content-aware shape)
-- [ ] **Ripple** — Material ink-ripple overlay that animates outward from a tap point
-- [ ] **Pulse** — Looping concentric-ring animation radiating from a center point (live indicator)
-- [ ] **CountBadge** — Animated numeric badge that counts up/down with spring or flip transitions
+- [x] **Skeleton** — Shimmer placeholder boxes rendered while async data loads (content-aware shape)
+- [x] **Ripple** — Material ink-ripple overlay that animates outward from a tap point
+- [x] **Pulse** — Looping concentric-ring animation radiating from a center point (live indicator)
+- [x] **CountBadge** — Animated numeric badge that counts up/down with spring or flip transitions
 
 ---
 
