@@ -342,6 +342,7 @@ enki_sources = files(
   'src/widgets/list_view.cpp',
   'src/widgets/grid_tile.cpp',
   'src/widgets/grid_view.cpp',
+  'src/widgets/sliver.cpp',
   'src/widgets/tree_view.cpp',
   'src/widgets/table.cpp',
   'src/widgets/data_table.cpp',
