@@ -328,6 +328,8 @@ enki_sources = files(
   'src/widgets/motion.cpp',
   'src/widgets/feedback_status.cpp',
   'src/widgets/utility.cpp',
+  'src/widgets/marquee.cpp',
+  'src/widgets/code_block.cpp',
 
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',
