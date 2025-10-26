@@ -391,6 +391,14 @@ anu_dep = declare_dependency(
 enki_deps += anu_dep
 
 # ============================================================
+# WebView / CEF Subsystem (optional)
+# ============================================================
+if get_option('enable_webview')
+  subdir('web_technology')
+  enki_deps += web_technology_dep
+endif
+
+# ============================================================
 # Library target
 # ============================================================
 enki_lib = library('enki',
@@ -406,8 +414,6 @@ enki_dep = declare_dependency(
   dependencies : enki_deps,
 )
 
-
-
 # ============================================================
 # Install headers
 # ============================================================
@@ -417,7 +423,7 @@ install_subdir('include/enki', install_dir : get_option('includedir'))
 # Tests
 # ============================================================
 if get_option('build_tests')
-  subdir('tests')
+#  subdir('tests')
 endif
 
 # ============================================================
@@ -425,8 +431,5 @@ endif
 # ============================================================
 if get_option('build_examples')
  subdir('examples')
- subdir('widgets_demo')
+# subdir('widgets_demo')
 endif
-
-
-

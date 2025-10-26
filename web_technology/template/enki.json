@@ -1,0 +1,34 @@
+{
+  "name": "Enki Workstation Pro",
+  "version": "0.1.0",
+  "description": "Next-Gen Native Desktop Dashboard powered by Enki Web Host",
+  "entry": "src/index.html",
+
+  "window": {
+    "title": "Enki Workstation Pro — Next-Gen Desktop Platform",
+    "width": 1360,
+    "height": 860,
+    "min_width": 900,
+    "min_height": 650,
+    "resizable": true,
+    "frameless": false,
+    "transparent": false,
+    "center": true,
+    "maximized": false,
+    "fullscreen": false
+  },
+
+  "permissions": [
+    "fs.read",
+    "fs.write",
+    "dialog",
+    "clipboard",
+    "notifications",
+    "system.info",
+    "shell.open_external"
+  ],
+
+  "devtools": true,
+  "single_instance": true,
+  "hardware_accel": true
+}

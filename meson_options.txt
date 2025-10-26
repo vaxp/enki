@@ -1,2 +1,8 @@
-option('build_tests', type : 'boolean', value : true, description : 'Build unit tests')
-option('build_examples', type : 'boolean', value : true, description : 'Build example applications')
+option('build_tests',    type : 'boolean', value : true,  description : 'Build unit tests')
+option('build_examples', type : 'boolean', value : true,  description : 'Build example applications')
+
+# ── WebView / CEF subsystem ────────────────────────────────────────────────────
+option('enable_webview', type : 'boolean', value : false,
+  description : 'Enable the WebView widget (requires CEF prebuilt binaries)')
+option('cef_root', type : 'string', value : '',
+  description : 'Absolute path to the CEF prebuilt distribution root directory')
