@@ -88,6 +88,12 @@ struct Window::Impl {
                 wayland_window->onFocus().connect([this](bool f) {
                     if (window) window->onFocus().emit(f);
                 });
+                wayland_window->onMaximized().connect([this](bool m) {
+                    if (window) window->onMaximized().emit(m);
+                });
+                wayland_window->onStateChanged().connect([this](WindowState s) {
+                    if (window) window->onStateChanged().emit(s);
+                });
             }
             current_width  = cfg.width;
             current_height = cfg.height;
@@ -107,6 +113,15 @@ struct Window::Impl {
             x11.reset();
             return false;
         }
+        x11->onFocus().connect([this](bool f) {
+            if (window) window->onFocus().emit(f);
+        });
+        x11->onMaximized().connect([this](bool m) {
+            if (window) window->onMaximized().emit(m);
+        });
+        x11->onStateChanged().connect([this](WindowState s) {
+            if (window) window->onStateChanged().emit(s);
+        });
         current_width  = cfg.width;
         current_height = cfg.height;
         return true;
@@ -255,6 +270,7 @@ void* Window::getEGLContext() const {
 }
 
 void* Window::getBackendWindow() const {
+    if (impl_->x11) return impl_->x11.get();
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window.get();
 #endif
@@ -266,6 +282,111 @@ void* Window::getBackendLayer() const {
     if (impl_->wayland_layer) return impl_->wayland_layer.get();
 #endif
     return nullptr;
+}
+
+// ── Client-Side Decoration (CSD) Operations ─────────────────────
+
+void Window::beginMove(float local_x, float local_y, int button) {
+    if (impl_->x11) impl_->x11->beginMove(local_x, local_y, button);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->beginMove(local_x, local_y, button);
+#endif
+}
+
+void Window::beginResize(WindowEdge edge, float local_x, float local_y, int button) {
+    if (impl_->x11) impl_->x11->beginResize(edge, local_x, local_y, button);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->beginResize(edge, local_x, local_y, button);
+#endif
+}
+
+void Window::setMaximized(bool max) {
+    if (impl_->x11) impl_->x11->setMaximized(max);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->setMaximized(max);
+#endif
+}
+
+void Window::setMinimized(bool min) {
+    if (impl_->x11) impl_->x11->setMinimized(min);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->setMinimized(min);
+#endif
+}
+
+void Window::setFullscreen(bool full) {
+    if (impl_->x11) impl_->x11->setFullscreen(full);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->setFullscreen(full);
+#endif
+}
+
+void Window::toggleMaximize() {
+    if (impl_->x11) impl_->x11->toggleMaximize();
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->toggleMaximize();
+#endif
+}
+
+void Window::showWindowMenu(float local_x, float local_y, int button) {
+    if (impl_->x11) impl_->x11->showWindowMenu(local_x, local_y, button);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->showWindowMenu(local_x, local_y, button);
+#endif
+}
+
+void Window::setDecorated(bool decorated) {
+    if (impl_->x11) impl_->x11->setDecorated(decorated);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->setDecorated(decorated);
+#endif
+}
+
+void Window::setWindowGeometry(int x, int y, int width, int height) {
+    if (impl_->x11) impl_->x11->setWindowGeometry(x, y, width, height);
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) impl_->wayland_window->setWindowGeometry(x, y, width, height);
+#endif
+}
+
+bool Window::isMaximized() const {
+    if (impl_->x11) return impl_->x11->isMaximized();
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) return impl_->wayland_window->isMaximized();
+#endif
+    return false;
+}
+
+bool Window::isMinimized() const {
+    if (impl_->x11) return impl_->x11->isMinimized();
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) return impl_->wayland_window->isMinimized();
+#endif
+    return false;
+}
+
+bool Window::isFullscreen() const {
+    if (impl_->x11) return impl_->x11->isFullscreen();
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) return impl_->wayland_window->isFullscreen();
+#endif
+    return false;
+}
+
+bool Window::isActivated() const {
+    if (impl_->x11) return impl_->x11->isActivated();
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) return impl_->wayland_window->isActivated();
+#endif
+    return true;
+}
+
+WindowState Window::getWindowState() const {
+    if (impl_->x11) return impl_->x11->getWindowState();
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) return impl_->wayland_window->getWindowState();
+#endif
+    return WindowState::Normal;
 }
 
 }  // namespace enki

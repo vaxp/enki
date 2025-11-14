@@ -19,7 +19,24 @@ enum class SystemCursor {
     NotAllowed,
     ResizeHorizontal,
     ResizeVertical,
+    ResizeTopLeft,     // NW-SE / Top-Left corner
+    ResizeTopRight,    // NE-SW / Top-Right corner
+    ResizeBottomLeft,  // SW-NE / Bottom-Left corner
+    ResizeBottomRight, // SE-NW / Bottom-Right corner
     Wait
+};
+
+/// Window edge identifier for interactive window resizing.
+enum class WindowEdge {
+    NoneEdge    = 0,
+    Top         = 1,
+    Bottom      = 2,
+    Left        = 3,
+    Right       = 4,
+    TopLeft     = 5,
+    TopRight    = 6,
+    BottomLeft  = 7,
+    BottomRight = 8,
 };
 
 /// Mouse button identifiers.

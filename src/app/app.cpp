@@ -114,6 +114,8 @@ struct App::Impl {
         win_cfg.resizable = config.resizable;
         win_cfg.vsync     = config.vsync;
         win_cfg.mode      = config.window_mode;
+        win_cfg.csd       = config.enable_csd;
+        win_cfg.app_id    = config.app_id;
 
         auto result = Window::create(*platform, win_cfg);
         if (!result.isOk()) return false;

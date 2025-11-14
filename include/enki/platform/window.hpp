@@ -36,6 +36,8 @@ struct WindowConfig {
     int         min_width    = 2;
     int         min_height   = 2;
     bool        vsync        = true;
+    bool        csd          = false; ///< Client-Side Decoration mode (frameless + CSD geometry/hints)
+    std::string app_id       = "enki.app";
     WindowMode  mode         = WindowMode::Normal; ///< Standard window or layer surface overlay.
     class Window* parent_window = nullptr; ///< Parent window if mode == Popup
     class LayerSurface* parent_layer = nullptr; ///< Parent layer surface if mode == Popup
@@ -68,6 +70,50 @@ public:
     /// Set whether window stays on top of other windows.
     void setAlwaysOnTop(bool on_top);
 
+    // ── Client-Side Decoration (CSD) Actions ────────────────────
+
+    /// Start interactive window move/drag driven by the Wayland compositor or X11 Window Manager.
+    void beginMove(float local_x = 0.0f, float local_y = 0.0f, int button = 1);
+
+    /// Start interactive window resize driven by the Wayland compositor or X11 Window Manager.
+    void beginResize(WindowEdge edge, float local_x = 0.0f, float local_y = 0.0f, int button = 1);
+
+    /// Request the window to be maximized or restored.
+    void setMaximized(bool max);
+
+    /// Request the window to be minimized.
+    void setMinimized(bool min);
+
+    /// Request the window to be fullscreen or restored.
+    void setFullscreen(bool full);
+
+    /// Toggle maximized state.
+    void toggleMaximize();
+
+    /// Request the window manager or compositor to display the window menu.
+    void showWindowMenu(float local_x = 0.0f, float local_y = 0.0f, int button = 3);
+
+    /// Set server-side vs client-side window decorations negotiation.
+    void setDecorated(bool decorated);
+
+    /// Set the inner window geometry excluding shadows/margins (Wayland window geometry & X11 frame extents).
+    void setWindowGeometry(int x, int y, int width, int height);
+
+    /// Check if the window is currently maximized.
+    [[nodiscard]] bool isMaximized() const;
+
+    /// Check if the window is currently minimized.
+    [[nodiscard]] bool isMinimized() const;
+
+    /// Check if the window is currently fullscreen.
+    [[nodiscard]] bool isFullscreen() const;
+
+    /// Check if the window currently has keyboard/input focus.
+    [[nodiscard]] bool isActivated() const;
+
+    /// Get the current window state flags.
+    [[nodiscard]] WindowState getWindowState() const;
+
     /// Get current window size in logical/pixel coordinates.
     [[nodiscard]] Size getSize() const;
 
@@ -99,9 +145,11 @@ public:
     void* getBackendLayer() const;
 
     // --- Signals ---
-    Signal<int, int>& onResize() { return on_resize_; }
-    Signal<>&         onClose()  { return on_close_; }
-    Signal<bool>&     onFocus()  { return on_focus_; }
+    Signal<int, int>&       onResize()       { return on_resize_; }
+    Signal<>&               onClose()        { return on_close_; }
+    Signal<bool>&           onFocus()        { return on_focus_; }
+    Signal<WindowState>&     onStateChanged() { return on_state_changed_; }
+    Signal<bool>&           onMaximized()    { return on_maximized_; }
 
     struct Impl;
     Impl* impl() { return impl_.get(); }
@@ -109,9 +157,11 @@ public:
 private:
     Window();
     std::unique_ptr<Impl> impl_;
-    Signal<int, int> on_resize_;
-    Signal<>         on_close_;
-    Signal<bool>     on_focus_;
+    Signal<int, int>       on_resize_;
+    Signal<>               on_close_;
+    Signal<bool>           on_focus_;
+    Signal<WindowState>     on_state_changed_;
+    Signal<bool>           on_maximized_;
 };
 
 }  // namespace enki

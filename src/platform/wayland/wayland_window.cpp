@@ -152,10 +152,25 @@ bool WaylandWindow::init(const WindowConfig& config) {
         if (!config_.title.empty()) {
             xdg_toplevel_set_title(xdg_toplevel_, config_.title.c_str());
         }
-        xdg_toplevel_set_app_id(xdg_toplevel_, "enki.app");
+        if (!config_.app_id.empty()) {
+            xdg_toplevel_set_app_id(xdg_toplevel_, config_.app_id.c_str());
+        } else {
+            xdg_toplevel_set_app_id(xdg_toplevel_, "enki.app");
+        }
 
         if (config_.min_width > 0 && config_.min_height > 0) {
             xdg_toplevel_set_min_size(xdg_toplevel_, config_.min_width, config_.min_height);
+        }
+
+        // CSD negotiation via zxdg_decoration_manager_v1 if available
+        if (backend_.getDecorationManager()) {
+            decoration_ = zxdg_decoration_manager_v1_get_toplevel_decoration(
+                backend_.getDecorationManager(), xdg_toplevel_);
+            if (decoration_) {
+                zxdg_toplevel_decoration_v1_set_mode(decoration_,
+                    config_.csd ? ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE
+                                : ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+            }
         }
     }
 
@@ -219,6 +234,10 @@ void WaylandWindow::destroy() {
         wl_egl_window_destroy(egl_window_);
         egl_window_ = nullptr;
     }
+    if (decoration_) {
+        zxdg_toplevel_decoration_v1_destroy(decoration_);
+        decoration_ = nullptr;
+    }
     if (xdg_popup_) {
         xdg_popup_destroy(xdg_popup_);
         xdg_popup_ = nullptr;
@@ -241,7 +260,34 @@ void WaylandWindow::handleSurfaceConfigure(uint32_t /*serial*/) {
     configured_ = true;
 }
 
-void WaylandWindow::handleToplevelConfigure(int32_t width, int32_t height, wl_array* /*states*/) {
+void WaylandWindow::handleToplevelConfigure(int32_t width, int32_t height, wl_array* states) {
+    WindowState new_state = WindowState::Normal;
+    if (states && states->data) {
+        auto* p = static_cast<const uint32_t*>(states->data);
+        size_t count = states->size / sizeof(uint32_t);
+        for (size_t i = 0; i < count; ++i) {
+            uint32_t s = p[i];
+            if (s == XDG_TOPLEVEL_STATE_MAXIMIZED)  new_state |= WindowState::Maximized;
+            if (s == XDG_TOPLEVEL_STATE_FULLSCREEN) new_state |= WindowState::Fullscreen;
+            if (s == XDG_TOPLEVEL_STATE_ACTIVATED)  new_state |= WindowState::Activated;
+        }
+    }
+
+    bool max_changed = (hasWindowState(state_, WindowState::Maximized) != hasWindowState(new_state, WindowState::Maximized));
+    bool focus_changed = (hasWindowState(state_, WindowState::Activated) != hasWindowState(new_state, WindowState::Activated));
+    bool state_changed = (state_ != new_state);
+    state_ = new_state;
+
+    if (focus_changed) {
+        on_focus_.emit(hasWindowState(state_, WindowState::Activated));
+    }
+    if (max_changed) {
+        on_maximized_.emit(hasWindowState(state_, WindowState::Maximized));
+    }
+    if (state_changed) {
+        on_state_changed_.emit(state_);
+    }
+
     if (width > 0 && height > 0) {
         if (current_width_ != width || current_height_ != height) {
             current_width_  = width;
@@ -315,6 +361,77 @@ void WaylandWindow::swapBuffers() {
     if (egl_display_ != EGL_NO_DISPLAY && egl_surface_ != EGL_NO_SURFACE) {
         eglSwapBuffers(egl_display_, egl_surface_);
     }
+}
+
+// ── Client-Side Decoration (CSD) Operations ─────────────────────
+
+void WaylandWindow::beginMove(float /*local_x*/, float /*local_y*/, int /*button*/) {
+    if (!xdg_toplevel_ || !backend_.getSeat()) return;
+    xdg_toplevel_move(xdg_toplevel_, backend_.getSeat(), backend_.getLastPointerSerial());
+}
+
+void WaylandWindow::beginResize(WindowEdge edge, float /*local_x*/, float /*local_y*/, int /*button*/) {
+    if (!xdg_toplevel_ || !backend_.getSeat() || edge == WindowEdge::NoneEdge) return;
+    uint32_t wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_NONE;
+    switch (edge) {
+        case WindowEdge::Top:         wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_TOP; break;
+        case WindowEdge::Bottom:      wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM; break;
+        case WindowEdge::Left:        wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_LEFT; break;
+        case WindowEdge::Right:       wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_RIGHT; break;
+        case WindowEdge::TopLeft:     wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_TOP_LEFT; break;
+        case WindowEdge::TopRight:    wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_TOP_RIGHT; break;
+        case WindowEdge::BottomLeft:  wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM_LEFT; break;
+        case WindowEdge::BottomRight: wl_edge = XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM_RIGHT; break;
+        default: break;
+    }
+    xdg_toplevel_resize(xdg_toplevel_, backend_.getSeat(), backend_.getLastPointerSerial(), wl_edge);
+}
+
+void WaylandWindow::setMaximized(bool max) {
+    if (!xdg_toplevel_) return;
+    if (max) {
+        xdg_toplevel_set_maximized(xdg_toplevel_);
+    } else {
+        xdg_toplevel_unset_maximized(xdg_toplevel_);
+    }
+}
+
+void WaylandWindow::setMinimized(bool min) {
+    if (!xdg_toplevel_) return;
+    if (min) {
+        xdg_toplevel_set_minimized(xdg_toplevel_);
+    }
+}
+
+void WaylandWindow::setFullscreen(bool full) {
+    if (!xdg_toplevel_) return;
+    if (full) {
+        xdg_toplevel_set_fullscreen(xdg_toplevel_, nullptr);
+    } else {
+        xdg_toplevel_unset_fullscreen(xdg_toplevel_);
+    }
+}
+
+void WaylandWindow::toggleMaximize() {
+    setMaximized(!isMaximized());
+}
+
+void WaylandWindow::showWindowMenu(float local_x, float local_y, int /*button*/) {
+    if (!xdg_toplevel_ || !backend_.getSeat()) return;
+    xdg_toplevel_show_window_menu(xdg_toplevel_, backend_.getSeat(), backend_.getLastPointerSerial(),
+                                  static_cast<int32_t>(local_x), static_cast<int32_t>(local_y));
+}
+
+void WaylandWindow::setDecorated(bool decorated) {
+    if (!decoration_) return;
+    zxdg_toplevel_decoration_v1_set_mode(decoration_,
+        decorated ? ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE
+                  : ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
+}
+
+void WaylandWindow::setWindowGeometry(int x, int y, int width, int height) {
+    if (!xdg_surface_) return;
+    xdg_surface_set_window_geometry(xdg_surface_, x, y, width, height);
 }
 
 } // namespace enki::wayland

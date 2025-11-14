@@ -93,6 +93,8 @@ struct AppConfig {
     int         target_fps               = 60;            ///< Target frames per second.
     WindowMode  window_mode              = WindowMode::Normal; ///< Standard window or Layer Shell.
     bool        show_performance_overlay = false;         ///< Render built-in FPS & latency HUD.
+    bool        enable_csd               = false;         ///< Enable Client-Side Decorations (CSD).
+    std::string app_id                   = "enki.app";    ///< Application identifier.
 };
 
 // ════════════════════════════════════════════════════════════════

@@ -2,6 +2,7 @@
 /// @brief X11 + EGL native platform backend implementation with multi-MIME Clipboard and XDnD.
 
 #include "enki/platform/x11/x11_platform.hpp"
+#include "enki/platform/x11/x11_window.hpp"
 #include "enki/platform/window.hpp"
 
 #include <X11/keysym.h>
@@ -157,6 +158,8 @@ bool X11PlatformBackend::init() {
     atom_net_wm_state_hidden_    = XInternAtom(display_, "_NET_WM_STATE_HIDDEN",     False);
     atom_net_wm_state_fullscreen_= XInternAtom(display_, "_NET_WM_STATE_FULLSCREEN", False);
     atom_net_wm_state_focused_   = XInternAtom(display_, "_NET_WM_STATE_FOCUSED",    False);
+    atom_net_wm_moveresize_      = XInternAtom(display_, "_NET_WM_MOVERESIZE",       False);
+    atom_gtk_frame_extents_      = XInternAtom(display_, "_GTK_FRAME_EXTENTS",       False);
 
     // XDnD atoms
     atom_xdnd_aware_       = XInternAtom(display_, "XdndAware",        False);
@@ -385,6 +388,30 @@ bool X11PlatformBackend::pollEvents() {
             for (Window* w : windows_) {
                 if ((void*)(uintptr_t)xev.xconfigure.window == w->getNativeHandle()) {
                     w->onResize().emit(xev.xconfigure.width, xev.xconfigure.height);
+                    break;
+                }
+            }
+            break;
+        }
+
+        case FocusIn: {
+            for (Window* w : windows_) {
+                if ((void*)(uintptr_t)xev.xfocus.window == w->getNativeHandle()) {
+                    auto* x11_win = static_cast<X11Window*>(w->getBackendWindow());
+                    if (x11_win) x11_win->handleFocus(true);
+                    w->onFocus().emit(true);
+                    break;
+                }
+            }
+            break;
+        }
+
+        case FocusOut: {
+            for (Window* w : windows_) {
+                if ((void*)(uintptr_t)xev.xfocus.window == w->getNativeHandle()) {
+                    auto* x11_win = static_cast<X11Window*>(w->getBackendWindow());
+                    if (x11_win) x11_win->handleFocus(false);
+                    w->onFocus().emit(false);
                     break;
                 }
             }
@@ -802,6 +829,10 @@ void X11PlatformBackend::setCursor(SystemCursor cursor) {
         case SystemCursor::NotAllowed: shape = XC_circle; break;
         case SystemCursor::ResizeHorizontal: shape = XC_sb_h_double_arrow; break;
         case SystemCursor::ResizeVertical: shape = XC_sb_v_double_arrow; break;
+        case SystemCursor::ResizeTopLeft: shape = XC_top_left_corner; break;
+        case SystemCursor::ResizeTopRight: shape = XC_top_right_corner; break;
+        case SystemCursor::ResizeBottomLeft: shape = XC_bottom_left_corner; break;
+        case SystemCursor::ResizeBottomRight: shape = XC_bottom_right_corner; break;
         case SystemCursor::Wait: shape = XC_watch; break;
         default: shape = XC_left_ptr; break;
     }
@@ -1134,6 +1165,15 @@ void X11PlatformBackend::handlePropertyNotify(const XPropertyEvent& prop) {
         auto it = toplevel_map_.find(prop.window);
         if (it != toplevel_map_.end()) {
             it->second->updateProperties();
+        }
+        if (prop.atom == atom_net_wm_state_) {
+            for (Window* w : windows_) {
+                if ((::Window)(uintptr_t)w->getNativeHandle() == prop.window) {
+                    auto* x11_win = static_cast<X11Window*>(w->getBackendWindow());
+                    if (x11_win) x11_win->updateState();
+                    break;
+                }
+            }
         }
     }
 }
