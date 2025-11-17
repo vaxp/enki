@@ -323,9 +323,31 @@ bool X11PlatformBackend::pollEvents() {
             break;
 
         case MotionNotify: {
+            // Motion event compression: discard intermediate motion events for the same window
+            XEvent next_ev;
+            while (XPending(display_)) {
+                XPeekEvent(display_, &next_ev);
+                if (next_ev.type == MotionNotify && next_ev.xmotion.window == xev.xmotion.window) {
+                    XNextEvent(display_, &xev);
+                } else {
+                    break;
+                }
+            }
+
             void* win_handle = (void*)(uintptr_t)xev.xmotion.window;
             float x = (float)xev.xmotion.x;
             float y = (float)xev.xmotion.y;
+
+            for (Window* w : windows_) {
+                if (w && w->getNativeHandle() == win_handle) {
+                    auto* x11_win = static_cast<X11Window*>(w->getBackendWindow());
+                    if (x11_win) {
+                        x11_win->handleDragMotion(xev.xmotion.x_root, xev.xmotion.y_root);
+                    }
+                    break;
+                }
+            }
+
             owner_->onMouseMove().emit(x, y);
             owner_->onTargetedMouseMove().emit(win_handle, x, y);
             break;
@@ -353,6 +375,14 @@ bool X11PlatformBackend::pollEvents() {
             void* win_handle = (void*)(uintptr_t)xev.xbutton.window;
             float x = (float)xev.xbutton.x, y = (float)xev.xbutton.y;
             int   b = xev.xbutton.button;
+
+            for (Window* w : windows_) {
+                if (w) {
+                    auto* x11_win = static_cast<X11Window*>(w->getBackendWindow());
+                    if (x11_win) x11_win->endDrag();
+                }
+            }
+
             if (b != 4 && b != 5) {
                 int btn_code = (b == 1 ? 1 : (b == 3 ? 3 : 2));
                 owner_->onMouseUp().emit(x, y, btn_code);
@@ -387,6 +417,10 @@ bool X11PlatformBackend::pollEvents() {
         case ConfigureNotify: {
             for (Window* w : windows_) {
                 if ((void*)(uintptr_t)xev.xconfigure.window == w->getNativeHandle()) {
+                    auto* x11_win = static_cast<X11Window*>(w->getBackendWindow());
+                    if (x11_win) {
+                        x11_win->handleConfigure(xev.xconfigure.width, xev.xconfigure.height);
+                    }
                     w->onResize().emit(xev.xconfigure.width, xev.xconfigure.height);
                     break;
                 }
@@ -438,6 +472,13 @@ void X11PlatformBackend::registerWindow(Window* w) {
 
 void X11PlatformBackend::unregisterWindow(Window* w) {
     if (w) windows_.erase(w);
+}
+
+bool X11PlatformBackend::isOwnWindow(::Window xid) const {
+    for (const Window* w : windows_) {
+        if ((::Window)(uintptr_t)w->getNativeHandle() == xid) return true;
+    }
+    return false;
 }
 
 // ── Clipboard Subsystem ──────────────────────────────────────────
@@ -855,8 +896,11 @@ public:
     X11Toplevel(::Display* display, ::Window xid, X11PlatformBackend* backend, Platform* owner)
         : display_(display), xid_(xid), backend_(backend), owner_(owner) {
         if (display_ && xid_ != None) {
-            // Select PropertyChangeMask on client window to receive title / state changes
-            XSelectInput(display_, xid_, PropertyChangeMask | StructureNotifyMask);
+            // CRITICAL: NEVER call XSelectInput on our own application windows!
+            // Doing so would overwrite the window's event_mask and wipe out ButtonPressMask/PointerMotionMask!
+            if (!backend_ || !backend_->isOwnWindow(xid_)) {
+                XSelectInput(display_, xid_, PropertyChangeMask | StructureNotifyMask);
+            }
         }
         updateProperties();
     }

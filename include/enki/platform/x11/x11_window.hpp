@@ -51,6 +51,9 @@ public:
 
     void updateState();
     void handleFocus(bool focused);
+    void handleConfigure(int nw, int nh);
+    bool handleDragMotion(int root_x, int root_y);
+    void endDrag();
 
     [[nodiscard]] void* getNativeHandle() const { return (void*)(uintptr_t)x11_window_; }
     [[nodiscard]] void* getEGLSurface()   const { return (void*)egl_surface_; }
@@ -60,6 +63,7 @@ public:
     Signal<WindowState>& onStateChanged() { return on_state_changed_; }
     Signal<bool>&        onMaximized()    { return on_maximized_; }
     Signal<bool>&        onFocus()        { return on_focus_; }
+    Signal<int, int>&    onResize()       { return on_resize_; }
 
 private:
     X11PlatformBackend& backend_;
@@ -76,9 +80,20 @@ private:
     int current_height_ = 0;
     WindowState state_  = WindowState::Normal;
 
+    bool is_moving_   = false;
+    bool is_resizing_ = false;
+    WindowEdge resize_edge_ = WindowEdge::NoneEdge;
+    int drag_start_root_x_ = 0;
+    int drag_start_root_y_ = 0;
+    int drag_orig_win_x_   = 0;
+    int drag_orig_win_y_   = 0;
+    int drag_orig_win_w_   = 0;
+    int drag_orig_win_h_   = 0;
+
     Signal<WindowState> on_state_changed_;
     Signal<bool>        on_maximized_;
     Signal<bool>        on_focus_;
+    Signal<int, int>    on_resize_;
 };
 
 } // namespace enki::x11

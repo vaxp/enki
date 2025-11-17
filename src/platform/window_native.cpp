@@ -122,6 +122,11 @@ struct Window::Impl {
         x11->onStateChanged().connect([this](WindowState s) {
             if (window) window->onStateChanged().emit(s);
         });
+        x11->onResize().connect([this](int w, int h) {
+            current_width  = w;
+            current_height = h;
+            if (window) window->onResize().emit(w, h);
+        });
         current_width  = cfg.width;
         current_height = cfg.height;
         return true;

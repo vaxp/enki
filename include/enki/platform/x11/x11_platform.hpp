@@ -46,6 +46,7 @@ public:
 
     void registerWindow(Window* w);
     void unregisterWindow(Window* w);
+    [[nodiscard]] bool isOwnWindow(::Window xid) const;
     [[nodiscard]] const std::unordered_set<Window*>& windows() const { return windows_; }
 
     // ── Clipboard Subsystem ──────────────────────────────────────

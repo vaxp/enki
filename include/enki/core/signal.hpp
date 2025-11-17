@@ -1,7 +1,6 @@
 #pragma once
 /// @file signal.hpp
 /// @brief Type-safe Signal/Slot system for decoupled event handling.
-/// Similar to Qt's signal/slot mechanism but implemented with
 /// modern C++20 (no MOC required).
 
 #include <functional>

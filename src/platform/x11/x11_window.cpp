@@ -6,6 +6,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <GL/gl.h>
+#include <dlfcn.h>
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -66,11 +67,11 @@ bool X11Window::init(const WindowConfig& cfg) {
     XSetWindowAttributes swa{};
     swa.colormap     = colormap_;
     swa.border_pixel = 0;
-    swa.background_pixel = 0;
+    swa.bit_gravity  = NorthWestGravity;
     swa.event_mask   = ExposureMask | StructureNotifyMask | ButtonPressMask |
                        ButtonReleaseMask | PointerMotionMask | KeyPressMask |
-                       KeyReleaseMask | FocusChangeMask;
-    unsigned long valuemask = CWColormap | CWBorderPixel | CWBackPixel | CWEventMask;
+                       KeyReleaseMask | FocusChangeMask | PropertyChangeMask;
+    unsigned long valuemask = CWColormap | CWBorderPixel | CWBitGravity | CWEventMask;
 
     if (cfg.override_redirect) {
         swa.override_redirect = True;
@@ -86,14 +87,32 @@ bool X11Window::init(const WindowConfig& cfg) {
         return false;
     }
 
+    // Never paint or clear any background by the X server (pure client rendering)
+    XSetWindowBackgroundPixmap(display_, x11_window_, None);
+
     setTitle(cfg.title);
+
+    // Set _NET_WM_WINDOW_TYPE to _NET_WM_WINDOW_TYPE_NORMAL
+    Atom net_wm_window_type = XInternAtom(display_, "_NET_WM_WINDOW_TYPE", False);
+    Atom net_wm_window_type_normal = XInternAtom(display_, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+    XChangeProperty(display_, x11_window_, net_wm_window_type, XA_ATOM, 32,
+                    PropModeReplace, (unsigned char*)&net_wm_window_type_normal, 1);
 
     // WM_DELETE_WINDOW protocol
     Atom wm_proto  = backend_.getAtomWmProtocols();
     Atom wm_delete = backend_.getAtomWmDeleteWindow();
     XSetWMProtocols(display_, x11_window_, &wm_delete, 1);
 
-    if (cfg.borderless || cfg.csd) setBorderless(true);
+    if (cfg.borderless || cfg.csd) {
+        setBorderless(true);
+        // Inform window manager that client provides its own frame
+        Atom frame_extents = backend_.getAtomGtkFrameExtents();
+        if (frame_extents) {
+            unsigned long extents[4] = {0, 0, 0, 0};
+            XChangeProperty(display_, x11_window_, frame_extents, XA_CARDINAL, 32,
+                            PropModeReplace, (unsigned char*)extents, 4);
+        }
+    }
     if (cfg.always_on_top)         setAlwaysOnTop(true);
 
     // Set _NET_WM_PID
@@ -195,7 +214,8 @@ void X11Window::setPosition(int x, int y) {
 void X11Window::setBorderless(bool borderless) {
     if (!display_ || !x11_window_) return;
     struct { unsigned long flags, functions, decorations; long inputMode; unsigned long status; } h{};
-    h.flags = 2; h.decorations = borderless ? 0 : 1;
+    h.flags = 2; // MWM_HINTS_DECORATIONS
+    h.decorations = borderless ? 0 : 1;
     Atom atom = XInternAtom(display_, "_MOTIF_WM_HINTS", False);
     XChangeProperty(display_, x11_window_, atom, atom, 32, PropModeReplace, (unsigned char*)&h, 5);
     XFlush(display_);
@@ -221,69 +241,144 @@ void X11Window::setAlwaysOnTop(bool on_top) {
 
 void X11Window::beginMove(float local_x, float local_y, int button) {
     if (!display_ || !x11_window_) return;
-    int root_x = 0, root_y = 0;
-    ::Window child = 0;
+    if (state_ == WindowState::Maximized || state_ == WindowState::Fullscreen) return;
+
     ::Window root = RootWindow(display_, backend_.getDefaultScreen());
-    XTranslateCoordinates(display_, x11_window_, root,
-                          static_cast<int>(local_x), static_cast<int>(local_y),
-                          &root_x, &root_y, &child);
+    ::Window root_ret = 0, child_ret = 0;
+    int win_x = 0, win_y = 0;
+    unsigned int mask = 0;
+    XQueryPointer(display_, root, &root_ret, &child_ret,
+                  &drag_start_root_x_, &drag_start_root_y_,
+                  &win_x, &win_y, &mask);
 
-    XClientMessageEvent xclient{};
-    xclient.type = ClientMessage;
-    xclient.window = x11_window_;
-    xclient.message_type = backend_.getAtomNetWmMoveresize();
-    xclient.format = 32;
-    xclient.data.l[0] = root_x;
-    xclient.data.l[1] = root_y;
-    xclient.data.l[2] = 8; // _NET_WM_MOVERESIZE_MOVE
-    xclient.data.l[3] = button;
-    xclient.data.l[4] = 1; // normal source indication
+    ::Window child = 0;
+    XTranslateCoordinates(display_, x11_window_, root, 0, 0,
+                          &drag_orig_win_x_, &drag_orig_win_y_, &child);
 
-    XUngrabPointer(display_, CurrentTime);
-    XSendEvent(display_, root, False,
-               SubstructureRedirectMask | SubstructureNotifyMask,
-               (XEvent*)&xclient);
+    is_moving_   = true;
+    is_resizing_ = false;
+
+    // Grab pointer so we continue receiving motion events reliably during drag
+    XGrabPointer(display_, x11_window_, False,
+                 ButtonReleaseMask | PointerMotionMask,
+                 GrabModeAsync, GrabModeAsync,
+                 None, None, CurrentTime);
     XFlush(display_);
 }
 
 void X11Window::beginResize(WindowEdge edge, float local_x, float local_y, int button) {
     if (!display_ || !x11_window_ || edge == WindowEdge::NoneEdge) return;
-    int root_x = 0, root_y = 0;
-    ::Window child = 0;
-    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
-    XTranslateCoordinates(display_, x11_window_, root,
-                          static_cast<int>(local_x), static_cast<int>(local_y),
-                          &root_x, &root_y, &child);
+    if (state_ == WindowState::Maximized || state_ == WindowState::Fullscreen) return;
 
-    long direction = 0;
-    switch (edge) {
-        case WindowEdge::TopLeft:     direction = 0; break;
-        case WindowEdge::Top:         direction = 1; break;
-        case WindowEdge::TopRight:    direction = 2; break;
-        case WindowEdge::Right:       direction = 3; break;
-        case WindowEdge::BottomRight: direction = 4; break;
-        case WindowEdge::Bottom:      direction = 5; break;
-        case WindowEdge::BottomLeft:  direction = 6; break;
-        case WindowEdge::Left:        direction = 7; break;
-        default: return;
+    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+    ::Window root_ret = 0, child_ret = 0;
+    int win_x = 0, win_y = 0;
+    unsigned int mask = 0;
+    XQueryPointer(display_, root, &root_ret, &child_ret,
+                  &drag_start_root_x_, &drag_start_root_y_,
+                  &win_x, &win_y, &mask);
+
+    ::Window child = 0;
+    XTranslateCoordinates(display_, x11_window_, root, 0, 0,
+                          &drag_orig_win_x_, &drag_orig_win_y_, &child);
+
+    drag_orig_win_w_ = current_width_;
+    drag_orig_win_h_ = current_height_;
+
+    is_resizing_ = true;
+    is_moving_   = false;
+    resize_edge_ = edge;
+
+    XGrabPointer(display_, x11_window_, False,
+                 ButtonReleaseMask | PointerMotionMask,
+                 GrabModeAsync, GrabModeAsync,
+                 None, None, CurrentTime);
+    XFlush(display_);
+}
+
+bool X11Window::handleDragMotion(int root_x, int root_y) {
+    if (!display_ || !x11_window_) return false;
+
+    if (is_moving_) {
+        int dx = root_x - drag_start_root_x_;
+        int dy = root_y - drag_start_root_y_;
+        int new_x = drag_orig_win_x_ + dx;
+        int new_y = drag_orig_win_y_ + dy;
+
+        XMoveWindow(display_, x11_window_, new_x, new_y);
+        return true;
     }
 
-    XClientMessageEvent xclient{};
-    xclient.type = ClientMessage;
-    xclient.window = x11_window_;
-    xclient.message_type = backend_.getAtomNetWmMoveresize();
-    xclient.format = 32;
-    xclient.data.l[0] = root_x;
-    xclient.data.l[1] = root_y;
-    xclient.data.l[2] = direction;
-    xclient.data.l[3] = button;
-    xclient.data.l[4] = 1;
+    if (is_resizing_) {
+        int dx = root_x - drag_start_root_x_;
+        int dy = root_y - drag_start_root_y_;
+        int new_x = drag_orig_win_x_;
+        int new_y = drag_orig_win_y_;
+        int new_w = drag_orig_win_w_;
+        int new_h = drag_orig_win_h_;
 
-    XUngrabPointer(display_, CurrentTime);
-    XSendEvent(display_, root, False,
-               SubstructureRedirectMask | SubstructureNotifyMask,
-               (XEvent*)&xclient);
-    XFlush(display_);
+        switch (resize_edge_) {
+            case WindowEdge::Left:
+                new_x += dx; new_w -= dx; break;
+            case WindowEdge::Right:
+                new_w += dx; break;
+            case WindowEdge::Top:
+                new_y += dy; new_h -= dy; break;
+            case WindowEdge::Bottom:
+                new_h += dy; break;
+            case WindowEdge::TopLeft:
+                new_x += dx; new_w -= dx;
+                new_y += dy; new_h -= dy; break;
+            case WindowEdge::TopRight:
+                new_w += dx;
+                new_y += dy; new_h -= dy; break;
+            case WindowEdge::BottomLeft:
+                new_x += dx; new_w -= dx;
+                new_h += dy; break;
+            case WindowEdge::BottomRight:
+                new_w += dx;
+                new_h += dy; break;
+            default: break;
+        }
+
+        int min_w = config_.min_width > 0 ? config_.min_width : 300;
+        int min_h = config_.min_height > 0 ? config_.min_height : 200;
+        if (new_w < min_w) {
+            if (new_x != drag_orig_win_x_) new_x = drag_orig_win_x_ + (drag_orig_win_w_ - min_w);
+            new_w = min_w;
+        }
+        if (new_h < min_h) {
+            if (new_y != drag_orig_win_y_) new_y = drag_orig_win_y_ + (drag_orig_win_h_ - min_h);
+            new_h = min_h;
+        }
+
+        if (new_x != drag_orig_win_x_ || new_y != drag_orig_win_y_) {
+            XMoveResizeWindow(display_, x11_window_, new_x, new_y, new_w, new_h);
+        } else {
+            XResizeWindow(display_, x11_window_, new_w, new_h);
+        }
+
+        if (new_w != current_width_ || new_h != current_height_) {
+            current_width_  = new_w;
+            current_height_ = new_h;
+            on_resize_.emit(new_w, new_h);
+        }
+        return true;
+    }
+
+    return false;
+}
+
+void X11Window::endDrag() {
+    if (is_moving_ || is_resizing_) {
+        is_moving_   = false;
+        is_resizing_ = false;
+        resize_edge_ = WindowEdge::NoneEdge;
+        if (display_) {
+            XUngrabPointer(display_, CurrentTime);
+            XFlush(display_);
+        }
+    }
 }
 
 void X11Window::setMaximized(bool max) {
@@ -343,7 +438,31 @@ void X11Window::toggleMaximize() {
     setMaximized(!isMaximized());
 }
 
-void X11Window::showWindowMenu(float /*local_x*/, float /*local_y*/, int /*button*/) {}
+void X11Window::showWindowMenu(float local_x, float local_y, int /*button*/) {
+    if (!display_ || !x11_window_) return;
+    int root_x = 0, root_y = 0;
+    ::Window child = 0;
+    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+    XTranslateCoordinates(display_, x11_window_, root,
+                          static_cast<int>(local_x), static_cast<int>(local_y),
+                          &root_x, &root_y, &child);
+
+    Atom show_menu = XInternAtom(display_, "_GTK_SHOW_WINDOW_MENU", False);
+    XClientMessageEvent xclient{};
+    xclient.type = ClientMessage;
+    xclient.window = x11_window_;
+    xclient.message_type = show_menu;
+    xclient.format = 32;
+    xclient.data.l[0] = 0; // default device
+    xclient.data.l[1] = root_x;
+    xclient.data.l[2] = root_y;
+
+    XUngrabPointer(display_, CurrentTime);
+    XSendEvent(display_, root, False,
+               SubstructureRedirectMask | SubstructureNotifyMask,
+               (XEvent*)&xclient);
+    XFlush(display_);
+}
 
 void X11Window::setDecorated(bool decorated) {
     setBorderless(!decorated);
@@ -426,6 +545,11 @@ void X11Window::handleFocus(bool focused) {
         on_focus_.emit(focused);
         on_state_changed_.emit(state_);
     }
+}
+
+void X11Window::handleConfigure(int nw, int nh) {
+    current_width_ = nw;
+    current_height_ = nh;
 }
 
 Size X11Window::getSize() const {
