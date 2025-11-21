@@ -28,8 +28,20 @@ void EnkiCefApp::OnBeforeCommandLineProcessing(
     cmd->AppendSwitch("disable-extensions");
     cmd->AppendSwitch("disable-pdf-extension");
 
-    // ── GPU / Rendering ─────────────────────────────────────────
+    // ── Platform / Ozone Detection (Linux) ─────────────────────
+    // Under pure X11 sessions (when WAYLAND_DISPLAY is not set), explicitly configure
+    // Ozone to use the X11 platform backend.
+    const char* wayland_display = getenv("WAYLAND_DISPLAY");
+    if (!wayland_display || wayland_display[0] == '\0') {
+        if (!cmd->HasSwitch("ozone-platform")) {
+            cmd->AppendSwitchWithValue("ozone-platform", "x11");
+        }
+    }
+
+    // ── GPU / Rendering Stability ───────────────────────────────
     cmd->AppendSwitch("enable-begin-frame-scheduling");
+    cmd->AppendSwitch("disable-gpu-sandbox");
+    cmd->AppendSwitch("disable-dev-shm-usage");
 
     // ── Security ────────────────────────────────────────────────
     cmd->AppendSwitch("allow-file-access-from-files");
@@ -38,15 +50,32 @@ void EnkiCefApp::OnBeforeCommandLineProcessing(
     // Audio is enabled by default. Autoplay permitted for media.
     cmd->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
 
-    // ── Disable Google Services (GCM / Push Notifications) ─────
-    // These cause harmless but noisy error messages when run offline.
+    // ── Dedicated Web Application Host Flags (Disable Browser Services) ──
+    // Disables all browser update checks, background telemetry, sync, and browser-only features.
+    cmd->AppendSwitch("disable-component-update");
+    cmd->AppendSwitch("disable-component-updater");
     cmd->AppendSwitch("disable-background-networking");
     cmd->AppendSwitch("disable-sync");
     cmd->AppendSwitch("disable-gcm");
     cmd->AppendSwitch("disable-push-messaging");
-    cmd->AppendSwitch("disable-component-update");
+    cmd->AppendSwitch("disable-domain-reliability");
+    cmd->AppendSwitch("disable-client-side-phishing-detection");
     cmd->AppendSwitch("disable-default-apps");
     cmd->AppendSwitch("no-first-run");
+    cmd->AppendSwitch("no-default-browser-check");
+    cmd->AppendSwitch("dns-prefetch-disable");
+    cmd->AppendSwitch("disable-breakpad");
+    cmd->AppendSwitch("disable-crash-reporter");
+    cmd->AppendSwitch("disable-speech-api");
+    cmd->AppendSwitch("disable-hang-monitor");
+    cmd->AppendSwitch("disable-prompt-on-repost");
+    cmd->AppendSwitch("disable-popup-blocking");
+    cmd->AppendSwitch("disable-back-forward-cache");
+    cmd->AppendSwitch("disable-renderer-backgrounding");
+    cmd->AppendSwitch("disable-backgrounding-occluded-windows");
+    cmd->AppendSwitch("safebrowsing-disable-auto-update");
+    cmd->AppendSwitchWithValue("safebrowsing-disable-download-protection", "1");
+    cmd->AppendSwitch("disable-features=Translate,OptimizationHints,OptimizationGuideModelDownloading,MediaRouter,DialLocalDiscovery,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication");
     cmd->AppendSwitch("noerrdialogs");
 }
 

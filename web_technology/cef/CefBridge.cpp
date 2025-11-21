@@ -12,8 +12,6 @@
 #include <cassert>
 #include <filesystem>
 #include <iostream>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 
 namespace enki::web {
 namespace fs = ::std::filesystem;
@@ -94,9 +92,10 @@ bool CefGlobal::ensure_initialized(int argc, char* argv[], const std::string& su
     std::string cache_dir = home ? (std::string(home) + "/.cache/enki_web") : "/tmp/enki_web_cache";
     try { fs::create_directories(cache_dir); } catch (...) {}
     CefString(&settings.root_cache_path) = cache_dir;
+    CefString(&settings.cache_path)      = cache_dir;
 
-    // Log to stderr by default; change to a file path for production.
-    settings.log_severity = LOGSEVERITY_WARNING;
+    // Log to stderr only on errors to avoid logging overhead.
+    settings.log_severity = LOGSEVERITY_ERROR;
 
     // Create the app object (nullptr = use internal defaults).
     auto app = CefRefPtr<EnkiCefApp>(new EnkiCefApp());
@@ -218,55 +217,16 @@ void CefBridge::create_browser(const BackendConfig& cfg)
     CefWindowInfo window_info;
 
     if (cfg.windowed_mode) {
-        // ── Create an X11 window and embed CEF into it ─────────
-        // We open a temporary Display connection just to create the window,
-        // then close it immediately. CEF will open its own Display connection
-        // internally to avoid dual-connection conflicts (stack smashing).
-        Display* dpy = XOpenDisplay(nullptr);
-        if (!dpy) {
-            std::cerr << "[CefBridge] Cannot open X11 display.\n";
-            return;
-        }
-        int scr    = DefaultScreen(dpy);
-        Window win = XCreateSimpleWindow(
-            dpy,
-            RootWindow(dpy, scr),
-            0, 0,                                       // position
-            static_cast<unsigned>(cfg.width),           // width
-            static_cast<unsigned>(cfg.height),          // height
-            0,                                          // border width
-            BlackPixel(dpy, scr),                       // border colour
-            BlackPixel(dpy, scr)                        // background colour
-        );
-
-        // Set title and delete-window atom before handing off to CEF
-        XStoreName(dpy, win, cfg.window_title.c_str());
-        Atom wm_delete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-        XSetWMProtocols(dpy, win, &wm_delete, 1);
-
-        // Size hints so the WM positions it properly
-        XSizeHints* hints = XAllocSizeHints();
-        if (hints) {
-            hints->flags      = PSize;
-            hints->width      = cfg.width;
-            hints->height     = cfg.height;
-            XSetNormalHints(dpy, win, hints);
-            XFree(hints);
-        }
-
-        XMapWindow(dpy, win);
-        XFlush(dpy);
-        XSync(dpy, False);
-
-        // Store the X11 Window ID (opaque unsigned long — doesn't need Display*)
-        unsigned long win_id = static_cast<unsigned long>(win);
-
-        // Close OUR Display connection — CEF will open its own
-        XCloseDisplay(dpy);
-
-        // Give CEF the window handle to embed into
-        CefRect cef_rect(0, 0, cfg.width, cfg.height);
-        window_info.SetAsChild(static_cast<CefWindowHandle>(win_id), cef_rect);
+        // ── Native Windowed Mode ──────────────────────────────
+        // Let CEF create and manage its native top-level window directly.
+        // Use Alloy style to render pure web content without the Chromium browser UI
+        // (no tabs, address bar, or navigation buttons — like Electron/Tauri).
+        window_info.bounds.x      = 0;
+        window_info.bounds.y      = 0;
+        window_info.bounds.width  = cfg.width;
+        window_info.bounds.height = cfg.height;
+        CefString(&window_info.window_name) = cfg.window_title.empty() ? "Enki Web Host" : cfg.window_title;
+        window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
     } else {
         // ── Offscreen (OSR) — for Enki Canvas embedding ───────
         window_info.SetAsWindowless(0);
@@ -283,10 +243,18 @@ void CefBridge::create_browser(const BackendConfig& cfg)
     browser_settings.image_loading = cfg.enable_images ? STATE_ENABLED  : STATE_DISABLED;
     browser_settings.background_color = cfg.background_color;
 
+    std::string start_url = "about:blank";
+    if (!cfg.initial_url.empty()) {
+        start_url = cfg.initial_url;
+    } else if (!pending_url_.empty()) {
+        start_url = pending_url_;
+        pending_url_.clear();
+    }
+
     CefBrowserHost::CreateBrowser(
         window_info,
         client_.get(),
-        pending_url_.empty() ? "about:blank" : pending_url_,
+        start_url,
         browser_settings,
         nullptr,   // extra_info
         nullptr    // request_context

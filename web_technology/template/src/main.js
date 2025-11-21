@@ -303,6 +303,14 @@ function switchTab(tabId) {
     };
     const subtitle = titleMap[tabId] || 'Workstation Pro';
     document.getElementById('window-title-display').textContent = subtitle;
+
+    // Load web portal iframe on-demand to avoid slowing down app startup
+    if (tabId === 'webportal') {
+        const iframe = document.getElementById('vaxp-iframe');
+        if (iframe && (!iframe.src || iframe.src === 'about:blank' || iframe.src.endsWith('about:blank'))) {
+            iframe.src = iframe.getAttribute('data-src') || 'https://vaxp.org';
+        }
+    }
 }
 
 // ── Live Permissions Action Tester ──────────────────────────

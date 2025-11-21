@@ -2,8 +2,7 @@
    Enki Workstation Pro — Design System & Stylesheet
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Google Fonts (fallback to system monospace/sans) ──────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* ── System Typography (Instant offline render, no blocking external CDN) ── */
 
 /* ── Reset & Base ──────────────────────────────────────────── */
 *, *::before, *::after {
