@@ -135,8 +135,17 @@ struct App::Impl {
             if (!popup_target && !surfaces.empty()) {
                 for (int i = static_cast<int>(surfaces.size()) - 1; i >= 0; --i) {
                     if (surfaces[i]->isAutoDismiss()) {
+                        if (active_popup_host == surfaces[i].get()) {
+                            active_popup_host = nullptr;
+                        }
                         surfaces.erase(surfaces.begin() + i);
                     }
+                }
+                if (window) {
+                    window->makeCurrent();
+                }
+                if (gr_context) {
+                    gr_context->resetContext();
                 }
             }
 
@@ -178,36 +187,23 @@ struct App::Impl {
             }
         });
 
-        // Connect fallback global input signals
+        // Fallback global event connections (targeted handlers above already process all events on X11 & Wayland)
         platform->onMouseDown().connect([this](float x, float y, int btn) {
-            if (!active_popup_host && !surfaces.empty()) {
-                for (int i = static_cast<int>(surfaces.size()) - 1; i >= 0; --i) {
-                    if (surfaces[i]->isAutoDismiss()) {
-                        surfaces.erase(surfaces.begin() + i);
-                    }
-                }
-            }
-            if (!active_popup_host) {
-                dispatchPointerDown(x, y, btn);
-            }
+            if (active_popup_host) return;
         });
 
         platform->onMouseUp().connect([this](float x, float y, int btn) {
-            if (!active_popup_host) {
-                dispatchPointerUp(x, y, btn);
+            if (active_popup_host) {
+                active_popup_host = nullptr;
             }
         });
 
         platform->onMouseMove().connect([this](float x, float y) {
-            if (!active_popup_host && surfaces.empty()) {
-                dispatchPointerMove(x, y);
-            }
+            // Already handled by onTargetedMouseMove
         });
 
         platform->onScroll().connect([this](float dx, float dy) {
-            if (!active_popup_host) {
-                dispatchScroll(dx, dy);
-            }
+            // Already handled by onTargetedScroll
         });
 
         return true;
@@ -451,6 +447,10 @@ struct App::Impl {
 
     void renderFrame() {
         auto frame_start = Clock::now();
+
+        if (window) {
+            window->makeCurrent();
+        }
 
         auto s = window->getDrawableSize();
         if (s.width <= 0 || s.height <= 0) return;
@@ -830,10 +830,19 @@ SurfaceHost* App::addWindow(WindowConfig config, WidgetPtr root_widget) {
 
 void App::removeSurface(SurfaceHost* host) {
     if (!host) return;
+    if (impl_->active_popup_host == host) {
+        impl_->active_popup_host = nullptr;
+    }
     auto it = std::find_if(impl_->surfaces.begin(), impl_->surfaces.end(),
                            [host](const std::unique_ptr<SurfaceHost>& h) { return h.get() == host; });
     if (it != impl_->surfaces.end()) {
         impl_->surfaces.erase(it);
+    }
+    if (impl_->window) {
+        impl_->window->makeCurrent();
+    }
+    if (impl_->gr_context) {
+        impl_->gr_context->resetContext();
     }
 }
 
@@ -889,6 +898,14 @@ int App::run() {
             host->layout();
             host->paint(impl.gr_context.get(), 0x00000000);
             host->swapBuffers();
+        }
+
+        // Restore main window context after rendering secondary surfaces
+        if (!impl.surfaces.empty() && impl.window) {
+            impl.window->makeCurrent();
+            if (impl.gr_context) {
+                impl.gr_context->resetContext();
+            }
         }
 
         // 5. Cap to target FPS
