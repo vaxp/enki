@@ -12,7 +12,7 @@ class AvatarDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
         return container({
-            .color = 0xFF0F172A,
+            .color = 0x4D000000,
             .align = Alignment::Center,
             .child = column({
                 .justify_content = Justify::Center,
@@ -50,9 +50,10 @@ public:
                             // 3. Avatar with Image and Border
                             Avatar {
                                 .radius = 40.0f,
+                                .background_color = 0x8D000000,
                                 .image_path = "/home/x/Work/enki/assets/vaxp.png",
                                 .border_width = 3.0f,
-                                .border_color = 0xFFFFFFFF,
+                                .border_color = 0x7D000000,
                                 .shadow_blur = 10.0f
                             }
                         }
@@ -65,7 +66,7 @@ public:
                             AvatarGroup {
                                 .avatars = {
                                     Avatar { .radius = 20.0f, .background_color = 0xFFEF4444, .initials = "A", .border_width = 2.0f },
-                                    Avatar { .radius = 20.0f, .background_color = 0xFF3B82F6, .initials = "B", .border_width = 2.0f },
+                                    Avatar { .radius = 20.0f, .background_color = 0x6D000000, .initials = "B", .border_width = 2.0f },
                                     Avatar { .radius = 20.0f, .background_color = 0xFF10B981, .initials = "C", .border_width = 2.0f },
                                     Avatar { .radius = 20.0f, .background_color = 0xFFF59E0B, .initials = "D", .border_width = 2.0f },
                                     Avatar { .radius = 20.0f, .background_color = 0xFF8B5CF6, .initials = "E", .border_width = 2.0f }
@@ -103,7 +104,7 @@ int main() {
     config.vsync       = false;
     config.target_fps  = 0;
     config.show_performance_overlay = true;
-    config.clear_color = 0xFF0F172A;
+    config.clear_color = 0x0000004D;
 
     return runApp(std::make_shared<AvatarDemoApp>(), config);
 }

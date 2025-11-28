@@ -57,7 +57,7 @@ public:
         // Tag pill helper
         auto make_tag = [](const std::string& label, Color bg, Color fg) {
             return container(ContainerProps{
-                .color = bg,
+                .color = 0x4D000000,
                 .border_radius = BorderRadius::circular(12.0f),
                 .padding = StyleInsets::symmetric(4.0f, 12.0f),
                 .child = text(label, TextStyle{
@@ -155,7 +155,7 @@ public:
 
         // Feature cards
         auto card1 = container(ContainerProps{
-            .color = 0xFF1F2430,
+            .color = 0x8D000000,
             .border_radius = BorderRadius::circular(8.0f),
             .border = Border(0x22FFFFFF, 1.0f),
             .width = 240.0f,
@@ -178,7 +178,7 @@ public:
         });
 
         auto card2 = container(ContainerProps{
-            .color = 0xFF1F2430,
+            .color = 0x8D000000,
             .border_radius = BorderRadius::circular(8.0f),
             .border = Border(0x22FFFFFF, 1.0f),
             .width = 240.0f,
@@ -201,7 +201,7 @@ public:
         });
 
         auto card3 = container(ContainerProps{
-            .color = 0xFF1F2430,
+            .color = 0x8D000000,
             .border_radius = BorderRadius::circular(8.0f),
             .border = Border(0x22FFFFFF, 1.0f),
             .width = 240.0f,
@@ -236,7 +236,7 @@ public:
         });
 
         auto app_body = container(ContainerProps{
-            .color = 0xFF14171F,
+            .color = 0x4D000000,
             .width = StyleValue::percent(100.0f),
             .height = StyleValue::percent(100.0f),
             .padding = StyleInsets::all(24.0f),
@@ -248,7 +248,10 @@ public:
             .content = app_body,
             .title = "ENKI — Client-Side Decorations Showcase",
             .border_radius = 12.0f,
-            .background_color = 0xFF14171F,
+            .background_color = 0x4D000000,
+            .titlebar_background_color = 0x4D000000,
+            .titlebar_inactive_background_color = 0x4D000000,
+            .titlebar_style = TitleBarStyle::VAXPOS,
         });
     }
 };
@@ -269,8 +272,8 @@ int main() {
     config.enable_csd = true;
     config.target_fps  = 0;
     config.vsync       = false;
-    config.show_performance_overlay = true;
-    config.clear_color = 0xFF14171F;
+    config.show_performance_overlay = false;
+    config.clear_color = 0x0000004D;
     config.app_id = "org.enki.csd_demo";
 
     auto app_res = App::create(std::make_shared<CsdDemoApp>(), config);

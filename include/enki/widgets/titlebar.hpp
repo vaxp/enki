@@ -22,6 +22,11 @@
 
 namespace enki {
 
+enum class TitleBarStyle {
+    Default,    ///< Standard desktop layout: Icon & Title on left, buttons on right
+    VAXPOS,     ///< VAXPOS-inspired layout: Circular buttons on left with hover glyphs & glow, centered title
+};
+
 // ════════════════════════════════════════════════════════════════
 // TitleBar Props
 // ════════════════════════════════════════════════════════════════
@@ -29,14 +34,15 @@ namespace enki {
 struct TitleBarProps {
     Key key = Key::none();
     Window* window = nullptr;                   ///< Target window for native CSD actions
+    TitleBarStyle style = TitleBarStyle::Default; ///< Visual layout and button style
     std::string title = "ENKI Application";     ///< Window title text
     WidgetPtr leading = nullptr;                ///< Optional leading widget (e.g. app icon)
     WidgetPtr title_widget = nullptr;           ///< Optional custom title widget
     WidgetPtr trailing = nullptr;               ///< Optional trailing widget (before buttons)
 
     float height = 38.0f;                       ///< Titlebar height (default 38px)
-    Color background_color = 0xFF181B22;        ///< Active titlebar background
-    Color inactive_background_color = 0xFF12141A; ///< Inactive titlebar background
+    Color background_color = 0x4D000000;        ///< Active titlebar background
+    Color inactive_background_color = 0x4D000000; ///< Inactive titlebar background
     Color title_color = 0xFFE6EDF3;             ///< Active title text color
     Color inactive_title_color = 0xFF7D8590;    ///< Inactive title text color
     float font_size = 13.0f;                    ///< Title font size

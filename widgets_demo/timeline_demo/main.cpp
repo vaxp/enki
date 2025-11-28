@@ -107,7 +107,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         return container({
-            .color = 0xFF0B1120,
+            .color = 0x3D000000,
             .padding = StyleInsets::all(16.0f),
             .flex_grow = 1.0f,
             .child = column({
@@ -130,7 +130,7 @@ public:
                     }),
                     
                     container({
-                        .color = 0xFF1E293B,
+                        .color = 0x4D000000,
                         .border_radius = BorderRadius::circular(10.0f),
                         .border = Border(0xFF334155, 1.0f),
                         .width = StyleValue::point(1220.0f),
@@ -191,7 +191,7 @@ public:
                         .gap = StyleValue::point(20.0f),
                         .children = {
                             container({
-                                .color = 0xFF1E293B,
+                                .color = 0x4D000000,
                                 .border_radius = BorderRadius::circular(10.0f),
                                 .border = Border(0xFF334155, 1.0f),
                                 .width = StyleValue::point(600.0f),
@@ -223,7 +223,7 @@ public:
                                 })
                             }),
                             container({
-                                .color = 0xFF1E293B,
+                                .color = 0x4D000000,
                                 .border_radius = BorderRadius::circular(10.0f),
                                 .border = Border(0xFF334155, 1.0f),
                                 .width = StyleValue::point(600.0f),
@@ -258,9 +258,9 @@ public:
                     }),
 
                     container({
-                        .color = 0xFF1E293B,
+                        .color = 0x4D000000,
                         .border_radius = BorderRadius::circular(6.0f),
-                        .border = Border(0xFF334155, 1.0f),
+                        .border = Border(0xFF553333, 1.0f),
                         .width = StyleValue::point(1220.0f),
                         .padding = StyleInsets::symmetric(6.0f, 12.0f),
                         .child = row({
@@ -298,8 +298,8 @@ int main() {
     config.resizable   = true;
     config.vsync       = false;
     config.target_fps  = 0;
-    config.show_performance_overlay = true;
-    config.clear_color = 0xFF0B1120;
+    config.show_performance_overlay = false;
+    config.clear_color = 0x2D000000;
 
     return runApp(std::make_shared<TimelineDemoApp>(), config);
 }

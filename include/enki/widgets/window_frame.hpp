@@ -36,6 +36,9 @@ struct WindowFrameProps {
     Color border_color = 0x26FFFFFF;            ///< Subtle outer window border
     float border_width = 1.0f;                  ///< Border stroke width
     Color background_color = 0xFF0F1117;        ///< Window content background color
+    std::optional<Color> titlebar_background_color = std::nullopt;          ///< Custom active titlebar background color
+    std::optional<Color> titlebar_inactive_background_color = std::nullopt; ///< Custom inactive titlebar background color
+    TitleBarStyle titlebar_style = TitleBarStyle::VAXPOS;                  ///< Titlebar style (Default or VAXPOS)
 
     float resize_thickness = 6.0f;              ///< Grab thickness of edge resize handles
     float corner_size = 14.0f;                  ///< Grab dimension of corner resize handles
