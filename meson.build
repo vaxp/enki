@@ -338,6 +338,8 @@ enki_sources = files(
   'src/widgets/menu.cpp',
   'src/widgets/clip.cpp',
   'src/widgets/paint_effects.cpp',
+  'src/widgets/skia_canvas.cpp',
+  'src/widgets/audio_waveform.cpp',
   'src/widgets/motion.cpp',
   'src/widgets/feedback_status.cpp',
   'src/widgets/utility.cpp',
@@ -413,6 +415,12 @@ if get_option('enable_webview')
   subdir('web_technology')
   enki_deps += web_technology_dep
 endif
+
+# ============================================================
+# Audio Subsystem (Capture & FFT DSP Analyzer)
+# ============================================================
+subdir('audio')
+enki_deps += audio_dep
 
 # ============================================================
 # Lottie Rendering Subsystem (-fno-rtti to match Skia Skottie)
