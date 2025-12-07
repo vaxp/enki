@@ -100,6 +100,15 @@ endif
 pulse_dep        = dependency('libpulse',        required : false)
 pulse_simple_dep = dependency('libpulse-simple', required : false)
 
+# FFmpeg & VA-API for hardware-accelerated video decoding 
+avcodec_dep    = dependency('libavcodec',    required : true)
+avformat_dep   = dependency('libavformat',   required : true)
+avutil_dep     = dependency('libavutil',     required : true)
+swscale_dep    = dependency('libswscale',    required : true)
+swresample_dep = dependency('libswresample', required : true)
+va_dep         = dependency('libva',         required : false)
+va_drm_dep     = dependency('libva-drm',     required : false)
+
 # Anu layout engine (compiled directly)
 anu_inc = include_directories('core')
 anu_sources = files(
@@ -340,6 +349,7 @@ enki_sources = files(
   'src/widgets/paint_effects.cpp',
   'src/widgets/skia_canvas.cpp',
   'src/widgets/audio_waveform.cpp',
+  'src/widgets/video_player.cpp',
   'src/widgets/motion.cpp',
   'src/widgets/feedback_status.cpp',
   'src/widgets/utility.cpp',
@@ -421,6 +431,12 @@ endif
 # ============================================================
 subdir('audio')
 enki_deps += audio_dep
+
+# ============================================================
+# Video Subsystem (FFmpeg Zero-Copy & PulseAudio Master Clock)
+# ============================================================
+subdir('video')
+enki_deps += video_dep
 
 # ============================================================
 # Lottie Rendering Subsystem (-fno-rtti to match Skia Skottie)

@@ -90,6 +90,4 @@ subdir('typography_demo')
 subdir('lottie_demo')
 subdir('skia_canvas_demo')
 subdir('audio_waveform_demo')
-
-
-
+subdir('video_player_demo')
