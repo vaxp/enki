@@ -116,6 +116,7 @@ int main() {
     config.width = 600;
     config.height = 400;
     config.target_fps = 0;
+    config.vsync = false;
     config.show_performance_overlay = true;
     
     return runApp(std::make_shared<SliderDemoWidget>(), config);
