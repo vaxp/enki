@@ -102,3 +102,10 @@ subdir('otp_field_demo')
 subdir('pin_field_demo')
 subdir('tag_input_demo')
 subdir('file_drop_zone_demo')
+
+# ── Section 19: Overlay & Popup Extended Demos ─────────────────
+subdir('spotlight_demo')
+subdir('floating_panel_demo')
+
+
+

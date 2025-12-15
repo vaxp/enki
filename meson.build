@@ -357,6 +357,8 @@ enki_sources = files(
   'src/widgets/code_block.cpp',
   'src/widgets/titlebar.cpp',
   'src/widgets/window_frame.cpp',
+  'src/widgets/spotlight.cpp',
+  'src/widgets/floating_panel.cpp',
 
   # Rich Input Controls (Roadmap v0.2.0 Section 15)
   'src/widgets/toggle_button.cpp',
