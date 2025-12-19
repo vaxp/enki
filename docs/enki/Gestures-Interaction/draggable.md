@@ -1,6 +1,6 @@
 # Draggable
 
-> An ultra-high-performance drag-and-drop source widget for Enki, featuring zero-rebuild 600+ FPS floating feedback overlays, typed `std::any` payloads, and semantic tag filtering.
+> An ultra-high-performance drag-and-drop source widget for Enki, featuring zero-rebuild  floating feedback overlays, typed `std::any` payloads, and semantic tag filtering.
 
 - **Header File**: `#include "enki/widgets/draggable.hpp"`
 - **C++ Class**: `enki::DraggableWidget` (inherits from `enki::StatefulWidget`)

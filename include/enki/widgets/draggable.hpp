@@ -1,7 +1,7 @@
 #pragma once
 /// @file draggable.hpp
 /// @brief Ultra high-performance Draggable, DragTarget, and DragOverlay widget system for ENKI Framework (Category 9. Gestures / Interaction).
-/// Supports zero-rebuild 600+ FPS direct Skia overlay rendering, drag-and-drop payloads, and drop target hit testing.
+/// Supports zero-rebuild  direct Skia overlay rendering, drag-and-drop payloads, and drop target hit testing.
 ///
 /// @copyright ENKI Framework — MIT License
 

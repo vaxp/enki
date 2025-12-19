@@ -1,5 +1,5 @@
 /// @file reorderable_list.cpp
-/// @brief 600+ FPS Direct Skia floating drag-and-drop ReorderableList for ENKI Framework.
+/// @brief  Direct Skia floating drag-and-drop ReorderableList for ENKI Framework.
 
 #include "enki/widgets/reorderable_list.hpp"
 #include "enki/widgets/container.hpp"

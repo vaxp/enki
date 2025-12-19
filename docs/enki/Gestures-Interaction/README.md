@@ -1,6 +1,6 @@
 # Enki Gestures & Interaction Suite
 
-> Pointer routing pipeline, Gesture Arena disambiguation, taps, long presses, 2D panning, zero-rebuild 600+ FPS drag-and-drop, swipe-to-dismiss, hover tracking, and system cursor control.
+> Pointer routing pipeline, Gesture Arena disambiguation, taps, long presses, 2D panning, zero-rebuild  drag-and-drop, swipe-to-dismiss, hover tracking, and system cursor control.
 
 The **Gestures / Interaction** subsystem transforms raw hardware pointer events (mouse clicks, trackpad pans, touch down/up/move, and wheel scrolls) into semantic user intent. Enki features a sophisticated **Gesture Arena** to resolve competing recognizers (e.g. distinguishing a quick single tap from a double tap, a long press, or a continuous drag), high-performance drag-and-drop overlays that bypass widget tree rebuilding, and granular hover/cursor dispatching.
 
@@ -51,7 +51,7 @@ Dispatch Semantic Callbacks (`on_tap`, `on_long_press`, `on_pan_update`)
 
 Enki includes an optimized global drag system managed by `DragManager` and `DragOverlay`:
 - **Zero Tree Rebuild**: Dragging does not trigger expensive layout passes or reconciliations on the main widget tree.
-- **Direct Skia Canvas Render**: The dragging `feedback` preview widget is painted directly at the cursor position on the root overlay pass at 600+ FPS.
+- **Direct Skia Canvas Render**: The dragging `feedback` preview widget is painted directly at the cursor position on the root overlay pass at .
 - **Type-Safe Payloads**: Arbitrary C++ objects can be passed safely via `std::any` and validated through `tag` matching.
 
 ---

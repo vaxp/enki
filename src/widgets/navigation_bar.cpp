@@ -1,5 +1,5 @@
 /// @file navigation_bar.cpp
-/// @brief 600+ FPS Direct Skia hardware-accelerated Advanced NavigationBar Suite for ENKI.
+/// @brief  Direct Skia hardware-accelerated Advanced NavigationBar Suite for ENKI.
 
 #include "enki/widgets/navigation_bar.hpp"
 #include "enki/animation/animation_controller.hpp"

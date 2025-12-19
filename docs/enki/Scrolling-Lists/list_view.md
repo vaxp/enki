@@ -15,7 +15,7 @@
 
 `ListView` is the standard widget for presenting linear vertical or horizontal lists. It supports two primary paradigms:
 1. **Static Vector Mode**: Pass a list of pre-constructed `items` or `children`. Ideal for short, static option lists or settings screens.
-2. **Lazy Builder Mode**: Provide an `item_count` and an `item_builder` lambda `(int index) -> WidgetPtr`. Only visible/required items are instantiated, allowing lists with thousands of items to run at 600+ FPS without memory overhead.
+2. **Lazy Builder Mode**: Provide an `item_count` and an `item_builder` lambda `(int index) -> WidgetPtr`. Only visible/required items are instantiated, allowing lists with thousands of items to run at  without memory overhead.
 
 It also supports custom dividers via `separator_builder`, row selection tracking with `selected_index`, and embedding inside other flex layouts via `shrink_wrap = true`.
 

@@ -5,7 +5,7 @@
 /// Features:
 ///   - Multiple styles: Material 3 Bottom Bar, macOS / iOS 18 Floating Capsule Dock,
 ///     Desktop Top Header Bar, and Segmented Capsule Tabs.
-///   - 600+ FPS Direct Skia hardware-accelerated animated sliding indicator (Spring/Lerp physics).
+///   -  Direct Skia hardware-accelerated animated sliding indicator (Spring/Lerp physics).
 ///   - Multiple indicator styles: Pill, Underline, Dot, Glow, None.
 ///   - Multiple item layout orientations: Vertical (Mobile/Bottom), Horizontal (Desktop/Header),
 ///     IconOnly (Dock), LabelOnly.
@@ -134,7 +134,7 @@ struct NavigationBarOptions {
     std::vector<std::string> trailing_actions; ///< Action button labels (e.g. "Docs", "GitHub")
 
     // ── Animation & Physics ────────────────────────────────────
-    bool  enable_animations  = true;        ///< Smooth 600+ FPS sliding indicator
+    bool  enable_animations  = true;        ///< Smooth  sliding indicator
     float animation_speed    = 16.0f;       ///< Lerp interpolation speed factor (higher = faster snap)
     bool  show_tooltips      = true;        ///< Render tooltips when hovering items
     bool  show_labels        = true;        ///< Global toggle for labels

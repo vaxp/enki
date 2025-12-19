@@ -360,6 +360,14 @@ enki_sources = files(
   'src/widgets/spotlight.cpp',
   'src/widgets/floating_panel.cpp',
 
+  # Layout — Extended (Roadmap v0.2.0 Section 11)
+  'src/widgets/intrinsic_width.cpp',
+  'src/widgets/intrinsic_height.cpp',
+  'src/widgets/overflow_box.cpp',
+  'src/widgets/limited_box.cpp',
+  'src/widgets/custom_multi_child_layout.cpp',
+  'src/widgets/flow.cpp',
+
   # Rich Input Controls (Roadmap v0.2.0 Section 15)
   'src/widgets/toggle_button.cpp',
   'src/widgets/segmented_control.cpp',

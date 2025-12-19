@@ -1,6 +1,6 @@
 # NavigationBar
 
-> A multi-style navigation bar widget supporting Material 3 bottom bars, macOS floating glassmorphism capsule docks, desktop top header bars, and segmented tabs with 600+ FPS sliding indicator physics.
+> A multi-style navigation bar widget supporting Material 3 bottom bars, macOS floating glassmorphism capsule docks, desktop top header bars, and segmented tabs with  FPS sliding indicator physics.
 
 - **Header File**: `#include "enki/widgets/navigation_bar.hpp"`
 - **C++ Class**: `enki::NavigationBarWidget` (inherits from `enki::StatefulWidget`)

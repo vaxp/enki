@@ -1,6 +1,6 @@
 # ReorderableList
 
-> An interactive list widget delivering 600+ FPS direct Skia floating drag-and-drop capabilities, real-time target slot displacement previews, glowing drop line indicators, and custom drag handles.
+> An interactive list widget delivering  direct Skia floating drag-and-drop capabilities, real-time target slot displacement previews, glowing drop line indicators, and custom drag handles.
 
 - **Header File**: `#include "enki/widgets/reorderable_list.hpp"`
 - **C++ Class**: `enki::ReorderableListWidget` (inherits from `enki::MultiChildRenderObjectWidget`)

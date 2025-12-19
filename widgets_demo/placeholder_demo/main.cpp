@@ -136,7 +136,7 @@ public:
             // Actual Loaded Content Card
             auto t1 = text("Alex Morgan (Lead Engineer)", { .color = 0xFFFFFFFF, .font_size = 14.0f, .font_weight = FontWeight::Bold });
             auto t2 = text("Senior Distributed Systems Specialist • Tokyo, Japan", { .color = 0xFF38BDF8, .font_size = 11.5f });
-            auto t3 = text("Successfully orchestrated high-throughput rendering pipelines with 600+ FPS benchmark throughput on Linux Wayland/X11.", {
+            auto t3 = text("Successfully orchestrated high-throughput rendering pipelines with  benchmark throughput on Linux Wayland/X11.", {
                 .color = 0xFFCBD5E1,
                 .font_size = 12.0f,
             });

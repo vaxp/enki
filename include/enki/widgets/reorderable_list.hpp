@@ -1,7 +1,7 @@
 #pragma once
 /// @file reorderable_list.hpp
 /// @brief Advanced ReorderableList widget for ENKI Framework (Category 4. Scrolling / Lists).
-/// Delivers 600+ FPS direct Skia floating drag-and-drop capabilities with real-time target slot displacement previews,
+/// Delivers  direct Skia floating drag-and-drop capabilities with real-time target slot displacement previews,
 /// drop line indicators, custom drag handles, and on_reorder callbacks.
 ///
 /// @copyright ENKI Framework — MIT License

@@ -107,5 +107,15 @@ subdir('file_drop_zone_demo')
 subdir('spotlight_demo')
 subdir('floating_panel_demo')
 
+# ── Section 11: Layout — Extended Demos ────────────────────────
+subdir('intrinsic_width_demo')
+subdir('intrinsic_height_demo')
+subdir('overflow_box_demo')
+subdir('limited_box_demo')
+subdir('custom_multi_child_layout_demo')
+subdir('flow_demo')
+
+
+
 
 
