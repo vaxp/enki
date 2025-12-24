@@ -44,6 +44,7 @@ The **Overlays** category encompasses floating cards, modals, sheets, and notifi
 | 4 | [**Snackbar**](./snackbar.md) | `struct Snackbar`, `SnackbarController` | `<enki/widgets/snackbar.hpp>` | 6-way toast notification with countdown progress bar, pause-on-hover, and semantic alerts. |
 | 5 | [**Spotlight**](./spotlight.md) | `struct Spotlight`, `SpotlightStep` | `<enki/widgets/spotlight.hpp>` | Full-screen dimmed overlay with inverse-cutout focus hole & step-by-step tour popover. |
 | 6 | [**FloatingPanel**](./floating_panel.md) | `struct FloatingPanel`, `FloatingPanelOptions` | `<enki/widgets/floating_panel.hpp>` | Freeform draggable & 8-direction resizable floating window overlay with state toggling. |
+| 7 | [**CommandPalette**](./command_palette.md) | `struct CommandPalette`, `CommandPaletteOptions` | `<enki/widgets/command_palette.hpp>` | Keyboard-driven fuzzy-search command launcher overlay (Ctrl+K style) with category grouping & recent history. |
 
 ---
 

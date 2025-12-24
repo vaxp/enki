@@ -138,7 +138,7 @@ public:
         return windowFrame(WindowFrameProps{
             .content = app_body,
             .title = "AudioWaveform Studio Suite — VAXP Audio Engine",
-            .border_radius = 16.0f,
+            .border_radius = 12.0f,
             .border_color = 0x3300E5FF,
             .border_width = 1.0f,
             .background_color = 0x4D000000,
