@@ -16,6 +16,7 @@
 #include "enki/widgets/flexbox.hpp"
 #include "enki/rendering/color.hpp"
 #include "enki/rendering/paint.hpp"
+#include "enki/rendering/svg.hpp"
 #include <vector>
 #include <memory>
 #include <optional>
@@ -122,6 +123,12 @@ struct BoxDecoration {
     std::vector<BoxShadow>       box_shadow;
     BoxShape                     shape          = BoxShape::Rectangle;
     bool                         clip_content   = false;
+    std::string                  background_shader = "";
+    std::string                  border_shader     = "";
+    std::string                  background_svg    = "";
+    std::string                  border_svg        = "";
+    SvgFit                       svg_fit           = SvgFit::Stretch;
+    std::optional<SvgSlice>      svg_slice         = std::nullopt;
 
     constexpr BoxDecoration() = default;
     explicit BoxDecoration(Color c) : color(c) {}
@@ -153,7 +160,7 @@ class RenderDecoratedBox : public RenderBox {
 public:
     RenderDecoratedBox();
     RenderDecoratedBox(BoxDecoration decoration, FlexboxStyle style);
-    ~RenderDecoratedBox() override = default;
+    ~RenderDecoratedBox() override;
 
     void setDecoration(const BoxDecoration& decoration);
     [[nodiscard]] const BoxDecoration& decoration() const { return decoration_; }
@@ -168,6 +175,10 @@ private:
     BoxDecoration decoration_;
     FlexboxStyle  style_;
 
+    struct ShaderData;
+    std::unique_ptr<ShaderData> shader_data_;
+
+    void updateShaders();
     void paintShadows(PaintContext& context, const Rect& bounds, const BorderRadius& radius);
     void paintBackground(PaintContext& context, const Rect& bounds, const BorderRadius& radius);
     void paintBorder(PaintContext& context, const Rect& bounds, const BorderRadius& radius);
@@ -212,6 +223,12 @@ struct Container {
     std::vector<BoxShadow>        box_shadow;
     std::optional<BoxShape>       shape;
     std::optional<bool>           clip_content;
+    std::string                   background_shader = "";
+    std::string                   border_shader     = "";
+    std::string                   background_svg    = "";
+    std::string                   border_svg        = "";
+    SvgFit                        svg_fit           = SvgFit::Stretch;
+    std::optional<SvgSlice>       svg_slice         = std::nullopt;
 
     // ── Child Alignment ────────────────────────────────────────
     std::optional<Alignment>      align;
@@ -264,6 +281,24 @@ inline std::shared_ptr<ContainerWidget> container(ContainerProps props = {}) {
     c->decoration.box_shadow = std::move(props.box_shadow);
     if (props.shape) c->decoration.shape = *props.shape;
     if (props.clip_content) c->decoration.clip_content = *props.clip_content;
+    if (!props.background_shader.empty()) c->decoration.background_shader = std::move(props.background_shader);
+    if (!props.border_shader.empty()) {
+        c->decoration.border_shader = std::move(props.border_shader);
+        if (!props.border) {
+            c->decoration.border = Border(Colors::Transparent, 1.0f);
+            c->style.border = StyleBorders::uniform(1.0f);
+        }
+    }
+    if (!props.background_svg.empty()) c->decoration.background_svg = std::move(props.background_svg);
+    if (!props.border_svg.empty()) {
+        c->decoration.border_svg = std::move(props.border_svg);
+        if (!props.border) {
+            c->decoration.border = Border(Colors::Transparent, 1.0f);
+            c->style.border = StyleBorders::uniform(1.0f);
+        }
+    }
+    c->decoration.svg_fit = props.svg_fit;
+    c->decoration.svg_slice = props.svg_slice;
     
     // Apply Alignment
     if (props.align) {
