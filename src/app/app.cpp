@@ -507,7 +507,6 @@ struct App::Impl {
         // ── Phase 1: Advance animations ─────────────────────────
         SchedulerBinding::instance().tick();
 
-        // ── Phase 2: Rebuild dirty elements ─────────────────────
         auto build_start = Clock::now();
         build_owner->buildScope(root_element.get());
         auto build_end = Clock::now();

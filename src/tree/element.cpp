@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <sstream>
 #include <cassert>
+#include <iostream>
+#include <chrono>
 
 #include "enki/state/state.hpp"
 
@@ -122,7 +124,6 @@ Element* Element::updateChild(Element* child, WidgetPtr newWidget, size_t newSlo
             child->slot_ = newSlot;
         }
         child->update(std::move(newWidget));
-        child->rebuild(true);
         return child;
     }
 
@@ -226,7 +227,7 @@ StatelessElement::StatelessElement(WidgetPtr widget)
 
 void StatelessElement::update(WidgetPtr newWidget) {
     Element::update(std::move(newWidget));
-    rebuild();
+    rebuild(true);
 }
 
 void StatelessElement::unmount() {
@@ -306,7 +307,7 @@ void StatefulElement::update(WidgetPtr newWidget) {
 
     // Notify state that the widget config changed
     state_->didUpdateWidget(*oldWidget);
-    markNeedsBuild();
+    rebuild(true);
 }
 
 void StatefulElement::performRebuild() {

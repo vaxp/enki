@@ -414,12 +414,18 @@ enki_sources = files(
   'src/widgets/sidebar.cpp',
   'src/widgets/drawer.cpp',
   'src/widgets/navigator.cpp',
+  'src/widgets/hero.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',
   'src/animation/lottie_controller.cpp',
   'src/animation/tween.cpp',
   'src/animation/curves.cpp',
+  'src/animation/spring_simulation.cpp',
+  'src/animation/spring_controller.cpp',
+  'src/animation/timeline.cpp',
+  'src/animation/path_morph.cpp',
+  'src/animation/particle_system.cpp',
 
   # Desktop Shell Subsystem
   'src/shell/surface_host.cpp',

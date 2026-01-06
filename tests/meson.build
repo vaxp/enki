@@ -355,6 +355,46 @@ test('test_flow',
   ),
 )
 
+test('test_spring',
+  executable('test_spring',
+    'animation/test_spring.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_timeline',
+  executable('test_timeline',
+    'animation/test_timeline.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_path_morph',
+  executable('test_path_morph',
+    'animation/test_path_morph.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_hero',
+  executable('test_hero',
+    'widgets/test_hero.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_particle',
+  executable('test_particle',
+    'animation/test_particle.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+
+
+
+
+
 
 
 
