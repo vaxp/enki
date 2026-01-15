@@ -25,6 +25,7 @@
 #include <thread>
 #include <unordered_set>
 #include <deque>
+#include <array>
 #include <algorithm>
 
 namespace enki {
@@ -445,15 +446,11 @@ struct App::Impl {
 
     // ── Per-frame rendering ─────────────────────────────────────
 
-    void renderFrame() {
+    bool renderFrame() {
         auto frame_start = Clock::now();
 
-        if (window) {
-            window->makeCurrent();
-        }
-
         auto s = window->getDrawableSize();
-        if (s.width <= 0 || s.height <= 0) return;
+        if (s.width <= 0 || s.height <= 0) return false;
 
         int w = static_cast<int>(s.width);
         int h = static_cast<int>(s.height);
@@ -490,7 +487,7 @@ struct App::Impl {
             }
         }
 
-        if (!cached_surface) return;
+        if (!cached_surface) return false;
 
         SkCanvas* sk_canvas = cached_surface->getCanvas();
 
@@ -515,12 +512,16 @@ struct App::Impl {
         auto* root_ro = root_element->findRenderObject();
 
         // ── Phase 3: Layout ──────────────────────────────────────
+        bool did_layout = false;
         auto layout_start = Clock::now();
         if (root_ro && root_ro->needsLayout()) {
             root_ro->layout(s.width, s.height);
+            did_layout = true;
         }
         auto layout_end = Clock::now();
-        stats.layout_time_ms = std::chrono::duration<double, std::milli>(layout_end - layout_start).count();
+        stats.layout_time_ms = did_layout
+            ? std::chrono::duration<double, std::milli>(layout_end - layout_start).count()
+            : 0.0;
 
         // ── Idle-skip decision ───────────────────────────────────
         // Only repaint if something in the scene actually changed:
@@ -528,17 +529,17 @@ struct App::Impl {
         //   • active tickers are running (animations in flight)
         //   • layout was recalculated (size/position changed)
         //   • any render object flagged itself as needing repaint
-        //   • the performance overlay is shown (it reads live stats)
+        //   • surface was resized
         bool scene_dirty = (stats.dirty_elements > 0)
                         || (stats.active_tickers > 0)
-                        || (stats.layout_time_ms > 0.0)
+                        || did_layout
                         || (root_ro && root_ro->subtreeNeedsPaint())
-                        || config.show_performance_overlay
                         || surface_resized;
 
         double paint_ms = 0.0;
         double gpu_flush_ms = 0.0;
         double swap_ms = 0.0;
+        bool did_swap = false;
 
         if (scene_dirty && root_ro) {
             // ── Phase 4: Clear background + Paint ───────────────
@@ -571,6 +572,7 @@ struct App::Impl {
             window->swapBuffers();
             auto swap_end = Clock::now();
             swap_ms = std::chrono::duration<double, std::milli>(swap_end - gpu_end).count();
+            did_swap = true;
         }
         // idle path: no paint, no flush, no swap — near-zero CPU
 
@@ -608,10 +610,14 @@ struct App::Impl {
             frame_times_window.pop_front();
         }
         if (!frame_times_window.empty()) {
-            std::vector<double> sorted(frame_times_window.begin(), frame_times_window.end());
-            std::sort(sorted.begin(), sorted.end());
-            size_t p95_idx = static_cast<size_t>(sorted.size() * 0.95);
-            if (p95_idx >= sorted.size()) p95_idx = sorted.size() - 1;
+            std::array<double, kFrameWindow> sorted;
+            const size_t count = frame_times_window.size();
+            for (size_t i = 0; i < count; ++i) {
+                sorted[i] = frame_times_window[i];
+            }
+            std::sort(sorted.begin(), sorted.begin() + count);
+            size_t p95_idx = static_cast<size_t>(count * 0.95);
+            if (p95_idx >= count) p95_idx = count - 1;
             stats.p95_frame_time_ms = sorted[p95_idx];
         }
 
@@ -622,6 +628,8 @@ struct App::Impl {
             frames_in_sample = 0;
             last_fps_sample_time = cpu_end;
         }
+
+        return did_swap;
     }
 
     void drawPerformanceOverlay(Canvas& canvas, Size s) {
@@ -752,9 +760,28 @@ struct App::Impl {
 
     // ── Frame timing ────────────────────────────────────────────
 
-    void capFrameRate() {
-        // When VSync is enabled, eglSwapBuffers handles synchronization with zero jitter.
-        if (config.vsync) {
+    void capFrameRate(bool did_swap) {
+        // When VSync is enabled and a buffer swap took place, eglSwapBuffers handles synchronization with zero jitter.
+        if (config.vsync && did_swap) {
+            last_frame_time = Clock::now();
+            return;
+        }
+
+        if (!did_swap) {
+            // Idle frame: nothing was painted or swapped.
+            // Sleep to yield CPU and prevent a tight busy-loop.
+            // Maintains instant responsiveness while keeping idle CPU consumption at ~0%.
+            const double idle_fps = (config.target_fps > 0) ? config.target_fps : 60.0;
+            using namespace std::chrono;
+            const auto idle_budget = duration_cast<Clock::duration>(
+                duration<double>(1.0 / idle_fps));
+            auto now = Clock::now();
+            auto elapsed = now - last_frame_time;
+            if (elapsed < idle_budget) {
+                std::this_thread::sleep_for(idle_budget - elapsed);
+            } else {
+                std::this_thread::sleep_for(milliseconds(8));
+            }
             last_frame_time = Clock::now();
             return;
         }
@@ -886,7 +913,8 @@ int App::run() {
         impl.tickPointer();
 
         // 3. Render main frame
-        impl.renderFrame();
+        bool main_rendered = impl.renderFrame();
+        bool secondary_rendered = false;
 
         // 4. Update and render all active popup and secondary surfaces
         for (size_t i = 0; i < impl.surfaces.size(); ++i) {
@@ -897,6 +925,7 @@ int App::run() {
             host->layout();
             host->paint(impl.gr_context.get(), 0x00000000);
             host->swapBuffers();
+            secondary_rendered = true;
         }
 
         // Restore main window context after rendering secondary surfaces
@@ -907,8 +936,8 @@ int App::run() {
             }
         }
 
-        // 5. Cap to target FPS
-        impl.capFrameRate();
+        // 5. Cap to target FPS or pace idle
+        impl.capFrameRate(main_rendered || secondary_rendered);
     }
 
     return 0;

@@ -228,8 +228,8 @@ public:
     ~RenderParagraph() override;
 
     void setTextSpan(std::shared_ptr<InlineSpan> span);
-    void setText(std::string data,
-                 TextStyle style,
+    void setText(const std::string& data,
+                 const TextStyle& style,
                  TextAlign align = TextAlign::Start,
                  TextDirection dir = TextDirection::LTR,
                  TextOverflow overflow = TextOverflow::Clip,
