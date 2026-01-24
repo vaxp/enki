@@ -244,7 +244,7 @@ protected:
     BuildOwner* owner_ = nullptr;                        ///< Build pipeline owner.
     size_t depth_ = 0;                                   ///< Tree depth.
     size_t slot_ = 0;                                    ///< Position in parent.
-    bool dirty_ = true;                                  ///< Needs rebuild?
+    bool dirty_ = false;                                 ///< Needs rebuild?
     ElementLifecycle lifecycle_ = ElementLifecycle::Initial;
 };
 
@@ -290,6 +290,7 @@ class StatelessElement : public Element {
 public:
     explicit StatelessElement(WidgetPtr widget);
 
+    void mount(Element* parent, size_t slot) override;
     void update(WidgetPtr newWidget) override;
     void unmount() override;
     void performRebuild() override;

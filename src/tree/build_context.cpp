@@ -19,16 +19,6 @@ BuildContext::BuildContext(Element* element) : element_(element) {
     assert(element_ && "BuildContext must be created with a valid Element");
 }
 
-template<typename T>
-T* BuildContext::findAncestorWidgetOfType() const {
-    return element_->findAncestorWidgetOfType<T>();
-}
-
-template<typename T>
-T* BuildContext::findAncestorElementOfType() const {
-    return element_->findAncestorElementOfType<T>();
-}
-
 RenderObject* BuildContext::findAncestorRenderObject() const {
     // Walk up the element tree to find the first RenderObjectElement
     Element* ancestor = element_->parent();
