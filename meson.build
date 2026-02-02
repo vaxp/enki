@@ -450,20 +450,20 @@ enki_deps += anu_dep
 # WebView / CEF Subsystem (optional)
 # ============================================================
 if get_option('enable_webview')
-  subdir('web_technology')
+  subdir('modules/web_technology')
   enki_deps += web_technology_dep
 endif
 
 # ============================================================
 # Audio Subsystem (Capture & FFT DSP Analyzer)
 # ============================================================
-subdir('audio')
+subdir('modules/audio')
 enki_deps += audio_dep
 
 # ============================================================
 # Video Subsystem (FFmpeg Zero-Copy & PulseAudio Master Clock)
 # ============================================================
-subdir('video')
+subdir('modules/video')
 enki_deps += video_dep
 
 # ============================================================
