@@ -105,13 +105,14 @@ bool X11Window::init(const WindowConfig& cfg) {
     colormap_ = XCreateColormap(display_, root, visual, AllocNone);
 
     XSetWindowAttributes swa{};
-    swa.colormap     = colormap_;
-    swa.border_pixel = 0;
-    swa.bit_gravity  = NorthWestGravity;
-    swa.event_mask   = ExposureMask | StructureNotifyMask | ButtonPressMask |
-                       ButtonReleaseMask | PointerMotionMask | KeyPressMask |
-                       KeyReleaseMask | FocusChangeMask | PropertyChangeMask;
-    unsigned long valuemask = CWColormap | CWBorderPixel | CWBitGravity | CWEventMask;
+    swa.colormap          = colormap_;
+    swa.border_pixel      = 0;
+    swa.background_pixmap = None;
+    swa.bit_gravity       = NorthWestGravity;
+    swa.event_mask        = ExposureMask | StructureNotifyMask | ButtonPressMask |
+                            ButtonReleaseMask | PointerMotionMask | KeyPressMask |
+                            KeyReleaseMask | FocusChangeMask | PropertyChangeMask;
+    unsigned long valuemask = CWColormap | CWBorderPixel | CWBackPixmap | CWBitGravity | CWEventMask;
 
     if (cfg.override_redirect || cfg.mode == WindowMode::Popup) {
         swa.override_redirect = True;
