@@ -31,6 +31,7 @@ struct WindowConfig {
     bool        fullscreen   = false;
     bool        borderless   = false;
     bool        transparent  = false; // 32-bit ARGB with compositing
+    bool        blur         = true;  ///< Request desktop compositor to blur behind transparent areas
     bool        always_on_top = false;
     bool        override_redirect = false; ///< Bypass window manager (for popups, tooltips, panels)
     int         min_width    = 2;
@@ -69,6 +70,9 @@ public:
 
     /// Set whether window stays on top of other windows.
     void setAlwaysOnTop(bool on_top);
+
+    /// Request desktop compositor to blur background behind transparent window regions.
+    void setBlurBehind(bool enable);
 
     // ── Client-Side Decoration (CSD) Actions ────────────────────
 

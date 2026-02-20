@@ -114,9 +114,11 @@ struct App::Impl {
         win_cfg.height    = config.height;
         win_cfg.resizable = config.resizable;
         win_cfg.vsync     = config.vsync;
-        win_cfg.mode      = config.window_mode;
-        win_cfg.csd       = config.enable_csd;
-        win_cfg.app_id    = config.app_id;
+        win_cfg.mode        = config.window_mode;
+        win_cfg.csd         = config.enable_csd;
+        win_cfg.app_id      = config.app_id;
+        win_cfg.blur        = config.enable_blur;
+        win_cfg.transparent = (((config.clear_color >> 24) & 0xFF) < 0xFF) || config.enable_csd;
 
         auto result = Window::create(*platform, win_cfg);
         if (!result.isOk()) return false;

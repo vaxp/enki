@@ -133,6 +133,20 @@ bool X11Window::init(const WindowConfig& cfg) {
 
     setTitle(cfg.title);
 
+    // Set WM_CLASS so compositors and window managers can identify the application
+    {
+        XClassHint class_hint{};
+        std::string app_id = cfg.app_id.empty() ? "enki.app" : cfg.app_id;
+        std::string res_name = app_id;
+        auto last_dot = res_name.rfind('.');
+        if (last_dot != std::string::npos && last_dot + 1 < res_name.size()) {
+            res_name = res_name.substr(last_dot + 1);
+        }
+        class_hint.res_name  = res_name.data();
+        class_hint.res_class = app_id.data();
+        XSetClassHint(display_, x11_window_, &class_hint);
+    }
+
     // Set _NET_WM_WINDOW_TYPE
     Atom net_wm_window_type = XInternAtom(display_, "_NET_WM_WINDOW_TYPE", False);
     if (cfg.mode == WindowMode::Popup) {
@@ -155,15 +169,12 @@ bool X11Window::init(const WindowConfig& cfg) {
 
     if (cfg.borderless || cfg.csd) {
         setBorderless(true);
-        // Inform window manager that client provides its own frame
-        Atom frame_extents = backend_.getAtomGtkFrameExtents();
-        if (frame_extents) {
-            unsigned long extents[4] = {0, 0, 0, 0};
-            XChangeProperty(display_, x11_window_, frame_extents, XA_CARDINAL, 32,
-                            PropModeReplace, (unsigned char*)extents, 4);
-        }
     }
-    if (cfg.always_on_top)         setAlwaysOnTop(true);
+    if (cfg.always_on_top) setAlwaysOnTop(true);
+
+    if (cfg.blur) {
+        setBlurBehind(true);
+    }
 
     // Set _NET_WM_PID
     Atom net_pid = XInternAtom(display_, "_NET_WM_PID", False);
@@ -253,6 +264,9 @@ void X11Window::setSize(int w, int h) {
     current_width_ = w; current_height_ = h;
     if (display_ && x11_window_) {
         XResizeWindow(display_, x11_window_, w, h);
+        if (blur_enabled_) {
+            updateBlurBehindRegion();
+        }
         XFlush(display_);
     }
 }
@@ -483,16 +497,20 @@ void X11Window::setWindowGeometry(int x, int y, int width, int height) {
     long right = (current_width_ > (x + width)) ? (current_width_ - (x + width)) : 0;
     long bottom = (current_height_ > (y + height)) ? (current_height_ - (y + height)) : 0;
 
-    unsigned long extents[4] = {
-        static_cast<unsigned long>(left),
-        static_cast<unsigned long>(right),
-        static_cast<unsigned long>(top),
-        static_cast<unsigned long>(bottom)
-    };
     Atom frame_extents = backend_.getAtomGtkFrameExtents();
     if (frame_extents) {
-        XChangeProperty(display_, x11_window_, frame_extents, XA_CARDINAL, 32,
-                        PropModeReplace, reinterpret_cast<unsigned char*>(extents), 4);
+        if (left == 0 && right == 0 && top == 0 && bottom == 0) {
+            XDeleteProperty(display_, x11_window_, frame_extents);
+        } else {
+            unsigned long extents[4] = {
+                static_cast<unsigned long>(left),
+                static_cast<unsigned long>(right),
+                static_cast<unsigned long>(top),
+                static_cast<unsigned long>(bottom)
+            };
+            XChangeProperty(display_, x11_window_, frame_extents, XA_CARDINAL, 32,
+                            PropModeReplace, reinterpret_cast<unsigned char*>(extents), 4);
+        }
         XFlush(display_);
     }
 }
@@ -556,8 +574,42 @@ void X11Window::handleFocus(bool focused) {
 }
 
 void X11Window::handleConfigure(int nw, int nh) {
-    current_width_ = nw;
-    current_height_ = nh;
+    if (current_width_ != nw || current_height_ != nh) {
+        current_width_  = nw;
+        current_height_ = nh;
+        if (blur_enabled_) {
+            updateBlurBehindRegion();
+        }
+    }
+}
+
+void X11Window::setBlurBehind(bool enable) {
+    blur_enabled_ = enable;
+    updateBlurBehindRegion();
+}
+
+void X11Window::updateBlurBehindRegion() {
+    if (!display_ || !x11_window_) return;
+
+    Atom atom_kde_blur = XInternAtom(display_, "_KDE_NET_WM_BLUR_BEHIND_REGION", False);
+    Atom atom_net_blur = XInternAtom(display_, "_NET_WM_BLUR_BEHIND_REGION", False);
+
+    if (blur_enabled_) {
+        unsigned long rect[4] = {
+            0,
+            0,
+            static_cast<unsigned long>(current_width_ > 0 ? current_width_ : 1),
+            static_cast<unsigned long>(current_height_ > 0 ? current_height_ : 1)
+        };
+        XChangeProperty(display_, x11_window_, atom_kde_blur, XA_CARDINAL, 32,
+                        PropModeReplace, reinterpret_cast<const unsigned char*>(rect), 4);
+        XChangeProperty(display_, x11_window_, atom_net_blur, XA_CARDINAL, 32,
+                        PropModeReplace, reinterpret_cast<const unsigned char*>(rect), 4);
+    } else {
+        XDeleteProperty(display_, x11_window_, atom_kde_blur);
+        XDeleteProperty(display_, x11_window_, atom_net_blur);
+    }
+    XFlush(display_);
 }
 
 Size X11Window::getSize() const {

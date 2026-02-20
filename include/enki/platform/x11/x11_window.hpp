@@ -24,6 +24,7 @@ public:
     void setPosition(int x, int y);
     void setBorderless(bool borderless);
     void setAlwaysOnTop(bool on_top);
+    void setBlurBehind(bool enable);
 
     [[nodiscard]] Size  getSize() const;
     [[nodiscard]] Size  getDrawableSize() const;
@@ -79,6 +80,9 @@ private:
     int current_width_  = 0;
     int current_height_ = 0;
     WindowState state_  = WindowState::Normal;
+    bool blur_enabled_  = false;
+
+    void updateBlurBehindRegion();
 
     Signal<WindowState> on_state_changed_;
     Signal<bool>        on_maximized_;

@@ -94,6 +94,7 @@ struct AppConfig {
     WindowMode  window_mode              = WindowMode::Normal; ///< Standard window or Layer Shell.
     bool        show_performance_overlay = false;         ///< Render built-in FPS & latency HUD.
     bool        enable_csd               = false;         ///< Enable Client-Side Decorations (CSD).
+    bool        enable_blur              = true;          ///< Enable compositor background blur for transparent windows.
     std::string app_id                   = "enki.app";    ///< Application identifier.
 };
 
