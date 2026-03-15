@@ -10,13 +10,26 @@
 // Skia GPU
 #include <include/core/SkCanvas.h>
 #include <include/core/SkSurface.h>
+#include <include/core/SkColorSpace.h>
 #include <include/gpu/GrDirectContext.h>
 #include <include/gpu/GrBackendSurface.h>
 #include <include/gpu/gl/GrGLInterface.h>
 #include <include/gpu/gl/GrGLAssembleInterface.h>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <GL/gl.h>
+#else
 #include <dlfcn.h>
 #include <EGL/egl.h>
 #include <GL/gl.h>
+#endif
 
 #include "enki/animation/ticker.hpp"
 
@@ -215,6 +228,21 @@ struct App::Impl {
     bool initSkia() {
         window->makeCurrent();
 
+#if defined(_WIN32)
+        sk_sp<const GrGLInterface> gl_interface = GrGLMakeNativeInterface();
+        if (!gl_interface) {
+            std::cerr << "[ENKI] Failed to create Skia Native GL Interface on Windows\n";
+            return false;
+        }
+
+        gr_context = GrDirectContext::MakeGL(gl_interface);
+        if (!gr_context) {
+            std::cerr << "[ENKI] GrDirectContext::MakeGL failed on Windows\n";
+            return false;
+        }
+
+        return true;
+#else
         // Strategy 1: Make assembled interface from loaded OpenGL libraries
         void* libgl = nullptr;
         if (!libgl) libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
@@ -266,6 +294,7 @@ struct App::Impl {
         }
 
         return true;
+#endif
     }
 
     bool initWidgetTree() {

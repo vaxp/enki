@@ -4,6 +4,7 @@
 
 #include "enki/rendering/lottie_composition.hpp"
 #include "enki/rendering/canvas.hpp"
+#include "enki/core/string_utils.hpp"
 
 #include <modules/skottie/include/Skottie.h>
 #include <modules/skottie/include/SkottieProperty.h>
@@ -12,7 +13,11 @@
 #include <include/core/SkData.h>
 #include <include/core/SkStream.h>
 #include <include/core/SkFontMgr.h>
+#if defined(_WIN32)
+#include <include/ports/SkTypeface_win.h>
+#else
 #include <include/ports/SkFontMgr_fontconfig.h>
+#endif
 
 #include <mutex>
 #include <unordered_map>
@@ -26,9 +31,13 @@ namespace {
 
 sk_sp<SkFontMgr> getLottieFontMgr() {
     static sk_sp<SkFontMgr> mgr = []() {
+#if defined(_WIN32)
+        return SkFontMgr_New_DirectWrite();
+#else
         auto m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
         return m;
+#endif
     }();
     return mgr;
 }
@@ -87,22 +96,8 @@ LottieComposition::LottieComposition() : impl_(std::make_unique<Impl>()) {}
 LottieComposition::~LottieComposition() = default;
 
 Result<std::shared_ptr<LottieComposition>> LottieComposition::loadFromFile(std::string_view path) {
-    std::string path_str(path);
+    std::string path_str = resolveAssetPath(path);
     auto data = SkData::MakeFromFileName(path_str.c_str());
-
-    if (!data) {
-        // Fallback: try ../path (e.g. running from build/)
-        std::string parent_rel = "../" + path_str;
-        data = SkData::MakeFromFileName(parent_rel.c_str());
-        if (data) path_str = parent_rel;
-    }
-
-    if (!data) {
-        // Fallback: try workspace relative
-        std::string ws_rel = "/home/x/Work/enki/" + path_str;
-        data = SkData::MakeFromFileName(ws_rel.c_str());
-        if (data) path_str = ws_rel;
-    }
 
     if (!data) {
         return Result<std::shared_ptr<LottieComposition>>::err(

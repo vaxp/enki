@@ -17,49 +17,104 @@ project('enki', ['c', 'cpp'],
 # ============================================================
 cpp = meson.get_compiler('cpp')
 
-add_project_arguments(
-  '-Wno-unused-parameter',
-  '-Wno-missing-field-initializers',
-  language : 'cpp',
-)
+if cpp.get_id() == 'msvc'
+  add_project_arguments(
+    '/wd4100',
+    '/wd4201',
+    '/D_USE_MATH_DEFINES',
+    '/DNOMINMAX',
+    '/permissive-',
+    '/Zc:__cplusplus',
+    language : 'cpp',
+  )
+else
+  add_project_arguments(
+    '-Wno-unused-parameter',
+    '-Wno-missing-field-initializers',
+    '-D_USE_MATH_DEFINES',
+    language : 'cpp',
+  )
+endif
+
+is_windows = host_machine.system() == 'windows'
 
 # ============================================================
-# Native Linux Dependencies (Zero SDL)
+# Platform Dependencies
 # ============================================================
-x11_dep    = dependency('x11',     required : true)
-xrandr_dep = dependency('xrandr',  required : false)
-egl_dep    = dependency('egl',     required : true)
-gl_dep     = dependency('gl',      required : true)
-thread_dep = dependency('threads')
-dl_dep = cpp.find_library('dl', required : false)
-m_dep = cpp.find_library('m',  required : false)
+if is_windows
+  thread_dep = dependency('threads')
+  opengl_dep = cpp.find_library('opengl32', required : true)
+  gdi_dep    = cpp.find_library('gdi32', required : true)
+  user32_dep = cpp.find_library('user32', required : true)
+  dwmapi_dep = cpp.find_library('dwmapi', required : true)
+  uxtheme_dep = cpp.find_library('uxtheme', required : true)
+  ole32_dep  = cpp.find_library('ole32', required : true)
+  shell32_dep = cpp.find_library('shell32', required : true)
+  shcore_dep = cpp.find_library('shcore', required : false)
 
-# Wayland client + EGL window support + keyboard handling
-wayland_client_dep  = dependency('wayland-client',  required : false)
-wayland_egl_dep     = dependency('wayland-egl',     required : false)
-wayland_cursor_dep  = dependency('wayland-cursor',  required : false)
-xkbcommon_dep       = dependency('xkbcommon',       required : false)
+  windows_deps = [thread_dep, opengl_dep, gdi_dep, user32_dep, dwmapi_dep, uxtheme_dep, ole32_dep, shell32_dep]
+  if shcore_dep.found()
+    windows_deps += shcore_dep
+  endif
 
-# wayland-scanner: generates C protocol glue from XML specs
-wayland_scanner = find_program('wayland-scanner', required : false)
+  pulse_dep        = dependency('libpulse',        required : false)
+  pulse_simple_dep = dependency('libpulse-simple', required : false)
+  avcodec_dep      = dependency('libavcodec',      required : false)
+  avformat_dep     = dependency('libavformat',     required : false)
+  avutil_dep       = dependency('libavutil',       required : false)
+  swscale_dep      = dependency('libswscale',      required : false)
+  swresample_dep   = dependency('libswresample',   required : false)
+  va_dep           = dependency('libva',           required : false)
+  va_drm_dep       = dependency('libva-drm',       required : false)
+  protocol_dep     = declare_dependency()
+else
+  # Native Linux Dependencies (Zero SDL)
+  x11_dep    = dependency('x11',     required : true)
+  xrandr_dep = dependency('xrandr',  required : false)
+  egl_dep    = dependency('egl',     required : true)
+  gl_dep     = dependency('gl',      required : true)
+  thread_dep = dependency('threads')
+  dl_dep = cpp.find_library('dl', required : false)
+  m_dep = cpp.find_library('m',  required : false)
+
+  # Wayland client + EGL window support + keyboard handling
+  wayland_client_dep  = dependency('wayland-client',  required : false)
+  wayland_egl_dep     = dependency('wayland-egl',     required : false)
+  wayland_cursor_dep  = dependency('wayland-cursor',  required : false)
+  xkbcommon_dep       = dependency('xkbcommon',       required : false)
+
+  # wayland-scanner: generates C protocol glue from XML specs
+  wayland_scanner = find_program('wayland-scanner', required : false)
+
+  # PulseAudio for live audio spectrum analysis
+  pulse_dep        = dependency('libpulse',        required : false)
+  pulse_simple_dep = dependency('libpulse-simple', required : false)
+
+  # FFmpeg & VA-API for hardware-accelerated video decoding 
+  avcodec_dep    = dependency('libavcodec',    required : true)
+  avformat_dep   = dependency('libavformat',   required : true)
+  avutil_dep     = dependency('libavutil',     required : true)
+  swscale_dep    = dependency('libswscale',    required : true)
+  swresample_dep = dependency('libswresample', required : true)
+  va_dep         = dependency('libva',         required : false)
+  va_drm_dep     = dependency('libva-drm',     required : false)
+endif
 
 # ── All project-wide compile definitions — MUST come before any build target ──
-# Meson prohibits add_project_arguments after the first build target is declared.
 enki_compile_args = ['-DENKI_HAS_ANU=1']
-if wayland_client_dep.found()
-  enki_compile_args += '-DENKI_HAS_WAYLAND=1'
-endif
-if xrandr_dep.found()
-  enki_compile_args += '-DENKI_HAS_XRANDR=1'
+if not is_windows
+  if wayland_client_dep.found()
+    enki_compile_args += '-DENKI_HAS_WAYLAND=1'
+  endif
+  if xrandr_dep.found()
+    enki_compile_args += '-DENKI_HAS_XRANDR=1'
+  endif
 endif
 
 add_project_arguments(enki_compile_args, language : 'cpp')
 
 # ── Protocol code generation ──────────────────────────────────────────────────
-# wayland-scanner produces plain C files (.c + .h), not C++.
-# We compile them into a tiny static C lib, then expose headers to C++ code.
-
-if wayland_scanner.found() and wayland_client_dep.found()
+if not is_windows and wayland_scanner.found() and wayland_client_dep.found()
   proto_c_sources = []
   proto_h_sources = []
 
@@ -95,20 +150,6 @@ else
   protocol_dep = declare_dependency()
 endif
 
-
-# PulseAudio for live audio spectrum analysis
-pulse_dep        = dependency('libpulse',        required : false)
-pulse_simple_dep = dependency('libpulse-simple', required : false)
-
-# FFmpeg & VA-API for hardware-accelerated video decoding 
-avcodec_dep    = dependency('libavcodec',    required : true)
-avformat_dep   = dependency('libavformat',   required : true)
-avutil_dep     = dependency('libavutil',     required : true)
-swscale_dep    = dependency('libswscale',    required : true)
-swresample_dep = dependency('libswresample', required : true)
-va_dep         = dependency('libva',         required : false)
-va_drm_dep     = dependency('libva-drm',     required : false)
-
 # Anu layout engine (compiled directly)
 anu_inc = include_directories('core')
 anu_sources = files(
@@ -133,57 +174,88 @@ anu_sources = files(
   'core/layout_engine/config/Config.cpp'
 )
 
-# Skia (prebuilt in core/skia)
-skia_inc = include_directories('core/skia')
-skia_dep = cpp.find_library('skia', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-skparagraph_dep = cpp.find_library('skparagraph', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-skshaper_dep = cpp.find_library('skshaper', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-skunicode_dep = cpp.find_library('skunicode', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-skottie_dep = cpp.find_library('skottie', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-sksg_dep = cpp.find_library('sksg', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-skresources_dep = cpp.find_library('skresources', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+# Skia (system or prebuilt in core/skia)
+skia_inc = include_directories(is_windows ? 'core/Skia-Windows' : 'core/skia')
 
-# Optional system Skia
-if not skia_dep.found()
-  skia_dep = dependency('skia', required : false)
+if is_windows
+  skia_win_dir = meson.current_source_dir() + '/core/Skia-Windows/out/Release-x64'
+  skia_dep = cpp.find_library('skia', dirs : [skia_win_dir], required : true)
+  skparagraph_dep = cpp.find_library('skparagraph', dirs : [skia_win_dir], required : false)
+  skshaper_dep    = cpp.find_library('skshaper',    dirs : [skia_win_dir], required : false)
+  skunicode_dep   = cpp.find_library('skunicode',   dirs : [skia_win_dir], required : false)
+  skottie_dep     = cpp.find_library('skottie',     dirs : [skia_win_dir], required : false)
+  sksg_dep        = cpp.find_library('sksg',        dirs : [skia_win_dir], required : false)
+  skresources_dep = cpp.find_library('skresources', dirs : [skia_win_dir], required : false)
+else
+  skia_dep = cpp.find_library('skia', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
   if not skia_dep.found()
     skia_dep = cpp.find_library('skia', required : false)
   endif
+  skparagraph_dep = cpp.find_library('skparagraph', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skshaper_dep    = cpp.find_library('skshaper', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skunicode_dep   = cpp.find_library('skunicode', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skottie_dep     = cpp.find_library('skottie', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  sksg_dep        = cpp.find_library('sksg', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skresources_dep = cpp.find_library('skresources', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
 endif
 
 # System libraries required by Skia
-fontconfig_dep = dependency('fontconfig', required : false)
-zlib_dep = dependency('zlib', required : false)
-if not zlib_dep.found()
-  zlib_dep = cpp.find_library('z', required : false)
+if not is_windows
+  fontconfig_dep = dependency('fontconfig', required : false)
+  zlib_dep = dependency('zlib', required : false)
+  if not zlib_dep.found()
+    zlib_dep = cpp.find_library('z', required : false)
+  endif
+else
+  fontconfig_dep = dependency('', required : false)
+  zlib_dep = dependency('', required : false)
 endif
 
 # ============================================================
 # Collect all dependencies
 # ============================================================
-enki_deps = [thread_dep, x11_dep, egl_dep, gl_dep]
+if is_windows
+  enki_deps = windows_deps
+else
+  enki_deps = [thread_dep, x11_dep, egl_dep, gl_dep]
 
-if xrandr_dep.found()
-  enki_deps += [xrandr_dep]
-endif
-if wayland_client_dep.found()
-  enki_deps += [wayland_client_dep]
-endif
-if wayland_egl_dep.found()
-  enki_deps += [wayland_egl_dep]
-endif
-if wayland_cursor_dep.found()
-  enki_deps += [wayland_cursor_dep]
-endif
-if xkbcommon_dep.found()
-  enki_deps += [xkbcommon_dep]
+  if xrandr_dep.found()
+    enki_deps += [xrandr_dep]
+  endif
+  if wayland_client_dep.found()
+    enki_deps += [wayland_client_dep]
+  endif
+  if wayland_egl_dep.found()
+    enki_deps += [wayland_egl_dep]
+  endif
+  if wayland_cursor_dep.found()
+    enki_deps += [wayland_cursor_dep]
+  endif
+  if xkbcommon_dep.found()
+    enki_deps += [xkbcommon_dep]
+  endif
+  if dl_dep.found()
+    enki_deps += dl_dep
+  endif
+  if m_dep.found()
+    enki_deps += m_dep
+  endif
+  if pulse_dep.found()
+    enki_deps += pulse_dep
+  endif
+  if pulse_simple_dep.found()
+    enki_deps += pulse_simple_dep
+  endif
+
+  # Add generated Wayland protocol headers as a dependency
+  enki_deps += protocol_dep
 endif
 
 if skia_dep.found()
   # Wrap Skia with compile-time macros so downstream headers see SK_GL
   skia_with_flags = declare_dependency(
     dependencies  : [skia_dep],
-    compile_args  : ['-DENKI_HAS_SKIA=1', '-DSK_GL'],
+    compile_args  : ['-DENKI_HAS_SKIA=1', '-DSK_GL', '-DSK_GANESH'],
   )
   enki_deps += [skia_with_flags]
   if skparagraph_dep.found()
@@ -210,56 +282,53 @@ if skia_dep.found()
   if zlib_dep.found()
     enki_deps += zlib_dep
   endif
+  if is_windows
+    foreach extra_lib : ['icu', 'harfbuzz', 'freetype2', 'libpng', 'libjpeg', 'libwebp', 'zlib', 'expat']
+      l = cpp.find_library(extra_lib, dirs : [skia_win_dir], required : false)
+      if l.found()
+        enki_deps += l
+      endif
+    endforeach
+  endif
 endif
-
-if dl_dep.found()
-  enki_deps += dl_dep
-endif
-if m_dep.found()
-  enki_deps += m_dep
-endif
-if pulse_dep.found()
-  enki_deps += pulse_dep
-endif
-if pulse_simple_dep.found()
-  enki_deps += pulse_simple_dep
-endif
-
-# Add generated Wayland protocol headers as a dependency
-enki_deps += protocol_dep
-
-# ============================================================
-# Feature detection macros — already emitted above
-# ============================================================
-# (add_project_arguments was called after the protocol static_library)
 
 # ============================================================
 # Include directories
 # ============================================================
-enki_inc          = include_directories('include', 'core/skia', 'core')
+enki_inc          = include_directories('include', is_windows ? 'core/Skia-Windows' : 'core/skia', 'core')
 enki_platform_inc = [enki_inc]
 
 # ============================================================
 # Source files
 # ============================================================
 
-# Platform backend sources — always built
+# Platform backend sources
 platform_sources = files(
   'src/platform/platform_native.cpp',
   'src/platform/window_native.cpp',
   'src/platform/input.cpp',
-  # X11 backend
-  'src/platform/x11/x11_platform.cpp',
-  'src/platform/x11/x11_window.cpp',
 )
 
-# Wayland backend — only built when wayland-client + wayland-scanner are available
-if wayland_scanner.found() and wayland_client_dep.found()
+if is_windows
   platform_sources += files(
-    'src/platform/wayland/wayland_platform.cpp',
-    'src/platform/wayland/wayland_surface.cpp',
-    'src/platform/wayland/wayland_window.cpp',
+    'src/platform/windows/win32_platform.cpp',
+    'src/platform/windows/win32_window.cpp',
   )
+else
+  # X11 backend
+  platform_sources += files(
+    'src/platform/x11/x11_platform.cpp',
+    'src/platform/x11/x11_window.cpp',
+  )
+
+  # Wayland backend — only built when wayland-client + wayland-scanner are available
+  if wayland_scanner.found() and wayland_client_dep.found()
+    platform_sources += files(
+      'src/platform/wayland/wayland_platform.cpp',
+      'src/platform/wayland/wayland_surface.cpp',
+      'src/platform/wayland/wayland_window.cpp',
+    )
+  endif
 endif
 
 enki_sources = files(
@@ -349,8 +418,6 @@ enki_sources = files(
   'src/widgets/clip.cpp',
   'src/widgets/paint_effects.cpp',
   'src/widgets/skia_canvas.cpp',
-  'src/widgets/audio_waveform.cpp',
-  'src/widgets/video_player.cpp',
   'src/widgets/motion.cpp',
   'src/widgets/feedback_status.cpp',
   'src/widgets/utility.cpp',
@@ -457,14 +524,20 @@ endif
 # ============================================================
 # Audio Subsystem (Capture & FFT DSP Analyzer)
 # ============================================================
-subdir('modules/audio')
-enki_deps += audio_dep
+if pulse_dep.found()
+  subdir('modules/audio')
+  enki_deps += audio_dep
+  enki_sources += files('src/widgets/audio_waveform.cpp')
+endif
 
 # ============================================================
 # Video Subsystem (FFmpeg Zero-Copy & PulseAudio Master Clock)
 # ============================================================
-subdir('modules/video')
-enki_deps += video_dep
+if avcodec_dep.found()
+  subdir('modules/video')
+  enki_deps += video_dep
+  enki_sources += files('src/widgets/video_player.cpp')
+endif
 
 # ============================================================
 # Lottie Rendering Subsystem (-fno-rtti to match Skia Skottie)
@@ -473,7 +546,7 @@ lottie_rendering_lib = static_library('enki_lottie_rendering',
   'src/rendering/lottie_composition.cpp',
   include_directories : enki_platform_inc,
   dependencies : enki_deps,
-  cpp_args : ['-fno-rtti'],
+  cpp_args : cpp.get_id() == 'msvc' ? ['/GR-'] : ['-fno-rtti'],
   pic : true,
 )
 
@@ -511,6 +584,12 @@ endif
 # ============================================================
 if get_option('build_examples')
   subdir('examples')
+endif
+
+# ============================================================
+# Widgets Demo
+# ============================================================
+if get_option('build_widgets_demo')
   subdir('widgets_demo')
 endif
 
@@ -518,3 +597,4 @@ endif
 # Real Applications
 # ============================================================
 subdir('real_app')
+

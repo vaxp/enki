@@ -8,7 +8,11 @@
 #include <include/core/SkColor.h>
 #include <include/core/SkFontStyle.h>
 #include <include/core/SkFontMgr.h>
+#if defined(_WIN32)
+#include <include/ports/SkTypeface_win.h>
+#else
 #include <include/ports/SkFontMgr_fontconfig.h>
+#endif
 #include <modules/skparagraph/include/ParagraphBuilder.h>
 #include <modules/skparagraph/include/Paragraph.h>
 #include <modules/skparagraph/include/ParagraphStyle.h>
@@ -33,9 +37,13 @@ namespace {
 
 sk_sp<SkFontMgr> getTextFontMgr() {
     static sk_sp<SkFontMgr> s_mgr = []() {
+#if defined(_WIN32)
+        return SkFontMgr_New_DirectWrite();
+#else
         auto m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
         return m;
+#endif
     }();
     return s_mgr;
 }
@@ -43,7 +51,11 @@ sk_sp<SkFontMgr> getTextFontMgr() {
 sk_sp<skia::textlayout::FontCollection> getSharedFontCollection() {
     static sk_sp<skia::textlayout::FontCollection> s_fc = []() {
         auto fc = sk_make_sp<skia::textlayout::FontCollection>();
+#if defined(_WIN32)
+        fc->setDefaultFontManager(getTextFontMgr(), "Segoe UI");
+#else
         fc->setDefaultFontManager(getTextFontMgr());
+#endif
         fc->enableFontFallback();
         return fc;
     }();
@@ -114,6 +126,13 @@ skia::textlayout::TextStyle toSkTextStyle(const TextStyle& s) {
         }
         sk.setFontFamilies(families);
     }
+#if defined(_WIN32)
+    else {
+        std::vector<SkString> families;
+        families.emplace_back("Segoe UI");
+        sk.setFontFamilies(families);
+    }
+#endif
 
     // Spacing
     sk.setLetterSpacing(s.letter_spacing);
