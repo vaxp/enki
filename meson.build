@@ -37,11 +37,45 @@ else
 endif
 
 is_windows = host_machine.system() == 'windows'
+is_android = host_machine.system() == 'android'
 
 # ============================================================
 # Platform Dependencies
 # ============================================================
-if is_windows
+if is_android
+  # Android NDK system libraries (resolved by the cross-file toolchain)
+  android_dep = cpp.find_library('android', required : true)
+  log_dep     = cpp.find_library('log',     required : true)
+  egl_dep     = cpp.find_library('EGL',     required : true)
+  gles3_dep   = cpp.find_library('GLESv3',  required : true)
+  thread_dep  = dependency('threads')
+
+  android_deps = [android_dep, log_dep, egl_dep, gles3_dep, thread_dep]
+
+  # Android does not use PulseAudio, Wayland, X11, FFmpeg, or VA-API
+  pulse_dep        = dependency('libpulse',        required : false)
+  pulse_simple_dep = dependency('libpulse-simple', required : false)
+  avcodec_dep      = dependency('libavcodec',      required : false)
+  avformat_dep     = dependency('libavformat',     required : false)
+  avutil_dep       = dependency('libavutil',       required : false)
+  swscale_dep      = dependency('libswscale',      required : false)
+  swresample_dep   = dependency('libswresample',   required : false)
+  va_dep           = dependency('libva',           required : false)
+  va_drm_dep       = dependency('libva-drm',       required : false)
+  protocol_dep     = declare_dependency()
+
+  # Android: Wayland/X11/FFmpeg deps are absent — define as not-found placeholders
+  wayland_client_dep = dependency('', required : false)
+  wayland_egl_dep    = dependency('', required : false)
+  wayland_scanner    = find_program('wayland-scanner', required : false)
+  x11_dep            = dependency('', required : false)
+  xrandr_dep         = dependency('', required : false)
+  egl_dep            = dependency('', required : false)
+  gl_dep             = dependency('', required : false)
+  dl_dep             = cpp.find_library('dl', required : false)
+  m_dep              = cpp.find_library('m',  required : false)
+
+elif is_windows
   thread_dep = dependency('threads')
   opengl_dep = cpp.find_library('opengl32', required : true)
   gdi_dep    = cpp.find_library('gdi32', required : true)
@@ -102,7 +136,10 @@ endif
 
 # ── All project-wide compile definitions — MUST come before any build target ──
 enki_compile_args = ['-DENKI_HAS_ANU=1']
-if not is_windows
+if is_android
+  enki_compile_args += '-DENKI_HAS_ANDROID=1'
+  enki_compile_args += '-DENKI_PLATFORM_ANDROID=1'
+elif not is_windows
   if wayland_client_dep.found()
     enki_compile_args += '-DENKI_HAS_WAYLAND=1'
   endif
@@ -114,7 +151,7 @@ endif
 add_project_arguments(enki_compile_args, language : 'cpp')
 
 # ── Protocol code generation ──────────────────────────────────────────────────
-if not is_windows and wayland_scanner.found() and wayland_client_dep.found()
+if not is_windows and not is_android and wayland_scanner.found() and wayland_client_dep.found()
   proto_c_sources = []
   proto_h_sources = []
 
@@ -177,7 +214,20 @@ anu_sources = files(
 # Skia (system or prebuilt in core/skia)
 skia_inc = include_directories(is_windows ? 'core/Skia-Windows' : 'core/skia')
 
-if is_windows
+if is_android
+  # Skia for Android arm64 — built separately via NDK:
+  #   cd core/skia
+  #   bin/gn gen out/Release-android-arm64 --args='target_os="android" target_cpu="arm64" ndk="/path/to/ndk"'
+  #   ninja -C out/Release-android-arm64
+  skia_android_dir = meson.current_source_dir() + '/core/skia/out/Release-android-arm64'
+  skia_dep        = cpp.find_library('skia',        dirs : [skia_android_dir], required : false)
+  skparagraph_dep = cpp.find_library('skparagraph', dirs : [skia_android_dir], required : false)
+  skshaper_dep    = cpp.find_library('skshaper',    dirs : [skia_android_dir], required : false)
+  skunicode_dep   = cpp.find_library('skunicode',   dirs : [skia_android_dir], required : false)
+  skottie_dep     = cpp.find_library('skottie',     dirs : [skia_android_dir], required : false)
+  sksg_dep        = cpp.find_library('sksg',        dirs : [skia_android_dir], required : false)
+  skresources_dep = cpp.find_library('skresources', dirs : [skia_android_dir], required : false)
+elif is_windows
   skia_win_dir = meson.current_source_dir() + '/core/Skia-Windows/out/Release-x64'
   skia_dep = cpp.find_library('skia', dirs : [skia_win_dir], required : true)
   skparagraph_dep = cpp.find_library('skparagraph', dirs : [skia_win_dir], required : false)
@@ -186,35 +236,48 @@ if is_windows
   skottie_dep     = cpp.find_library('skottie',     dirs : [skia_win_dir], required : false)
   sksg_dep        = cpp.find_library('sksg',        dirs : [skia_win_dir], required : false)
   skresources_dep = cpp.find_library('skresources', dirs : [skia_win_dir], required : false)
+
+  # ── ICU data file required by skunicode / SkParagraph ──────────────────────
+  # Copy icudtl.dat to the build root so that every EXE in any subdirectory can
+  # locate it at startup (Skia's SkIcuLoader searches CWD and EXE directory).
+  icu_dat_src = meson.current_source_dir() + '/core/Skia-Windows/out/Release-x64/icudtl.dat'
+  run_command(
+    'cmd', '/c',
+    'copy /Y "' + icu_dat_src + '" "' + meson.current_build_dir() + '\\icudtl.dat"',
+    check : false,
+  )
 else
   skia_dep = cpp.find_library('skia', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
   if not skia_dep.found()
     skia_dep = cpp.find_library('skia', required : false)
   endif
   skparagraph_dep = cpp.find_library('skparagraph', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-  skshaper_dep    = cpp.find_library('skshaper', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-  skunicode_dep   = cpp.find_library('skunicode', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-  skottie_dep     = cpp.find_library('skottie', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
-  sksg_dep        = cpp.find_library('sksg', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skshaper_dep    = cpp.find_library('skshaper',    dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skunicode_dep   = cpp.find_library('skunicode',   dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  skottie_dep     = cpp.find_library('skottie',     dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+  sksg_dep        = cpp.find_library('sksg',        dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
   skresources_dep = cpp.find_library('skresources', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
 endif
 
 # System libraries required by Skia
-if not is_windows
+# Android: fontconfig not available; zlib is part of the NDK sysroot
+if is_windows or is_android
+  fontconfig_dep = dependency('', required : false)
+  zlib_dep = dependency('', required : false)
+else
   fontconfig_dep = dependency('fontconfig', required : false)
   zlib_dep = dependency('zlib', required : false)
   if not zlib_dep.found()
     zlib_dep = cpp.find_library('z', required : false)
   endif
-else
-  fontconfig_dep = dependency('', required : false)
-  zlib_dep = dependency('', required : false)
 endif
 
 # ============================================================
 # Collect all dependencies
 # ============================================================
-if is_windows
+if is_android
+  enki_deps = android_deps
+elif is_windows
   enki_deps = windows_deps
 else
   enki_deps = [thread_dep, x11_dep, egl_dep, gl_dep]
@@ -290,6 +353,12 @@ if skia_dep.found()
       endif
     endforeach
   endif
+else
+  # Skia headers are included in enki_inc; compile flags are required
+  skia_compile_flags = declare_dependency(
+    compile_args : ['-DENKI_HAS_SKIA=1', '-DSK_GL', '-DSK_GANESH'],
+  )
+  enki_deps += [skia_compile_flags]
 endif
 
 # ============================================================
@@ -309,13 +378,19 @@ platform_sources = files(
   'src/platform/input.cpp',
 )
 
-if is_windows
+if is_android
+  platform_sources += files(
+    'src/platform/android/android_platform.cpp',
+    'src/platform/android/android_surface.cpp',
+    'src/platform/android/android_app_glue.cpp',
+  )
+elif is_windows
   platform_sources += files(
     'src/platform/windows/win32_platform.cpp',
     'src/platform/windows/win32_window.cpp',
   )
 else
-  # X11 backend
+  # X11 backend (always present on Linux)
   platform_sources += files(
     'src/platform/x11/x11_platform.cpp',
     'src/platform/x11/x11_window.cpp',
@@ -542,11 +617,16 @@ endif
 # ============================================================
 # Lottie Rendering Subsystem (-fno-rtti to match Skia Skottie)
 # ============================================================
+lottie_cpp_args = cpp.get_id() == 'msvc' ? ['/GR-'] : ['-fno-rtti']
+if skottie_dep.found()
+  lottie_cpp_args += '-DENKI_HAS_SKOTTIE=1'
+endif
+
 lottie_rendering_lib = static_library('enki_lottie_rendering',
   'src/rendering/lottie_composition.cpp',
   include_directories : enki_platform_inc,
   dependencies : enki_deps,
-  cpp_args : cpp.get_id() == 'msvc' ? ['/GR-'] : ['-fno-rtti'],
+  cpp_args : lottie_cpp_args,
   pic : true,
 )
 
@@ -575,21 +655,21 @@ install_subdir('include/enki', install_dir : get_option('includedir'))
 # ============================================================
 # Tests
 # ============================================================
-if get_option('build_tests')
+if get_option('build_tests') and not is_android
 #  subdir('tests')
 endif
 
 # ============================================================
 # Examples
 # ============================================================
-if get_option('build_examples')
+if get_option('build_examples') and not is_android
   subdir('examples')
 endif
 
 # ============================================================
 # Widgets Demo
 # ============================================================
-if get_option('build_widgets_demo')
+if get_option('build_widgets_demo') and not is_android
   subdir('widgets_demo')
 endif
 
@@ -597,4 +677,3 @@ endif
 # Real Applications
 # ============================================================
 subdir('real_app')
-

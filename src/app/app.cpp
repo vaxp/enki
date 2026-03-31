@@ -16,7 +16,12 @@
 #include <include/gpu/gl/GrGLInterface.h>
 #include <include/gpu/gl/GrGLAssembleInterface.h>
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <dlfcn.h>
+#include <EGL/egl.h>
+#include <GLES3/gl3.h>
+#include <android/log.h>
+#elif defined(_WIN32)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -203,23 +208,42 @@ struct App::Impl {
             }
         });
 
-        // Fallback global event connections (targeted handlers above already process all events on X11 & Wayland)
+        // Fallback global event connections.
+        // On Android there are no per-window handles, so touch events arrive here
+        // (not via onTargetedMouse*). We dispatch them directly.
         platform->onMouseDown().connect([this](float x, float y, int btn) {
-            if (active_popup_host) return;
+            if (active_popup_host) return;  // popup takes priority
+#if defined(__ANDROID__)
+            dispatchPointerDown(x, y, btn);
+#endif
         });
 
         platform->onMouseUp().connect([this](float x, float y, int btn) {
             if (active_popup_host) {
                 active_popup_host = nullptr;
+                return;
             }
+#if defined(__ANDROID__)
+            dispatchPointerUp(x, y, btn);
+#endif
         });
 
         platform->onMouseMove().connect([this](float x, float y) {
-            // Already handled by onTargetedMouseMove
+#if defined(__ANDROID__)
+            if (!active_popup_host) {
+                dispatchPointerMove(x, y);
+            }
+#endif
+            // On X11/Wayland: already handled by onTargetedMouseMove
         });
 
         platform->onScroll().connect([this](float dx, float dy) {
-            // Already handled by onTargetedScroll
+#if defined(__ANDROID__)
+            if (!active_popup_host) {
+                dispatchScroll(dx, dy);
+            }
+#endif
+            // On X11/Wayland: already handled by onTargetedScroll
         });
 
         return true;
@@ -228,7 +252,30 @@ struct App::Impl {
     bool initSkia() {
         window->makeCurrent();
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        sk_sp<const GrGLInterface> gl_interface = GrGLMakeNativeInterface();
+        if (!gl_interface) {
+            __android_log_print(ANDROID_LOG_WARN, "enki", "GrGLMakeNativeInterface() returned null, trying EGL proc loader");
+            gl_interface = GrGLMakeAssembledGLESInterface(
+                nullptr,
+                [](void*, const char* name) -> GrGLFuncPtr {
+                    return reinterpret_cast<GrGLFuncPtr>(eglGetProcAddress(name));
+                }
+            );
+        }
+        if (!gl_interface) {
+            __android_log_print(ANDROID_LOG_ERROR, "enki", "Failed to create Skia GL Interface on Android");
+            return false;
+        }
+
+        gr_context = GrDirectContext::MakeGL(gl_interface);
+        if (!gr_context) {
+            __android_log_print(ANDROID_LOG_ERROR, "enki", "GrDirectContext::MakeGL failed on Android");
+            return false;
+        }
+        __android_log_print(ANDROID_LOG_DEBUG, "enki", "GrDirectContext::MakeGL initialized successfully on Android!");
+        return true;
+#elif defined(_WIN32)
         sk_sp<const GrGLInterface> gl_interface = GrGLMakeNativeInterface();
         if (!gl_interface) {
             std::cerr << "[ENKI] Failed to create Skia Native GL Interface on Windows\n";
@@ -919,10 +966,30 @@ Result<std::unique_ptr<App>> App::create(WidgetPtr root_widget, AppConfig config
     impl.config      = config;
     impl.root_widget = std::move(root_widget);
 
-    if (!impl.initPlatform())   return Result<std::unique_ptr<App>>::err(ErrorCode::PlatformError, "Failed to initialize Native Linux Platform");
-    if (!impl.initWindow())     return Result<std::unique_ptr<App>>::err(ErrorCode::WindowError,   "Failed to create Native Window");
-    if (!impl.initSkia())       return Result<std::unique_ptr<App>>::err(ErrorCode::RenderingError, "Failed to initialize Skia GPU context");
-    if (!impl.initWidgetTree()) return Result<std::unique_ptr<App>>::err(ErrorCode::NotInitialized, "Failed to build widget tree");
+    if (!impl.initPlatform()) {
+#if defined(__ANDROID__)
+        __android_log_print(ANDROID_LOG_ERROR, "enki", "App::create: initPlatform() failed");
+#endif
+        return Result<std::unique_ptr<App>>::err(ErrorCode::PlatformError, "Failed to initialize Native Platform");
+    }
+    if (!impl.initWindow()) {
+#if defined(__ANDROID__)
+        __android_log_print(ANDROID_LOG_ERROR, "enki", "App::create: initWindow() failed");
+#endif
+        return Result<std::unique_ptr<App>>::err(ErrorCode::WindowError,   "Failed to create Native Window");
+    }
+    if (!impl.initSkia()) {
+#if defined(__ANDROID__)
+        __android_log_print(ANDROID_LOG_ERROR, "enki", "App::create: initSkia() failed");
+#endif
+        return Result<std::unique_ptr<App>>::err(ErrorCode::RenderingError, "Failed to initialize Skia GPU context");
+    }
+    if (!impl.initWidgetTree()) {
+#if defined(__ANDROID__)
+        __android_log_print(ANDROID_LOG_ERROR, "enki", "App::create: initWidgetTree() failed");
+#endif
+        return Result<std::unique_ptr<App>>::err(ErrorCode::NotInitialized, "Failed to build widget tree");
+    }
 
     impl.last_frame_time      = Impl::Clock::now();
     impl.last_fps_sample_time = impl.last_frame_time;

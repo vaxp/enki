@@ -1,0 +1,202 @@
+/// @file android_surface.cpp
+/// @brief AndroidSurface — EGL window surface backed by ANativeWindow*.
+/// The EGL context lives in AndroidPlatformBackend and is shared across
+/// surface recreations (e.g. screen rotation). Only the EGL surface
+/// is destroyed/recreated when the ANativeWindow changes.
+
+#ifdef __ANDROID__
+
+#include "enki/platform/android/android_surface.hpp"
+#include "enki/core/types.hpp"
+
+#include <android/native_window.h>
+#include <cmath>
+
+namespace enki::android {
+
+// ════════════════════════════════════════════════════════════════
+// Constructor / Destructor
+// ════════════════════════════════════════════════════════════════
+
+AndroidSurface::AndroidSurface(AndroidPlatformBackend& backend)
+    : backend_(backend)
+{
+    // Cache EGL objects from backend (they are stable across surface changes)
+    egl_display_ = backend_.getEGLDisplay();
+    egl_context_ = backend_.getEGLContext();
+    dpi_scale_   = backend_.getDpiScale();
+}
+
+AndroidSurface::~AndroidSurface() {
+    destroy();
+    backend_.unregisterSurface(this);
+}
+
+// ════════════════════════════════════════════════════════════════
+// init / destroy
+// ════════════════════════════════════════════════════════════════
+
+bool AndroidSurface::init() {
+    // Register with backend so it can notify us of ANativeWindow events
+    backend_.registerSurface(this);
+
+    // The ANativeWindow may not be available yet (surface created later
+    // via onNativeWindowCreated). That is expected behaviour.
+    ENKI_ALOG("AndroidSurface::init — waiting for native window");
+    return true;
+}
+
+void AndroidSurface::destroy() {
+    destroyEGLSurface();
+}
+
+// ════════════════════════════════════════════════════════════════
+// EGL Surface lifecycle
+// ════════════════════════════════════════════════════════════════
+
+bool AndroidSurface::createEGLSurface() {
+    if (!native_window_) {
+        ENKI_ALOGE("createEGLSurface: no native window");
+        return false;
+    }
+    if (egl_surface_ != EGL_NO_SURFACE) {
+        // Already created — should not happen normally
+        return true;
+    }
+
+    // Set the native window buffer format to match the EGL config
+    EGLint format = 0;
+    eglGetConfigAttrib(egl_display_, backend_.getEGLConfig(), EGL_NATIVE_VISUAL_ID, &format);
+    ANativeWindow_setBuffersGeometry(native_window_, 0, 0, format);
+
+    egl_surface_ = eglCreateWindowSurface(
+        egl_display_, backend_.getEGLConfig(), native_window_, nullptr);
+
+    if (egl_surface_ == EGL_NO_SURFACE) {
+        ENKI_ALOGE("eglCreateWindowSurface failed (error 0x%x)", eglGetError());
+        return false;
+    }
+
+    ENKI_ALOG("EGL surface created");
+    querySize();
+    return true;
+}
+
+void AndroidSurface::destroyEGLSurface() {
+    if (egl_surface_ == EGL_NO_SURFACE) return;
+
+    // Make sure nothing is current before destroying
+    eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroySurface(egl_display_, egl_surface_);
+    egl_surface_ = EGL_NO_SURFACE;
+    ENKI_ALOG("EGL surface destroyed");
+}
+
+void AndroidSurface::querySize() {
+    if (egl_surface_ == EGL_NO_SURFACE) return;
+
+    EGLint w = 0, h = 0;
+    eglQuerySurface(egl_display_, egl_surface_, EGL_WIDTH,  &w);
+    eglQuerySurface(egl_display_, egl_surface_, EGL_HEIGHT, &h);
+
+    bool changed = (w != width_ || h != height_);
+    width_  = w;
+    height_ = h;
+
+    if (changed && w > 0 && h > 0) {
+        ENKI_ALOG("Surface size: %dx%d", w, h);
+        on_resize_.emit(w, h);
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Android lifecycle hooks (called by AndroidPlatformBackend)
+// ════════════════════════════════════════════════════════════════
+
+void AndroidSurface::onNativeWindowCreated(ANativeWindow* window) {
+    ENKI_ALOG("AndroidSurface::onNativeWindowCreated");
+    native_window_ = window;
+
+    if (!createEGLSurface()) {
+        ENKI_ALOGE("Failed to create EGL surface for new native window");
+        return;
+    }
+
+    // Update DPI from backend (may have changed after rotation)
+    dpi_scale_ = backend_.getDpiScale();
+
+    // Notify state change
+    on_state_changed_.emit(getWindowState());
+}
+
+void AndroidSurface::onNativeWindowDestroyed() {
+    ENKI_ALOG("AndroidSurface::onNativeWindowDestroyed");
+    // Destroy the EGL surface — the EGL context in the backend is preserved
+    destroyEGLSurface();
+    native_window_ = nullptr;
+}
+
+void AndroidSurface::onWindowFocusChanged(bool focused) {
+    activated_ = focused;
+    on_focus_.emit(focused);
+
+    WindowState state = getWindowState();
+    on_state_changed_.emit(state);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Rendering API
+// ════════════════════════════════════════════════════════════════
+
+void AndroidSurface::makeCurrent() {
+    if (egl_surface_ == EGL_NO_SURFACE || egl_context_ == EGL_NO_CONTEXT) return;
+
+    if (!eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_)) {
+        ENKI_ALOGE("eglMakeCurrent failed (error 0x%x)", eglGetError());
+    }
+}
+
+void AndroidSurface::swapBuffers() {
+    if (egl_surface_ == EGL_NO_SURFACE) return;
+
+    if (!eglSwapBuffers(egl_display_, egl_surface_)) {
+        EGLint err = eglGetError();
+        if (err == EGL_BAD_SURFACE || err == EGL_BAD_NATIVE_WINDOW) {
+            // Surface was lost (e.g. rotation in progress) — not fatal
+            ENKI_ALOGW("eglSwapBuffers: surface lost (0x%x), will recreate", err);
+            destroyEGLSurface();
+        } else {
+            ENKI_ALOGE("eglSwapBuffers failed (error 0x%x)", err);
+        }
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Accessors
+// ════════════════════════════════════════════════════════════════
+
+Size AndroidSurface::getSize() const {
+    return { static_cast<float>(width_), static_cast<float>(height_) };
+}
+
+Size AndroidSurface::getDrawableSize() const {
+    // On Android, drawable size == logical size (no separate HiDPI backing store)
+    return getSize();
+}
+
+float AndroidSurface::getDpiScale() const {
+    return dpi_scale_;
+}
+
+WindowState AndroidSurface::getWindowState() const {
+    // Android is always fullscreen; add Activated flag when focused
+    WindowState state = WindowState::Fullscreen;
+    if (activated_) {
+        state = state | WindowState::Activated;
+    }
+    return state;
+}
+
+} // namespace enki::android
+
+#endif // __ANDROID__

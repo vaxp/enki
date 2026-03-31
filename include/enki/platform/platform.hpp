@@ -17,6 +17,10 @@
 #include <string_view>
 #include <vector>
 
+#if defined(__ANDROID__)
+struct ANativeActivity;
+#endif
+
 namespace enki {
 
 class Window;
@@ -27,6 +31,11 @@ public:
     /// Create and initialize the native platform subsystem.
     static Result<std::unique_ptr<Platform>> create();
 
+#if defined(__ANDROID__)
+    /// [Android only] Set the ANativeActivity before calling Platform::create().
+    /// Called automatically by android_app_glue — do not call this manually.
+    static void setAndroidActivity(::ANativeActivity* activity);
+#endif
     /// Get the active Platform instance (singleton).
     static Platform* instance();
 
@@ -189,7 +198,9 @@ public:
     void* getWaylandBackend() const;
     void* getX11Backend() const;
     void* getWin32Backend() const;
+    void* getAndroidBackend() const;  ///< Returns AndroidPlatformBackend* when compiled for Android, nullptr otherwise.
     [[nodiscard]] bool isWayland() const;
+    [[nodiscard]] bool isAndroid() const;  ///< Returns true when running on Android.
 
     /// Register/unregister active window for event dispatch
     void registerWindow(Window* win);

@@ -5,7 +5,9 @@
 #include "enki/platform/platform.hpp"
 #include "enki/platform/window.hpp"
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include "enki/platform/android/android_platform.hpp"
+#elif defined(_WIN32)
 #include "enki/platform/windows/win32_platform.hpp"
 #else
 #include "enki/platform/x11/x11_platform.hpp"
@@ -23,13 +25,25 @@ namespace enki {
 
 static Platform* g_platform_instance = nullptr;
 
+#if defined(__ANDROID__)
+// Static slot for the ANativeActivity — set by android_app_glue before
+// Platform::create() is called.
+static ::ANativeActivity* s_pending_activity_ = nullptr;
+
+void Platform::setAndroidActivity(::ANativeActivity* activity) {
+    s_pending_activity_ = activity;
+}
+#endif
+
 // ════════════════════════════════════════════════════════════════
-// Platform::Impl  — owns active backend (Win32 on Windows, Wayland/X11 on Linux)
+// Platform::Impl  — owns active backend (Android / Win32 / Wayland/X11)
 // ════════════════════════════════════════════════════════════════
 struct Platform::Impl {
     Platform* owner = nullptr;
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    std::unique_ptr<android::AndroidPlatformBackend> android_backend;
+#elif defined(_WIN32)
     std::unique_ptr<win32::Win32PlatformBackend> win32;
 #else
     std::unique_ptr<wayland::WaylandPlatformBackend> wayland;
@@ -44,7 +58,22 @@ struct Platform::Impl {
     bool init() {
         start_time = std::chrono::steady_clock::now();
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        // Activity pointer is set by android_app_glue before Platform::create()
+        // via the static accessor below.
+        ANativeActivity* activity = s_pending_activity_;
+        if (!activity) {
+            std::cerr << "[ENKI Platform] Android: no ANativeActivity set. "
+                         "Call Platform::setAndroidActivity() before Platform::create()\n";
+            return false;
+        }
+        android_backend = std::make_unique<android::AndroidPlatformBackend>(owner, activity);
+        if (!android_backend->init()) {
+            android_backend.reset();
+            return false;
+        }
+        return true;
+#elif defined(_WIN32)
         win32 = std::make_unique<win32::Win32PlatformBackend>(owner);
         if (!win32->init()) {
             win32.reset();
@@ -76,7 +105,9 @@ struct Platform::Impl {
     }
 
     void shutdown() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        if (android_backend) { android_backend->shutdown(); android_backend.reset(); }
+#elif defined(_WIN32)
         if (win32)   { win32->shutdown();   win32.reset(); }
 #else
         if (wayland) { wayland->shutdown(); wayland.reset(); }
@@ -85,13 +116,22 @@ struct Platform::Impl {
     }
 
     bool isWayland() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32)
         return false;
 #else
         return wayland != nullptr;
 #endif
     }
+
+    bool isAndroid() const {
+#if defined(__ANDROID__)
+        return android_backend != nullptr;
+#else
+        return false;
+#endif
+    }
 };
+
 
 // ════════════════════════════════════════════════════════════════
 // Platform — Public API
@@ -123,7 +163,10 @@ Platform* Platform::instance() { return g_platform_instance; }
 
 // ── Event Loop ──────────────────────────────────────────────────
 bool Platform::pollEvents() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->pollEvents();
+    return false;
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->pollEvents();
     return false;
 #else
@@ -137,7 +180,9 @@ bool Platform::pollEvents() {
 void Platform::registerWindow(Window* w) {
     if (!w) return;
     impl_->windows.insert(w);
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    // Android has no per-window registration in the backend
+#elif defined(_WIN32)
     if (impl_->win32) impl_->win32->registerWindow(w);
 #else
     if (impl_->x11) impl_->x11->registerWindow(w);
@@ -147,7 +192,9 @@ void Platform::registerWindow(Window* w) {
 void Platform::unregisterWindow(Window* w) {
     if (!w) return;
     impl_->windows.erase(w);
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    // Android has no per-window registration in the backend
+#elif defined(_WIN32)
     if (impl_->win32) impl_->win32->unregisterWindow(w);
 #else
     if (impl_->x11) impl_->x11->unregisterWindow(w);
@@ -162,7 +209,9 @@ void Platform::setClipboardText(std::string_view text, ClipboardType type) {
 }
 
 std::string Platform::getClipboardText(ClipboardType type) const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getClipboardText(type);
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardText(type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardData(type).getText();
@@ -173,7 +222,9 @@ std::string Platform::getClipboardText(ClipboardType type) const {
 
 void Platform::setClipboardData(const ClipboardData& data, ClipboardType type) {
     impl_->clipboard_buffer = data.getText();
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) impl_->android_backend->setClipboardData(data, type);
+#elif defined(_WIN32)
     if (impl_->win32) impl_->win32->setClipboardData(data, type);
 #else
     if (impl_->wayland) impl_->wayland->setClipboardData(data, type);
@@ -182,7 +233,9 @@ void Platform::setClipboardData(const ClipboardData& data, ClipboardType type) {
 }
 
 ClipboardData Platform::getClipboardData(ClipboardType type) const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getClipboardData(type);
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardData(type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardData(type);
@@ -194,7 +247,9 @@ ClipboardData Platform::getClipboardData(ClipboardType type) const {
 }
 
 std::vector<uint8_t> Platform::getClipboardDataForMime(std::string_view mime_type, ClipboardType type) const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getClipboardDataForMime(mime_type, type);
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardDataForMime(mime_type, type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardDataForMime(mime_type, type);
@@ -204,7 +259,9 @@ std::vector<uint8_t> Platform::getClipboardDataForMime(std::string_view mime_typ
 }
 
 std::vector<std::string> Platform::getClipboardFormats(ClipboardType type) const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getClipboardFormats(type);
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardFormats(type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardFormats(type);
@@ -214,7 +271,9 @@ std::vector<std::string> Platform::getClipboardFormats(ClipboardType type) const
 }
 
 bool Platform::hasClipboardFormat(std::string_view mime_type, ClipboardType type) const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->hasClipboardFormat(mime_type, type);
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->hasClipboardFormat(mime_type, type);
 #else
     if (impl_->wayland) return impl_->wayland->hasClipboardFormat(mime_type, type);
@@ -225,7 +284,9 @@ bool Platform::hasClipboardFormat(std::string_view mime_type, ClipboardType type
 
 // ── Drag & Drop Subsystem ────────────────────────────────────
 bool Platform::startDrag(const DragData& data, DragAction actions) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    return false;  // DnD not supported on Android
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->startDrag(data, actions);
 #else
     if (impl_->wayland) return impl_->wayland->startDrag(data, actions);
@@ -236,7 +297,9 @@ bool Platform::startDrag(const DragData& data, DragAction actions) {
 
 // ── Foreign Toplevel Subsystem ───────────────────────────────
 std::vector<std::shared_ptr<ToplevelWindow>> Platform::getToplevels() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    return {};  // No window manager on Android
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getToplevels();
 #else
     if (impl_->wayland) return impl_->wayland->getToplevels();
@@ -246,7 +309,9 @@ std::vector<std::shared_ptr<ToplevelWindow>> Platform::getToplevels() const {
 }
 
 std::shared_ptr<ToplevelWindow> Platform::getActiveToplevel() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    return nullptr;  // No window manager on Android
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getActiveToplevel();
 #else
     if (impl_->wayland) return impl_->wayland->getActiveToplevel();
@@ -257,7 +322,9 @@ std::shared_ptr<ToplevelWindow> Platform::getActiveToplevel() const {
 
 // ── Output / Monitor Subsystem ──────────────────────────────
 std::vector<std::shared_ptr<Output>> Platform::getOutputs() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getOutputs();
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getOutputs();
 #else
     if (impl_->wayland) return impl_->wayland->getOutputs();
@@ -267,7 +334,9 @@ std::vector<std::shared_ptr<Output>> Platform::getOutputs() const {
 }
 
 std::shared_ptr<Output> Platform::getOutputByName(std::string_view name) const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getOutputByName(name);
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getOutputByName(name);
 #else
     if (impl_->wayland) return impl_->wayland->getOutputByName(name);
@@ -277,7 +346,9 @@ std::shared_ptr<Output> Platform::getOutputByName(std::string_view name) const {
 }
 
 std::shared_ptr<Output> Platform::getPrimaryOutput() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getPrimaryOutput();
+#elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getPrimaryOutput();
 #else
     if (impl_->wayland) return impl_->wayland->getPrimaryOutput();
@@ -288,7 +359,9 @@ std::shared_ptr<Output> Platform::getPrimaryOutput() const {
 
 // ── Cursor ───────────────────────────────────────────────────────
 void Platform::setCursor(SystemCursor cursor) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    // No cursor on Android — silently ignore
+#elif defined(_WIN32)
     if (impl_->win32) impl_->win32->setCursor(cursor);
 #else
     if (impl_->wayland) impl_->wayland->setCursor(cursor);
@@ -304,7 +377,7 @@ double Platform::getTime() const {
 
 // ── Backend accessors ─────────────────────────────────────────────
 void* Platform::getNativeDisplay() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getDisplay();
@@ -313,7 +386,10 @@ void* Platform::getNativeDisplay() const {
 #endif
 }
 void* Platform::getEGLDisplay() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return (void*)impl_->android_backend->getEGLDisplay();
+    return nullptr;
+#elif defined(_WIN32)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLDisplay();
@@ -322,7 +398,10 @@ void* Platform::getEGLDisplay() const {
 #endif
 }
 void* Platform::getEGLConfig() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return (void*)impl_->android_backend->getEGLConfig();
+    return nullptr;
+#elif defined(_WIN32)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLConfig();
@@ -331,7 +410,10 @@ void* Platform::getEGLConfig() const {
 #endif
 }
 void* Platform::getEGLContext() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return (void*)impl_->android_backend->getEGLContext();
+    return nullptr;
+#elif defined(_WIN32)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLContext();
@@ -341,15 +423,24 @@ void* Platform::getEGLContext() const {
 }
 
 bool  Platform::isWayland()        const { return impl_->isWayland(); }
+bool  Platform::isAndroid()        const { return impl_->isAndroid(); }
+
+void* Platform::getAndroidBackend() const {
+#if defined(__ANDROID__)
+    return (void*)impl_->android_backend.get();
+#else
+    return nullptr;
+#endif
+}
 void* Platform::getWaylandBackend() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32)
     return nullptr;
 #else
     return (void*)impl_->wayland.get();
 #endif
 }
 void* Platform::getX11Backend()    const {
-#if defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32)
     return nullptr;
 #else
     return (void*)impl_->x11.get();

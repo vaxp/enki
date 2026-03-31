@@ -6,7 +6,10 @@
 #include "enki/platform/window.hpp"
 #include "enki/platform/platform.hpp"
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include "enki/platform/android/android_platform.hpp"
+#include "enki/platform/android/android_surface.hpp"
+#elif defined(_WIN32)
 #include "enki/platform/windows/win32_window.hpp"
 #include "enki/platform/windows/win32_platform.hpp"
 #else
@@ -25,14 +28,16 @@
 namespace enki {
 
 // ════════════════════════════════════════════════════════════════
-// Window::Impl  — owned backend handle (Win32 on Windows, X11 or Wayland on Linux)
+// Window::Impl  — owned backend handle (Android / Win32 / X11 / Wayland)
 // ════════════════════════════════════════════════════════════════
 struct Window::Impl {
     Platform* platform = nullptr;
     Window*   window   = nullptr;
 
     // Active backend
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    std::unique_ptr<android::AndroidSurface> android_surface;
+#elif defined(_WIN32)
     std::unique_ptr<win32::Win32Window>           win32_window;
 #else
     std::unique_ptr<x11::X11Window>               x11;
@@ -50,7 +55,37 @@ struct Window::Impl {
         platform = &plat;
         window   = win;
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        auto* ab = static_cast<android::AndroidPlatformBackend*>(plat.getAndroidBackend());
+        if (!ab) {
+            std::cerr << "[ENKI Window] Android backend unavailable\n";
+            return false;
+        }
+
+        android_surface = std::make_unique<android::AndroidSurface>(*ab);
+        if (!android_surface->init()) {
+            std::cerr << "[ENKI Window] Failed to create AndroidSurface\n";
+            android_surface.reset();
+            return false;
+        }
+        android_surface->onResize().connect([this](int w, int h) {
+            current_width  = w;
+            current_height = h;
+            if (window) window->onResize().emit(w, h);
+        });
+        android_surface->onFocus().connect([this](bool f) {
+            if (window) window->onFocus().emit(f);
+        });
+        android_surface->onStateChanged().connect([this](WindowState s) {
+            if (window) window->onStateChanged().emit(s);
+        });
+        android_surface->onClose().connect([this]() {
+            if (window) window->onClose().emit();
+        });
+        current_width  = cfg.width;
+        current_height = cfg.height;
+        return true;
+#elif defined(_WIN32)
         auto* wb = static_cast<win32::Win32PlatformBackend*>(plat.getWin32Backend());
         if (!wb) {
             std::cerr << "[ENKI Window] Win32 backend unavailable\n";
@@ -174,7 +209,9 @@ struct Window::Impl {
     }
 
     void destroy() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        if (android_surface) { android_surface.reset(); }
+#elif defined(_WIN32)
         if (win32_window) { win32_window.reset(); }
 #else
         if (x11) { x11.reset(); }
@@ -217,7 +254,9 @@ Result<std::unique_ptr<Window>> Window::create(Platform& platform, WindowConfig 
 
 // ── Mutators ────────────────────────────────────────────────────
 void Window::setTitle(std::string_view title) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setTitle(title);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setTitle(title);
 #else
     if (impl_->x11) impl_->x11->setTitle(title);
@@ -228,7 +267,9 @@ void Window::setTitle(std::string_view title) {
 }
 
 void Window::setSize(int w, int h) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setSize(w, h);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setSize(w, h);
 #else
     if (impl_->x11) impl_->x11->setSize(w, h);
@@ -242,7 +283,9 @@ void Window::setSize(int w, int h) {
 }
 
 void Window::setPosition(int x, int y) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setPosition(x, y);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setPosition(x, y);
 #else
     if (impl_->x11) impl_->x11->setPosition(x, y);
@@ -253,7 +296,9 @@ void Window::setPosition(int x, int y) {
 }
 
 void Window::setBorderless(bool b) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setBorderless(b);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setBorderless(b);
 #else
     if (impl_->x11) impl_->x11->setBorderless(b);
@@ -261,7 +306,9 @@ void Window::setBorderless(bool b) {
 }
 
 void Window::setAlwaysOnTop(bool t) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setAlwaysOnTop(t);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setAlwaysOnTop(t);
 #else
     if (impl_->x11) impl_->x11->setAlwaysOnTop(t);
@@ -269,7 +316,9 @@ void Window::setAlwaysOnTop(bool t) {
 }
 
 void Window::setBlurBehind(bool enable) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setBlurBehind(enable);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setBlurBehind(enable);
 #else
     if (impl_->x11) impl_->x11->setBlurBehind(enable);
@@ -278,7 +327,9 @@ void Window::setBlurBehind(bool enable) {
 
 // ── Accessors ───────────────────────────────────────────────────
 Size Window::getSize() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getSize();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getSize();
 #else
     if (impl_->x11) return impl_->x11->getSize();
@@ -291,7 +342,9 @@ Size Window::getSize() const {
 }
 
 Size Window::getDrawableSize() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getDrawableSize();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getDrawableSize();
 #else
     if (impl_->x11) return impl_->x11->getDrawableSize();
@@ -304,7 +357,9 @@ Size Window::getDrawableSize() const {
 }
 
 float Window::getDpiScale() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getDpiScale();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getDpiScale();
 #else
     if (impl_->x11) return impl_->x11->getDpiScale();
@@ -317,7 +372,9 @@ float Window::getDpiScale() const {
 }
 
 void Window::makeCurrent() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->makeCurrent();
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->makeCurrent();
 #else
     if (impl_->x11) impl_->x11->makeCurrent();
@@ -329,7 +386,9 @@ void Window::makeCurrent() {
 }
 
 void Window::swapBuffers() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->swapBuffers();
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->swapBuffers();
 #else
     if (impl_->x11) impl_->x11->swapBuffers();
@@ -341,7 +400,9 @@ void Window::swapBuffers() {
 }
 
 void* Window::getNativeHandle() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getNativeHandle();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getNativeHandle();
 #else
     if (impl_->x11) return impl_->x11->getNativeHandle();
@@ -354,7 +415,10 @@ void* Window::getNativeHandle() const {
 }
 
 void* Window::getEGLSurface() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getEGLSurface();
+    return nullptr;
+#elif defined(_WIN32)
     return nullptr;
 #else
     if (impl_->x11) return impl_->x11->getEGLSurface();
@@ -367,7 +431,10 @@ void* Window::getEGLSurface() const {
 }
 
 void* Window::getEGLContext() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getEGLContext();
+    return nullptr;
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getEGLContext();
     return nullptr;
 #else
@@ -381,7 +448,9 @@ void* Window::getEGLContext() const {
 }
 
 void* Window::getBackendWindow() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface.get();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window.get();
 #else
     if (impl_->x11) return impl_->x11.get();
@@ -393,7 +462,7 @@ void* Window::getBackendWindow() const {
 }
 
 void* Window::getBackendLayer() const {
-#if defined(ENKI_HAS_WAYLAND) && !defined(_WIN32)
+#if defined(ENKI_HAS_WAYLAND) && !defined(_WIN32) && !defined(__ANDROID__)
     if (impl_->wayland_layer) return impl_->wayland_layer.get();
 #endif
     return nullptr;
@@ -402,7 +471,9 @@ void* Window::getBackendLayer() const {
 // ── Client-Side Decoration (CSD) Operations ─────────────────────
 
 void Window::beginMove(float local_x, float local_y, int button) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->beginMove(local_x, local_y, button);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->beginMove(local_x, local_y, button);
 #else
     if (impl_->x11) impl_->x11->beginMove(local_x, local_y, button);
@@ -413,7 +484,9 @@ void Window::beginMove(float local_x, float local_y, int button) {
 }
 
 void Window::beginResize(WindowEdge edge, float local_x, float local_y, int button) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->beginResize(edge, local_x, local_y, button);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->beginResize(edge, local_x, local_y, button);
 #else
     if (impl_->x11) impl_->x11->beginResize(edge, local_x, local_y, button);
@@ -424,7 +497,9 @@ void Window::beginResize(WindowEdge edge, float local_x, float local_y, int butt
 }
 
 void Window::setMaximized(bool max) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setMaximized(max);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setMaximized(max);
 #else
     if (impl_->x11) impl_->x11->setMaximized(max);
@@ -435,7 +510,9 @@ void Window::setMaximized(bool max) {
 }
 
 void Window::setMinimized(bool min) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setMinimized(min);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setMinimized(min);
 #else
     if (impl_->x11) impl_->x11->setMinimized(min);
@@ -446,7 +523,9 @@ void Window::setMinimized(bool min) {
 }
 
 void Window::setFullscreen(bool full) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setFullscreen(full);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setFullscreen(full);
 #else
     if (impl_->x11) impl_->x11->setFullscreen(full);
@@ -457,7 +536,9 @@ void Window::setFullscreen(bool full) {
 }
 
 void Window::toggleMaximize() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->toggleMaximize();
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->toggleMaximize();
 #else
     if (impl_->x11) impl_->x11->toggleMaximize();
@@ -468,7 +549,9 @@ void Window::toggleMaximize() {
 }
 
 void Window::showWindowMenu(float local_x, float local_y, int button) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->showWindowMenu(local_x, local_y, button);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->showWindowMenu(local_x, local_y, button);
 #else
     if (impl_->x11) impl_->x11->showWindowMenu(local_x, local_y, button);
@@ -479,7 +562,9 @@ void Window::showWindowMenu(float local_x, float local_y, int button) {
 }
 
 void Window::setDecorated(bool decorated) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setDecorated(decorated);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setDecorated(decorated);
 #else
     if (impl_->x11) impl_->x11->setDecorated(decorated);
@@ -490,7 +575,9 @@ void Window::setDecorated(bool decorated) {
 }
 
 void Window::setWindowGeometry(int x, int y, int width, int height) {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) impl_->android_surface->setWindowGeometry(x, y, width, height);
+#elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setWindowGeometry(x, y, width, height);
 #else
     if (impl_->x11) impl_->x11->setWindowGeometry(x, y, width, height);
@@ -501,7 +588,9 @@ void Window::setWindowGeometry(int x, int y, int width, int height) {
 }
 
 bool Window::isMaximized() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->isMaximized();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isMaximized();
 #else
     if (impl_->x11) return impl_->x11->isMaximized();
@@ -513,7 +602,9 @@ bool Window::isMaximized() const {
 }
 
 bool Window::isMinimized() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->isMinimized();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isMinimized();
 #else
     if (impl_->x11) return impl_->x11->isMinimized();
@@ -525,7 +616,9 @@ bool Window::isMinimized() const {
 }
 
 bool Window::isFullscreen() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->isFullscreen();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isFullscreen();
 #else
     if (impl_->x11) return impl_->x11->isFullscreen();
@@ -537,7 +630,9 @@ bool Window::isFullscreen() const {
 }
 
 bool Window::isActivated() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->isActivated();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isActivated();
 #else
     if (impl_->x11) return impl_->x11->isActivated();
@@ -549,7 +644,9 @@ bool Window::isActivated() const {
 }
 
 WindowState Window::getWindowState() const {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    if (impl_->android_surface) return impl_->android_surface->getWindowState();
+#elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getWindowState();
 #else
     if (impl_->x11) return impl_->x11->getWindowState();

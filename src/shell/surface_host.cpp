@@ -9,7 +9,9 @@
 #include <include/gpu/gl/GrGLTypes.h>
 
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <GLES3/gl3.h>
+#elif defined(_WIN32)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -17,8 +19,10 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
-#endif
 #include <GL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 
 #ifndef GL_FRAMEBUFFER_BINDING
 #define GL_FRAMEBUFFER_BINDING 0x8CA6

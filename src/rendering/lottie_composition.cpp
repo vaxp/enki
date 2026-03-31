@@ -6,6 +6,7 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/core/string_utils.hpp"
 
+#if defined(ENKI_HAS_SKOTTIE)
 #include <modules/skottie/include/Skottie.h>
 #include <modules/skottie/include/SkottieProperty.h>
 #include <modules/skresources/include/SkResources.h>
@@ -13,10 +14,13 @@
 #include <include/core/SkData.h>
 #include <include/core/SkStream.h>
 #include <include/core/SkFontMgr.h>
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <include/ports/SkFontMgr_android.h>
+#elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
+#endif
 #endif
 
 #include <mutex>
@@ -27,11 +31,17 @@
 
 namespace enki {
 
+#if defined(ENKI_HAS_SKOTTIE)
+
 namespace {
 
 sk_sp<SkFontMgr> getLottieFontMgr() {
     static sk_sp<SkFontMgr> mgr = []() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        auto m = SkFontMgr_New_Android(nullptr);
+        if (!m) m = SkFontMgr::RefDefault();
+        return m;
+#elif defined(_WIN32)
         return SkFontMgr_New_DirectWrite();
 #else
         auto m = SkFontMgr_New_FontConfig(nullptr);
@@ -175,7 +185,7 @@ Result<std::shared_ptr<LottieComposition>> LottieComposition::loadFromMemory(con
     auto anim = builder.make(&stream);
     if (!anim) {
         return Result<std::shared_ptr<LottieComposition>>::err(
-            ErrorCode::RenderingError, "Failed to parse Lottie animation from memory");
+            ErrorCode::RenderingError, "Failed to parse Lottie animation memory stream");
     }
 
     auto comp = std::shared_ptr<LottieComposition>(new LottieComposition());
@@ -198,7 +208,7 @@ double LottieComposition::durationMs() const {
 }
 
 double LottieComposition::fps() const {
-    return impl_->animation ? impl_->animation->fps() : 60.0;
+    return impl_->animation ? impl_->animation->fps() : 0.0;
 }
 
 double LottieComposition::inPoint() const {
@@ -210,13 +220,14 @@ double LottieComposition::outPoint() const {
 }
 
 double LottieComposition::frameCount() const {
-    return duration() * fps();
+    if (!impl_->animation) return 0.0;
+    return outPoint() - inPoint();
 }
 
 Size LottieComposition::getSize() const {
-    if (!impl_->animation) return {0.0f, 0.0f};
-    const auto& s = impl_->animation->size();
-    return {static_cast<float>(s.width()), static_cast<float>(s.height())};
+    if (!impl_->animation) return Size{0.0f, 0.0f};
+    const SkSize& size = impl_->animation->size();
+    return Size{size.width(), size.height()};
 }
 
 float LottieComposition::getWidth() const {
@@ -232,8 +243,10 @@ const std::vector<LottieMarker>& LottieComposition::getMarkers() const {
 }
 
 std::optional<LottieMarker> LottieComposition::getMarker(std::string_view name) const {
-    for (const auto& m : impl_->markers) {
-        if (m.name == name) return m;
+    for (const auto& marker : impl_->markers) {
+        if (marker.name == name) {
+            return marker;
+        }
     }
     return std::nullopt;
 }
@@ -291,6 +304,56 @@ void LottieComposition::render(Canvas& canvas, const Rect& dst, uint32_t render_
 void* LottieComposition::getNativeAnimation() const {
     return impl_->animation.get();
 }
+
+#else // !defined(ENKI_HAS_SKOTTIE)
+
+struct LottieComposition::Impl {
+    std::vector<LottieMarker> markers;
+};
+
+LottieComposition::LottieComposition() : impl_(std::make_unique<Impl>()) {}
+LottieComposition::~LottieComposition() = default;
+
+Result<std::shared_ptr<LottieComposition>> LottieComposition::loadFromFile(std::string_view) {
+    return Result<std::shared_ptr<LottieComposition>>::err(
+        ErrorCode::NotSupported, "Lottie animations are not enabled in this build.");
+}
+
+Result<std::shared_ptr<LottieComposition>> LottieComposition::loadFromJson(std::string_view) {
+    return Result<std::shared_ptr<LottieComposition>>::err(
+        ErrorCode::NotSupported, "Lottie animations are not enabled in this build.");
+}
+
+Result<std::shared_ptr<LottieComposition>> LottieComposition::loadFromMemory(const std::vector<uint8_t>&) {
+    return Result<std::shared_ptr<LottieComposition>>::err(
+        ErrorCode::NotSupported, "Lottie animations are not enabled in this build.");
+}
+
+Result<std::shared_ptr<LottieComposition>> LottieComposition::loadFromMemory(const void*, size_t) {
+    return Result<std::shared_ptr<LottieComposition>>::err(
+        ErrorCode::NotSupported, "Lottie animations are not enabled in this build.");
+}
+
+double LottieComposition::duration() const { return 0.0; }
+double LottieComposition::durationMs() const { return 0.0; }
+double LottieComposition::fps() const { return 0.0; }
+double LottieComposition::inPoint() const { return 0.0; }
+double LottieComposition::outPoint() const { return 0.0; }
+double LottieComposition::frameCount() const { return 0.0; }
+Size   LottieComposition::getSize() const { return Size{0.0f, 0.0f}; }
+float  LottieComposition::getWidth() const { return 0.0f; }
+float  LottieComposition::getHeight() const { return 0.0f; }
+const std::vector<LottieMarker>& LottieComposition::getMarkers() const { return impl_->markers; }
+std::optional<LottieMarker> LottieComposition::getMarker(std::string_view) const { return std::nullopt; }
+void LottieComposition::seek(float) {}
+void LottieComposition::seekFrame(double) {}
+void LottieComposition::seekTime(double) {}
+void LottieComposition::setColor(std::string_view, Color) {}
+void LottieComposition::setOpacity(std::string_view, float) {}
+void LottieComposition::render(Canvas&, const Rect&, uint32_t) const {}
+void* LottieComposition::getNativeAnimation() const { return nullptr; }
+
+#endif // ENKI_HAS_SKOTTIE
 
 // ════════════════════════════════════════════════════════════════
 // LottieCache Implementation

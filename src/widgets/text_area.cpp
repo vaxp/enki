@@ -18,7 +18,9 @@
 #include <include/core/SkPaint.h>
 #include <include/core/SkRRect.h>
 #include <include/core/SkFontMgr.h>
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <include/ports/SkFontMgr_android.h>
+#elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
@@ -109,14 +111,19 @@ static TextAreaState* g_focused_textarea = nullptr;
 static sk_sp<skia::textlayout::FontCollection> getTextAreaFontCollection() {
     static sk_sp<skia::textlayout::FontCollection> s_fc = []() {
         sk_sp<SkFontMgr> m = nullptr;
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        m = SkFontMgr_New_Android(nullptr);
+        if (!m) m = SkFontMgr::RefDefault();
+#elif defined(_WIN32)
         m = SkFontMgr_New_DirectWrite();
 #else
         m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
 #endif
         auto fc = sk_make_sp<skia::textlayout::FontCollection>();
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        fc->setDefaultFontManager(m, "Roboto");
+#elif defined(_WIN32)
         fc->setDefaultFontManager(m, "Segoe UI");
 #else
         fc->setDefaultFontManager(m);

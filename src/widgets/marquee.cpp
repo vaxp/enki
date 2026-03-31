@@ -10,7 +10,9 @@
 #include <include/core/SkColor.h>
 #include <include/core/SkFontStyle.h>
 #include <include/core/SkFontMgr.h>
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <include/ports/SkFontMgr_android.h>
+#elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
@@ -34,7 +36,10 @@ namespace {
 sk_sp<SkFontMgr> getSharedFontMgr() {
     static sk_sp<SkFontMgr> s_mgr = []() {
         sk_sp<SkFontMgr> m = nullptr;
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        m = SkFontMgr_New_Android(nullptr);
+        if (!m) m = SkFontMgr::RefDefault();
+#elif defined(_WIN32)
         m = SkFontMgr_New_DirectWrite();
 #else
         m = SkFontMgr_New_FontConfig(nullptr);
@@ -48,7 +53,9 @@ sk_sp<SkFontMgr> getSharedFontMgr() {
 sk_sp<skia::textlayout::FontCollection> getSharedFontCollection() {
     static sk_sp<skia::textlayout::FontCollection> s_fc = []() {
         auto fc = sk_make_sp<skia::textlayout::FontCollection>();
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        fc->setDefaultFontManager(getSharedFontMgr(), "Roboto");
+#elif defined(_WIN32)
         fc->setDefaultFontManager(getSharedFontMgr(), "Segoe UI");
 #else
         fc->setDefaultFontManager(getSharedFontMgr());
