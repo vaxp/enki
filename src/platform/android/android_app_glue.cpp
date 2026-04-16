@@ -22,9 +22,16 @@
 #include <mutex>
 #include <condition_variable>
 
-// ── Application-defined entry point ─────────────────────────────
-/// The application defines this function.
-extern "C" int enki_android_main();
+// ── User entry point (user's main() renamed via #define in app.hpp) ─────────
+/// The developer writes int main(); app.hpp renames it to enki_user_main via
+/// #define. Since it's a C++ function we declare it without extern "C".
+int enki_user_main();
+
+/// @brief Framework-owned Android entry point called by NativeActivity.
+/// Bridges NativeActivity lifecycle to the user's int main().
+extern "C" int enki_android_main() {
+    return enki_user_main();
+}
 
 // ════════════════════════════════════════════════════════════════
 // Internal glue state — one per NativeActivity instance
@@ -168,11 +175,11 @@ void appThreadEntry(ANativeActivity* activity, EnkiAndroidGlue* glue) {
         }
     }
 
-    ENKI_ALOG("Native window ready — registering activity and invoking enki_android_main");
+    ENKI_ALOG("Native window ready — registering activity and invoking user main");
     enki::Platform::setAndroidActivity(activity);
 
     int ret = enki_android_main();
-    ENKI_ALOG("enki_android_main returned %d — finishing activity", ret);
+    ENKI_ALOG("User main() returned %d — finishing activity", ret);
 
     ANativeActivity_finish(activity);
 }

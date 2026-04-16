@@ -206,3 +206,19 @@ private:
 int runApp(WidgetPtr root_widget, AppConfig config = {});
 
 }  // namespace enki
+
+// ════════════════════════════════════════════════════════════════
+// Cross-platform entry point bridge
+// ════════════════════════════════════════════════════════════════
+//
+// On Android  : renames the developer's int main() to enki_user_main.
+//               The framework's android_app_glue provides enki_android_main()
+//               which calls enki_user_main() after NativeWindow is ready.
+// On Desktop  : no-op — the OS calls int main() directly as always.
+//
+// The developer writes ONE int main() and includes only this header.
+// No #ifdef __ANDROID__ in the application entry point ever again.
+//
+#ifdef __ANDROID__
+#  define main enki_user_main
+#endif

@@ -15,10 +15,20 @@ if is_windows
   )
 endif
 
-enki_calculator_exe = executable('enki_calculator',
-  sources: calculator_sources,
-  include_directories: include_directories('include'),
-  dependencies: [enki_dep],
-  install: true,
-)
-
+if is_android
+  shared_library('enki_calculator',
+    sources: calculator_sources,
+    include_directories: include_directories('include'),
+    dependencies: [enki_dep],
+    name_prefix: 'lib',
+    link_args: ['-u', 'ANativeActivity_onCreate'],
+    install: true,
+  )
+else
+  executable('enki_calculator',
+    sources: calculator_sources,
+    include_directories: include_directories('include'),
+    dependencies: [enki_dep],
+    install: true,
+  )
+endif
