@@ -401,20 +401,26 @@ public:
             .border_svg = SVG_HUD_SCREEN_FRAME,
             .svg_fit = SvgFit::Stretch,
             .width = 100_pct,
-            .height = 126_px,
+            .height = 100_pct,
+            .min_height = 126_px,
             .padding = StyleInsets::all(16.0f),
             .child = screen_content
         });
 
         // Screen framed in Vector SVG HUD Frame, with layered celebratory particle burst
-        return stack({
+        StackProps sp;
+        sp.fit = StackFit::Expand;
+        sp.width = 100_pct;
+        sp.height = 100_pct;
+        sp.children = {
             screen_box,
             particleEmitter(ParticleEmitterProps{
                 .preset = ParticlePreset::NeonSparks,
                 .active = trigger_particles,
                 .key = Key::value(particle_seed)
             })
-        });
+        };
+        return stack(sp);
     }
 
     WidgetPtr buildToolBar() {
@@ -650,10 +656,12 @@ public:
         // App Body
         auto content_col = column({
             .width = 100_pct,
+            .height = 100_pct,
             .children = {
-                buildScreen(),
+                expanded(buildScreen()),
                 buildToolBar(),
                 show_history ? buildHistoryView() : column({
+                    .gap = StyleValue::point(8.0f),
                     .width = 100_pct,
                     .children = {
                         buildScientificGrid(),
@@ -664,7 +672,6 @@ public:
         });
 
         auto app_body = container({
-            .color = colors::WindowBg,
             .width = 100_pct,
             .height = 100_pct,
             .padding = StyleInsets::all(16_px),

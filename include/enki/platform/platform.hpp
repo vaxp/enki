@@ -99,6 +99,11 @@ public:
     /// Change the active system cursor.
     void setCursor(SystemCursor cursor);
 
+    // ── Safe Area Subsystem ──────────────────────────────────────
+
+    /// Get the system safe area insets (e.g. status bar, display notch, home gesture bar).
+    [[nodiscard]] EdgeInsets getSafeAreaInsets() const;
+
     // ── Signals ──────────────────────────────────────────────────
 
     /// Signal emitted when the application should quit.

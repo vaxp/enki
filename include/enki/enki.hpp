@@ -189,3 +189,7 @@
 // ── Desktop Window Frame & CSD ──────────────────────────────────
 #include "enki/widgets/window_frame.hpp"
 #include "enki/widgets/titlebar.hpp"
+
+// ── Mobile / System UI ──────────────────────────────────────────
+#include "enki/widgets/safe_area.hpp"
+#include "enki/widgets/aspect_ratio.hpp"

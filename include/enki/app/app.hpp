@@ -203,6 +203,11 @@ private:
 ///       return enki::runApp(std::make_shared<MyApp>());
 ///   }
 /// @endcode
+/// @brief Returns the physical screen size in pixels.
+/// On Android: returns ANativeWindow dimensions before runApp().
+/// On Desktop: returns {0, 0} (applications can fallback to their window config).
+Size getScreenSize();
+
 int runApp(WidgetPtr root_widget, AppConfig config = {});
 
 }  // namespace enki

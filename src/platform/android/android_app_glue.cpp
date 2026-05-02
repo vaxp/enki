@@ -12,8 +12,10 @@
 
 #include "enki/platform/android/android_platform.hpp"
 #include "enki/platform/platform.hpp"
+#include "enki/core/types.hpp"
 
 #include <android/native_activity.h>
+#include <android/configuration.h>
 #include <android/log.h>
 
 #include <cstdlib>
@@ -27,11 +29,44 @@
 /// #define. Since it's a C++ function we declare it without extern "C".
 int enki_user_main();
 
+// ── Screen size accessor ─────────────────────────────────────────────────────
+// Stores the ANativeWindow* that was ready before main() was called.
+// enki::getScreenSize() reads from this to let main() query screen dimensions.
+static ANativeWindow*   s_boot_window   = nullptr;
+static ANativeActivity* s_boot_activity = nullptr;
+
+namespace enki {
+/// Returns the logical screen size in density-independent pixels (dp).
+/// On Android this queries ANativeWindow and scales by the display density.
+/// Always safe to call from main() before runApp().
+Size getScreenSize() {
+    if (s_boot_window) {
+        float dpi = 1.0f;
+        if (s_boot_activity && s_boot_activity->assetManager) {
+            auto* cfg = AConfiguration_new();
+            AConfiguration_fromAssetManager(cfg, s_boot_activity->assetManager);
+            int32_t density = AConfiguration_getDensity(cfg);
+            AConfiguration_delete(cfg);
+            if (density > 0) {
+                dpi = static_cast<float>(density) / 160.0f;
+            }
+        }
+        if (dpi <= 0.0f) dpi = 1.0f;
+        return {
+            static_cast<float>(ANativeWindow_getWidth(s_boot_window)) / dpi,
+            static_cast<float>(ANativeWindow_getHeight(s_boot_window)) / dpi
+        };
+    }
+    return {0.0f, 0.0f};
+}
+} // namespace enki
+
 /// @brief Framework-owned Android entry point called by NativeActivity.
 /// Bridges NativeActivity lifecycle to the user's int main().
 extern "C" int enki_android_main() {
     return enki_user_main();
 }
+
 
 // ════════════════════════════════════════════════════════════════
 // Internal glue state — one per NativeActivity instance
@@ -177,6 +212,10 @@ void appThreadEntry(ANativeActivity* activity, EnkiAndroidGlue* glue) {
 
     ENKI_ALOG("Native window ready — registering activity and invoking user main");
     enki::Platform::setAndroidActivity(activity);
+
+    // Make the native window available to enki::getScreenSize() before main() runs
+    s_boot_window   = glue->native_window;
+    s_boot_activity = activity;
 
     int ret = enki_android_main();
     ENKI_ALOG("User main() returned %d — finishing activity", ret);

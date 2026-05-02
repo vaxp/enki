@@ -279,12 +279,12 @@ struct LayoutDimensions {
     .column_gap            = 32.0f,
 };
 
-inline const LayoutDimensions& getLayoutDimensions() {
+inline LayoutDimensions getLayoutDimensions() {
+    LayoutDimensions dim = kOriginalDimensions;
 #ifdef __ANDROID__
-    return kMobileDimensions;
-#else
-    return kOriginalDimensions;
+    dim.status_bar_top = 36.0f; // Clear native status bar in logical dp
 #endif
+    return dim;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -345,7 +345,7 @@ public:
 
         // 5. BlocBuilder — Subscribes to CounterCubit and rebuilds ONLY this subtree!
         auto counter_display = bloc_builder<CounterCubit>(
-            [&dim](BuildContext& b_ctx, const CounterState& state) {
+            [dim](BuildContext& b_ctx, const CounterState& state) {
                 s_builder_rebuild_count++;
 
                 Element* target = b_ctx.element();
@@ -556,13 +556,24 @@ int main() {
     AppConfig config;
     config.title       = "ENKI Counter";
     config.app_id      = "org.enki.cubit_counter";
-    config.width       = 520;
-    config.height      = 640;
-    config.resizable   = false;
-    config.enable_csd  = false;
     config.vsync       = true;
     config.show_performance_overlay = true;
     config.clear_color = 0xFF0B0F19;
+
+    auto screen = enki::getScreenSize();
+    if (screen.width > 0 && screen.height > 0) {
+        // Mobile / Android: adapt to native screen dimensions
+        config.width       = static_cast<int>(screen.width);
+        config.height      = static_cast<int>(screen.height);
+        config.resizable   = false;
+        config.enable_csd  = false;
+    } else {
+        // Desktop default window size
+        config.width       = 520;
+        config.height      = 640;
+        config.resizable   = false;
+        config.enable_csd  = false;
+    }
 
     return runApp(std::make_shared<CounterApp>(), config);
 }

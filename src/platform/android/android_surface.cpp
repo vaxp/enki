@@ -60,8 +60,8 @@ bool AndroidSurface::createEGLSurface() {
         return false;
     }
     if (egl_surface_ != EGL_NO_SURFACE) {
-        // Already created — should not happen normally
-        return true;
+        // Destroy existing surface before binding to the new native window
+        destroyEGLSurface();
     }
 
     // Set the native window buffer format to match the EGL config
@@ -78,6 +78,8 @@ bool AndroidSurface::createEGLSurface() {
     }
 
     ENKI_ALOG("EGL surface created");
+    // Immediately make current so that OpenGL commands and Skia context are bound
+    makeCurrent();
     querySize();
     return true;
 }
@@ -89,6 +91,8 @@ void AndroidSurface::destroyEGLSurface() {
     eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(egl_display_, egl_surface_);
     egl_surface_ = EGL_NO_SURFACE;
+    width_  = 0;
+    height_ = 0;
     ENKI_ALOG("EGL surface destroyed");
 }
 
@@ -114,7 +118,7 @@ void AndroidSurface::querySize() {
 // ════════════════════════════════════════════════════════════════
 
 void AndroidSurface::onNativeWindowCreated(ANativeWindow* window) {
-    ENKI_ALOG("AndroidSurface::onNativeWindowCreated");
+    ENKI_ALOG("AndroidSurface::onNativeWindowCreated: %p", window);
     native_window_ = window;
 
     if (!createEGLSurface()) {
@@ -125,8 +129,9 @@ void AndroidSurface::onNativeWindowCreated(ANativeWindow* window) {
     // Update DPI from backend (may have changed after rotation)
     dpi_scale_ = backend_.getDpiScale();
 
-    // Notify state change
+    // Notify state change and surface recreation
     on_state_changed_.emit(getWindowState());
+    on_surface_recreated_.emit();
 }
 
 void AndroidSurface::onNativeWindowDestroyed() {
@@ -134,6 +139,7 @@ void AndroidSurface::onNativeWindowDestroyed() {
     // Destroy the EGL surface — the EGL context in the backend is preserved
     destroyEGLSurface();
     native_window_ = nullptr;
+    on_surface_destroyed_.emit();
 }
 
 void AndroidSurface::onWindowFocusChanged(bool focused) {
@@ -165,6 +171,7 @@ void AndroidSurface::swapBuffers() {
             // Surface was lost (e.g. rotation in progress) — not fatal
             ENKI_ALOGW("eglSwapBuffers: surface lost (0x%x), will recreate", err);
             destroyEGLSurface();
+            on_surface_destroyed_.emit();
         } else {
             ENKI_ALOGE("eglSwapBuffers failed (error 0x%x)", err);
         }
@@ -176,12 +183,13 @@ void AndroidSurface::swapBuffers() {
 // ════════════════════════════════════════════════════════════════
 
 Size AndroidSurface::getSize() const {
-    return { static_cast<float>(width_), static_cast<float>(height_) };
+    float dpi = (dpi_scale_ > 0.0f) ? dpi_scale_ : 1.0f;
+    return { static_cast<float>(width_) / dpi, static_cast<float>(height_) / dpi };
 }
 
 Size AndroidSurface::getDrawableSize() const {
-    // On Android, drawable size == logical size (no separate HiDPI backing store)
-    return getSize();
+    // Physical pixel size of the EGL surface buffer
+    return { static_cast<float>(width_), static_cast<float>(height_) };
 }
 
 float AndroidSurface::getDpiScale() const {

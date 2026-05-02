@@ -84,12 +84,14 @@ public:
     [[nodiscard]] void* getEGLSurface()   const { return (void*)egl_surface_; }
     [[nodiscard]] void* getEGLContext()   const { return (void*)egl_context_; }
 
-    // ── Signals (same set as X11Window) ──────────────────────────
-    Signal<WindowState>& onStateChanged() { return on_state_changed_; }
-    Signal<bool>&        onMaximized()    { return on_maximized_; }
-    Signal<bool>&        onFocus()        { return on_focus_; }
-    Signal<int, int>&    onResize()       { return on_resize_; }
-    Signal<>&            onClose()        { return on_close_; }
+    // ── Signals (same set as X11Window + lifecycle signals) ──────
+    Signal<WindowState>& onStateChanged()        { return on_state_changed_; }
+    Signal<bool>&        onMaximized()           { return on_maximized_; }
+    Signal<bool>&        onFocus()               { return on_focus_; }
+    Signal<int, int>&    onResize()              { return on_resize_; }
+    Signal<>&            onClose()               { return on_close_; }
+    Signal<>&            onSurfaceRecreated()    { return on_surface_recreated_; }
+    Signal<>&            onSurfaceDestroyed()    { return on_surface_destroyed_; }
 
     // ── Android lifecycle hooks (called by AndroidPlatformBackend) ─
 
@@ -125,6 +127,8 @@ private:
     Signal<bool>        on_focus_;
     Signal<int, int>    on_resize_;
     Signal<>            on_close_;
+    Signal<>            on_surface_recreated_;
+    Signal<>            on_surface_destroyed_;
 
     bool createEGLSurface();
     void destroyEGLSurface();

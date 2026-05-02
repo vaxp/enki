@@ -149,11 +149,13 @@ public:
     void* getBackendLayer() const;
 
     // --- Signals ---
-    Signal<int, int>&       onResize()       { return on_resize_; }
-    Signal<>&               onClose()        { return on_close_; }
-    Signal<bool>&           onFocus()        { return on_focus_; }
-    Signal<WindowState>&     onStateChanged() { return on_state_changed_; }
-    Signal<bool>&           onMaximized()    { return on_maximized_; }
+    Signal<int, int>&       onResize()           { return on_resize_; }
+    Signal<>&               onClose()            { return on_close_; }
+    Signal<bool>&           onFocus()            { return on_focus_; }
+    Signal<WindowState>&     onStateChanged()     { return on_state_changed_; }
+    Signal<bool>&           onMaximized()        { return on_maximized_; }
+    Signal<>&               onSurfaceRecreated() { return on_surface_recreated_; }
+    Signal<>&               onSurfaceDestroyed() { return on_surface_destroyed_; }
 
     struct Impl;
     Impl* impl() { return impl_.get(); }
@@ -166,6 +168,8 @@ private:
     Signal<bool>           on_focus_;
     Signal<WindowState>     on_state_changed_;
     Signal<bool>           on_maximized_;
+    Signal<>               on_surface_recreated_;
+    Signal<>               on_surface_destroyed_;
 };
 
 }  // namespace enki

@@ -13,10 +13,12 @@
 #include <jni.h>
 
 #include <unistd.h>  // pipe(), read(), write()
+#include <fcntl.h>
 #include <cerrno>
 #include <cstring>
 #include <cmath>
 #include <sstream>
+#include <chrono>
 
 namespace enki::android {
 
@@ -111,17 +113,20 @@ bool AndroidPlatformBackend::init() {
     // Build initial output information from the configuration
     updateOutputFromConfig();
 
-    // Connect backend to glue and adopt any pre-existing native window
+    // Connect backend to glue and adopt any pre-existing native window / input queue.
+    // init() runs on the engine thread, so we set state directly — no queueing needed.
     auto* glue = reinterpret_cast<EnkiAndroidGlue*>(activity_->instance);
     if (glue) {
         glue->backend = this;
         if (glue->native_window) {
             ENKI_ALOG("Adopting native window from glue: %p", glue->native_window);
-            this->onNativeWindowCreated(glue->native_window);
+            current_native_window_ = glue->native_window;
+            has_window_.store(true, std::memory_order_release);
         }
         if (glue->input_queue) {
             ENKI_ALOG("Adopting input queue from glue: %p", glue->input_queue);
-            this->onInputQueueCreated(glue->input_queue);
+            std::lock_guard<std::mutex> lk(input_queue_mutex_);
+            input_queue_ = glue->input_queue;
         }
     }
 
@@ -232,9 +237,15 @@ static int s_wakeup_ident = 1;  // ALooper ident for the wakeup pipe
 
 void AndroidPlatformBackend::createWakeupPipe() {
     int fds[2];
-    if (pipe(fds) != 0) {
-        ENKI_ALOGE("pipe() failed: %s", strerror(errno));
-        return;
+    if (pipe2(fds, O_NONBLOCK | O_CLOEXEC) != 0) {
+        if (pipe(fds) != 0) {
+            ENKI_ALOGE("pipe() failed: %s", strerror(errno));
+            return;
+        }
+        int flags0 = fcntl(fds[0], F_GETFL, 0);
+        fcntl(fds[0], F_SETFL, flags0 | O_NONBLOCK);
+        int flags1 = fcntl(fds[1], F_GETFL, 0);
+        fcntl(fds[1], F_SETFL, flags1 | O_NONBLOCK);
     }
     pipe_read_fd_  = fds[0];
     pipe_write_fd_ = fds[1];
@@ -256,31 +267,120 @@ void AndroidPlatformBackend::destroyWakeupPipe() {
     }
 }
 
+void AndroidPlatformBackend::wakeupLooper() {
+    if (pipe_write_fd_ >= 0) {
+        char c = 1;
+        (void)write(pipe_write_fd_, &c, 1);
+    }
+    if (looper_) {
+        ALooper_wake(looper_);
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Deferred window events — processPendingWindowEvents
+// All EGL surface creation / destruction runs on the engine thread.
+// The UI thread only stores pointers and notifies; the engine does the work.
+// ════════════════════════════════════════════════════════════════
+
+void AndroidPlatformBackend::processPendingWindowEvents() {
+    bool          do_destroy = false;
+    ANativeWindow* do_create = nullptr;
+
+    {
+        std::lock_guard<std::mutex> lk(window_event_mutex_);
+        do_destroy = window_destroy_pending_;
+        do_create  = window_create_pending_;
+        window_destroy_pending_ = false;
+        window_create_pending_  = nullptr;
+    }
+    needs_processing_.store(false, std::memory_order_release);
+
+    // ── Destroy EGL surface (keep EGL context alive for fast recreation) ────────
+    if (do_destroy) {
+        ENKI_ALOG("processPendingWindowEvents: destroying EGL surfaces");
+        current_native_window_ = nullptr;
+        has_window_.store(false, std::memory_order_release);
+
+        std::vector<AndroidSurface*> slist;
+        {
+            std::lock_guard<std::mutex> lk(surfaces_mutex_);
+            slist.assign(surfaces_.begin(), surfaces_.end());
+        }
+        for (auto* s : slist) s->onNativeWindowDestroyed();
+
+        // Acknowledge to the UI thread that the native window has been fully released
+        {
+            std::lock_guard<std::mutex> lk(window_destroy_ack_mutex_);
+            window_destroy_ack_cv_.notify_all();
+        }
+    }
+
+    // ── Create EGL surface for the new native window ──────────────────────────
+    if (do_create) {
+        ENKI_ALOG("processPendingWindowEvents: creating EGL surfaces for %p", do_create);
+        current_native_window_ = do_create;
+
+        std::vector<AndroidSurface*> slist;
+        {
+            std::lock_guard<std::mutex> lk(surfaces_mutex_);
+            slist.assign(surfaces_.begin(), surfaces_.end());
+        }
+        for (auto* s : slist) s->onNativeWindowCreated(do_create);
+
+        has_window_.store(true, std::memory_order_release);
+        // Geometry may have changed (rotation) — invalidate safe-area cache
+        insets_dirty_.store(true, std::memory_order_relaxed);
+    }
+}
+
 // ════════════════════════════════════════════════════════════════
 // pollEvents — main event loop tick
 // ════════════════════════════════════════════════════════════════
 
 bool AndroidPlatformBackend::pollEvents() {
+    // ── Step 1: Process any queued window lifecycle events ──────────────────────
+    // EGL surface creation / destruction must happen on the engine (GL) thread.
+    processPendingWindowEvents();
+
+    // ── Step 2: Block engine thread when there is no renderable surface ──────────
+    // This eliminates busy-spinning and guarantees that makeCurrent /
+    // swapBuffers are never called while the EGL surface is absent,
+    // fixing the black-screen-on-resume and random crash after backgrounding.
+    while (!has_window_.load(std::memory_order_acquire)) {
+        if (quit_requested_.load(std::memory_order_relaxed)) {
+            owner_->onQuit().emit();
+            return false;
+        }
+        ENKI_ALOG("pollEvents: no surface — engine thread suspending");
+        {
+            std::unique_lock<std::mutex> lock(state_mutex_);
+            state_cv_.wait(lock, [this] {
+                return needs_processing_.load(std::memory_order_relaxed)
+                    || quit_requested_.load(std::memory_order_relaxed);
+            });
+        }
+        // Re-process whatever woke us up (surface create / quit)
+        processPendingWindowEvents();
+    }
+
     if (quit_requested_.load(std::memory_order_relaxed)) {
         owner_->onQuit().emit();
         return false;
     }
 
-    // Poll ALooper with zero timeout (non-blocking)
-    int  ident     = 0;
-    int  events    = 0;
+    // ── Step 3: Drain the ALooper (non-blocking) ─────────────────────────────
+    int   ident   = 0;
+    int   events  = 0;
     void* data_ptr = nullptr;
-
     while ((ident = ALooper_pollOnce(0, nullptr, &events, &data_ptr)) >= 0) {
         if (ident == s_wakeup_ident) {
-            // Drain the wakeup pipe
-            char buf[8];
+            char buf[64];
             while (read(pipe_read_fd_, buf, sizeof(buf)) > 0) {}
         }
-        // Input events are processed via onInputQueueCreated callback
     }
 
-    // Process any pending input events from the queue
+    // ── Step 4: Process pending input events ──────────────────────────────
     processInputQueue();
 
     return !quit_requested_.load(std::memory_order_relaxed);
@@ -291,18 +391,23 @@ bool AndroidPlatformBackend::pollEvents() {
 // ════════════════════════════════════════════════════════════════
 
 void AndroidPlatformBackend::processInputQueue() {
-    if (!input_queue_) return;
+    // Snapshot the queue pointer under mutex — the UI thread may replace it
+    // via onInputQueueCreated / onInputQueueDestroyed at any time.
+    AInputQueue* queue;
+    {
+        std::lock_guard<std::mutex> lk(input_queue_mutex_);
+        queue = input_queue_;
+    }
+    if (!queue) return;
 
-    // AInputQueue_hasEvents returns: >0 if events pending, 0 if none, <0 on error.
-    // Always check before getEvent to avoid blocking the worker thread.
     AInputEvent* event = nullptr;
-    while (AInputQueue_hasEvents(input_queue_) > 0) {
-        if (AInputQueue_getEvent(input_queue_, &event) < 0) break;
-        if (AInputQueue_preDispatchEvent(input_queue_, event)) {
-            continue;  // IME consumed the event; event already finished
+    while (AInputQueue_hasEvents(queue) > 0) {
+        if (AInputQueue_getEvent(queue, &event) < 0) break;
+        if (AInputQueue_preDispatchEvent(queue, event)) {
+            continue;  // IME consumed the event; already finished
         }
         handleInputEvent(event);
-        AInputQueue_finishEvent(input_queue_, event, 1 /*handled*/);
+        AInputQueue_finishEvent(queue, event, 1 /*handled*/);
     }
 }
 
@@ -370,9 +475,15 @@ void AndroidPlatformBackend::handleKeyEvent(AInputEvent* event) {
     if (meta & AMETA_META_ON)    modifiers |= static_cast<int>(KeyMod::Super);
 
     if (action == AKEY_EVENT_ACTION_DOWN) {
-        // Back button → quit signal
+        // Back button → quit signal; wake the engine in case it is suspended
         if (keycode == AKEYCODE_BACK) {
-            quit_requested_.store(true, std::memory_order_relaxed);
+            quit_requested_.store(true, std::memory_order_release);
+            needs_processing_.store(true, std::memory_order_release);
+            wakeupLooper();
+            {
+                std::lock_guard<std::mutex> lk(state_mutex_);
+                state_cv_.notify_all();
+            }
             return;
         }
         owner_->onKeyDown().emit(keycode, modifiers);
@@ -382,63 +493,103 @@ void AndroidPlatformBackend::handleKeyEvent(AInputEvent* event) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// Lifecycle callbacks
+// Lifecycle callbacks (invoked on the UI / main thread by NativeActivity)
+// Surface creation / destruction is DEFERRED to the engine thread via
+// processPendingWindowEvents() to satisfy OpenGL ES threading requirements.
 // ════════════════════════════════════════════════════════════════
 
 void AndroidPlatformBackend::onNativeWindowCreated(ANativeWindow* window) {
-    ENKI_ALOG("onNativeWindowCreated: %p", window);
-    current_native_window_ = window;
-    // Notify all registered surfaces
-    for (auto* s : surfaces_) {
-        s->onNativeWindowCreated(window);
+    ENKI_ALOG("onNativeWindowCreated (UI thread): %p", window);
+    {
+        std::lock_guard<std::mutex> lk(window_event_mutex_);
+        window_create_pending_  = window;
+    }
+    needs_processing_.store(true, std::memory_order_release);
+    // Wake the engine thread: first the ALooper (so pollOnce returns quickly),
+    // then the condition variable (in case the engine is blocked on state_cv_).
+    wakeupLooper();
+    {
+        std::lock_guard<std::mutex> lk(state_mutex_);
+        state_cv_.notify_all();
     }
 }
 
 void AndroidPlatformBackend::onNativeWindowDestroyed(ANativeWindow* /*window*/) {
-    ENKI_ALOG("onNativeWindowDestroyed");
-    current_native_window_ = nullptr;
-    for (auto* s : surfaces_) {
-        s->onNativeWindowDestroyed();
+    ENKI_ALOG("onNativeWindowDestroyed (UI thread) — requesting surface destruction");
+    {
+        std::lock_guard<std::mutex> lk(window_event_mutex_);
+        window_destroy_pending_ = true;
     }
+    needs_processing_.store(true, std::memory_order_release);
+    wakeupLooper();
+    {
+        std::lock_guard<std::mutex> lk(state_mutex_);
+        state_cv_.notify_all();
+    }
+
+    // Synchronize: wait until engine thread has destroyed EGL surfaces
+    // before allowing Android OS to free ANativeWindow.
+    {
+        std::unique_lock<std::mutex> lk(window_destroy_ack_mutex_);
+        window_destroy_ack_cv_.wait_for(lk, std::chrono::milliseconds(500), [this]() {
+            return !has_window_.load(std::memory_order_acquire);
+        });
+    }
+    ENKI_ALOG("onNativeWindowDestroyed (UI thread) — engine thread acknowledged release");
 }
 
 void AndroidPlatformBackend::onWindowFocusChanged(bool has_focus) {
-    activated_ = has_focus;
-    for (auto* s : surfaces_) {
-        s->onWindowFocusChanged(has_focus);
+    // Focus callbacks carry no EGL ops, so forward immediately.
+    // Copy surface list under lock to avoid iterator invalidation.
+    std::vector<AndroidSurface*> slist;
+    {
+        std::lock_guard<std::mutex> lk(surfaces_mutex_);
+        slist.assign(surfaces_.begin(), surfaces_.end());
     }
+    for (auto* s : slist) s->onWindowFocusChanged(has_focus);
 }
 
 void AndroidPlatformBackend::onPause() {
     ENKI_ALOG("onPause");
-    paused_ = true;
+    paused_.store(true, std::memory_order_release);
+    // The engine thread will suspend naturally on the next pollEvents()
+    // call once the surface is destroyed (onNativeWindowDestroyed follows).
 }
 
 void AndroidPlatformBackend::onResume() {
     ENKI_ALOG("onResume");
-    paused_ = false;
+    paused_.store(false, std::memory_order_release);
+    insets_dirty_.store(true, std::memory_order_relaxed);
+    wakeupLooper();
+    {
+        std::lock_guard<std::mutex> lk(state_mutex_);
+        state_cv_.notify_all();
+    }
 }
 
 void AndroidPlatformBackend::onDestroy() {
     ENKI_ALOG("onDestroy");
-    quit_requested_.store(true, std::memory_order_relaxed);
-    // Wake up pollEvents if it's sleeping
-    if (pipe_write_fd_ >= 0) {
-        char c = 1;
-        write(pipe_write_fd_, &c, 1);
+    quit_requested_.store(true, std::memory_order_release);
+    needs_processing_.store(true, std::memory_order_release);
+    // Wake the engine thread regardless of which wait it is in
+    wakeupLooper();
+    {
+        std::lock_guard<std::mutex> lk(state_mutex_);
+        state_cv_.notify_all();
     }
 }
 
 void AndroidPlatformBackend::onInputQueueCreated(AInputQueue* queue) {
-    // Store the queue — we poll it directly in processInputQueue().
-    // Do NOT attach to any ALooper: onInputQueueCreated is called from the
-    // main (UI) thread while our engine runs on the worker thread, so
-    // attaching to our worker looper causes the main thread's input
-    // dispatcher to never see acknowledgements → ANR after 5 s.
+    // Do NOT attach the queue to our worker ALooper:
+    // onInputQueueCreated is called on the UI thread; the dispatcher needs to
+    // receive acknowledgements there. Attaching to the worker looper breaks
+    // this, causing an ANR after ~5 s.
+    std::lock_guard<std::mutex> lk(input_queue_mutex_);
     input_queue_ = queue;
 }
 
 void AndroidPlatformBackend::onInputQueueDestroyed(AInputQueue* /*queue*/) {
+    std::lock_guard<std::mutex> lk(input_queue_mutex_);
     input_queue_ = nullptr;
 }
 
@@ -447,15 +598,23 @@ void AndroidPlatformBackend::onInputQueueDestroyed(AInputQueue* /*queue*/) {
 // ════════════════════════════════════════════════════════════════
 
 void AndroidPlatformBackend::registerSurface(AndroidSurface* surface) {
-    if (surface) {
+    if (!surface) return;
+    {
+        std::lock_guard<std::mutex> lk(surfaces_mutex_);
         surfaces_.insert(surface);
-        if (current_native_window_) {
-            surface->onNativeWindowCreated(current_native_window_);
-        }
+    }
+    // If a native window is already available (init() already ran and adopted
+    // the boot window), notify the surface immediately — this runs on the
+    // engine thread so EGL operations are safe.
+    ANativeWindow* win = current_native_window_;
+    if (win) {
+        surface->onNativeWindowCreated(win);
+        has_window_.store(true, std::memory_order_release);
     }
 }
 
 void AndroidPlatformBackend::unregisterSurface(AndroidSurface* surface) {
+    std::lock_guard<std::mutex> lk(surfaces_mutex_);
     surfaces_.erase(surface);
 }
 
@@ -476,6 +635,9 @@ void AndroidPlatformBackend::updateOutputFromConfig() {
 
     primary_output_->fractional_scale_ = static_cast<double>(dpi_scale_);
     primary_output_->scale_factor_     = static_cast<int32_t>(std::round(dpi_scale_));
+
+    // Invalidate safe-area cache: display geometry / density changed
+    insets_dirty_.store(true, std::memory_order_relaxed);
 
     ENKI_ALOG("Display density: %d dpi, scale: %.2f", density, dpi_scale_);
 }
@@ -631,6 +793,175 @@ std::vector<std::string> AndroidPlatformBackend::getClipboardFormats(ClipboardTy
 
 bool AndroidPlatformBackend::hasClipboardFormat(std::string_view mime_type, ClipboardType /*type*/) const {
     return mime_type == mime::TextPlainUtf8 || mime_type == mime::TextPlain;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Safe Area Insets
+// Strategy 1 (preferred): Window.getDecorView().getRootWindowInsets()
+//   getStableInsetTop/Bottom() — accounts for display cutouts + status/nav bars.
+// Strategy 2 (fallback):  Resources.getSystem() dimension lookup.
+// Strategy 3 (last resort): hardcoded dp constants.
+// ════════════════════════════════════════════════════════════════
+
+EdgeInsets AndroidPlatformBackend::getSafeAreaInsets() const {
+    // ── Fast path: return cached value when the display config hasn't changed ───────
+    // This avoids expensive JNI calls (AttachCurrentThread + 3+ method lookups)
+    // on every frame that queries safe-area insets.
+    if (!insets_dirty_.load(std::memory_order_acquire)) {
+        std::lock_guard<std::mutex> lock(insets_mutex_);
+        return cached_insets_;
+    }
+
+    constexpr float kFallbackTop    = 36.0f;  // status bar + notch ~36dp
+    constexpr float kFallbackBottom = 24.0f;  // gesture nav bar
+
+    // Helper: store result in cache and return it
+    auto storeAndReturn = [this](EdgeInsets insets) -> EdgeInsets {
+        std::lock_guard<std::mutex> lock(insets_mutex_);
+        cached_insets_ = insets;
+        insets_dirty_.store(false, std::memory_order_release);
+        return insets;
+    };
+
+    if (!activity_) {
+        return storeAndReturn(EdgeInsets::only(kFallbackTop, 0.0f, kFallbackBottom, 0.0f));
+    }
+
+    JavaVM* jvm = activity_->vm;
+    if (!jvm) {
+        return storeAndReturn(EdgeInsets::only(kFallbackTop, 0.0f, kFallbackBottom, 0.0f));
+    }
+
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) {
+            return storeAndReturn(EdgeInsets::only(kFallbackTop, 0.0f, kFallbackBottom, 0.0f));
+        }
+        attached = true;
+    }
+
+    float top_dp    = kFallbackTop;
+    float bottom_dp = kFallbackBottom;
+    bool  got_insets = false;
+    const float dpi = (dpi_scale_ > 0.1f) ? dpi_scale_ : 1.0f;
+
+    // ── Strategy 1: WindowInsets from DecorView ────────────────────────────────
+    // Uses activity.getWindow().getDecorView().getRootWindowInsets()
+    // .getStableInsetTop() / .getStableInsetBottom()
+    // These stable insets include the status bar, display cutout (notch/camera),
+    // and navigation bar in pixels — the most reliable source on API 20+.
+    do {
+        jclass act_class = env->GetObjectClass(activity_->clazz);
+        if (!act_class || env->ExceptionCheck()) { env->ExceptionClear(); break; }
+
+        jmethodID getWindow = env->GetMethodID(act_class, "getWindow",
+                                               "()Landroid/view/Window;");
+        env->DeleteLocalRef(act_class);
+        if (!getWindow || env->ExceptionCheck()) { env->ExceptionClear(); break; }
+
+        jobject window = env->CallObjectMethod(activity_->clazz, getWindow);
+        if (!window || env->ExceptionCheck()) { env->ExceptionClear(); break; }
+
+        jclass win_class = env->GetObjectClass(window);
+        jmethodID getDecorView = env->GetMethodID(win_class, "getDecorView",
+                                                   "()Landroid/view/View;");
+        env->DeleteLocalRef(win_class);
+        if (!getDecorView || env->ExceptionCheck()) {
+            env->ExceptionClear();
+            env->DeleteLocalRef(window);
+            break;
+        }
+
+        jobject decor = env->CallObjectMethod(window, getDecorView);
+        env->DeleteLocalRef(window);
+        if (!decor || env->ExceptionCheck()) { env->ExceptionClear(); break; }
+
+        jclass view_class = env->GetObjectClass(decor);
+        jmethodID getRootWI = env->GetMethodID(view_class, "getRootWindowInsets",
+                                                "()Landroid/view/WindowInsets;");
+        env->DeleteLocalRef(view_class);
+        if (!getRootWI || env->ExceptionCheck()) {
+            env->ExceptionClear();
+            env->DeleteLocalRef(decor);
+            break;
+        }
+
+        jobject wi = env->CallObjectMethod(decor, getRootWI);
+        env->DeleteLocalRef(decor);
+        if (!wi || env->ExceptionCheck()) { env->ExceptionClear(); break; }
+
+        jclass wi_class      = env->GetObjectClass(wi);
+        jmethodID stabTop    = env->GetMethodID(wi_class, "getStableInsetTop",    "()I");
+        jmethodID stabBottom = env->GetMethodID(wi_class, "getStableInsetBottom", "()I");
+        env->DeleteLocalRef(wi_class);
+
+        if (stabTop && stabBottom && !env->ExceptionCheck()) {
+            jint top_px    = env->CallIntMethod(wi, stabTop);
+            jint bottom_px = env->CallIntMethod(wi, stabBottom);
+            if (!env->ExceptionCheck()) {
+                if (top_px    > 0) top_dp    = static_cast<float>(top_px)    / dpi;
+                if (bottom_px > 0) bottom_dp = static_cast<float>(bottom_px) / dpi;
+                got_insets = true;
+            } else {
+                env->ExceptionClear();
+            }
+        } else {
+            env->ExceptionClear();
+        }
+        env->DeleteLocalRef(wi);
+    } while (false);
+
+    // ── Strategy 2: Resources.getSystem() dimension lookup ─────────────────────
+    if (!got_insets) {
+        auto queryDimenPx = [&](const char* name) -> int {
+            jclass res_class = env->FindClass("android/content/res/Resources");
+            if (!res_class) return -1;
+            jmethodID getRes = env->GetStaticMethodID(res_class,
+                "getSystem", "()Landroid/content/res/Resources;");
+            if (!getRes) { env->DeleteLocalRef(res_class); return -1; }
+            jobject resources = env->CallStaticObjectMethod(res_class, getRes);
+            env->DeleteLocalRef(res_class);
+            if (!resources) return -1;
+
+            jclass robj_class = env->GetObjectClass(resources);
+            jmethodID getIdent = env->GetMethodID(robj_class,
+                "getIdentifier",
+                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I");
+            jmethodID getDimen = env->GetMethodID(robj_class,
+                "getDimensionPixelSize", "(I)I");
+            env->DeleteLocalRef(robj_class);
+            if (!getIdent || !getDimen) { env->DeleteLocalRef(resources); return -1; }
+
+            jstring jName    = env->NewStringUTF(name);
+            jstring jDimen   = env->NewStringUTF("dimen");
+            jstring jAndroid = env->NewStringUTF("android");
+            jint resId = env->CallIntMethod(resources, getIdent, jName, jDimen, jAndroid);
+            env->DeleteLocalRef(jName);
+            env->DeleteLocalRef(jDimen);
+            env->DeleteLocalRef(jAndroid);
+
+            int px = -1;
+            if (resId > 0) {
+                px = (int)env->CallIntMethod(resources, getDimen, resId);
+                if (env->ExceptionCheck()) { env->ExceptionClear(); px = -1; }
+            }
+            env->DeleteLocalRef(resources);
+            return px;
+        };
+
+        int status_px = queryDimenPx("status_bar_height");
+        if (status_px > 0) top_dp = static_cast<float>(status_px) / dpi;
+
+        int nav_px = queryDimenPx("navigation_bar_height");
+        if (nav_px > 0) bottom_dp = static_cast<float>(nav_px) / dpi;
+    }
+
+    if (attached) jvm->DetachCurrentThread();
+
+    ENKI_ALOG("SafeArea insets: top=%.1fdp bottom=%.1fdp (via %s)",
+              top_dp, bottom_dp, got_insets ? "WindowInsets" : "Resources");
+    return storeAndReturn(EdgeInsets::only(top_dp, 0.0f, bottom_dp, 0.0f));
 }
 
 } // namespace enki::android
