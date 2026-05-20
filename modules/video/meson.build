@@ -33,6 +33,13 @@ if va_drm_dep.found()
   video_deps += va_drm_dep
 endif
 
+if host_machine.system() == 'windows'
+  video_sources += files('src/video_decoder_win.cpp')
+  d3d11_dep = cpp.find_library('d3d11', required : true)
+  dxgi_dep  = cpp.find_library('dxgi', required : true)
+  video_deps += [d3d11_dep, dxgi_dep, ole32_dep]
+endif
+
 libenki_video = static_library('enki_video',
   video_sources,
   include_directories : video_inc,

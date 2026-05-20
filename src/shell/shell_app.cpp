@@ -45,7 +45,14 @@ struct ShellApp::Impl {
     sk_sp<GrDirectContext>    gr_context;
 
     std::vector<std::unique_ptr<SurfaceHost>> surfaces;
+    std::vector<std::unique_ptr<SurfaceHost>> pending_remove_surfaces;
     bool quit_requested = false;
+
+    void drainPendingSurfaces() {
+        if (!pending_remove_surfaces.empty()) {
+            pending_remove_surfaces.clear();
+        }
+    }
 
     // Pointer routing
     SurfaceHost* active_pointer_host = nullptr;
@@ -74,6 +81,10 @@ struct ShellApp::Impl {
 
             // Auto-dismiss popup surfaces if click is outside popup
             if (!target && surfaces.size() > 1) {
+                for (size_t i = 1; i < surfaces.size(); ++i) {
+                    surfaces[i]->onClose().emit();
+                    pending_remove_surfaces.push_back(std::move(surfaces[i]));
+                }
                 surfaces.resize(1); // Keep main surface only
             }
 
@@ -299,6 +310,8 @@ void ShellApp::removeSurface(SurfaceHost* host) {
     auto it = std::find_if(impl_->surfaces.begin(), impl_->surfaces.end(),
                            [host](const std::unique_ptr<SurfaceHost>& h) { return h.get() == host; });
     if (it != impl_->surfaces.end()) {
+        (*it)->onClose().emit();
+        impl_->pending_remove_surfaces.push_back(std::move(*it));
         impl_->surfaces.erase(it);
     }
 }
@@ -315,6 +328,8 @@ int ShellApp::run() {
             break;
         }
 
+        impl_->drainPendingSurfaces();
+
         // 2. Advance all animations and Ticker timers
         SchedulerBinding::instance().tick();
 
@@ -328,6 +343,8 @@ int ShellApp::run() {
             host->paint(impl_->gr_context.get(), 0x00000000);
             host->swapBuffers();
         }
+
+        impl_->drainPendingSurfaces();
 
         // 3. Frame rate pacing
         auto elapsed = Clock::now() - frame_start;

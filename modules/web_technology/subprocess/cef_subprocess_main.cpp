@@ -15,9 +15,18 @@
 #include <include/cef_app.h>
 #include "../cef/EnkiCefApp.hpp"
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 int main(int argc, char* argv[])
 {
+#if defined(_WIN32)
+    CefMainArgs main_args(GetModuleHandle(nullptr));
+#else
     CefMainArgs main_args(argc, argv);
+#endif
 
     // Use EnkiSubprocessApp so the renderer process can handle
     // V8 context creation and IPC messages for JS bindings.

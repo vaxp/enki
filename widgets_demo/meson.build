@@ -97,8 +97,12 @@ subdir('utility_demo')
 subdir('typography_demo')
 subdir('lottie_demo')
 subdir('skia_canvas_demo')
-# subdir('audio_waveform_demo') # Disabled per user request (requires PulseAudio)
-# subdir('video_player_demo')   # Disabled per user request (requires FFmpeg)
+if pulse_dep.found() or host_machine.system() == 'windows'
+  subdir('audio_waveform_demo')
+endif
+if avcodec_dep.found()
+  subdir('video_player_demo')
+endif
 subdir('rich_inputs_demo')
 
 # ── Section 15: Standalone Rich Input Demos ───────────────────

@@ -3,6 +3,7 @@
 /// @copyright ENKI Framework — MIT License
 
 #include "video/video_controller.hpp"
+#include <algorithm>
 
 namespace enki::video {
 

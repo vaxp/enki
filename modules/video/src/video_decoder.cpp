@@ -16,8 +16,12 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
+#if defined(_WIN32)
+#include "video_decoder_win.hpp"
+#else
 #include <pulse/simple.h>
 #include <pulse/error.h>
+#endif
 
 #include <iostream>
 #include <algorithm>
@@ -28,12 +32,16 @@ namespace enki::video {
 namespace {
 
 enum AVPixelFormat getHwFormat(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
+#if defined(_WIN32)
+    return getHwFormatWin(ctx, pix_fmts);
+#else
     for (const enum AVPixelFormat* p = pix_fmts; *p != AV_PIX_FMT_NONE; ++p) {
         if (*p == AV_PIX_FMT_VAAPI) {
             return *p;
         }
     }
     return AV_PIX_FMT_NONE;
+#endif
 }
 
 } // namespace
@@ -47,6 +55,9 @@ VideoDecoder::~VideoDecoder() {
 }
 
 bool VideoDecoder::initHardwareDevice() {
+#if defined(_WIN32)
+    return initHardwareDeviceWin(&hw_device_ctx_);
+#else
     // Attempt VA-API hardware acceleration via Linux DRI render device
     int err = av_hwdevice_ctx_create(&hw_device_ctx_, AV_HWDEVICE_TYPE_VAAPI, "/dev/dri/renderD128", nullptr, 0);
     if (err < 0) {
@@ -54,6 +65,7 @@ bool VideoDecoder::initHardwareDevice() {
         err = av_hwdevice_ctx_create(&hw_device_ctx_, AV_HWDEVICE_TYPE_VAAPI, nullptr, nullptr, 0);
     }
     return (err >= 0 && hw_device_ctx_ != nullptr);
+#endif
 }
 
 bool VideoDecoder::open(const std::string& path_or_url) {
@@ -132,6 +144,10 @@ bool VideoDecoder::open(const std::string& path_or_url) {
                 metadata_.audio_channels = audio_codec_ctx_->ch_layout.nb_channels;
                 metadata_.audio_sample_rate = audio_codec_ctx_->sample_rate;
 
+#if defined(_WIN32)
+                win_audio_ = std::make_unique<WinAudioPlayer>();
+                win_audio_->open(48000, 2);
+#else
                 // Setup PulseAudio playback (48kHz Stereo S16LE)
                 pa_sample_spec ss;
                 ss.format   = PA_SAMPLE_S16LE;
@@ -157,6 +173,7 @@ bool VideoDecoder::open(const std::string& path_or_url) {
                     &ba,
                     &error
                 );
+#endif
 
                 // Setup SwrContext resampler to 48000Hz stereo s16
                 AVChannelLayout out_ch_layout;
@@ -219,10 +236,17 @@ void VideoDecoder::close() {
 
     flushQueues();
 
+#if defined(_WIN32)
+    if (win_audio_) {
+        win_audio_->close();
+        win_audio_.reset();
+    }
+#else
     if (pa_playback_) {
         pa_simple_free(pa_playback_);
         pa_playback_ = nullptr;
     }
+#endif
 
     if (swr_ctx_) {
         swr_free(&swr_ctx_);
@@ -325,6 +349,14 @@ double VideoDecoder::getDuration() const {
 }
 
 double VideoDecoder::getMasterClock() const {
+#if defined(_WIN32)
+    if (metadata_.has_audio && win_audio_ && audio_clock_.load() > 0.0) {
+        double lat_sec = win_audio_->getLatencySec();
+        double speed = playback_speed_.load();
+        double current = audio_clock_.load() - (lat_sec * speed);
+        return std::max(0.0, current);
+    }
+#else
     if (metadata_.has_audio && pa_playback_ && audio_clock_.load() > 0.0) {
         int error = 0;
         pa_usec_t latency = pa_simple_get_latency(pa_playback_, &error);
@@ -333,6 +365,7 @@ double VideoDecoder::getMasterClock() const {
         double current = audio_clock_.load() - (lat_sec * speed);
         return std::max(0.0, current);
     }
+#endif
     // Fallback: steady monotonic clock
     if (state_ == PlaybackState::Playing) {
         auto now = std::chrono::steady_clock::now();
@@ -363,10 +396,16 @@ void VideoDecoder::demuxerLoop() {
                 if (audio_codec_ctx_) avcodec_flush_buffers(audio_codec_ctx_);
             }
 
+#if defined(_WIN32)
+            if (win_audio_) {
+                win_audio_->flush();
+            }
+#else
             if (pa_playback_) {
                 int error = 0;
                 pa_simple_flush(pa_playback_, &error);
             }
+#endif
 
             flushQueues();
 
@@ -476,12 +515,21 @@ void VideoDecoder::videoDecodeLoop() {
 
                 AVFrame* render_src = frame;
 
-                // Handle Hardware VA-API frame
+                // Handle Hardware accelerated frame (D3D11VA/DXVA2 on Windows, VA-API on Linux)
+#if defined(_WIN32)
+                if (frame->format == AV_PIX_FMT_D3D11 || frame->format == AV_PIX_FMT_DXVA2_VLD) {
+                    extractD3D11FrameWin(frame, video_frame.get());
+                    if (av_hwframe_transfer_data(sw_frame, frame, 0) >= 0) {
+                        render_src = sw_frame;
+                    }
+                }
+#else
                 if (frame->format == AV_PIX_FMT_VAAPI) {
                     if (av_hwframe_transfer_data(sw_frame, frame, 0) >= 0) {
                         render_src = sw_frame;
                     }
                 }
+#endif
 
                 // Always convert render_src to RGBA32 for Skia GPU presentation
                 sws_ctx_ = sws_getCachedContext(
@@ -553,7 +601,11 @@ void VideoDecoder::audioDecodeLoop() {
             }
 
             while (avcodec_receive_frame(audio_codec_ctx_, frame) == 0) {
+#if defined(_WIN32)
+                if (swr_ctx_ && win_audio_) {
+#else
                 if (swr_ctx_ && pa_playback_) {
+#endif
                     int out_samples = swr_get_out_samples(swr_ctx_, frame->nb_samples);
                     if (out_samples <= 0) continue;
 
@@ -605,6 +657,9 @@ void VideoDecoder::audioDecodeLoop() {
                             }
                         }
 
+#if defined(_WIN32)
+                        win_audio_->write(write_ptr, play_samples);
+#else
                         int error = 0;
                         pa_simple_write(
                             pa_playback_,
@@ -612,6 +667,7 @@ void VideoDecoder::audioDecodeLoop() {
                             play_samples * 2 * sizeof(int16_t),
                             &error
                         );
+#endif
 
                         // Update Master Audio Clock
                         double pts = 0.0;

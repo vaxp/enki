@@ -15,18 +15,27 @@ audio_sources = files(
 )
 
 audio_deps = []
-if pulse_dep.found()
-  audio_deps += pulse_dep
+if host_machine.system() == 'windows'
+  audio_deps += cpp.find_library('ole32', required : true)
+else
+  if pulse_dep.found()
+    audio_deps += pulse_dep
+  endif
+  if pulse_simple_dep.found()
+    audio_deps += pulse_simple_dep
+  endif
 endif
-if pulse_simple_dep.found()
-  audio_deps += pulse_simple_dep
+
+audio_cpp_args = []
+if cpp.get_id() != 'msvc'
+  audio_cpp_args += ['-std=c++20']
 endif
 
 audio_lib = static_library('enki_audio',
   audio_sources,
   include_directories : [audio_inc],
   dependencies : audio_deps,
-  cpp_args : ['-std=c++20'],
+  cpp_args : audio_cpp_args,
   pic : true,
 )
 

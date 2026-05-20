@@ -291,8 +291,11 @@ public:
                                " | " + std::to_string(int(meta.fps > 0 ? meta.fps : 24)) + " FPS" +
                                " | " + (meta.audio_codec.empty() ? "AAC" : meta.audio_codec) +
                                " (" + std::to_string(meta.audio_sample_rate > 0 ? meta.audio_sample_rate : 48000) + "Hz " +
-                               std::to_string(meta.audio_channels > 0 ? meta.audio_channels : 2) + "ch)" +
-                               " | VA-API Hardware Zero-Copy";
+#if defined(_WIN32)
+                               " | " + std::string(meta.hw_accelerated ? "D3D11VA Hardware Zero-Copy" : "Software Decoding");
+#else
+                               " | " + std::string(meta.hw_accelerated ? "VA-API Hardware Zero-Copy" : "Software Decoding");
+#endif
 
         auto stats_badge = text(meta_str, {
             .color = 0xFF64748B,

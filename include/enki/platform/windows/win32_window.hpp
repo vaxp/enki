@@ -104,6 +104,7 @@ private:
     bool is_fullscreen_ = false;
     bool blur_enabled_  = false;
     bool in_size_move_  = false;
+    bool is_destroying_ = false;
 
     Signal<WindowState> on_state_changed_;
     Signal<bool>        on_maximized_;

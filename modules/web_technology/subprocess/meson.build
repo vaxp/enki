@@ -16,7 +16,12 @@ executable('enki_cef_subprocess',
     cef_lib,
     cef_dll_wrapper,
     thread_dep,
-  ],
+  ] + (host_machine.system() == 'windows' ? [
+    cpp.find_library('user32', required: true),
+    cpp.find_library('shell32', required: true),
+    cpp.find_library('ole32', required: true),
+    cpp.find_library('advapi32', required: true),
+  ] : []),
 
   # Disable warnings from CEF headers.
   cpp_args : ['-w'],

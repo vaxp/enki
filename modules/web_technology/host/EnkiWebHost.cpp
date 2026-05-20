@@ -12,6 +12,11 @@
 #include <sstream>
 #include <vector>
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace enki::web {
@@ -280,7 +285,11 @@ void EnkiWebHost::init_cef_subprocess()
     }
 
     if (is_subprocess) {
+#if defined(_WIN32)
+        CefMainArgs main_args(GetModuleHandle(nullptr));
+#else
         CefMainArgs main_args(impl_->argc, impl_->argv);
+#endif
         auto app = CefRefPtr<EnkiSubprocessApp>(new EnkiSubprocessApp());
         int exit_code = CefExecuteProcess(main_args, app.get(), nullptr);
         if (exit_code >= 0) {

@@ -44,7 +44,9 @@ public:
 
 private:
     void captureLoop();
+#if !defined(_WIN32)
     static std::string resolveMonitorSourceName();
+#endif
 
     AudioCaptureConfig config_;
     AudioChunkCallback callback_;

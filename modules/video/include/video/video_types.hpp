@@ -49,6 +49,16 @@ struct DmaBufFrame {
     std::vector<DmaBufPlane> planes;
 };
 
+/// Hardware Direct3D 11 / DXGI surface descriptor for Zero-Copy GPU rendering on Windows
+struct D3D11Frame {
+    void*    texture_ptr   = nullptr; ///< ID3D11Texture2D* GPU surface
+    intptr_t subresource   = 0;       ///< Texture array slice index
+    uint32_t dxgi_format   = 0;       ///< DXGI_FORMAT
+    int      width         = 0;
+    int      height        = 0;
+    void*    shared_handle = nullptr; ///< Windows DXGI Shared Handle
+};
+
 /// Decoded video frame ready for Skia rendering
 struct VideoFrame {
     double               pts_sec   = 0.0;
@@ -56,6 +66,8 @@ struct VideoFrame {
     int                  height    = 0;
     bool                 is_dma_buf = false;
     DmaBufFrame          dma_buf;
+    bool                 is_d3d11   = false;
+    D3D11Frame           d3d11;
     std::vector<uint8_t> rgba_data; ///< Pre-converted RGB32 buffer (fast GPU upload)
 };
 

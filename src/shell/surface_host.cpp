@@ -53,8 +53,18 @@ SurfaceHost::SurfaceHost(std::unique_ptr<LayerSurface> layer_surface, WidgetPtr 
 }
 
 SurfaceHost::~SurfaceHost() {
+    on_close_.disconnectAll();
+    if (window_) {
+        window_->onClose().disconnectAll();
+    }
+    if (layer_surface_) {
+        layer_surface_->onClose().disconnectAll();
+    }
     if (root_element_) {
         root_element_->unmount();
+    }
+    if (window_) {
+        window_->makeCurrent();
     }
     cached_surface_.reset();
     root_element_.reset();

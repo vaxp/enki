@@ -22,7 +22,11 @@ struct SwsContext;
 struct SwrContext;
 struct AVPacket;
 struct AVFrame;
+#if defined(_WIN32)
+namespace enki::video { class WinAudioPlayer; }
+#else
 struct pa_simple;
+#endif
 
 namespace enki::video {
 
@@ -96,8 +100,12 @@ private:
     double           video_time_base_{0.0};
     double           audio_time_base_{0.0};
 
+#if defined(_WIN32)
+    std::unique_ptr<WinAudioPlayer> win_audio_;
+#else
     // PulseAudio playback
     pa_simple*       pa_playback_{nullptr};
+#endif
 
     // Synchronization Clocks
     std::atomic<double> audio_clock_{0.0};
