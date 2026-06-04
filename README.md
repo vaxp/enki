@@ -17,3 +17,6 @@ $env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH; ninja -C build-android
 $env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH; python3 scripts/package_android_apk.py 2>&1 | Out-String
 
 $env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH; python3 scripts/package_calculator_apk.py 2>&1 | Out-String
+
+$env:PATH = "C:\msys64\ucrt64\bin;" + $env:PATH; python3 scripts/package_gallery_apk.py 2>&1 | Out-String
+

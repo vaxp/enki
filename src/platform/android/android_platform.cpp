@@ -22,6 +22,8 @@
 
 namespace enki::android {
 
+static AndroidPlatformBackend* s_active_backend = nullptr;
+
 // ════════════════════════════════════════════════════════════════
 // AndroidOutput — represents the device screen as a single Output
 // ════════════════════════════════════════════════════════════════
@@ -130,12 +132,16 @@ bool AndroidPlatformBackend::init() {
         }
     }
 
+    s_active_backend = this;
     ENKI_ALOG("AndroidPlatformBackend initialised — EGL %d.%d", 0, 0);
     return true;
 }
 
 void AndroidPlatformBackend::shutdown() {
     ENKI_ALOG("AndroidPlatformBackend::shutdown");
+    if (s_active_backend == this) {
+        s_active_backend = nullptr;
+    }
     surfaces_.clear();
     destroyEGL();
     destroyWakeupPipe();
@@ -547,6 +553,10 @@ void AndroidPlatformBackend::onWindowFocusChanged(bool has_focus) {
         slist.assign(surfaces_.begin(), surfaces_.end());
     }
     for (auto* s : slist) s->onWindowFocusChanged(has_focus);
+
+    if (has_focus) {
+        resolvePendingPermissions();
+    }
 }
 
 void AndroidPlatformBackend::onPause() {
@@ -565,6 +575,7 @@ void AndroidPlatformBackend::onResume() {
         std::lock_guard<std::mutex> lk(state_mutex_);
         state_cv_.notify_all();
     }
+    resolvePendingPermissions();
 }
 
 void AndroidPlatformBackend::onDestroy() {
@@ -964,6 +975,393 @@ EdgeInsets AndroidPlatformBackend::getSafeAreaInsets() const {
     return storeAndReturn(EdgeInsets::only(top_dp, 0.0f, bottom_dp, 0.0f));
 }
 
+// ════════════════════════════════════════════════════════════════
+// Runtime Permissions Subsystem (JNI)
+// ════════════════════════════════════════════════════════════════
+
+int AndroidPlatformBackend::jniGetSdkVersion() const {
+    if (cached_sdk_version_ > 0) return cached_sdk_version_;
+    if (!activity_ || !activity_->vm) return 26;
+
+    JavaVM* jvm = activity_->vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) return 26;
+        attached = true;
+    }
+
+    int sdk = 26;
+    jclass version_class = env->FindClass("android/os/Build$VERSION");
+    if (version_class) {
+        jfieldID sdk_int_fid = env->GetStaticFieldID(version_class, "SDK_INT", "I");
+        if (sdk_int_fid) {
+            sdk = env->GetStaticIntField(version_class, sdk_int_fid);
+        }
+        env->DeleteLocalRef(version_class);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) jvm->DetachCurrentThread();
+
+    cached_sdk_version_ = sdk;
+    return sdk;
+}
+
+int AndroidPlatformBackend::jniCheckPermission(std::string_view permission) const {
+    if (!activity_ || !activity_->vm || !activity_->clazz) return -1;
+
+    JavaVM* jvm = activity_->vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) return -1;
+        attached = true;
+    }
+
+    int result = -1;
+    jclass act_class = env->GetObjectClass(activity_->clazz);
+    if (act_class) {
+        jmethodID check_perm = env->GetMethodID(act_class, "checkSelfPermission", "(Ljava/lang/String;)I");
+        if (check_perm) {
+            std::string perm_str(permission);
+            jstring jperm = env->NewStringUTF(perm_str.c_str());
+            result = env->CallIntMethod(activity_->clazz, check_perm, jperm);
+            env->DeleteLocalRef(jperm);
+        }
+        env->DeleteLocalRef(act_class);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) jvm->DetachCurrentThread();
+
+    return result;
+}
+
+bool AndroidPlatformBackend::jniShouldShowRationale(std::string_view permission) const {
+    if (!activity_ || !activity_->vm || !activity_->clazz) return false;
+
+    JavaVM* jvm = activity_->vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) return false;
+        attached = true;
+    }
+
+    jboolean should_show = JNI_FALSE;
+    jclass act_class = env->GetObjectClass(activity_->clazz);
+    if (act_class) {
+        jmethodID rationale_method = env->GetMethodID(act_class, "shouldShowRequestPermissionRationale", "(Ljava/lang/String;)Z");
+        if (rationale_method) {
+            std::string perm_str(permission);
+            jstring jperm = env->NewStringUTF(perm_str.c_str());
+            should_show = env->CallBooleanMethod(activity_->clazz, rationale_method, jperm);
+            env->DeleteLocalRef(jperm);
+        }
+        env->DeleteLocalRef(act_class);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) jvm->DetachCurrentThread();
+
+    return should_show == JNI_TRUE;
+}
+
+void AndroidPlatformBackend::jniRequestPermissions(const std::vector<std::string>& permissions, int request_code) {
+    if (!activity_ || !activity_->vm || !activity_->clazz || permissions.empty()) return;
+
+    JavaVM* jvm = activity_->vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) return;
+        attached = true;
+    }
+
+    jclass act_class = env->GetObjectClass(activity_->clazz);
+    if (act_class) {
+        jmethodID req_method = env->GetMethodID(act_class, "requestPermissions", "([Ljava/lang/String;I)V");
+        if (req_method) {
+            jclass str_class = env->FindClass("java/lang/String");
+            if (str_class) {
+                jobjectArray perm_array = env->NewObjectArray(permissions.size(), str_class, nullptr);
+                for (size_t i = 0; i < permissions.size(); ++i) {
+                    jstring s = env->NewStringUTF(permissions[i].c_str());
+                    env->SetObjectArrayElement(perm_array, i, s);
+                    env->DeleteLocalRef(s);
+                }
+                env->CallVoidMethod(activity_->clazz, req_method, perm_array, (jint)request_code);
+                env->DeleteLocalRef(perm_array);
+                env->DeleteLocalRef(str_class);
+            }
+        }
+        env->DeleteLocalRef(act_class);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) jvm->DetachCurrentThread();
+}
+
+bool AndroidPlatformBackend::jniOpenAppSettings() {
+    if (!activity_ || !activity_->vm || !activity_->clazz) return false;
+
+    JavaVM* jvm = activity_->vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) return false;
+        attached = true;
+    }
+
+    bool success = false;
+    do {
+        jclass act_class = env->GetObjectClass(activity_->clazz);
+        if (!act_class) break;
+
+        jmethodID get_pkg = env->GetMethodID(act_class, "getPackageName", "()Ljava/lang/String;");
+        if (!get_pkg) { env->DeleteLocalRef(act_class); break; }
+
+        jstring pkg_name = (jstring)env->CallObjectMethod(activity_->clazz, get_pkg);
+        if (!pkg_name) { env->DeleteLocalRef(act_class); break; }
+
+        jclass intent_class = env->FindClass("android/content/Intent");
+        if (!intent_class) {
+            env->DeleteLocalRef(pkg_name);
+            env->DeleteLocalRef(act_class);
+            break;
+        }
+
+        jmethodID intent_init = env->GetMethodID(intent_class, "<init>", "(Ljava/lang/String;)V");
+        if (!intent_init) {
+            env->DeleteLocalRef(intent_class);
+            env->DeleteLocalRef(pkg_name);
+            env->DeleteLocalRef(act_class);
+            break;
+        }
+
+        jstring action = env->NewStringUTF("android.settings.APPLICATION_DETAILS_SETTINGS");
+        jobject intent = env->NewObject(intent_class, intent_init, action);
+        env->DeleteLocalRef(action);
+        if (!intent) {
+            env->DeleteLocalRef(intent_class);
+            env->DeleteLocalRef(pkg_name);
+            env->DeleteLocalRef(act_class);
+            break;
+        }
+
+        jclass uri_class = env->FindClass("android/net/Uri");
+        if (uri_class) {
+            jmethodID from_parts = env->GetStaticMethodID(uri_class, "fromParts",
+                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Landroid/net/Uri;");
+            if (from_parts) {
+                jstring scheme = env->NewStringUTF("package");
+                jobject uri = env->CallStaticObjectMethod(uri_class, from_parts, scheme, pkg_name, nullptr);
+                env->DeleteLocalRef(scheme);
+
+                if (uri) {
+                    jmethodID set_data = env->GetMethodID(intent_class, "setData",
+                        "(Landroid/net/Uri;)Landroid/content/Intent;");
+                    if (set_data) {
+                        env->CallObjectMethod(intent, set_data, uri);
+                    }
+                    env->DeleteLocalRef(uri);
+                }
+            }
+            env->DeleteLocalRef(uri_class);
+        }
+
+        jmethodID start_act = env->GetMethodID(act_class, "startActivity", "(Landroid/content/Intent;)V");
+        if (start_act) {
+            env->CallVoidMethod(activity_->clazz, start_act, intent);
+            if (!env->ExceptionCheck()) {
+                success = true;
+            }
+        }
+
+        env->DeleteLocalRef(intent);
+        env->DeleteLocalRef(intent_class);
+        env->DeleteLocalRef(pkg_name);
+        env->DeleteLocalRef(act_class);
+    } while (false);
+
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) jvm->DetachCurrentThread();
+
+    return success;
+}
+
+PermissionStatus AndroidPlatformBackend::checkPermission(std::string_view permission) {
+    int res = jniCheckPermission(permission);
+    if (res == 0) {
+        return PermissionStatus::Granted;
+    }
+    return PermissionStatus::Denied;
+}
+
+bool AndroidPlatformBackend::shouldShowRationale(std::string_view permission) {
+    return jniShouldShowRationale(permission);
+}
+
+int AndroidPlatformBackend::getAndroidSdkVersion() const {
+    return jniGetSdkVersion();
+}
+
+bool AndroidPlatformBackend::openAppSettings() {
+    return jniOpenAppSettings();
+}
+
+void AndroidPlatformBackend::requestPermissions(
+    const std::vector<std::string>& permissions,
+    std::function<void(const std::unordered_map<std::string, PermissionStatus>&)> callback)
+{
+    if (permissions.empty()) {
+        if (callback) callback({});
+        return;
+    }
+
+    bool all_granted = true;
+    std::unordered_map<std::string, PermissionStatus> results;
+    std::vector<std::string> to_request;
+    std::vector<bool> pre_rationales;
+
+    for (const auto& perm : permissions) {
+        if (jniCheckPermission(perm) == 0) {
+            results[perm] = PermissionStatus::Granted;
+        } else {
+            all_granted = false;
+            to_request.push_back(perm);
+            pre_rationales.push_back(jniShouldShowRationale(perm));
+        }
+    }
+
+    if (all_granted) {
+        if (callback) callback(results);
+        return;
+    }
+
+    int code = next_permission_request_code_.fetch_add(1);
+    PendingPermissionRequest req;
+    req.request_code = code;
+    req.permissions = permissions;
+    req.callback = std::move(callback);
+    req.pre_rationales = std::move(pre_rationales);
+
+    {
+        std::lock_guard<std::mutex> lk(permissions_mutex_);
+        pending_permission_requests_.push_back(std::move(req));
+    }
+
+    ENKI_ALOG("Requesting %zu Android permissions (request_code=%d)", to_request.size(), code);
+    jniRequestPermissions(to_request, code);
+}
+
+void AndroidPlatformBackend::resolvePendingPermissions() {
+    std::vector<PendingPermissionRequest> reqs;
+    {
+        std::lock_guard<std::mutex> lk(permissions_mutex_);
+        if (pending_permission_requests_.empty()) return;
+        reqs = std::move(pending_permission_requests_);
+        pending_permission_requests_.clear();
+    }
+
+    ENKI_ALOG("Resolving %zu pending permission request(s)", reqs.size());
+
+    for (auto& req : reqs) {
+        std::unordered_map<std::string, PermissionStatus> result;
+        for (size_t i = 0; i < req.permissions.size(); ++i) {
+            const auto& perm = req.permissions[i];
+            if (jniCheckPermission(perm) == 0) {
+                result[perm] = PermissionStatus::Granted;
+            } else {
+                bool rationale = jniShouldShowRationale(perm);
+                bool had_rationale_before = (i < req.pre_rationales.size()) ? req.pre_rationales[i] : false;
+                if (!rationale && had_rationale_before) {
+                    result[perm] = PermissionStatus::PermanentlyDenied;
+                } else {
+                    result[perm] = PermissionStatus::Denied;
+                }
+            }
+        }
+        if (req.callback) {
+            req.callback(result);
+        }
+    }
+}
+
+void AndroidPlatformBackend::onNativePermissionsResult(
+    int request_code,
+    const std::vector<std::string>& permissions,
+    const std::vector<int>& grant_results)
+{
+    PendingPermissionRequest matched_req;
+    bool found = false;
+
+    {
+        std::lock_guard<std::mutex> lk(permissions_mutex_);
+        for (auto it = pending_permission_requests_.begin(); it != pending_permission_requests_.end(); ++it) {
+            if (it->request_code == request_code) {
+                matched_req = std::move(*it);
+                pending_permission_requests_.erase(it);
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) return;
+
+    std::unordered_map<std::string, PermissionStatus> result;
+    for (size_t i = 0; i < permissions.size(); ++i) {
+        const auto& perm = permissions[i];
+        int code = (i < grant_results.size()) ? grant_results[i] : -1;
+        if (code == 0) {
+            result[perm] = PermissionStatus::Granted;
+        } else {
+            bool rationale = jniShouldShowRationale(perm);
+            result[perm] = rationale ? PermissionStatus::Denied : PermissionStatus::PermanentlyDenied;
+        }
+    }
+
+    if (matched_req.callback) {
+        matched_req.callback(result);
+    }
+}
+
 } // namespace enki::android
+
+extern "C" JNIEXPORT void JNICALL
+Java_enki_EnkiNativeActivity_onPermissionsResult(
+    JNIEnv* env, jobject /*thiz*/, jint request_code,
+    jobjectArray jpermissions, jintArray jgrant_results)
+{
+    if (!enki::android::s_active_backend || !env || !jpermissions || !jgrant_results) return;
+
+    jsize num_perms = env->GetArrayLength(jpermissions);
+    jsize num_results = env->GetArrayLength(jgrant_results);
+    jint* results_ptr = env->GetIntArrayElements(jgrant_results, nullptr);
+
+    std::vector<std::string> perms;
+    std::vector<int> grants;
+    perms.reserve(num_perms);
+    grants.reserve(num_results);
+
+    for (jsize i = 0; i < num_perms; ++i) {
+        auto jstr = (jstring)env->GetObjectArrayElement(jpermissions, i);
+        if (jstr) {
+            const char* utf = env->GetStringUTFChars(jstr, nullptr);
+            if (utf) {
+                perms.emplace_back(utf);
+                env->ReleaseStringUTFChars(jstr, utf);
+            }
+            env->DeleteLocalRef(jstr);
+        }
+    }
+
+    if (results_ptr) {
+        for (jsize i = 0; i < num_results; ++i) {
+            grants.push_back(results_ptr[i]);
+        }
+        env->ReleaseIntArrayElements(jgrant_results, results_ptr, JNI_ABORT);
+    }
+
+    enki::android::s_active_backend->onNativePermissionsResult(request_code, perms, grants);
+}
 
 #endif // __ANDROID__

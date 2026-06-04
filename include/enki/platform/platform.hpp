@@ -11,6 +11,7 @@
 #include "enki/platform/dnd.hpp"
 #include "enki/platform/toplevel.hpp"
 #include "enki/platform/output.hpp"
+#include "enki/platform/permissions.hpp"
 #include <functional>
 #include <memory>
 #include <string>

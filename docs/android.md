@@ -108,42 +108,116 @@ The `ANativeActivity_onCreate` entry point is provided automatically by
 </activity>
 ```
 
----
+## 5. Android Permissions System
 
-## Architecture
+`enki` provides a unified, cross-platform runtime permissions API (`enki::Permissions`) designed specifically for Android NativeActivity apps with zero Java code required.
 
+### 5.1 Declare Permissions in `AndroidManifest.xml`
+
+Declare the permissions your application needs inside `<manifest>`:
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.enki_app">
+
+    <!-- ── Network ─────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- ── Storage & Media (Android 13+ API 33 & legacy) ───────── -->
+    <!-- Android 13+ (API 33+) granular media access -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Android 12 and below (API <= 32) fallback -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+
+    <!-- ── Notifications (Android 13+ API 33) ──────────────────── -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- ── Location ────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Optional: Background location (API 29+) -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> -->
+
+    <!-- ── Hardware & Sensors ─────────────────────────────────── -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+
+    <!-- ── Bluetooth (Android 12+ API 31 & legacy) ─────────────── -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+
+    <!-- ── Contacts & Calendar ────────────────────────────────── -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
+    <application ...>
+        <activity android:name="android.app.NativeActivity" ...>
+            <meta-data android:name="android.app.lib_name" android:value="enki_myapp" />
+        </activity>
+    </application>
+</manifest>
 ```
-ANativeActivity_onCreate()          [android_app_glue.cpp]
-  └─ Platform::setAndroidActivity()
-  └─ Platform::create()
-       └─ AndroidPlatformBackend::init()
-            ├─ EGL (shared context — survives rotation)
-            ├─ ALooper (main thread event pump)
-            └─ AConfiguration (DPI, locale)
-  └─ enki_android_main()            [your application]
-       └─ Window::create()
-            └─ AndroidSurface::init()
-                 └─ registers with backend
-                      │
-                      ├─ onNativeWindowCreated()  → createEGLSurface()
-                      ├─ onNativeWindowDestroyed() → destroyEGLSurface()
-                      └─ pollEvents()  → touch / key dispatch
+
+### 5.2 C++ Usage Examples
+
+#### Checking and Requesting a Single Permission
+
+```cpp
+#include <enki/platform/permissions.hpp>
+
+// Synchronous check
+if (enki::Permissions::isGranted(enki::Permission::Storage)) {
+    loadUserMedia();
+} else {
+    // Request permission asynchronously
+    enki::Permissions::request(enki::Permission::Storage, [](enki::PermissionStatus status) {
+        if (status == enki::PermissionStatus::Granted) {
+            loadUserMedia();
+        } else if (status == enki::PermissionStatus::PermanentlyDenied) {
+            // User selected "Don't ask again" — direct to system settings
+            enki::Permissions::openAppSettings();
+        }
+    });
+}
 ```
 
-### Key Design Decisions
+#### Requesting Multiple Permissions
 
-- **EGL context is shared** — Only the EGL *surface* is destroyed/recreated on
-  screen rotation, keeping GPU resources (textures, shaders, Skia GrContext)
-  alive across configuration changes.
-- **Single surface** — Android always has one full-screen window; there is no
-  window manager. `AndroidSurface` is always fullscreen.
-- **JNI clipboard** — Text clipboard is bridged to Android's `ClipboardManager`
-  via JNI. Other MIME types fall back to an in-process buffer.
-- **No cursor / drag-and-drop** — These are silently no-ops since Android has
-  no desktop-style mouse or DnD protocol.
-- **Strict isolation** — Every Android-specific code path is wrapped in
-  `#if defined(__ANDROID__)` / `#elif defined(_WIN32)` / `#else` chains.
-  Linux (X11/Wayland) and Windows builds are **completely unaffected**.
+```cpp
+enki::Permissions::request({
+    enki::Permission::Location,
+    enki::Permission::Notifications,
+    enki::Permission::Camera
+}, [](const std::unordered_map<enki::Permission, enki::PermissionStatus>& results) {
+    for (const auto& [perm, status] : results) {
+        ENKI_ALOG("Permission %s: %s",
+                  enki::Permissions::toString(perm),
+                  enki::Permissions::toString(status));
+    }
+});
+```
+
+#### Showing Rationale
+
+```cpp
+if (enki::Permissions::shouldShowRationale(enki::Permission::Location)) {
+    // Show your app's explanation dialog explaining why GPS is needed,
+    // then call enki::Permissions::request(...)
+}
+```
+
+### 5.3 Desktop Compatibility
+On Windows and Linux, `enki::Permissions::check()` and `enki::Permissions::request()` automatically return `PermissionStatus::Granted`, allowing multiplatform applications to use the exact same code without `#ifdef` guards.
 
 ---
 
@@ -151,9 +225,12 @@ ANativeActivity_onCreate()          [android_app_glue.cpp]
 
 | File | Purpose |
 |------|---------|
-| `include/enki/platform/android/android_platform.hpp` | Backend public interface |
+| `include/enki/platform/permissions.hpp` | Cross-platform runtime permissions public API |
+| `src/platform/permissions.cpp` | Permissions implementation & Desktop stubs |
+| `include/enki/platform/android/android_platform.hpp` | Backend public interface & JNI permission helpers |
 | `include/enki/platform/android/android_surface.hpp` | Surface (window) public interface |
-| `src/platform/android/android_platform.cpp` | EGL init, ALooper, input, clipboard |
+| `src/platform/android/android_platform.cpp` | EGL init, ALooper, input, clipboard, JNI permissions |
 | `src/platform/android/android_surface.cpp` | EGL surface lifecycle |
 | `src/platform/android/android_app_glue.cpp` | `ANativeActivity_onCreate`, callbacks |
 | `cross/android-arm64.ini` | Meson NDK cross-compilation toolchain |
+

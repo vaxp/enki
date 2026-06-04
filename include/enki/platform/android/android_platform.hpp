@@ -7,6 +7,7 @@
 #ifdef __ANDROID__
 
 #include "enki/platform/platform.hpp"
+#include "enki/platform/permissions.hpp"
 #include "enki/platform/output.hpp"
 
 #include <android/native_activity.h>
@@ -156,6 +157,31 @@ public:
     /// from system resources via JNI, with sensible fallbacks.
     [[nodiscard]] EdgeInsets getSafeAreaInsets() const;
 
+    // ── Runtime Permissions ──────────────────────────────────────
+    /// Check the status of an Android permission string.
+    [[nodiscard]] PermissionStatus checkPermission(std::string_view permission);
+
+    /// Check if rationale should be shown before requesting the permission.
+    [[nodiscard]] bool shouldShowRationale(std::string_view permission);
+
+    /// Request a set of Android permissions asynchronously.
+    void requestPermissions(const std::vector<std::string>& permissions,
+                            std::function<void(const std::unordered_map<std::string, PermissionStatus>&)> callback);
+
+    /// Launch system application settings page for this package.
+    bool openAppSettings();
+
+    /// Get Android SDK version (Build.VERSION.SDK_INT).
+    [[nodiscard]] int getAndroidSdkVersion() const;
+
+    /// Called by onWindowFocusChanged(true) / onResume() to resolve any pending permission requests.
+    void resolvePendingPermissions();
+
+    /// Called by JNIEXPORT onPermissionsResult if custom Java activity is used.
+    void onNativePermissionsResult(int request_code,
+                                   const std::vector<std::string>& permissions,
+                                   const std::vector<int>& grant_results);
+
 private:
     Platform*        owner_    = nullptr;
     ANativeActivity* activity_ = nullptr;
@@ -234,6 +260,25 @@ private:
     // ── JNI helpers ───────────────────────────────────────────────
     std::string jniGetClipboardText() const;
     void        jniSetClipboardText(std::string_view text) const;
+
+    // ── Permissions JNI helpers & state ───────────────────────────
+    struct PendingPermissionRequest {
+        int request_code = 0;
+        std::vector<std::string> permissions;
+        std::function<void(const std::unordered_map<std::string, PermissionStatus>&)> callback;
+        std::vector<bool> pre_rationales;
+    };
+
+    mutable std::mutex                    permissions_mutex_;
+    std::vector<PendingPermissionRequest> pending_permission_requests_;
+    std::atomic<int>                      next_permission_request_code_{ 1000 };
+    mutable int                           cached_sdk_version_ = -1;
+
+    int  jniCheckPermission(std::string_view permission) const;
+    bool jniShouldShowRationale(std::string_view permission) const;
+    void jniRequestPermissions(const std::vector<std::string>& permissions, int request_code);
+    bool jniOpenAppSettings();
+    int  jniGetSdkVersion() const;
 
     // ── ALooper pipe for wakeup ───────────────────────────────────
     int  pipe_read_fd_  = -1;

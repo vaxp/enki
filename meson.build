@@ -400,6 +400,7 @@ platform_sources = files(
   'src/platform/platform_native.cpp',
   'src/platform/window_native.cpp',
   'src/platform/input.cpp',
+  'src/platform/permissions.cpp',
 )
 
 if is_android
@@ -701,3 +702,10 @@ endif
 # Real Applications
 # ============================================================
 subdir('real_app')
+
+# ============================================================
+# ENKI Native CLI Developer Tool
+# ============================================================
+if not is_android
+  subdir('tools/cli')
+endif
