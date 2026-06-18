@@ -6,6 +6,14 @@ meson compile -C build
 meson install -C build
 ```
 
+For Linux:
+build\tools\cli\enki -h
+
+For Windows :
+build-Win\tools\cli\enki.exe -h
+
+
+For Windows setup:
 cmd.exe /c "call ""C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"" && C:\msys64\ucrt64\bin\meson.exe setup build-Win --backend ninja -Dbuildtype=release -Db_vscrt=mt"
 
 
