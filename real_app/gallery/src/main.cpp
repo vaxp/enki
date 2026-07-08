@@ -21,6 +21,11 @@
 #include "ui/components/photo_grid.hpp"
 #include "ui/views/fullscreen_viewer.hpp"
 
+#include "services/gallery_i18n.hpp"
+#include "enki/i18n/i18n.hpp"
+#include "enki/i18n/locale.hpp"
+#include "enki/state/state.hpp"
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -86,19 +91,36 @@ public:
     std::string_view typeName() const override { return "GalleryPage"; }
 };
 
-class GalleryApp : public StatelessWidget {
+class GalleryAppState : public State {
+    std::shared_ptr<GalleryCubit> cubit_;
+    SlotId locale_sub_ = 0;
+
 public:
+    void initState() override {
+        State::initState();
+        cubit_ = std::make_shared<GalleryCubit>();
+        locale_sub_ = I18n::onLocaleChanged().connect([this](const Locale&) {
+            setState([]{});
+        });
+    }
+
+    void dispose() override {
+        if (locale_sub_ != 0) {
+            I18n::onLocaleChanged().disconnect(locale_sub_);
+            locale_sub_ = 0;
+        }
+        State::dispose();
+    }
+
     WidgetPtr build(BuildContext&) override {
-        auto page = bloc_provider<GalleryCubit>(
-            []() {
-                return std::make_shared<GalleryCubit>();
-            },
+        auto page = bloc_provider_value<GalleryCubit>(
+            cubit_,
             std::make_shared<GalleryPage>()
         );
 
         return windowFrame(WindowFrameProps{
             .content = page,
-            .title = "ENKI Gallery • Real Photo Storage",
+            .title = std::string(tr("gallery.window_title")),
             .border_radius = 12.0f,
             .border_color = 0x4038BDF8,
             .border_width = 1.5f,
@@ -108,11 +130,24 @@ public:
             .titlebar_style = TitleBarStyle::VAXPOS,
         });
     }
+};
+
+class GalleryApp : public StatefulWidget {
+public:
+    std::unique_ptr<State> createState() override {
+        return std::make_unique<GalleryAppState>();
+    }
     std::string_view typeName() const override { return "GalleryApp"; }
 };
 
 int main() {
     std::cout << "[GalleryApp] Launching ENKI Gallery App...\n";
+
+    // ── 1. Initialize Declarative Localization ────────────────────
+    initGalleryTranslations();
+
+    // Default to Arabic (Iraq) to showcase native RTL & Arabic typography on startup:
+    I18n::setLocale(Locale("ar", "IQ"));
 
     AppConfig config;
     config.title       = "ENKI Gallery";

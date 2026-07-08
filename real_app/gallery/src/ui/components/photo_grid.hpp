@@ -9,6 +9,7 @@
 #include "state/gallery_cubit.hpp"
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/text.hpp"
+#include "enki/i18n/i18n.hpp"
 #include <vector>
 #include <utility>
 
@@ -23,13 +24,13 @@ inline WidgetPtr buildPhotoGrid(const GalleryState& state, GalleryCubit* cubit) 
                 .children = {
                     text("[LOCKED]", { .color = Palette::amber, .font_size = 24.0f, .font_weight = FontWeight::Bold }),
                     sizedBox(0, 10.0f),
-                    text("Storage Access Required", {
+                    text(std::string(tr("grid.locked_title")), {
                         .color = Palette::text_white,
                         .font_size = 16.0f,
                         .font_weight = FontWeight::Bold
                     }),
                     sizedBox(0, 6.0f),
-                    text("Tap 'Request Storage Access' above to scan photos on this device.", {
+                    text(std::string(tr("grid.locked_desc")), {
                         .color = Palette::text_muted,
                         .font_size = 13.0f
                     })
@@ -61,7 +62,7 @@ inline WidgetPtr buildPhotoGrid(const GalleryState& state, GalleryCubit* cubit) 
                 .children = {
                     text("[EMPTY]", { .color = Palette::text_muted, .font_size = 20.0f }),
                     sizedBox(0, 8.0f),
-                    text("No photos found in this directory.", {
+                    text(std::string(tr("grid.empty_title")), {
                         .color = Palette::text_white,
                         .font_size = 14.0f,
                         .font_weight = FontWeight::Bold

@@ -440,6 +440,10 @@ enki_sources = files(
   'src/app/app.cpp',
   'src/app/theme.cpp',
 
+  # i18n & Localization
+  'src/i18n/locale.cpp',
+  'src/i18n/i18n.cpp',
+
   # Rendering
   'src/rendering/canvas.cpp',
   'src/rendering/paint.cpp',

@@ -10,6 +10,8 @@
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/image.hpp"
 #include "enki/widgets/text.hpp"
+#include "enki/i18n/i18n.hpp"
+#include "services/gallery_i18n.hpp"
 #include <string>
 #include <iostream>
 
@@ -26,7 +28,7 @@ inline WidgetPtr buildFullscreenViewer(const GalleryState& state, GalleryCubit* 
     // ── 1. Top Floating Header Bar ─────────────────────────────────
     auto back_btn = makeClickable(
         makeBox(
-            text("< Back", {
+            text(std::string(tr("viewer.back")), {
                 .color = Palette::text_white,
                 .font_size = 14.0f,
                 .font_weight = FontWeight::Bold
@@ -49,9 +51,10 @@ inline WidgetPtr buildFullscreenViewer(const GalleryState& state, GalleryCubit* 
         .font_weight = FontWeight::Bold
     });
 
+    std::string fav_label = photo.is_favorite ? std::string(tr("viewer.saved")) : std::string(tr("viewer.favorite"));
     auto fav_btn = makeClickable(
         makeBox(
-            text(photo.is_favorite ? "SAVED" : "FAVORITE", {
+            text(fav_label, {
                 .color = photo.is_favorite ? Palette::rose : Palette::text_white,
                 .font_size = 12.0f,
                 .font_weight = FontWeight::Bold
@@ -106,7 +109,7 @@ inline WidgetPtr buildFullscreenViewer(const GalleryState& state, GalleryCubit* 
     // ── 3. Floating Bottom Navigation Bar ──────────────────────────
     auto prev_btn = makeClickable(
         makeBox(
-            text("< Prev", {
+            text(std::string(tr("viewer.prev")), {
                 .color = Palette::text_white,
                 .font_size = 13.0f,
                 .font_weight = FontWeight::Bold
@@ -129,7 +132,7 @@ inline WidgetPtr buildFullscreenViewer(const GalleryState& state, GalleryCubit* 
         .font_weight = FontWeight::Bold
     });
 
-    std::string short_folder = truncateString(photo.folder_name, 14);
+    std::string short_folder = truncateString(localizeFolderName(photo.folder_name), 14);
     auto meta_display = text(short_folder + " • " + photo.file_size, {
         .color = Palette::text_muted,
         .font_size = 11.0f
@@ -142,7 +145,7 @@ inline WidgetPtr buildFullscreenViewer(const GalleryState& state, GalleryCubit* 
 
     auto next_btn = makeClickable(
         makeBox(
-            text("Next >", {
+            text(std::string(tr("viewer.next")), {
                 .color = Palette::text_white,
                 .font_size = 13.0f,
                 .font_weight = FontWeight::Bold

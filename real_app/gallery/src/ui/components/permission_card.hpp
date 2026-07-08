@@ -8,6 +8,7 @@
 #include "state/gallery_cubit.hpp"
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/text.hpp"
+#include "enki/i18n/i18n.hpp"
 #include <vector>
 
 namespace enki::gallery {
@@ -17,6 +18,7 @@ inline WidgetPtr buildPermissionStatusCard(const GalleryState& state, GalleryCub
     Color border_c  = Palette::border_subtle;
     Color badge_c   = Palette::amber;
     std::string badge_str;
+    std::string desc_str;
     std::string icon_str;
     WidgetPtr action_btn = nullptr;
 
@@ -24,18 +26,20 @@ inline WidgetPtr buildPermissionStatusCard(const GalleryState& state, GalleryCub
         card_bg   = 0x1810B981;
         border_c  = 0x4010B981;
         badge_c   = Palette::emerald;
-        badge_str = "Storage Permission: GRANTED";
+        badge_str = std::string(tr("permission.granted"));
+        desc_str  = std::string(tr("permission.desc_granted"));
         icon_str  = "[OK]";
     } else if (state.storage_status == PermissionStatus::PermanentlyDenied) {
         card_bg   = 0x18EF4444;
         border_c  = 0x40EF4444;
         badge_c   = Palette::rose;
-        badge_str = "Storage Permission: PERMANENTLY DENIED";
+        badge_str = std::string(tr("permission.denied"));
+        desc_str  = std::string(tr("permission.desc_denied"));
         icon_str  = "[X]";
 
         action_btn = makeClickable(
             makeBox(
-                text("Open App Settings", {
+                text(std::string(tr("permission.open_settings")), {
                     .color = Palette::text_white,
                     .font_size = 13.0f,
                     .font_weight = FontWeight::Bold
@@ -51,12 +55,13 @@ inline WidgetPtr buildPermissionStatusCard(const GalleryState& state, GalleryCub
         card_bg   = 0x18F59E0B;
         border_c  = 0x40F59E0B;
         badge_c   = Palette::amber;
-        badge_str = "Storage Permission: REQUIRED";
+        badge_str = std::string(tr("permission.required"));
+        desc_str  = std::string(tr("permission.desc_required"));
         icon_str  = "[!]";
 
         action_btn = makeClickable(
             makeBox(
-                text("Request Storage Access", {
+                text(std::string(tr("permission.request_access")), {
                     .color = Palette::text_white,
                     .font_size = 13.0f,
                     .font_weight = FontWeight::Bold
@@ -82,7 +87,7 @@ inline WidgetPtr buildPermissionStatusCard(const GalleryState& state, GalleryCub
         StyleInsets::symmetric(4.0f, 8.0f)
     );
 
-    auto desc = text(state.status_message, {
+    auto desc = text(desc_str, {
         .color = Palette::text_white,
         .font_size = 13.0f
     });

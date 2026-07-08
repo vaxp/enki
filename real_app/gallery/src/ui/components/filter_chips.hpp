@@ -8,6 +8,8 @@
 #include "state/gallery_cubit.hpp"
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/text.hpp"
+#include "enki/i18n/i18n.hpp"
+#include "services/gallery_i18n.hpp"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -28,9 +30,11 @@ inline WidgetPtr buildFolderFilterChips(const GalleryState& state, GalleryCubit*
     for (const auto& folder : folders) {
         bool active = (state.selected_folder == folder);
 
+        std::string display_label = localizeFolderName(folder);
+
         auto chip = makeClickable(
             makeBox(
-                text(folder, {
+                text(display_label, {
                     .color = active ? Palette::text_white : Palette::text_muted,
                     .font_size = 13.0f,
                     .font_weight = active ? FontWeight::Bold : FontWeight::Normal

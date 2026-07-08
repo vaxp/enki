@@ -193,3 +193,10 @@
 // ── Mobile / System UI ──────────────────────────────────────────
 #include "enki/widgets/safe_area.hpp"
 #include "enki/widgets/aspect_ratio.hpp"
+
+// ════════════════════════════════════════════════════════════════
+// 7. Internationalization & Localization (i18n)
+// ════════════════════════════════════════════════════════════════
+#include "enki/i18n/locale.hpp"
+#include "enki/i18n/plural_rules.hpp"
+#include "enki/i18n/i18n.hpp"

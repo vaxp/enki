@@ -9,6 +9,8 @@
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/image.hpp"
 #include "enki/widgets/text.hpp"
+#include "enki/i18n/i18n.hpp"
+#include "services/gallery_i18n.hpp"
 #include <iostream>
 
 namespace enki::gallery {
@@ -48,15 +50,16 @@ inline WidgetPtr buildPhotoCard(size_t photo_idx, const PhotoItem& photo, Galler
         .font_weight = FontWeight::Bold
     });
 
-    std::string card_folder = truncateString(photo.folder_name, 12);
+    std::string card_folder = truncateString(localizeFolderName(photo.folder_name), 12);
     auto meta = text(card_folder + " • " + photo.file_size, {
         .color = Palette::text_muted,
         .font_size = 11.0f
     });
 
+    std::string fav_tag = (photo.is_favorite ? "★ " : "☆ ") + std::string(tr("card.fav"));
     auto fav_btn = makeClickable(
         makeBox(
-            text(photo.is_favorite ? "★ FAV" : "☆ FAV", {
+            text(fav_tag, {
                 .color = photo.is_favorite ? Palette::rose : Palette::primary_neon,
                 .font_size = 11.0f,
                 .font_weight = FontWeight::Bold
