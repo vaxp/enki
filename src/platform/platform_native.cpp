@@ -14,6 +14,9 @@
 #if defined(ENKI_HAS_WAYLAND)
 #include "enki/platform/wayland/wayland_platform.hpp"
 #endif
+#if defined(ENKI_HAS_DRM)
+#include "enki/platform/drm/drm_platform.hpp"
+#endif
 #endif
 
 #include <chrono>
@@ -48,6 +51,9 @@ struct Platform::Impl {
 #else
     std::unique_ptr<wayland::WaylandPlatformBackend> wayland;
     std::unique_ptr<x11::X11PlatformBackend>         x11;
+#if defined(ENKI_HAS_DRM)
+    std::unique_ptr<drm::DRMPlatformBackend>         drm;
+#endif
 #endif
 
     std::chrono::steady_clock::time_point start_time;
@@ -81,6 +87,23 @@ struct Platform::Impl {
         }
         return true;
 #else
+#if defined(ENKI_HAS_DRM)
+        // Explicit DRM preference via environment variable
+        const char* plat_env = std::getenv("ENKI_PLATFORM");
+        const char* back_env = std::getenv("ENKI_BACKEND");
+        bool prefer_drm = (plat_env && (std::string_view(plat_env) == "drm" || std::string_view(plat_env) == "kms")) ||
+                          (back_env && (std::string_view(back_env) == "drm" || std::string_view(back_env) == "kms"));
+
+        if (prefer_drm) {
+            drm = std::make_unique<drm::DRMPlatformBackend>(owner);
+            if (drm->init()) {
+                return true;
+            }
+            std::cerr << "[ENKI Platform] Explicit DRM backend requested but failed to initialize\n";
+            drm.reset();
+        }
+#endif
+
         // Prefer Wayland if environment indicates it
         const char* wl_disp = std::getenv("WAYLAND_DISPLAY");
         if (wl_disp || std::getenv("WAYLAND_SOCKET")) {
@@ -94,11 +117,33 @@ struct Platform::Impl {
 #endif
         }
 
-        // X11 fallback
-        x11 = std::make_unique<x11::X11PlatformBackend>(owner);
-        if (!x11->init()) {
+        // X11 check / fallback
+        const char* x11_disp = std::getenv("DISPLAY");
+        if (x11_disp) {
+            x11 = std::make_unique<x11::X11PlatformBackend>(owner);
+            if (x11->init()) {
+                return true;
+            }
+            std::cerr << "[ENKI Platform] X11 failed\n";
             x11.reset();
-            return false;
+        }
+
+#if defined(ENKI_HAS_DRM)
+        // Fallback to DRM/KMS if neither Wayland nor X11 was present or succeeded
+        drm = std::make_unique<drm::DRMPlatformBackend>(owner);
+        if (drm->init()) {
+            return true;
+        }
+        drm.reset();
+#endif
+
+        // Final X11 attempt if nothing else succeeded
+        if (!x11) {
+            x11 = std::make_unique<x11::X11PlatformBackend>(owner);
+            if (!x11->init()) {
+                x11.reset();
+                return false;
+            }
         }
         return true;
 #endif
@@ -112,6 +157,9 @@ struct Platform::Impl {
 #else
         if (wayland) { wayland->shutdown(); wayland.reset(); }
         if (x11)     { x11->shutdown();     x11.reset(); }
+#if defined(ENKI_HAS_DRM)
+        if (drm)     { drm->shutdown();     drm.reset(); }
+#endif
 #endif
     }
 
@@ -126,6 +174,16 @@ struct Platform::Impl {
     bool isAndroid() const {
 #if defined(__ANDROID__)
         return android_backend != nullptr;
+#else
+        return false;
+#endif
+    }
+
+    bool isDRM() const {
+#if defined(__ANDROID__) || defined(_WIN32)
+        return false;
+#elif defined(ENKI_HAS_DRM)
+        return drm != nullptr;
 #else
         return false;
 #endif
@@ -172,6 +230,9 @@ bool Platform::pollEvents() {
 #else
     if (impl_->wayland) return impl_->wayland->pollEvents();
     if (impl_->x11)     return impl_->x11->pollEvents();
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return impl_->drm->pollEvents();
+#endif
     return false;
 #endif
 }
@@ -186,6 +247,9 @@ void Platform::registerWindow(Window* w) {
     if (impl_->win32) impl_->win32->registerWindow(w);
 #else
     if (impl_->x11) impl_->x11->registerWindow(w);
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm) impl_->drm->registerWindow(w);
+#endif
 #endif
 }
 
@@ -198,6 +262,9 @@ void Platform::unregisterWindow(Window* w) {
     if (impl_->win32) impl_->win32->unregisterWindow(w);
 #else
     if (impl_->x11) impl_->x11->unregisterWindow(w);
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm) impl_->drm->unregisterWindow(w);
+#endif
 #endif
 }
 
@@ -329,6 +396,9 @@ std::vector<std::shared_ptr<Output>> Platform::getOutputs() const {
 #else
     if (impl_->wayland) return impl_->wayland->getOutputs();
     if (impl_->x11)     return impl_->x11->getOutputs();
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return impl_->drm->getOutputs();
+#endif
 #endif
     return {};
 }
@@ -341,6 +411,9 @@ std::shared_ptr<Output> Platform::getOutputByName(std::string_view name) const {
 #else
     if (impl_->wayland) return impl_->wayland->getOutputByName(name);
     if (impl_->x11)     return impl_->x11->getOutputByName(name);
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return impl_->drm->getOutputByName(name);
+#endif
 #endif
     return nullptr;
 }
@@ -353,6 +426,9 @@ std::shared_ptr<Output> Platform::getPrimaryOutput() const {
 #else
     if (impl_->wayland) return impl_->wayland->getPrimaryOutput();
     if (impl_->x11)     return impl_->x11->getPrimaryOutput();
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return impl_->drm->getPrimaryOutput();
+#endif
 #endif
     return nullptr;
 }
@@ -366,6 +442,9 @@ void Platform::setCursor(SystemCursor cursor) {
 #else
     if (impl_->wayland) impl_->wayland->setCursor(cursor);
     if (impl_->x11)     impl_->x11->setCursor(cursor);
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     impl_->drm->setCursor(cursor);
+#endif
 #endif
 }
 
@@ -394,6 +473,9 @@ void* Platform::getEGLDisplay() const {
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLDisplay();
     if (impl_->x11)     return (void*)impl_->x11->getEGLDisplay();
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return (void*)impl_->drm->getEGLDisplay();
+#endif
     return nullptr;
 #endif
 }
@@ -406,6 +488,9 @@ void* Platform::getEGLConfig() const {
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLConfig();
     if (impl_->x11)     return (void*)impl_->x11->getEGLConfig();
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return (void*)impl_->drm->getEGLConfig();
+#endif
     return nullptr;
 #endif
 }
@@ -418,6 +503,9 @@ void* Platform::getEGLContext() const {
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLContext();
     if (impl_->x11)     return (void*)impl_->x11->getEGLContext();
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm)     return (void*)impl_->drm->getEGLContext();
+#endif
     return nullptr;
 #endif
 }
@@ -431,6 +519,15 @@ EdgeInsets Platform::getSafeAreaInsets() const {
 
 bool  Platform::isWayland()        const { return impl_->isWayland(); }
 bool  Platform::isAndroid()        const { return impl_->isAndroid(); }
+bool  Platform::isDRM()            const { return impl_->isDRM(); }
+
+void* Platform::getDRMBackend() const {
+#if defined(ENKI_HAS_DRM)
+    return (void*)impl_->drm.get();
+#else
+    return nullptr;
+#endif
+}
 
 void* Platform::getAndroidBackend() const {
 #if defined(__ANDROID__)

@@ -21,6 +21,10 @@
 #include "enki/platform/wayland/wayland_surface.hpp"
 #include "enki/platform/wayland/wayland_window.hpp"
 #endif
+#if defined(ENKI_HAS_DRM)
+#include "enki/platform/drm/drm_platform.hpp"
+#include "enki/platform/drm/drm_window.hpp"
+#endif
 #endif
 
 #include <iostream>
@@ -44,6 +48,9 @@ struct Window::Impl {
 #if defined(ENKI_HAS_WAYLAND)
     std::unique_ptr<wayland::WaylandWindow>       wayland_window;
     std::unique_ptr<wayland::WaylandLayerSurface> wayland_layer;
+#endif
+#if defined(ENKI_HAS_DRM)
+    std::unique_ptr<drm::DRMWindow>               drm_window;
 #endif
 #endif
 
@@ -185,6 +192,42 @@ struct Window::Impl {
         }
 #endif
 
+#if defined(ENKI_HAS_DRM)
+        if (plat.isDRM()) {
+            auto* db = static_cast<drm::DRMPlatformBackend*>(plat.getDRMBackend());
+            if (!db) {
+                std::cerr << "[ENKI Window] DRM backend unavailable\n";
+                return false;
+            }
+
+            drm_window = std::make_unique<drm::DRMWindow>(*db);
+            if (!drm_window->init(cfg)) {
+                std::cerr << "[ENKI Window] Failed to create DRM KMS scanout window\n";
+                drm_window.reset();
+                return false;
+            }
+
+            drm_window->onClose().connect([this]() {
+                if (window) window->onClose().emit();
+            });
+            drm_window->onResize().connect([this](int w, int h) {
+                current_width  = w;
+                current_height = h;
+                if (window) window->onResize().emit(w, h);
+            });
+            drm_window->onFocus().connect([this](bool f) {
+                if (window) window->onFocus().emit(f);
+            });
+            drm_window->onStateChanged().connect([this](WindowState s) {
+                if (window) window->onStateChanged().emit(s);
+            });
+
+            current_width  = static_cast<int>(drm_window->getSize().width);
+            current_height = static_cast<int>(drm_window->getSize().height);
+            return true;
+        }
+#endif
+
         // X11 path
         auto* xb = static_cast<x11::X11PlatformBackend*>(plat.getX11Backend());
         if (!xb) {
@@ -227,6 +270,9 @@ struct Window::Impl {
 #if defined(ENKI_HAS_WAYLAND)
         if (wayland_window) { wayland_window.reset(); }
         if (wayland_layer)  { wayland_layer.reset(); }
+#endif
+#if defined(ENKI_HAS_DRM)
+        if (drm_window) { drm_window.reset(); }
 #endif
 #endif
     }
@@ -272,6 +318,9 @@ void Window::setTitle(std::string_view title) {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) impl_->wayland_window->setTitle(title);
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) impl_->drm_window->setTitle(title);
+#endif
 #endif
 }
 
@@ -285,6 +334,9 @@ void Window::setSize(int w, int h) {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) impl_->wayland_window->setSize(w, h);
     if (impl_->wayland_layer)  impl_->wayland_layer->setSize(w, h);
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) impl_->drm_window->setSize(w, h);
 #endif
 #endif
     impl_->current_width  = w;
@@ -300,6 +352,9 @@ void Window::setPosition(int x, int y) {
     if (impl_->x11) impl_->x11->setPosition(x, y);
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) impl_->wayland_window->setPosition(x, y);
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) impl_->drm_window->setPosition(x, y);
 #endif
 #endif
 }
@@ -346,6 +401,9 @@ Size Window::getSize() const {
     if (impl_->wayland_window) return impl_->wayland_window->getSize();
     if (impl_->wayland_layer)  return impl_->wayland_layer->getSize();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getSize();
+#endif
 #endif
     return {(float)impl_->current_width, (float)impl_->current_height};
 }
@@ -360,6 +418,9 @@ Size Window::getDrawableSize() const {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->getDrawableSize();
     if (impl_->wayland_layer)  return impl_->wayland_layer->getDrawableSize();
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getDrawableSize();
 #endif
 #endif
     return getSize();
@@ -376,6 +437,9 @@ float Window::getDpiScale() const {
     if (impl_->wayland_window) return impl_->wayland_window->getDpiScale();
     if (impl_->wayland_layer)  return impl_->wayland_layer->getDpiScale();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getDpiScale();
+#endif
 #endif
     return 1.0f;
 }
@@ -391,6 +455,9 @@ void Window::makeCurrent() {
     if (impl_->wayland_window) impl_->wayland_window->makeCurrent();
     if (impl_->wayland_layer)  impl_->wayland_layer->makeCurrent();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) impl_->drm_window->makeCurrent();
+#endif
 #endif
 }
 
@@ -405,6 +472,9 @@ void Window::swapBuffers() {
     if (impl_->wayland_window) impl_->wayland_window->swapBuffers();
     if (impl_->wayland_layer)  impl_->wayland_layer->swapBuffers();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) impl_->drm_window->swapBuffers();
+#endif
 #endif
 }
 
@@ -418,6 +488,9 @@ void* Window::getNativeHandle() const {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->getNativeHandle();
     if (impl_->wayland_layer)  return impl_->wayland_layer->getWlSurface();
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getNativeHandle();
 #endif
 #endif
     return nullptr;
@@ -434,6 +507,9 @@ void* Window::getEGLSurface() const {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->getEGLSurface();
     if (impl_->wayland_layer)  return impl_->wayland_layer->getEGLSurface();
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getEGLSurface();
 #endif
     return nullptr;
 #endif
@@ -452,6 +528,9 @@ void* Window::getEGLContext() const {
     if (impl_->wayland_window) return impl_->wayland_window->getEGLContext();
     if (impl_->wayland_layer)  return impl_->wayland_layer->getEGLContext();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getEGLContext();
+#endif
     return nullptr;
 #endif
 }
@@ -465,6 +544,9 @@ void* Window::getBackendWindow() const {
     if (impl_->x11) return impl_->x11.get();
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window.get();
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window.get();
 #endif
 #endif
     return nullptr;
@@ -606,6 +688,9 @@ bool Window::isMaximized() const {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->isMaximized();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->isMaximized();
+#endif
 #endif
     return false;
 }
@@ -619,6 +704,9 @@ bool Window::isMinimized() const {
     if (impl_->x11) return impl_->x11->isMinimized();
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->isMinimized();
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->isMinimized();
 #endif
 #endif
     return false;
@@ -634,6 +722,9 @@ bool Window::isFullscreen() const {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->isFullscreen();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->isFullscreen();
+#endif
 #endif
     return false;
 }
@@ -648,6 +739,9 @@ bool Window::isActivated() const {
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->isActivated();
 #endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->isActivated();
+#endif
 #endif
     return true;
 }
@@ -661,6 +755,9 @@ WindowState Window::getWindowState() const {
     if (impl_->x11) return impl_->x11->getWindowState();
 #if defined(ENKI_HAS_WAYLAND)
     if (impl_->wayland_window) return impl_->wayland_window->getWindowState();
+#endif
+#if defined(ENKI_HAS_DRM)
+    if (impl_->drm_window) return impl_->drm_window->getWindowState();
 #endif
 #endif
     return WindowState::Normal;

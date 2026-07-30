@@ -74,6 +74,11 @@ if is_android
   gl_dep             = dependency('', required : false)
   dl_dep             = cpp.find_library('dl', required : false)
   m_dep              = cpp.find_library('m',  required : false)
+  libdrm_dep         = dependency('', required : false)
+  gbm_dep            = dependency('', required : false)
+  libinput_dep       = dependency('', required : false)
+  libudev_dep        = dependency('', required : false)
+  has_drm            = false
 
 elif is_windows
   thread_dep = dependency('threads')
@@ -116,6 +121,11 @@ elif is_windows
   endif
   va_dep           = dependency('libva',           required : false)
   va_drm_dep       = dependency('libva-drm',       required : false)
+  libdrm_dep       = dependency('', required : false)
+  gbm_dep          = dependency('', required : false)
+  libinput_dep     = dependency('', required : false)
+  libudev_dep      = dependency('', required : false)
+  has_drm          = false
   protocol_dep     = declare_dependency()
 else
   # Native Linux Dependencies (Zero SDL)
@@ -148,6 +158,14 @@ else
   swresample_dep = dependency('libswresample', required : true)
   va_dep         = dependency('libva',         required : false)
   va_drm_dep     = dependency('libva-drm',     required : false)
+
+  # DRM/KMS Embedded Backend (Direct Rendering via DRM, GBM, libinput, libudev)
+  enable_drm_opt = get_option('enable_drm')
+  libdrm_dep     = dependency('libdrm',   required : enable_drm_opt)
+  gbm_dep        = dependency('gbm',      required : enable_drm_opt)
+  libinput_dep   = dependency('libinput', required : enable_drm_opt)
+  libudev_dep    = dependency('libudev',  required : enable_drm_opt)
+  has_drm        = (libdrm_dep.found() and gbm_dep.found() and libinput_dep.found() and libudev_dep.found())
 endif
 
 # ── All project-wide compile definitions — MUST come before any build target ──
@@ -161,6 +179,9 @@ elif not is_windows
   endif
   if xrandr_dep.found()
     enki_compile_args += '-DENKI_HAS_XRANDR=1'
+  endif
+  if has_drm
+    enki_compile_args += '-DENKI_HAS_DRM=1'
   endif
 endif
 
@@ -333,6 +354,9 @@ else
   if pulse_simple_dep.found()
     enki_deps += pulse_simple_dep
   endif
+  if has_drm
+    enki_deps += [libdrm_dep, gbm_dep, libinput_dep, libudev_dep]
+  endif
 
   # Add generated Wayland protocol headers as a dependency
   enki_deps += protocol_dep
@@ -427,6 +451,15 @@ else
       'src/platform/wayland/wayland_platform.cpp',
       'src/platform/wayland/wayland_surface.cpp',
       'src/platform/wayland/wayland_window.cpp',
+    )
+  endif
+
+  # DRM/KMS Embedded backend — only built when DRM dependencies are available
+  if has_drm
+    platform_sources += files(
+      'src/platform/drm/drm_platform.cpp',
+      'src/platform/drm/drm_window.cpp',
+      'src/platform/drm/drm_input.cpp',
     )
   endif
 endif

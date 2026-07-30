@@ -242,7 +242,7 @@ struct App::Impl {
             if (popup_target) {
                 active_popup_host = popup_target;
                 popup_target->handlePointerDown(x, y, mb);
-            } else if (!window || handle == window->getNativeHandle()) {
+            } else if (!window || !handle || handle == window->getNativeHandle()) {
                 dispatchPointerDown(x, y, btn);
             }
         });
@@ -254,7 +254,7 @@ struct App::Impl {
             if (popup_target) {
                 popup_target->handlePointerUp(x, y, mb);
                 active_popup_host = nullptr;
-            } else if (!window || handle == window->getNativeHandle()) {
+            } else if (!window || !handle || handle == window->getNativeHandle()) {
                 dispatchPointerUp(x, y, btn);
             }
         });
@@ -263,7 +263,7 @@ struct App::Impl {
             SurfaceHost* popup_target = findSurfaceForHandle(handle);
             if (popup_target) {
                 popup_target->handlePointerMove(x, y);
-            } else if (!window || handle == window->getNativeHandle()) {
+            } else if (!window || !handle || handle == window->getNativeHandle()) {
                 dispatchPointerMove(x, y);
             }
         });
@@ -272,7 +272,7 @@ struct App::Impl {
             SurfaceHost* popup_target = findSurfaceForHandle(handle);
             if (popup_target) {
                 popup_target->handleScroll(dx, dy);
-            } else if (!window || handle == window->getNativeHandle()) {
+            } else if (!window || !handle || handle == window->getNativeHandle()) {
                 dispatchScroll(dx, dy);
             }
         });

@@ -7,3 +7,8 @@ option('enable_webview', type : 'boolean', value : false,
   description : 'Enable the WebView widget (requires CEF prebuilt binaries)')
 option('cef_root', type : 'string', value : '',
   description : 'Absolute path to the CEF prebuilt distribution root directory')
+
+# ── DRM/KMS Embedded Backend ──────────────────────────────────────────────────
+option('enable_drm', type : 'boolean', value : false,
+  description : 'Enable Linux DRM/KMS + GBM embedded backend (direct rendering with libinput)')
+
