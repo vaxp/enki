@@ -315,3 +315,11 @@ install_subdir('include/enki', install_dir : get_option('includedir'))
 if get_option('build_tests')
   subdir('tests')
 endif
+
+# ============================================================
+# Examples
+# ============================================================
+if get_option('build_examples')
+  subdir('examples')
+endif
+
