@@ -315,6 +315,14 @@ inline std::shared_ptr<Row> row(std::initializer_list<WidgetPtr> children) {
     return std::make_shared<Row>(std::vector<WidgetPtr>(children));
 }
 
+inline std::shared_ptr<Row> row(Key key, std::vector<WidgetPtr> children) {
+    return std::make_shared<Row>(std::move(key), std::move(children));
+}
+
+inline std::shared_ptr<Row> row(Key key, std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Row>(std::move(key), std::vector<WidgetPtr>(children));
+}
+
 inline std::shared_ptr<Row> row(Justify justify, Align align, std::vector<WidgetPtr> children) {
     return std::make_shared<Row>(justify, align, std::move(children));
 }
@@ -329,6 +337,14 @@ inline std::shared_ptr<Column> column(std::vector<WidgetPtr> children) {
 
 inline std::shared_ptr<Column> column(std::initializer_list<WidgetPtr> children) {
     return std::make_shared<Column>(std::vector<WidgetPtr>(children));
+}
+
+inline std::shared_ptr<Column> column(Key key, std::vector<WidgetPtr> children) {
+    return std::make_shared<Column>(std::move(key), std::move(children));
+}
+
+inline std::shared_ptr<Column> column(Key key, std::initializer_list<WidgetPtr> children) {
+    return std::make_shared<Column>(std::move(key), std::vector<WidgetPtr>(children));
 }
 
 inline std::shared_ptr<Column> column(Justify justify, Align align, std::vector<WidgetPtr> children) {
