@@ -78,5 +78,13 @@ test('test_container',
   ),
 )
 
+test('test_text',
+  executable('test_text',
+    'widgets/test_text.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+
 
 

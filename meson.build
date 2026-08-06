@@ -270,6 +270,7 @@ enki_sources = files(
   # Widgets
   'src/widgets/flexbox.cpp',
   'src/widgets/container.cpp',
+  'src/widgets/text.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',
@@ -327,5 +328,6 @@ if get_option('build_examples')
   subdir('examples')
   subdir('widgets_demo')
 endif
+
 
 
