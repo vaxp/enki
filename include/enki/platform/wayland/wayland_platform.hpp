@@ -59,12 +59,17 @@ public:
     void registerSurface(LayerSurface* surface);
     void unregisterSurface(LayerSurface* surface);
 
+    // Cursor management
+    void setCursor(SystemCursor cursor);
+    void updateWaylandCursor();
+
     // Internal registry & seat listeners
     void handleGlobal(uint32_t name, const char* interface, uint32_t version);
     void handleGlobalRemove(uint32_t name);
+    void handleSeatCapabilities(wl_seat* seat, uint32_t caps);
 
     // Pointer events
-    void handlePointerEnter(wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy);
+    void handlePointerEnter(uint32_t serial, wl_surface* surface, wl_fixed_t sx, wl_fixed_t sy);
     void handlePointerLeave(wl_surface* surface);
     void handlePointerMotion(uint32_t time, wl_fixed_t sx, wl_fixed_t sy);
     void handlePointerButton(uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
@@ -89,6 +94,12 @@ private:
     wl_touch*            touch_          = nullptr;
     zwlr_layer_shell_v1* layer_shell_    = nullptr;
     xdg_wm_base*         xdg_wm_base_    = nullptr;
+
+    // Wayland cursor support
+    wl_cursor_theme*     cursor_theme_   = nullptr;
+    wl_surface*          cursor_surface_ = nullptr;
+    uint32_t             last_pointer_serial_ = 0;
+    SystemCursor         current_cursor_ = SystemCursor::Arrow;
 
     std::vector<WaylandOutput> outputs_;
     std::unordered_set<LayerSurface*> surfaces_;

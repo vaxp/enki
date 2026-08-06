@@ -117,6 +117,12 @@ void Platform::setClipboardText(std::string_view text) {
 }
 std::string Platform::getClipboardText() const { return impl_->clipboard_buffer; }
 
+// ── Cursor ───────────────────────────────────────────────────────
+void Platform::setCursor(SystemCursor cursor) {
+    if (impl_->wayland) impl_->wayland->setCursor(cursor);
+    if (impl_->x11)     impl_->x11->setCursor(cursor);
+}
+
 // ── Timing ───────────────────────────────────────────────────────
 double Platform::getTime() const {
     return std::chrono::duration<double>(

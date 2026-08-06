@@ -22,6 +22,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <unordered_set>
 
 namespace enki {
 
@@ -57,7 +58,7 @@ struct App::Impl {
     bool quit_requested = false;
 
     // Pointer state
-    RenderObject* last_hovered = nullptr;
+    std::unordered_set<RenderObject*> hovered_targets;
     float last_pointer_x = 0.0f;
     float last_pointer_y = 0.0f;
 
@@ -88,20 +89,18 @@ struct App::Impl {
         title  = config.title;
 
         // Connect quit signals
-        platform->onQuit().connect([this]() { quit_requested = true; });
         window->onClose().connect([this]()  { quit_requested = true; });
+        platform->onQuit().connect([this]() { quit_requested = true; });
 
-        // Connect mouse events → event dispatcher
-        platform->onMouseMove().connect([this](float x, float y) {
-            last_pointer_x = x;
-            last_pointer_y = y;
-            dispatchPointerMove(x, y);
-        });
+        // Connect input signals
         platform->onMouseDown().connect([this](float x, float y, int btn) {
             dispatchPointerDown(x, y, btn);
         });
         platform->onMouseUp().connect([this](float x, float y, int btn) {
             dispatchPointerUp(x, y, btn);
+        });
+        platform->onMouseMove().connect([this](float x, float y) {
+            dispatchPointerMove(x, y);
         });
         platform->onScroll().connect([this](float dx, float dy) {
             dispatchScroll(dx, dy);
@@ -113,15 +112,14 @@ struct App::Impl {
     bool initSkia() {
         window->makeCurrent();
 
-        sk_sp<const GrGLInterface> gl_interface = nullptr;
-
-        // Strategy 1: Assembled Interface with eglGetProcAddress + dlopen (universal across Linux drivers)
-        static void* libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
+        // Strategy 1: Make assembled interface from loaded OpenGL libraries
+        void* libgl = nullptr;
+        if (!libgl) libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
         if (!libgl) libgl = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
         if (!libgl) libgl = dlopen("libGLESv2.so.2", RTLD_LAZY | RTLD_LOCAL);
         if (!libgl) libgl = dlopen("libGLESv2.so", RTLD_LAZY | RTLD_LOCAL);
 
-        gl_interface = GrGLMakeAssembledInterface(libgl, [](void* ctx, const char* name) -> GrGLFuncPtr {
+        auto gl_interface = GrGLMakeAssembledInterface(libgl, [](void* ctx, const char* name) -> GrGLFuncPtr {
             // First check eglGetProcAddress
             if (auto proc = eglGetProcAddress(name)) {
                 return reinterpret_cast<GrGLFuncPtr>(proc);
@@ -170,6 +168,9 @@ struct App::Impl {
     // ── Event Dispatching ───────────────────────────────────────
 
     void dispatchPointerMove(float x, float y) {
+        last_pointer_x = x;
+        last_pointer_y = y;
+
         if (!root_element) return;
         auto* root_ro = root_element->findRenderObject();
         if (!root_ro) return;
@@ -177,10 +178,12 @@ struct App::Impl {
         HitTestResult result;
         root_ro->hitTest(result, {x, y});
 
-        RenderObject* hovered = nullptr;
+        std::unordered_set<RenderObject*> current_hovered;
+        SystemCursor desired_cursor = SystemCursor::Arrow;
+
         for (const auto& entry : result.path()) {
             if (entry.target) {
-                hovered = entry.target;
+                current_hovered.insert(entry.target);
                 PointerEvent e{
                     .type          = PointerEvent::Move,
                     .position      = {x, y},
@@ -188,18 +191,31 @@ struct App::Impl {
                     .button        = MouseButton::None
                 };
                 entry.target->handlePointerMove(e);
-                break;
+
+                if (desired_cursor == SystemCursor::Arrow && entry.target->cursor() != SystemCursor::Default) {
+                    desired_cursor = entry.target->cursor();
+                }
             }
         }
 
-        if (last_hovered != hovered) {
-            if (last_hovered) {
-                last_hovered->handlePointerExit({});
+        // Notify exit for targets no longer hovered
+        for (RenderObject* ro : hovered_targets) {
+            if (current_hovered.find(ro) == current_hovered.end()) {
+                ro->handlePointerExit({});
             }
-            if (hovered) {
-                hovered->handlePointerEnter({});
+        }
+
+        // Notify enter for newly hovered targets
+        for (RenderObject* ro : current_hovered) {
+            if (hovered_targets.find(ro) == hovered_targets.end()) {
+                ro->handlePointerEnter({});
             }
-            last_hovered = hovered;
+        }
+
+        hovered_targets = std::move(current_hovered);
+
+        if (platform) {
+            platform->setCursor(desired_cursor);
         }
     }
 
@@ -236,7 +252,6 @@ struct App::Impl {
                     .button        = static_cast<MouseButton>(btn)
                 };
                 entry.target->handlePointerDown(e);
-                break;
             }
         }
     }
@@ -258,7 +273,6 @@ struct App::Impl {
                     .button        = static_cast<MouseButton>(btn)
                 };
                 entry.target->handlePointerUp(e);
-                break;
             }
         }
     }

@@ -5,6 +5,7 @@
 #include "enki/platform/window.hpp"
 
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 #include <GL/gl.h>
 #include <iostream>
 #include <cstring>
@@ -176,6 +177,31 @@ void X11PlatformBackend::setClipboardText(const std::string& text) {
     if (windows_.empty() || !display_) return;
     ::Window xwin = (::Window)(uintptr_t)(*windows_.begin())->getNativeHandle();
     XSetSelectionOwner(display_, atom_clipboard_, xwin, CurrentTime);
+    XFlush(display_);
+}
+
+void X11PlatformBackend::setCursor(SystemCursor cursor) {
+    if (!display_ || windows_.empty()) return;
+
+    unsigned int shape = XC_left_ptr;
+    switch (cursor) {
+        case SystemCursor::Pointer: shape = XC_hand2; break;
+        case SystemCursor::Text: shape = XC_xterm; break;
+        case SystemCursor::Crosshair: shape = XC_crosshair; break;
+        case SystemCursor::Move: shape = XC_fleur; break;
+        case SystemCursor::NotAllowed: shape = XC_circle; break;
+        case SystemCursor::ResizeHorizontal: shape = XC_sb_h_double_arrow; break;
+        case SystemCursor::ResizeVertical: shape = XC_sb_v_double_arrow; break;
+        case SystemCursor::Wait: shape = XC_watch; break;
+        default: shape = XC_left_ptr; break;
+    }
+
+    ::Cursor xcursor = XCreateFontCursor(display_, shape);
+    for (Window* w : windows_) {
+        ::Window xwin = (::Window)(uintptr_t)w->getNativeHandle();
+        XDefineCursor(display_, xwin, xcursor);
+    }
+    XFreeCursor(display_, xcursor);
     XFlush(display_);
 }
 

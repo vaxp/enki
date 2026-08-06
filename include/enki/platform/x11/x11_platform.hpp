@@ -48,6 +48,7 @@ public:
     [[nodiscard]] const std::unordered_set<Window*>& windows() const { return windows_; }
 
     void setClipboardText(const std::string& text);
+    void setCursor(SystemCursor cursor);
 
 private:
     Platform*   owner_          = nullptr;

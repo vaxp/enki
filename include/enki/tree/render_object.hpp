@@ -143,6 +143,7 @@ public:
     virtual void handlePointerMove(const PointerEvent& e) {}
     virtual void handlePointerScroll(float dx, float dy) {}
     virtual bool handlesScroll() const { return false; }
+    virtual SystemCursor cursor() const { return SystemCursor::Default; }
 
     /// Mark this render object as needing repaint.
     void markNeedsPaint();
