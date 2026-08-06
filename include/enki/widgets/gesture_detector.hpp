@@ -48,7 +48,7 @@ public:
     bool hitTest(HitTestResult& result, Point localPoint) override;
     bool handlesScroll() const override { return static_cast<bool>(on_scroll); }
     SystemCursor cursor() const override { return cursor_type; }
-
+    void tick(double now) override;
     void handlePointerDown(const PointerEvent& e) override;
     void handlePointerMove(const PointerEvent& e) override;
     void handlePointerUp(const PointerEvent& e) override;

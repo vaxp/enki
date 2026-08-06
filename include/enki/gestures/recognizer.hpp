@@ -101,6 +101,7 @@ public:
     void handlePointerUp(const PointerEvent& e) override;
     void handlePointerCancel() override;
     void reset() override;
+    void tick(double now);
 
 private:
     bool   is_down_        = false;

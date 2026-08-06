@@ -41,17 +41,27 @@ namespace enki {
 // AppConfig — Application configuration
 // ════════════════════════════════════════════════════════════════
 
+/// @brief Real-time performance and frame statistics.
+struct FrameStats {
+    double   fps            = 0.0;   ///< Instantaneous smoothed frames per second.
+    double   frame_time_ms  = 0.0;   ///< Total frame duration in milliseconds.
+    double   cpu_time_ms    = 0.0;   ///< CPU build, layout, and paint time in ms.
+    double   gpu_time_ms    = 0.0;   ///< GPU flush and swap buffers latency in ms.
+    uint64_t total_frames   = 0;     ///< Monotonic frame counter.
+};
+
 /// @brief Configuration for the ENKI application.
 struct AppConfig {
-    std::string title      = "ENKI App";   ///< Window title.
-    int         width      = 800;           ///< Initial window width.
-    int         height     = 600;           ///< Initial window height.
-    bool        resizable  = true;          ///< Whether the window is resizable.
-    bool        vsync      = true;          ///< Enable vertical sync.
-    bool        msaa       = true;          ///< Enable MSAA antialiasing.
-    Color       clear_color = 0xFF0F172A;   ///< Default background color.
-    int         target_fps = 60;            ///< Target frames per second.
-    WindowMode  window_mode = WindowMode::Normal; ///< Standard window or Layer Shell.
+    std::string title                    = "ENKI App";   ///< Window title.
+    int         width                    = 800;           ///< Initial window width.
+    int         height                   = 600;           ///< Initial window height.
+    bool        resizable                = true;          ///< Whether the window is resizable.
+    bool        vsync                    = true;          ///< Enable vertical sync.
+    bool        msaa                     = true;          ///< Enable MSAA antialiasing.
+    Color       clear_color              = 0xFF0F172A;   ///< Default background color.
+    int         target_fps               = 60;            ///< Target frames per second.
+    WindowMode  window_mode              = WindowMode::Normal; ///< Standard window or Layer Shell.
+    bool        show_performance_overlay = false;         ///< Render built-in FPS & latency HUD.
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -89,6 +99,15 @@ public:
 
     /// Request the application to quit on the next frame.
     void quit();
+
+    /// Get real-time frame statistics (FPS, latency, frame times).
+    [[nodiscard]] FrameStats frameStats() const;
+
+    /// Get current FPS.
+    [[nodiscard]] double currentFps() const;
+
+    /// Get current frame duration in milliseconds.
+    [[nodiscard]] double currentFrameTimeMs() const;
 
     /// Get the window title.
     [[nodiscard]] const std::string& title() const;

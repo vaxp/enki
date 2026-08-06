@@ -9,20 +9,31 @@
 #include <cassert>
 #include <cmath>
 
+#include <unordered_set>
+
 namespace enki {
 
 // ════════════════════════════════════════════════════════════════
 // RenderObject — Base Implementation
 // ════════════════════════════════════════════════════════════════
 
+static std::unordered_set<const RenderObject*> s_alive_objects;
+
 RenderObject::RenderObject() {
+    s_alive_objects.insert(this);
     anu_node_ = ANUNodeNew();
 }
 
 RenderObject::~RenderObject() {
+    s_alive_objects.erase(this);
     if (anu_node_) {
         ANUNodeFree(anu_node_);
     }
+}
+
+bool RenderObject::isAlive(const RenderObject* ro) {
+    if (!ro) return false;
+    return s_alive_objects.find(ro) != s_alive_objects.end();
 }
 
 void RenderObject::layout(float available_width, float available_height) {

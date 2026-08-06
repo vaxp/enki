@@ -183,6 +183,9 @@ struct EdgeInsets {
     static constexpr EdgeInsets only(float t = 0, float r = 0, float b = 0, float l = 0) {
         return {t, r, b, l};
     }
+    static constexpr EdgeInsets fromLTRB(float left, float top, float right, float bottom) {
+        return {top, right, bottom, left};
+    }
     static constexpr EdgeInsets directional(float top, float bottom, float start, float end) {
         return {top, 0.0f, bottom, 0.0f, start, end};
     }

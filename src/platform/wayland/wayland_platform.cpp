@@ -488,10 +488,10 @@ void WaylandPlatformBackend::handlePointerMotion(uint32_t time, wl_fixed_t sx, w
 void WaylandPlatformBackend::handlePointerButton(uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
     if (!owner_) return;
 
-    // Linux button codes: BTN_LEFT (0x110/272)=1, BTN_RIGHT (0x111/273)=2, BTN_MIDDLE (0x112/274)=3
+    // Linux button codes: BTN_LEFT (0x110/272)=1, BTN_RIGHT (0x111/273)=3, BTN_MIDDLE (0x112/274)=2
     int btn_code = 1;
-    if (button == 273) btn_code = 2;
-    else if (button == 274) btn_code = 3;
+    if (button == 273) btn_code = 3;       // Right
+    else if (button == 274) btn_code = 2;  // Middle
 
     if (state == WL_POINTER_BUTTON_STATE_PRESSED) {
         owner_->onMouseDown().emit(last_px_, last_py_, btn_code);
