@@ -11,4 +11,5 @@ executable('widgets_demo',
 subdir('text_demo')
 subdir('gesture_demo')
 subdir('benchmark_demo')
+subdir('stack_demo')
 
