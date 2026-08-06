@@ -682,7 +682,9 @@ int main() {
     config.width       = 1080;
     config.height      = 940;
     config.resizable   = true;
-    config.vsync       = true;
+    config.vsync       = false;
+    config.target_fps  = 0; // Uncapped max speed
+    config.show_performance_overlay = true; // Display real-time FPS & Frame Time HUD
     config.clear_color = 0xFF0B0F19;
 
     return runApp(std::make_shared<TextDemoApp>(), config);
