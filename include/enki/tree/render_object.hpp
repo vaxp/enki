@@ -205,6 +205,8 @@ public:
     /// @return The Anu layout node for this render object.
     [[nodiscard]] ANUNodeRef anuNode() { return anu_node_; }
     [[nodiscard]] ANUNodeRef anuNode() const { return anu_node_; }
+    [[nodiscard]] ANUNodeRef getAnuNode() { return anu_node_; }
+    [[nodiscard]] ANUNodeRef getAnuNode() const { return anu_node_; }
 
     // ── Tree Structure ─────────────────────────────────────────
 
