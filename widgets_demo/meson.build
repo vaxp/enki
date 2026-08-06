@@ -10,4 +10,5 @@ executable('widgets_demo',
 # Sub-demos for specific widgets
 subdir('text_demo')
 subdir('gesture_demo')
+subdir('benchmark_demo')
 

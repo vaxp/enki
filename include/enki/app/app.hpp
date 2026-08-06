@@ -46,7 +46,9 @@ struct FrameStats {
     double   fps            = 0.0;   ///< Instantaneous smoothed frames per second.
     double   frame_time_ms  = 0.0;   ///< Total frame duration in milliseconds.
     double   cpu_time_ms    = 0.0;   ///< CPU build, layout, and paint time in ms.
-    double   gpu_time_ms    = 0.0;   ///< GPU flush and swap buffers latency in ms.
+    double   gpu_render_ms  = 0.0;   ///< Pure Skia GPU raster command submission in ms.
+    double   swap_time_ms   = 0.0;   ///< Wayland / EGL buffer presentation & compositor IPC in ms.
+    double   gpu_time_ms    = 0.0;   ///< Combined GPU + swap time in ms (for backward compatibility).
     uint64_t total_frames   = 0;     ///< Monotonic frame counter.
 };
 
