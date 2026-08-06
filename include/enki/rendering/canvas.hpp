@@ -68,4 +68,8 @@ public:
     virtual void* getNativeHandle() = 0;
 };
 
+/// Factory function to wrap a SkCanvas pointer in a Canvas object.
+std::unique_ptr<Canvas> createCanvasWrapper(void* sk_canvas);
+
 }  // namespace enki
+
