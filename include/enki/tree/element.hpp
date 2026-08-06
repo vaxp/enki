@@ -290,6 +290,7 @@ class StatelessElement : public Element {
 public:
     explicit StatelessElement(WidgetPtr widget);
 
+    void update(WidgetPtr newWidget) override;
     void performRebuild() override;
     void visitChildren(const std::function<void(Element&)>& visitor) override;
 
@@ -370,6 +371,7 @@ public:
 
     void mount(Element* parent, size_t slot) override;
     void unmount() override;
+    void update(WidgetPtr newWidget) override;
     void performRebuild() override;
     void visitChildren(const std::function<void(Element&)>& visitor) override;
 
@@ -395,6 +397,7 @@ public:
 
     void mount(Element* parent, size_t slot) override;
     void unmount() override;
+    void update(WidgetPtr newWidget) override;
     void performRebuild() override;
     void visitChildren(const std::function<void(Element&)>& visitor) override;
 

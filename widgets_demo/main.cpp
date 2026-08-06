@@ -63,6 +63,12 @@ public:
         if (auto* rl = dynamic_cast<RenderLabel*>(&ro)) {
             rl->setText(text);
             rl->setColor(color);
+            rl->font_size_ = font_size;
+            rl->bold_ = bold;
+            float approx_w = text.length() * font_size * 0.58f;
+            ANUNodeStyleSetWidth(rl->anuNode(), approx_w);
+            ANUNodeStyleSetHeight(rl->anuNode(), font_size * 1.3f);
+            rl->markNeedsLayout();
         }
     }
 
@@ -123,6 +129,14 @@ public:
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
         return std::make_unique<RenderClickable>(decoration, style, on_click);
+    }
+
+    void updateRenderObject(BuildContext&, RenderObject& ro) override {
+        if (auto* rc = dynamic_cast<RenderClickable*>(&ro)) {
+            rc->setDecoration(decoration);
+            rc->setStyle(style);
+            rc->on_click_ = on_click;
+        }
     }
 
     std::string_view typeName() const override { return "Clickable"; }

@@ -15,187 +15,175 @@ void applyFlexboxStyle(ANUNodeRef node, const FlexboxStyle& style) {
     if (!node) return;
 
     // ── Direction & Flow ───────────────────────────────────────
-    if (style.direction) {
-        ANUNodeStyleSetDirection(node, static_cast<ANUDirection>(*style.direction));
-    }
-    if (style.flex_direction) {
-        ANUNodeStyleSetFlexDirection(node, static_cast<ANUFlexDirection>(*style.flex_direction));
-    }
-    if (style.justify_content) {
-        ANUNodeStyleSetJustifyContent(node, static_cast<ANUJustify>(*style.justify_content));
-    }
-    if (style.align_content) {
-        ANUNodeStyleSetAlignContent(node, static_cast<ANUAlign>(*style.align_content));
-    }
-    if (style.align_items) {
-        ANUNodeStyleSetAlignItems(node, static_cast<ANUAlign>(*style.align_items));
-    }
-    if (style.align_self) {
-        ANUNodeStyleSetAlignSelf(node, static_cast<ANUAlign>(*style.align_self));
-    }
-    if (style.position_type) {
-        ANUNodeStyleSetPositionType(node, static_cast<ANUPositionType>(*style.position_type));
-    }
-    if (style.flex_wrap) {
-        ANUNodeStyleSetFlexWrap(node, static_cast<ANUWrap>(*style.flex_wrap));
-    }
-    if (style.overflow) {
-        ANUNodeStyleSetOverflow(node, static_cast<ANUOverflow>(*style.overflow));
-    }
-    if (style.display) {
-        ANUNodeStyleSetDisplay(node, static_cast<ANUDisplay>(*style.display));
-    }
-    if (style.box_sizing) {
-        ANUNodeStyleSetBoxSizing(node, static_cast<ANUBoxSizing>(*style.box_sizing));
-    }
+    ANUNodeStyleSetDirection(node, style.direction ? static_cast<ANUDirection>(*style.direction) : ANUDirectionInherit);
+    ANUNodeStyleSetFlexDirection(node, style.flex_direction ? static_cast<ANUFlexDirection>(*style.flex_direction) : ANUFlexDirectionColumn);
+    ANUNodeStyleSetJustifyContent(node, style.justify_content ? static_cast<ANUJustify>(*style.justify_content) : ANUJustifyFlexStart);
+    ANUNodeStyleSetAlignContent(node, style.align_content ? static_cast<ANUAlign>(*style.align_content) : ANUAlignFlexStart);
+    ANUNodeStyleSetAlignItems(node, style.align_items ? static_cast<ANUAlign>(*style.align_items) : ANUAlignStretch);
+    ANUNodeStyleSetAlignSelf(node, style.align_self ? static_cast<ANUAlign>(*style.align_self) : ANUAlignAuto);
+    ANUNodeStyleSetPositionType(node, style.position_type ? static_cast<ANUPositionType>(*style.position_type) : ANUPositionTypeStatic);
+    ANUNodeStyleSetFlexWrap(node, style.flex_wrap ? static_cast<ANUWrap>(*style.flex_wrap) : ANUWrapNoWrap);
+    ANUNodeStyleSetOverflow(node, style.overflow ? static_cast<ANUOverflow>(*style.overflow) : ANUOverflowVisible);
+    ANUNodeStyleSetDisplay(node, style.display ? static_cast<ANUDisplay>(*style.display) : ANUDisplayFlex);
+    ANUNodeStyleSetBoxSizing(node, style.box_sizing ? static_cast<ANUBoxSizing>(*style.box_sizing) : ANUBoxSizingBorderBox);
 
     // ── Flex Factors ───────────────────────────────────────────
-    if (style.flex) {
-        ANUNodeStyleSetFlex(node, *style.flex);
-    }
-    if (style.flex_grow) {
-        ANUNodeStyleSetFlexGrow(node, *style.flex_grow);
-    }
-    if (style.flex_shrink) {
-        ANUNodeStyleSetFlexShrink(node, *style.flex_shrink);
-    }
-    if (style.flex_basis.isDefined()) {
-        if (style.flex_basis.isPercent()) {
-            ANUNodeStyleSetFlexBasisPercent(node, style.flex_basis.value);
-        } else if (style.flex_basis.isPoint()) {
-            ANUNodeStyleSetFlexBasis(node, style.flex_basis.value);
-        } else if (style.flex_basis.isAuto()) {
-            ANUNodeStyleSetFlexBasisAuto(node);
-        }
+    ANUNodeStyleSetFlex(node, style.flex ? *style.flex : ANUUndefined);
+    ANUNodeStyleSetFlexGrow(node, style.flex_grow ? *style.flex_grow : ANUUndefined);
+    ANUNodeStyleSetFlexShrink(node, style.flex_shrink ? *style.flex_shrink : ANUUndefined);
+
+    if (style.flex_basis.isPercent()) {
+        ANUNodeStyleSetFlexBasisPercent(node, style.flex_basis.value);
+    } else if (style.flex_basis.isPoint()) {
+        ANUNodeStyleSetFlexBasis(node, style.flex_basis.value);
+    } else {
+        ANUNodeStyleSetFlexBasisAuto(node);
     }
 
     // ── Gaps (Gutters) ─────────────────────────────────────────
-    if (style.gap.isDefined()) {
-        if (style.gap.isPercent()) {
-            ANUNodeStyleSetGapPercent(node, ANUGutterAll, style.gap.value);
-        } else {
-            ANUNodeStyleSetGap(node, ANUGutterAll, style.gap.value);
-        }
+    if (style.gap.isPercent()) {
+        ANUNodeStyleSetGapPercent(node, ANUGutterAll, style.gap.value);
+    } else if (style.gap.isPoint()) {
+        ANUNodeStyleSetGap(node, ANUGutterAll, style.gap.value);
+    } else {
+        ANUNodeStyleSetGap(node, ANUGutterAll, ANUUndefined);
     }
-    if (style.row_gap.isDefined()) {
-        if (style.row_gap.isPercent()) {
-            ANUNodeStyleSetGapPercent(node, ANUGutterRow, style.row_gap.value);
-        } else {
-            ANUNodeStyleSetGap(node, ANUGutterRow, style.row_gap.value);
-        }
+
+    if (style.row_gap.isPercent()) {
+        ANUNodeStyleSetGapPercent(node, ANUGutterRow, style.row_gap.value);
+    } else if (style.row_gap.isPoint()) {
+        ANUNodeStyleSetGap(node, ANUGutterRow, style.row_gap.value);
+    } else {
+        ANUNodeStyleSetGap(node, ANUGutterRow, ANUUndefined);
     }
-    if (style.column_gap.isDefined()) {
-        if (style.column_gap.isPercent()) {
-            ANUNodeStyleSetGapPercent(node, ANUGutterColumn, style.column_gap.value);
-        } else {
-            ANUNodeStyleSetGap(node, ANUGutterColumn, style.column_gap.value);
-        }
+
+    if (style.column_gap.isPercent()) {
+        ANUNodeStyleSetGapPercent(node, ANUGutterColumn, style.column_gap.value);
+    } else if (style.column_gap.isPoint()) {
+        ANUNodeStyleSetGap(node, ANUGutterColumn, style.column_gap.value);
+    } else {
+        ANUNodeStyleSetGap(node, ANUGutterColumn, ANUUndefined);
     }
 
     // ── Dimensions & Constraints ───────────────────────────────
-    if (style.width.isDefined()) {
-        if (style.width.isPercent()) {
-            ANUNodeStyleSetWidthPercent(node, style.width.value);
-        } else if (style.width.isPoint()) {
-            ANUNodeStyleSetWidth(node, style.width.value);
-        } else if (style.width.isAuto()) {
-            ANUNodeStyleSetWidthAuto(node);
-        }
-    }
-    if (style.height.isDefined()) {
-        if (style.height.isPercent()) {
-            ANUNodeStyleSetHeightPercent(node, style.height.value);
-        } else if (style.height.isPoint()) {
-            ANUNodeStyleSetHeight(node, style.height.value);
-        } else if (style.height.isAuto()) {
-            ANUNodeStyleSetHeightAuto(node);
-        }
+    if (style.width.isPercent()) {
+        ANUNodeStyleSetWidthPercent(node, style.width.value);
+    } else if (style.width.isPoint()) {
+        ANUNodeStyleSetWidth(node, style.width.value);
+    } else {
+        ANUNodeStyleSetWidthAuto(node);
     }
 
-    if (style.min_width.isDefined()) {
-        if (style.min_width.isPercent()) {
-            ANUNodeStyleSetMinWidthPercent(node, style.min_width.value);
-        } else {
-            ANUNodeStyleSetMinWidth(node, style.min_width.value);
-        }
-    }
-    if (style.min_height.isDefined()) {
-        if (style.min_height.isPercent()) {
-            ANUNodeStyleSetMinHeightPercent(node, style.min_height.value);
-        } else {
-            ANUNodeStyleSetMinHeight(node, style.min_height.value);
-        }
+    if (style.height.isPercent()) {
+        ANUNodeStyleSetHeightPercent(node, style.height.value);
+    } else if (style.height.isPoint()) {
+        ANUNodeStyleSetHeight(node, style.height.value);
+    } else {
+        ANUNodeStyleSetHeightAuto(node);
     }
 
-    if (style.max_width.isDefined()) {
-        if (style.max_width.isPercent()) {
-            ANUNodeStyleSetMaxWidthPercent(node, style.max_width.value);
-        } else {
-            ANUNodeStyleSetMaxWidth(node, style.max_width.value);
-        }
-    }
-    if (style.max_height.isDefined()) {
-        if (style.max_height.isPercent()) {
-            ANUNodeStyleSetMaxHeightPercent(node, style.max_height.value);
-        } else {
-            ANUNodeStyleSetMaxHeight(node, style.max_height.value);
-        }
+    if (style.min_width.isPercent()) {
+        ANUNodeStyleSetMinWidthPercent(node, style.min_width.value);
+    } else if (style.min_width.isPoint()) {
+        ANUNodeStyleSetMinWidth(node, style.min_width.value);
+    } else {
+        ANUNodeStyleSetMinWidth(node, ANUUndefined);
     }
 
-    if (style.aspect_ratio) {
-        ANUNodeStyleSetAspectRatio(node, *style.aspect_ratio);
+    if (style.min_height.isPercent()) {
+        ANUNodeStyleSetMinHeightPercent(node, style.min_height.value);
+    } else if (style.min_height.isPoint()) {
+        ANUNodeStyleSetMinHeight(node, style.min_height.value);
+    } else {
+        ANUNodeStyleSetMinHeight(node, ANUUndefined);
     }
 
-    // ── Inset Application Helper ───────────────────────────────
-    auto applyEdge = [](ANUNodeRef n, ANUEdge edge, const StyleValue& val,
-                        auto fnPoint, auto fnPercent, auto fnAuto) {
-        if (!val.isDefined()) return;
-        if (val.isPercent()) {
-            fnPercent(n, edge, val.value);
-        } else if (val.isPoint()) {
-            fnPoint(n, edge, val.value);
-        } else if (val.isAuto()) {
-            fnAuto(n, edge);
-        }
-    };
+    if (style.max_width.isPercent()) {
+        ANUNodeStyleSetMaxWidthPercent(node, style.max_width.value);
+    } else if (style.max_width.isPoint()) {
+        ANUNodeStyleSetMaxWidth(node, style.max_width.value);
+    } else {
+        ANUNodeStyleSetMaxWidth(node, ANUUndefined);
+    }
+
+    if (style.max_height.isPercent()) {
+        ANUNodeStyleSetMaxHeightPercent(node, style.max_height.value);
+    } else if (style.max_height.isPoint()) {
+        ANUNodeStyleSetMaxHeight(node, style.max_height.value);
+    } else {
+        ANUNodeStyleSetMaxHeight(node, ANUUndefined);
+    }
+
+    ANUNodeStyleSetAspectRatio(node, style.aspect_ratio ? *style.aspect_ratio : ANUUndefined);
 
     // ── Margin ─────────────────────────────────────────────────
-    applyEdge(node, ANUEdgeTop, style.margin.top, ANUNodeStyleSetMargin, ANUNodeStyleSetMarginPercent, ANUNodeStyleSetMarginAuto);
-    applyEdge(node, ANUEdgeRight, style.margin.right, ANUNodeStyleSetMargin, ANUNodeStyleSetMarginPercent, ANUNodeStyleSetMarginAuto);
-    applyEdge(node, ANUEdgeBottom, style.margin.bottom, ANUNodeStyleSetMargin, ANUNodeStyleSetMarginPercent, ANUNodeStyleSetMarginAuto);
-    applyEdge(node, ANUEdgeLeft, style.margin.left, ANUNodeStyleSetMargin, ANUNodeStyleSetMarginPercent, ANUNodeStyleSetMarginAuto);
-    applyEdge(node, ANUEdgeStart, style.margin.start, ANUNodeStyleSetMargin, ANUNodeStyleSetMarginPercent, ANUNodeStyleSetMarginAuto);
-    applyEdge(node, ANUEdgeEnd, style.margin.end, ANUNodeStyleSetMargin, ANUNodeStyleSetMarginPercent, ANUNodeStyleSetMarginAuto);
+    auto applyMarginEdge = [](ANUNodeRef n, ANUEdge edge, const StyleValue& val) {
+        if (val.isPercent()) {
+            ANUNodeStyleSetMarginPercent(n, edge, val.value);
+        } else if (val.isPoint()) {
+            ANUNodeStyleSetMargin(n, edge, val.value);
+        } else if (val.isAuto()) {
+            ANUNodeStyleSetMarginAuto(n, edge);
+        } else {
+            ANUNodeStyleSetMargin(n, edge, ANUUndefined);
+        }
+    };
+    applyMarginEdge(node, ANUEdgeTop, style.margin.top);
+    applyMarginEdge(node, ANUEdgeRight, style.margin.right);
+    applyMarginEdge(node, ANUEdgeBottom, style.margin.bottom);
+    applyMarginEdge(node, ANUEdgeLeft, style.margin.left);
+    applyMarginEdge(node, ANUEdgeStart, style.margin.start);
+    applyMarginEdge(node, ANUEdgeEnd, style.margin.end);
 
     // ── Padding ────────────────────────────────────────────────
-    auto dummyAuto = [](ANUNodeRef, ANUEdge) {};
-    applyEdge(node, ANUEdgeTop, style.padding.top, ANUNodeStyleSetPadding, ANUNodeStyleSetPaddingPercent, dummyAuto);
-    applyEdge(node, ANUEdgeRight, style.padding.right, ANUNodeStyleSetPadding, ANUNodeStyleSetPaddingPercent, dummyAuto);
-    applyEdge(node, ANUEdgeBottom, style.padding.bottom, ANUNodeStyleSetPadding, ANUNodeStyleSetPaddingPercent, dummyAuto);
-    applyEdge(node, ANUEdgeLeft, style.padding.left, ANUNodeStyleSetPadding, ANUNodeStyleSetPaddingPercent, dummyAuto);
-    applyEdge(node, ANUEdgeStart, style.padding.start, ANUNodeStyleSetPadding, ANUNodeStyleSetPaddingPercent, dummyAuto);
-    applyEdge(node, ANUEdgeEnd, style.padding.end, ANUNodeStyleSetPadding, ANUNodeStyleSetPaddingPercent, dummyAuto);
+    auto applyPaddingEdge = [](ANUNodeRef n, ANUEdge edge, const StyleValue& val) {
+        if (val.isPercent()) {
+            ANUNodeStyleSetPaddingPercent(n, edge, val.value);
+        } else if (val.isPoint()) {
+            ANUNodeStyleSetPadding(n, edge, val.value);
+        } else {
+            ANUNodeStyleSetPadding(n, edge, ANUUndefined);
+        }
+    };
+    applyPaddingEdge(node, ANUEdgeTop, style.padding.top);
+    applyPaddingEdge(node, ANUEdgeRight, style.padding.right);
+    applyPaddingEdge(node, ANUEdgeBottom, style.padding.bottom);
+    applyPaddingEdge(node, ANUEdgeLeft, style.padding.left);
+    applyPaddingEdge(node, ANUEdgeStart, style.padding.start);
+    applyPaddingEdge(node, ANUEdgeEnd, style.padding.end);
 
     // ── Position / Insets ──────────────────────────────────────
-    applyEdge(node, ANUEdgeTop, style.position.top, ANUNodeStyleSetPosition, ANUNodeStyleSetPositionPercent, ANUNodeStyleSetPositionAuto);
-    applyEdge(node, ANUEdgeRight, style.position.right, ANUNodeStyleSetPosition, ANUNodeStyleSetPositionPercent, ANUNodeStyleSetPositionAuto);
-    applyEdge(node, ANUEdgeBottom, style.position.bottom, ANUNodeStyleSetPosition, ANUNodeStyleSetPositionPercent, ANUNodeStyleSetPositionAuto);
-    applyEdge(node, ANUEdgeLeft, style.position.left, ANUNodeStyleSetPosition, ANUNodeStyleSetPositionPercent, ANUNodeStyleSetPositionAuto);
-    applyEdge(node, ANUEdgeStart, style.position.start, ANUNodeStyleSetPosition, ANUNodeStyleSetPositionPercent, ANUNodeStyleSetPositionAuto);
-    applyEdge(node, ANUEdgeEnd, style.position.end, ANUNodeStyleSetPosition, ANUNodeStyleSetPositionPercent, ANUNodeStyleSetPositionAuto);
+    auto applyPositionEdge = [](ANUNodeRef n, ANUEdge edge, const StyleValue& val) {
+        if (val.isPercent()) {
+            ANUNodeStyleSetPositionPercent(n, edge, val.value);
+        } else if (val.isPoint()) {
+            ANUNodeStyleSetPosition(n, edge, val.value);
+        } else if (val.isAuto()) {
+            ANUNodeStyleSetPositionAuto(n, edge);
+        } else {
+            ANUNodeStyleSetPosition(n, edge, ANUUndefined);
+        }
+    };
+    applyPositionEdge(node, ANUEdgeTop, style.position.top);
+    applyPositionEdge(node, ANUEdgeRight, style.position.right);
+    applyPositionEdge(node, ANUEdgeBottom, style.position.bottom);
+    applyPositionEdge(node, ANUEdgeLeft, style.position.left);
+    applyPositionEdge(node, ANUEdgeStart, style.position.start);
+    applyPositionEdge(node, ANUEdgeEnd, style.position.end);
 
     // ── Border Widths ──────────────────────────────────────────
     if (style.border.all > 0.0f) {
         ANUNodeStyleSetBorder(node, ANUEdgeAll, style.border.all);
     } else {
-        if (style.border.top > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeTop, style.border.top);
-        if (style.border.right > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeRight, style.border.right);
-        if (style.border.bottom > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeBottom, style.border.bottom);
-        if (style.border.left > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeLeft, style.border.left);
-        if (style.border.start > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeStart, style.border.start);
-        if (style.border.end > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeEnd, style.border.end);
-        if (style.border.horizontal > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeHorizontal, style.border.horizontal);
-        if (style.border.vertical > 0.0f) ANUNodeStyleSetBorder(node, ANUEdgeVertical, style.border.vertical);
+        ANUNodeStyleSetBorder(node, ANUEdgeAll, ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeTop, style.border.top > 0.0f ? style.border.top : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeRight, style.border.right > 0.0f ? style.border.right : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeBottom, style.border.bottom > 0.0f ? style.border.bottom : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeLeft, style.border.left > 0.0f ? style.border.left : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeStart, style.border.start > 0.0f ? style.border.start : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeEnd, style.border.end > 0.0f ? style.border.end : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeHorizontal, style.border.horizontal > 0.0f ? style.border.horizontal : ANUUndefined);
+        ANUNodeStyleSetBorder(node, ANUEdgeVertical, style.border.vertical > 0.0f ? style.border.vertical : ANUUndefined);
     }
 }
 
