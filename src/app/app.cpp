@@ -82,6 +82,7 @@ struct App::Impl {
         win_cfg.height    = config.height;
         win_cfg.resizable = config.resizable;
         win_cfg.vsync     = config.vsync;
+        win_cfg.mode      = config.window_mode;
 
         auto result = Window::create(*platform, win_cfg);
         if (!result.isOk()) return false;

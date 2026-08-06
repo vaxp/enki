@@ -51,6 +51,7 @@ struct AppConfig {
     bool        msaa       = true;          ///< Enable MSAA antialiasing.
     Color       clear_color = 0xFF0F172A;   ///< Default background color.
     int         target_fps = 60;            ///< Target frames per second.
+    WindowMode  window_mode = WindowMode::Normal; ///< Standard window or Layer Shell.
 };
 
 // ════════════════════════════════════════════════════════════════

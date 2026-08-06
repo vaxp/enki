@@ -296,6 +296,16 @@ void WaylandPlatformBackend::shutdown() {
     }
 }
 
+// ── XDG Shell Base Listener (Ping/Pong) ───────────────────────────
+
+static void xdg_wm_base_ping_handler(void* /*data*/, xdg_wm_base* wm_base, uint32_t serial) {
+    xdg_wm_base_pong(wm_base, serial);
+}
+
+static const struct xdg_wm_base_listener wm_base_listener = {
+    .ping = xdg_wm_base_ping_handler,
+};
+
 void WaylandPlatformBackend::handleGlobal(uint32_t name, const char* interface, uint32_t version) {
     if (std::strcmp(interface, wl_compositor_interface.name) == 0) {
         compositor_ = static_cast<wl_compositor*>(
@@ -316,6 +326,7 @@ void WaylandPlatformBackend::handleGlobal(uint32_t name, const char* interface, 
     } else if (std::strcmp(interface, xdg_wm_base_interface.name) == 0) {
         xdg_wm_base_ = static_cast<xdg_wm_base*>(
             wl_registry_bind(registry_, name, &xdg_wm_base_interface, std::min<uint32_t>(version, 3)));
+        xdg_wm_base_add_listener(xdg_wm_base_, &wm_base_listener, this);
     } else if (std::strcmp(interface, wl_output_interface.name) == 0) {
         auto* output = static_cast<wl_output*>(
             wl_registry_bind(registry_, name, &wl_output_interface, std::min<uint32_t>(version, 3)));

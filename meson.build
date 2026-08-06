@@ -230,6 +230,7 @@ if wayland_scanner.found() and wayland_client_dep.found()
   platform_sources += files(
     'src/platform/wayland/wayland_platform.cpp',
     'src/platform/wayland/wayland_surface.cpp',
+    'src/platform/wayland/wayland_window.cpp',
   )
 endif
 
