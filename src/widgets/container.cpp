@@ -23,11 +23,13 @@ RenderDecoratedBox::RenderDecoratedBox(BoxDecoration decoration, FlexboxStyle st
 }
 
 void RenderDecoratedBox::setDecoration(const BoxDecoration& decoration) {
+    if (decoration_ == decoration) return;
     decoration_ = decoration;
     markNeedsPaint();
 }
 
 void RenderDecoratedBox::setStyle(const FlexboxStyle& style) {
+    if (style_ == style) return;
     style_ = style;
     applyFlexboxStyle(anu_node_, style_);
     markNeedsLayout();

@@ -196,6 +196,7 @@ RenderFlex::RenderFlex(FlexboxStyle style) : style_(std::move(style)) {
 }
 
 void RenderFlex::setStyle(const FlexboxStyle& style) {
+    if (style_ == style) return;
     style_ = style;
     applyFlexboxStyle(anu_node_, style_);
     markNeedsLayout();
@@ -233,6 +234,7 @@ RenderFlexItem::RenderFlexItem(FlexboxStyle style) : style_(std::move(style)) {
 }
 
 void RenderFlexItem::setStyle(const FlexboxStyle& style) {
+    if (style_ == style) return;
     style_ = style;
     applyFlexboxStyle(anu_node_, style_);
     markNeedsLayout();
