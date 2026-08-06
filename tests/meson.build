@@ -85,6 +85,13 @@ test('test_text',
   ),
 )
 
+test('test_gestures',
+  executable('test_gestures',
+    'widgets/test_gestures.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 
 
 
