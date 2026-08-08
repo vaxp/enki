@@ -6,3 +6,10 @@ executable('overlay_logo_demo',
   dependencies : example_deps,
   install : false,
 )
+
+executable('clipboard_dnd_demo',
+  'clipboard_dnd_demo.cpp',
+  dependencies : example_deps,
+  install : false,
+)
+

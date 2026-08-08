@@ -63,6 +63,20 @@ test('test_platform',
   ),
 )
 
+test('test_clipboard',
+  executable('test_clipboard',
+    'platform/test_clipboard.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_dnd',
+  executable('test_dnd',
+    'platform/test_dnd.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 # Widget tests
 test('test_flexbox',
   executable('test_flexbox',
