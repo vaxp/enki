@@ -19,4 +19,8 @@ executable('toplevel_dock_demo',
   install : false,
 )
 
-
+executable('outputs_monitor_demo',
+  'outputs_monitor_demo.cpp',
+  dependencies : example_deps,
+  install : false,
+)

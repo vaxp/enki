@@ -82,10 +82,11 @@ bool WaylandLayerSurface::init() {
 
     // 2. Create Layer Shell surface
     uint32_t layer_val = static_cast<uint32_t>(config_.layer);
+    wl_output* target_wl_output = config_.target_output ? static_cast<wl_output*>(config_.target_output->nativeHandle()) : nullptr;
     layer_surface_ = zwlr_layer_shell_v1_get_layer_surface(
         layer_shell,
         wl_surface_,
-        nullptr, // Default output
+        target_wl_output,
         layer_val,
         config_.namespace_id.c_str()
     );

@@ -174,6 +174,25 @@ std::shared_ptr<ToplevelWindow> Platform::getActiveToplevel() const {
     return nullptr;
 }
 
+// ── Output / Monitor Subsystem ──────────────────────────────
+std::vector<std::shared_ptr<Output>> Platform::getOutputs() const {
+    if (impl_->wayland) return impl_->wayland->getOutputs();
+    if (impl_->x11)     return impl_->x11->getOutputs();
+    return {};
+}
+
+std::shared_ptr<Output> Platform::getOutputByName(std::string_view name) const {
+    if (impl_->wayland) return impl_->wayland->getOutputByName(name);
+    if (impl_->x11)     return impl_->x11->getOutputByName(name);
+    return nullptr;
+}
+
+std::shared_ptr<Output> Platform::getPrimaryOutput() const {
+    if (impl_->wayland) return impl_->wayland->getPrimaryOutput();
+    if (impl_->x11)     return impl_->x11->getPrimaryOutput();
+    return nullptr;
+}
+
 // ── Cursor ───────────────────────────────────────────────────────
 void Platform::setCursor(SystemCursor cursor) {
     if (impl_->wayland) impl_->wayland->setCursor(cursor);

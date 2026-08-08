@@ -78,6 +78,13 @@ public:
 
     void setCursor(SystemCursor cursor);
 
+    // ── Output / Monitor Subsystem ──────────────────────────────
+    [[nodiscard]] std::vector<std::shared_ptr<Output>> getOutputs() const;
+    [[nodiscard]] std::shared_ptr<Output> getOutputByName(std::string_view name) const;
+    [[nodiscard]] std::shared_ptr<Output> getPrimaryOutput() const;
+    void updateOutputs();
+    [[nodiscard]] Platform* getOwner() const { return owner_; }
+
     // Internal XDnD & EWMH handlers
     void handleSelectionRequest(const XSelectionRequestEvent& req);
     void handleSelectionClear(const XSelectionClearEvent& clr);
@@ -156,6 +163,13 @@ private:
     std::vector<std::shared_ptr<X11Toplevel>> toplevels_;
     std::unordered_map<::Window, std::shared_ptr<X11Toplevel>> toplevel_map_;
     std::shared_ptr<X11Toplevel> active_toplevel_;
+
+    // Outputs State
+    class X11Output;
+    std::vector<std::shared_ptr<X11Output>> outputs_;
+    int  xrandr_event_base_ = 0;
+    int  xrandr_error_base_ = 0;
+    bool has_xrandr_        = false;
 };
 
 } // namespace enki::x11
