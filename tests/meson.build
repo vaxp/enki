@@ -77,6 +77,13 @@ test('test_dnd',
   ),
 )
 
+test('test_toplevel',
+  executable('test_toplevel',
+    'platform/test_toplevel.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 # Widget tests
 test('test_flexbox',
   executable('test_flexbox',

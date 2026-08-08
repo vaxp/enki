@@ -18,6 +18,7 @@
 extern "C" {
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+#include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 }
 
 #include <vector>
@@ -73,6 +74,10 @@ public:
     // Drag and Drop Subsystem
     bool startDrag(const DragData& data, DragAction actions);
 
+    // Foreign Toplevel Subsystem
+    [[nodiscard]] std::vector<std::shared_ptr<ToplevelWindow>> getToplevels() const;
+    [[nodiscard]] std::shared_ptr<ToplevelWindow> getActiveToplevel() const;
+
     // Internal registry & seat listeners
     void handleGlobal(uint32_t name, const char* interface, uint32_t version);
     void handleGlobalRemove(uint32_t name);
@@ -98,6 +103,14 @@ public:
     void handleDataDeviceDrop();
     void handleDataDeviceSelection(wl_data_offer* offer);
 
+    // Foreign toplevel callbacks
+    void handleToplevelHandle(zwlr_foreign_toplevel_handle_v1* handle);
+    void handleToplevelTitle(zwlr_foreign_toplevel_handle_v1* handle, const char* title);
+    void handleToplevelAppId(zwlr_foreign_toplevel_handle_v1* handle, const char* app_id);
+    void handleToplevelState(zwlr_foreign_toplevel_handle_v1* handle, wl_array* state);
+    void handleToplevelDone(zwlr_foreign_toplevel_handle_v1* handle);
+    void handleToplevelClosed(zwlr_foreign_toplevel_handle_v1* handle);
+
     uint32_t getLastPointerSerial() const { return last_pointer_serial_; }
     uint32_t getLastKeyboardSerial() const { return last_keyboard_serial_; }
 
@@ -117,19 +130,20 @@ public:
 private:
     Platform* owner_ = nullptr;
 
-    wl_display*             display_             = nullptr;
-    wl_registry*            registry_            = nullptr;
-    wl_compositor*          compositor_          = nullptr;
-    wl_subcompositor*       subcompositor_       = nullptr;
-    wl_shm*                 shm_                 = nullptr;
-    wl_seat*                seat_                = nullptr;
-    wl_pointer*             pointer_             = nullptr;
-    wl_keyboard*            keyboard_            = nullptr;
-    wl_touch*               touch_               = nullptr;
-    zwlr_layer_shell_v1*    layer_shell_         = nullptr;
-    xdg_wm_base*            xdg_wm_base_         = nullptr;
-    wl_data_device_manager* data_device_manager_ = nullptr;
-    wl_data_device*         data_device_         = nullptr;
+    wl_display*                         display_             = nullptr;
+    wl_registry*                        registry_            = nullptr;
+    wl_compositor*                      compositor_          = nullptr;
+    wl_subcompositor*                   subcompositor_       = nullptr;
+    wl_shm*                             shm_                 = nullptr;
+    wl_seat*                            seat_                = nullptr;
+    wl_pointer*                         pointer_             = nullptr;
+    wl_keyboard*                        keyboard_            = nullptr;
+    wl_touch*                           touch_               = nullptr;
+    zwlr_layer_shell_v1*                layer_shell_         = nullptr;
+    xdg_wm_base*                        xdg_wm_base_         = nullptr;
+    wl_data_device_manager*             data_device_manager_ = nullptr;
+    wl_data_device*                     data_device_         = nullptr;
+    zwlr_foreign_toplevel_manager_v1*   toplevel_manager_    = nullptr;
 
     // Wayland cursor support
     wl_cursor_theme*     cursor_theme_   = nullptr;
@@ -171,6 +185,12 @@ private:
     // Local fallback clipboard buffer
     ClipboardData local_clipboard_;
     ClipboardData local_primary_;
+
+    // Foreign Toplevel State
+    class WaylandToplevel;
+    std::vector<std::shared_ptr<WaylandToplevel>> toplevels_;
+    std::unordered_map<zwlr_foreign_toplevel_handle_v1*, std::shared_ptr<WaylandToplevel>> toplevel_map_;
+    std::shared_ptr<WaylandToplevel> active_toplevel_;
 };
 
 } // namespace enki::wayland

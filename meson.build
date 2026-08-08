@@ -59,7 +59,7 @@ if wayland_scanner.found() and wayland_client_dep.found()
   proto_c_sources = []
   proto_h_sources = []
 
-  foreach proto : ['wlr-layer-shell-unstable-v1', 'xdg-shell']
+  foreach proto : ['wlr-layer-shell-unstable-v1', 'xdg-shell', 'wlr-foreign-toplevel-management-unstable-v1']
     xml = 'protocols' / proto + '.xml'
 
     hdr = custom_target(proto + '-client-header',

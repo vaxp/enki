@@ -13,3 +13,10 @@ executable('clipboard_dnd_demo',
   install : false,
 )
 
+executable('toplevel_dock_demo',
+  'toplevel_dock_demo.cpp',
+  dependencies : example_deps,
+  install : false,
+)
+
+
