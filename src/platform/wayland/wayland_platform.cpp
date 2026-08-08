@@ -559,6 +559,20 @@ bool WaylandPlatformBackend::init() {
         eglChooseConfig(egl_display_, fallback_attribs, &egl_config_, 1, &num_configs);
     }
 
+    // Shared master EGL context for Wayland surfaces
+    const EGLint core_attrs[] = {
+        EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 3,
+        EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+        EGL_NONE
+    };
+    const EGLint gles_attrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+
+    egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, core_attrs);
+    if (egl_context_ == EGL_NO_CONTEXT)
+        egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, gles_attrs);
+    if (egl_context_ == EGL_NO_CONTEXT)
+        egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, nullptr);
+
     return true;
 }
 
@@ -582,6 +596,10 @@ void WaylandPlatformBackend::shutdown() {
 
     if (egl_display_ != EGL_NO_DISPLAY) {
         eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        if (egl_context_ != EGL_NO_CONTEXT) {
+            eglDestroyContext(egl_display_, egl_context_);
+            egl_context_ = EGL_NO_CONTEXT;
+        }
         eglTerminate(egl_display_);
         egl_display_ = EGL_NO_DISPLAY;
     }
@@ -1100,6 +1118,7 @@ void WaylandPlatformBackend::handlePointerEnter(uint32_t serial, wl_surface* sur
 
     if (owner_) {
         owner_->onMouseMove().emit(last_px_, last_py_);
+        owner_->onTargetedMouseMove().emit((void*)pointer_focus_surface_, last_px_, last_py_);
     }
 }
 
@@ -1114,6 +1133,7 @@ void WaylandPlatformBackend::handlePointerMotion(uint32_t time, wl_fixed_t sx, w
     last_py_ = wl_fixed_to_double(sy);
     if (owner_) {
         owner_->onMouseMove().emit(last_px_, last_py_);
+        owner_->onTargetedMouseMove().emit((void*)pointer_focus_surface_, last_px_, last_py_);
     }
 }
 
@@ -1125,20 +1145,28 @@ void WaylandPlatformBackend::handlePointerButton(uint32_t serial, uint32_t time,
     if (button == 273) btn_code = 3;       // Right
     else if (button == 274) btn_code = 2;  // Middle
 
+    void* win_handle = (void*)pointer_focus_surface_;
     if (state == WL_POINTER_BUTTON_STATE_PRESSED) {
         owner_->onMouseDown().emit(last_px_, last_py_, btn_code);
+        owner_->onTargetedMouseDown().emit(win_handle, last_px_, last_py_, btn_code);
     } else {
         owner_->onMouseUp().emit(last_px_, last_py_, btn_code);
+        owner_->onTargetedMouseUp().emit(win_handle, last_px_, last_py_, btn_code);
     }
 }
 
 void WaylandPlatformBackend::handlePointerAxis(uint32_t time, uint32_t axis, wl_fixed_t value) {
     if (!owner_) return;
     double v = wl_fixed_to_double(value);
+    void* win_handle = (void*)pointer_focus_surface_;
     if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-        owner_->onScroll().emit(0.0f, v < 0 ? 1.0f : -1.0f);
+        float dy = v < 0 ? 1.0f : -1.0f;
+        owner_->onScroll().emit(0.0f, dy);
+        owner_->onTargetedScroll().emit(win_handle, 0.0f, dy);
     } else if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
-        owner_->onScroll().emit(v < 0 ? -1.0f : 1.0f, 0.0f);
+        float dx = v < 0 ? -1.0f : 1.0f;
+        owner_->onScroll().emit(dx, 0.0f);
+        owner_->onTargetedScroll().emit(win_handle, dx, 0.0f);
     }
 }
 

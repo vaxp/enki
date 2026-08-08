@@ -42,10 +42,6 @@ WaylandLayerSurface::~WaylandLayerSurface() {
             eglDestroySurface(backend_.getEGLDisplay(), egl_surface_);
             egl_surface_ = EGL_NO_SURFACE;
         }
-        if (egl_context_ != EGL_NO_CONTEXT) {
-            eglDestroyContext(backend_.getEGLDisplay(), egl_context_);
-            egl_context_ = EGL_NO_CONTEXT;
-        }
     }
 
     if (egl_window_) {
@@ -127,20 +123,23 @@ bool WaylandLayerSurface::init() {
         return false;
     }
 
-    // 4. Create EGL Context
-    const EGLint ctx_attribs[] = {
-        EGL_CONTEXT_MAJOR_VERSION, 3,
-        EGL_CONTEXT_MINOR_VERSION, 3,
-        EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
-        EGL_NONE
-    };
-    egl_context_ = eglCreateContext(egl_display_, egl_cfg, EGL_NO_CONTEXT, ctx_attribs);
+    // 4. Use shared EGL Context from backend
+    egl_context_ = backend_.getEGLContext();
     if (egl_context_ == EGL_NO_CONTEXT) {
-        const EGLint gles_attribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
-        egl_context_ = eglCreateContext(egl_display_, egl_cfg, EGL_NO_CONTEXT, gles_attribs);
-    }
-    if (egl_context_ == EGL_NO_CONTEXT) {
-        egl_context_ = eglCreateContext(egl_display_, egl_cfg, EGL_NO_CONTEXT, nullptr);
+        const EGLint ctx_attribs[] = {
+            EGL_CONTEXT_MAJOR_VERSION, 3,
+            EGL_CONTEXT_MINOR_VERSION, 3,
+            EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+            EGL_NONE
+        };
+        egl_context_ = eglCreateContext(egl_display_, egl_cfg, EGL_NO_CONTEXT, ctx_attribs);
+        if (egl_context_ == EGL_NO_CONTEXT) {
+            const EGLint gles_attribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+            egl_context_ = eglCreateContext(egl_display_, egl_cfg, EGL_NO_CONTEXT, gles_attribs);
+        }
+        if (egl_context_ == EGL_NO_CONTEXT) {
+            egl_context_ = eglCreateContext(egl_display_, egl_cfg, EGL_NO_CONTEXT, nullptr);
+        }
     }
 
     if (egl_context_ == EGL_NO_CONTEXT) {

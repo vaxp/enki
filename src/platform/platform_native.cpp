@@ -221,6 +221,11 @@ void* Platform::getEGLConfig() const {
     if (impl_->x11)     return (void*)impl_->x11->getEGLConfig();
     return nullptr;
 }
+void* Platform::getEGLContext() const {
+    if (impl_->wayland) return (void*)impl_->wayland->getEGLContext();
+    if (impl_->x11)     return (void*)impl_->x11->getEGLContext();
+    return nullptr;
+}
 
 bool  Platform::isWayland()        const { return impl_->isWayland(); }
 void* Platform::getWaylandBackend() const { return (void*)impl_->wayland.get(); }

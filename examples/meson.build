@@ -24,3 +24,10 @@ executable('outputs_monitor_demo',
   dependencies : example_deps,
   install : false,
 )
+
+executable('desktop_shell_demo',
+  'desktop_shell_demo.cpp',
+  dependencies : example_deps,
+  install : false,
+)
+

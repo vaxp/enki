@@ -35,6 +35,7 @@ public:
     [[nodiscard]] ::Display*  getDisplay()    const { return display_; }
     [[nodiscard]] EGLDisplay  getEGLDisplay() const { return egl_display_; }
     [[nodiscard]] EGLConfig   getEGLConfig()  const { return egl_config_; }
+    [[nodiscard]] EGLContext  getEGLContext() const { return egl_context_; }
     [[nodiscard]] int         getDefaultScreen() const { return default_screen_; }
 
     // ── Atoms ────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ private:
     int         default_screen_ = 0;
     EGLDisplay egl_display_    = EGL_NO_DISPLAY;
     EGLConfig  egl_config_     = nullptr;
+    EGLContext egl_context_    = EGL_NO_CONTEXT;
     int        egl_major_      = 0;
     int        egl_minor_      = 0;
 

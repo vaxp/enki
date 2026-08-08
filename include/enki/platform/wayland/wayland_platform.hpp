@@ -50,6 +50,7 @@ public:
     [[nodiscard]] wl_seat* getSeat() const { return seat_; }
     [[nodiscard]] EGLDisplay getEGLDisplay() const { return egl_display_; }
     [[nodiscard]] EGLConfig getEGLConfig() const { return egl_config_; }
+    [[nodiscard]] EGLContext getEGLContext() const { return egl_context_; }
     [[nodiscard]] Platform* getOwner() const { return owner_; }
 
     // Output / Monitor Management
@@ -167,6 +168,7 @@ private:
     // EGL
     EGLDisplay egl_display_ = EGL_NO_DISPLAY;
     EGLConfig  egl_config_  = nullptr;
+    EGLContext egl_context_ = EGL_NO_CONTEXT;
     int        egl_major_   = 0;
     int        egl_minor_   = 0;
 

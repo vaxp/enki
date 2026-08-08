@@ -214,6 +214,20 @@ bool X11PlatformBackend::init() {
         }
     }
 
+    // Create shared master EGL context
+    const EGLint core_attrs[] = {
+        EGL_CONTEXT_MAJOR_VERSION, 3, EGL_CONTEXT_MINOR_VERSION, 3,
+        EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+        EGL_NONE
+    };
+    const EGLint gles_attrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+
+    egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, core_attrs);
+    if (egl_context_ == EGL_NO_CONTEXT)
+        egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, gles_attrs);
+    if (egl_context_ == EGL_NO_CONTEXT)
+        egl_context_ = eglCreateContext(egl_display_, egl_config_, EGL_NO_CONTEXT, nullptr);
+
     // Initial EWMH scan
     refreshClientList();
     refreshActiveWindow();
@@ -240,6 +254,10 @@ void X11PlatformBackend::shutdown() {
 
     if (egl_display_ != EGL_NO_DISPLAY) {
         eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        if (egl_context_ != EGL_NO_CONTEXT) {
+            eglDestroyContext(egl_display_, egl_context_);
+            egl_context_ = EGL_NO_CONTEXT;
+        }
         eglTerminate(egl_display_);
         egl_display_ = EGL_NO_DISPLAY;
     }
@@ -301,25 +319,42 @@ bool X11PlatformBackend::pollEvents() {
             refreshClientList();
             break;
 
-        case MotionNotify:
-            owner_->onMouseMove().emit(
-                (float)xev.xmotion.x, (float)xev.xmotion.y);
+        case MotionNotify: {
+            void* win_handle = (void*)(uintptr_t)xev.xmotion.window;
+            float x = (float)xev.xmotion.x;
+            float y = (float)xev.xmotion.y;
+            owner_->onMouseMove().emit(x, y);
+            owner_->onTargetedMouseMove().emit(win_handle, x, y);
             break;
+        }
 
         case ButtonPress: {
+            void* win_handle = (void*)(uintptr_t)xev.xbutton.window;
             float x = (float)xev.xbutton.x, y = (float)xev.xbutton.y;
             int   b = xev.xbutton.button;
-            if      (b == 4) owner_->onScroll().emit( 0.0f,  1.0f);
-            else if (b == 5) owner_->onScroll().emit( 0.0f, -1.0f);
-            else             owner_->onMouseDown().emit(x, y, b == 1 ? 1 : (b == 3 ? 3 : 2));
+            if (b == 4) {
+                owner_->onScroll().emit(0.0f,  1.0f);
+                owner_->onTargetedScroll().emit(win_handle, 0.0f, 1.0f);
+            } else if (b == 5) {
+                owner_->onScroll().emit(0.0f, -1.0f);
+                owner_->onTargetedScroll().emit(win_handle, 0.0f, -1.0f);
+            } else {
+                int btn_code = (b == 1 ? 1 : (b == 3 ? 3 : 2));
+                owner_->onMouseDown().emit(x, y, btn_code);
+                owner_->onTargetedMouseDown().emit(win_handle, x, y, btn_code);
+            }
             break;
         }
 
         case ButtonRelease: {
+            void* win_handle = (void*)(uintptr_t)xev.xbutton.window;
             float x = (float)xev.xbutton.x, y = (float)xev.xbutton.y;
             int   b = xev.xbutton.button;
-            if (b != 4 && b != 5)
-                owner_->onMouseUp().emit(x, y, b == 1 ? 1 : (b == 3 ? 3 : 2));
+            if (b != 4 && b != 5) {
+                int btn_code = (b == 1 ? 1 : (b == 3 ? 3 : 2));
+                owner_->onMouseUp().emit(x, y, btn_code);
+                owner_->onTargetedMouseUp().emit(win_handle, x, y, btn_code);
+            }
             break;
         }
 

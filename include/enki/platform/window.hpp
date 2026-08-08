@@ -31,6 +31,7 @@ struct WindowConfig {
     bool        borderless   = false;
     bool        transparent  = false; // 32-bit ARGB with compositing
     bool        always_on_top = false;
+    bool        override_redirect = false; ///< Bypass window manager (for popups, tooltips, panels)
     int         min_width    = 320;
     int         min_height   = 240;
     bool        vsync        = true;

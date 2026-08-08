@@ -114,6 +114,7 @@ public:
 
     virtual void makeCurrent() = 0;
     virtual void swapBuffers() = 0;
+    virtual void* getNativeHandle() const = 0;
     virtual void* getEGLSurface() const = 0;
     virtual void* getEGLContext() const = 0;
 
