@@ -34,6 +34,7 @@ public:
     void* getNativeHandle() const override { return (void*)wl_surface_; }
     void* getEGLSurface() const override { return (void*)egl_surface_; }
     void* getEGLContext() const override { return (void*)egl_context_; }
+    void* getBackendLayer() const override { return (void*)this; }
 
     [[nodiscard]] wl_surface* getWlSurface() const { return wl_surface_; }
     [[nodiscard]] zwlr_layer_surface_v1* getLayerSurface() const { return layer_surface_; }

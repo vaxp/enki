@@ -89,11 +89,9 @@ void test_native_popup_spawn() {
 
     // Spawn native popup outside bar
     PopupOptions opts;
-    opts.anchor_rect = Rect{100.0f, 0.0f, 80.0f, 36.0f}; // Button at (100, 0, 80, 36)
-    opts.placement   = PopupPlacement::BottomStart;
+    opts.position    = Point{100.0f, 42.0f}; // Button at (100, 0, 80, 36) + offset 6
     opts.width       = 240;
     opts.height      = 300;
-    opts.offset_gap  = 6;
 
     bool closed = false;
     opts.on_close = [&closed] { closed = true; };

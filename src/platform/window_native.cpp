@@ -254,4 +254,18 @@ void* Window::getEGLContext() const {
     return nullptr;
 }
 
+void* Window::getBackendWindow() const {
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_window) return impl_->wayland_window.get();
+#endif
+    return nullptr;
+}
+
+void* Window::getBackendLayer() const {
+#if defined(ENKI_HAS_WAYLAND)
+    if (impl_->wayland_layer) return impl_->wayland_layer.get();
+#endif
+    return nullptr;
+}
+
 }  // namespace enki

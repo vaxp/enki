@@ -12,6 +12,8 @@
 #include "enki/widgets/text.hpp"
 #include "enki/widgets/gesture_detector.hpp"
 #include "enki/state/state.hpp"
+#include "enki/tree/element.hpp"
+#include "enki/tree/render_object.hpp"
 
 #include <iostream>
 #include <memory>
@@ -91,6 +93,9 @@ public:
         detector->on_tap = [this, on_click] {
             if (on_click) {
                 Rect btn_rect{100.0f, 0.0f, 120.0f, 36.0f};
+                if (auto* ro = context().element()->findRenderObject()) {
+                    btn_rect = ro->globalBounds();
+                }
                 on_click(context(), btn_rect);
             }
         };
@@ -214,7 +219,7 @@ public:
 class TopBarWidgetState : public State {
     std::shared_ptr<NativePopup> active_popup_;
 
-    void openPopup(Rect anchor, PopupPlacement placement, int w, int h,
+    void openPopup(Point position, int w, int h,
                    std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> content_builder) {
         if (active_popup_ && active_popup_->isOpen()) {
             active_popup_->close();
@@ -223,11 +228,9 @@ class TopBarWidgetState : public State {
         }
 
         PopupOptions opts;
-        opts.anchor_rect  = anchor;
-        opts.placement    = placement;
+        opts.position     = position;
         opts.width        = w;
         opts.height       = h;
-        opts.offset_gap   = 6;
         opts.auto_dismiss = true;
 
         active_popup_ = NativePopup::show(
@@ -242,8 +245,8 @@ public:
         // Left Side: Launcher & Workspace switcher
         auto launcher_btn = std::make_shared<BarButton>(
             "⚡", "Applications",
-            [this](BuildContext&, Rect) {
-                openPopup(Rect{12.0f, 0.0f, 110.0f, 36.0f}, PopupPlacement::BottomStart, 300, 260, buildLauncherPopup);
+            [this](BuildContext&, Rect anchor) {
+                openPopup(Point(anchor.x, anchor.y + anchor.height + 6.0f), 300, 260, buildLauncherPopup);
             }
         );
 
@@ -264,8 +267,8 @@ public:
         // Right Side: Tray Icons & Power
         auto wifi_btn = std::make_shared<BarButton>(
             "📶", "Connected",
-            [this](BuildContext&, Rect) {
-                openPopup(Rect{850.0f, 0.0f, 100.0f, 36.0f}, PopupPlacement::BottomEnd, 260, 200, buildWifiPopup);
+            [this](BuildContext&, Rect anchor) {
+                openPopup(Point(anchor.x + anchor.width - 260.0f, anchor.y + anchor.height + 6.0f), 260, 200, buildWifiPopup);
             }
         );
 

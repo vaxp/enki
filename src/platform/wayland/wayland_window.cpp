@@ -2,6 +2,9 @@
 /// @brief Standard Desktop Window implementation using xdg_shell protocol and EGL.
 
 #include "enki/platform/wayland/wayland_window.hpp"
+#include "enki/platform/wayland/wayland_platform.hpp"
+#include "enki/platform/wayland/wayland_surface.hpp"
+#include "enki/platform/window.hpp"
 #include <iostream>
 
 namespace enki::wayland {
@@ -46,6 +49,22 @@ static const struct xdg_toplevel_listener xdg_toplevel_listener_impl = {
     .wm_capabilities  = xdg_toplevel_wm_capabilities_handler,
 };
 
+static void xdg_popup_configure_handler(void* data, xdg_popup* /*popup*/,
+                                        int32_t x, int32_t y, int32_t width, int32_t height) {
+    auto* self = static_cast<WaylandWindow*>(data);
+    self->handlePopupConfigure(x, y, width, height);
+}
+
+static void xdg_popup_done_handler(void* data, xdg_popup* /*popup*/) {
+    auto* self = static_cast<WaylandWindow*>(data);
+    self->handleClose();
+}
+
+static const struct xdg_popup_listener xdg_popup_listener_impl = {
+    .configure = xdg_popup_configure_handler,
+    .popup_done = xdg_popup_done_handler,
+};
+
 // ════════════════════════════════════════════════════════════════
 // WaylandWindow Implementation
 // ════════════════════════════════════════════════════════════════
@@ -87,7 +106,7 @@ bool WaylandWindow::init(const WindowConfig& config) {
         return false;
     }
 
-    // 2. Create XDG Surface & Toplevel
+    // 2. Create XDG Surface
     xdg_surface_ = xdg_wm_base_get_xdg_surface(xdg_wm_base, wl_surface_);
     if (!xdg_surface_) {
         std::cerr << "[ENKI WaylandWindow] Failed to get xdg_surface\n";
@@ -95,21 +114,49 @@ bool WaylandWindow::init(const WindowConfig& config) {
     }
     xdg_surface_add_listener(xdg_surface_, &xdg_surface_listener_impl, this);
 
-    xdg_toplevel_ = xdg_surface_get_toplevel(xdg_surface_);
-    if (!xdg_toplevel_) {
-        std::cerr << "[ENKI WaylandWindow] Failed to get xdg_toplevel\n";
-        return false;
-    }
-    xdg_toplevel_add_listener(xdg_toplevel_, &xdg_toplevel_listener_impl, this);
+    if (config_.mode == WindowMode::Popup) {
+        xdg_positioner* positioner = xdg_wm_base_create_positioner(xdg_wm_base);
+        xdg_positioner_set_size(positioner, current_width_, current_height_);
+        xdg_positioner_set_anchor_rect(positioner, config_.x, config_.y, 1, 1);
+        xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_TOP_LEFT);
+        xdg_positioner_set_gravity(positioner, XDG_POSITIONER_GRAVITY_BOTTOM_RIGHT);
+        xdg_positioner_set_constraint_adjustment(positioner, 
+            XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_SLIDE_X | XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_SLIDE_Y);
 
-    // Apply configuration metadata
-    if (!config_.title.empty()) {
-        xdg_toplevel_set_title(xdg_toplevel_, config_.title.c_str());
-    }
-    xdg_toplevel_set_app_id(xdg_toplevel_, "enki.app");
+        xdg_surface* parent_xdg = nullptr;
+        if (config_.parent_window) {
+            auto* parent_wl_win = static_cast<WaylandWindow*>(config_.parent_window->getBackendWindow());
+            if (parent_wl_win) parent_xdg = parent_wl_win->getXdgSurface();
+        }
 
-    if (config_.min_width > 0 && config_.min_height > 0) {
-        xdg_toplevel_set_min_size(xdg_toplevel_, config_.min_width, config_.min_height);
+        xdg_popup_ = xdg_surface_get_popup(xdg_surface_, parent_xdg, positioner);
+        xdg_popup_add_listener(xdg_popup_, &xdg_popup_listener_impl, this);
+        xdg_positioner_destroy(positioner);
+
+        if (config_.parent_layer) {
+            auto* layer_shell = backend_.getLayerShell();
+            auto* parent_wl_layer = static_cast<WaylandLayerSurface*>(config_.parent_layer->getBackendLayer());
+            if (layer_shell && parent_wl_layer && parent_wl_layer->getLayerSurface()) {
+                zwlr_layer_surface_v1_get_popup(parent_wl_layer->getLayerSurface(), xdg_popup_);
+            }
+        }
+    } else {
+        xdg_toplevel_ = xdg_surface_get_toplevel(xdg_surface_);
+        if (!xdg_toplevel_) {
+            std::cerr << "[ENKI WaylandWindow] Failed to get xdg_toplevel\n";
+            return false;
+        }
+        xdg_toplevel_add_listener(xdg_toplevel_, &xdg_toplevel_listener_impl, this);
+
+        // Apply configuration metadata
+        if (!config_.title.empty()) {
+            xdg_toplevel_set_title(xdg_toplevel_, config_.title.c_str());
+        }
+        xdg_toplevel_set_app_id(xdg_toplevel_, "enki.app");
+
+        if (config_.min_width > 0 && config_.min_height > 0) {
+            xdg_toplevel_set_min_size(xdg_toplevel_, config_.min_width, config_.min_height);
+        }
     }
 
     // Commit initial state and wait for compositor's first configure sequence
@@ -172,6 +219,10 @@ void WaylandWindow::destroy() {
         wl_egl_window_destroy(egl_window_);
         egl_window_ = nullptr;
     }
+    if (xdg_popup_) {
+        xdg_popup_destroy(xdg_popup_);
+        xdg_popup_ = nullptr;
+    }
     if (xdg_toplevel_) {
         xdg_toplevel_destroy(xdg_toplevel_);
         xdg_toplevel_ = nullptr;
@@ -191,6 +242,19 @@ void WaylandWindow::handleSurfaceConfigure(uint32_t /*serial*/) {
 }
 
 void WaylandWindow::handleToplevelConfigure(int32_t width, int32_t height, wl_array* /*states*/) {
+    if (width > 0 && height > 0) {
+        if (current_width_ != width || current_height_ != height) {
+            current_width_  = width;
+            current_height_ = height;
+            if (egl_window_) {
+                wl_egl_window_resize(egl_window_, current_width_, current_height_, 0, 0);
+            }
+            on_resize_.emit(current_width_, current_height_);
+        }
+    }
+}
+
+void WaylandWindow::handlePopupConfigure(int32_t /*x*/, int32_t /*y*/, int32_t width, int32_t height) {
     if (width > 0 && height > 0) {
         if (current_width_ != width || current_height_ != height) {
             current_width_  = width;
