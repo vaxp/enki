@@ -26,10 +26,10 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [X] Icon
 - [x] Image
 - [x] Avatar
-- [ ] Badge
+- [x] Badge
 - [x] Divider
 - [ ] VerticalDivider
-- [ ] Card
+- [x] Card
 - [ ] Chip
 - [x] Button
 - [ ] IconButton
