@@ -391,6 +391,10 @@ void RenderParagraph::layoutParagraph(float availableWidth) {
     impl_->layout(availableWidth);
 }
 
+void* RenderParagraph::getNativeParagraph() const {
+    return impl_->paragraph.get();
+}
+
 ANUSize RenderParagraph::measureText(ANUNodeConstRef node,
                                      float width,
                                      ANUMeasureMode widthMode,

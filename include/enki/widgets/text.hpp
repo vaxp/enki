@@ -234,9 +234,13 @@ public:
     /// Anu layout measurement callback.
     static ANUSize measureText(ANUNodeConstRef node, float width, ANUMeasureMode widthMode, float height, ANUMeasureMode heightMode);
 
-private:
     void rebuildParagraph();
+
+protected:
     void layoutParagraph(float availableWidth);
+    void* getNativeParagraph() const;
+
+private:
 
     std::string                 text_data_;
     std::shared_ptr<InlineSpan> span_;

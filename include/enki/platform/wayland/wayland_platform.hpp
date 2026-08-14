@@ -113,6 +113,8 @@ public:
     void handleToplevelDone(zwlr_foreign_toplevel_handle_v1* handle);
     void handleToplevelClosed(zwlr_foreign_toplevel_handle_v1* handle);
 
+    void setKeyRepeatInfo(int32_t rate, int32_t delay);
+
     uint32_t getLastPointerSerial() const { return last_pointer_serial_; }
     uint32_t getLastKeyboardSerial() const { return last_keyboard_serial_; }
 
@@ -164,6 +166,13 @@ private:
     xkb_keymap*  xkb_keymap_  = nullptr;
     xkb_state*   xkb_state_   = nullptr;
     int          active_modifiers_ = 0;
+
+    // Key Repeat State
+    int32_t  repeat_rate_ = 0;
+    int32_t  repeat_delay_ = 0;
+    uint32_t repeating_key_ = 0;
+    uint32_t repeating_keycode_ = 0;
+    double   repeat_next_fire_time_ = 0.0;
 
     // EGL
     EGLDisplay egl_display_ = EGL_NO_DISPLAY;
