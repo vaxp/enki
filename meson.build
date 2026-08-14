@@ -290,6 +290,8 @@ enki_sources = files(
   'src/widgets/image.cpp',
   'src/widgets/scroll_view.cpp',
   'src/widgets/icon.cpp',
+  'src/widgets/divider.cpp',
+  'src/widgets/checkbox.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',
