@@ -156,3 +156,11 @@ test('test_multi_surface',
   ),
 )
 
+
+test('test_scroll_view',
+  executable('test_scroll_view',
+    'widgets/test_scroll_view.cpp',
+    dependencies : test_deps,
+  ),
+)
+
