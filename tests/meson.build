@@ -106,6 +106,13 @@ test('test_button',
   ),
 )
 
+test('test_avatar',
+  executable('test_avatar',
+    'widgets/test_avatar.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 test('test_container',
   executable('test_container',
     'widgets/test_container.cpp',
