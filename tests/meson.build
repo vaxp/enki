@@ -184,3 +184,17 @@ test('test_checkbox',
     dependencies : test_deps,
   ),
 )
+
+test('test_switch',
+  executable('test_switch',
+    'widgets/test_switch.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_radio',
+  executable('test_radio',
+    'widgets/test_radio.cpp',
+    dependencies : test_deps,
+  ),
+)
