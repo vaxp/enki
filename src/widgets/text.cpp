@@ -159,7 +159,13 @@ TextStyle mergeStyles(const TextStyle& parent, const std::optional<TextStyle>& c
 
 class ParagraphBuilderContext {
 public:
-    explicit ParagraphBuilderContext(skia::textlayout::ParagraphBuilder* b) : builder(b) {}
+    struct SpanRange {
+        size_t start;
+        size_t end;
+        const TextSpan* span;
+    };
+
+    explicit ParagraphBuilderContext(skia::textlayout::ParagraphBuilder* b) : builder(b), current_index(0) {}
 
     void pushStyle(const TextStyle& style) {
         builder->pushStyle(toSkTextStyle(style));
@@ -169,13 +175,20 @@ public:
         builder->pop();
     }
 
-    void addText(const std::string& text) {
+    void addText(const std::string& text, const TextSpan* span = nullptr) {
         if (!text.empty()) {
             builder->addText(text.c_str(), text.size());
+            size_t end_index = current_index + text.size();
+            if (span && (span->on_click || span->on_hover)) {
+                interactive_spans.push_back({current_index, end_index, span});
+            }
+            current_index = end_index;
         }
     }
 
     skia::textlayout::ParagraphBuilder* builder;
+    size_t current_index;
+    std::vector<SpanRange> interactive_spans;
 };
 
 void TextSpan::build(ParagraphBuilderContext& builder, const TextStyle& inheritedStyle) const {
@@ -183,7 +196,7 @@ void TextSpan::build(ParagraphBuilderContext& builder, const TextStyle& inherite
     builder.pushStyle(effectiveStyle);
 
     if (!text.empty()) {
-        builder.addText(text);
+        builder.addText(text, this);
     }
 
     for (const auto& child : children) {
@@ -202,6 +215,8 @@ void TextSpan::build(ParagraphBuilderContext& builder, const TextStyle& inherite
 struct RenderParagraph::Impl {
     std::unique_ptr<skia::textlayout::Paragraph> paragraph;
     float current_layout_width = -1.0f;
+    std::vector<ParagraphBuilderContext::SpanRange> interactive_spans;
+    const TextSpan* hovered_span = nullptr;
 
     void build(const InlineSpan* rootSpan,
                const TextStyle& defaultStyle,
@@ -236,6 +251,7 @@ struct RenderParagraph::Impl {
             rootSpan->build(ctx, defaultStyle);
         }
 
+        interactive_spans = std::move(ctx.interactive_spans);
         paragraph = builder->Build();
         current_layout_width = -1.0f;
     }
@@ -295,6 +311,13 @@ void RenderParagraph::setText(std::string data,
         return; // Fast path: zero allocation, zero shaping, zero flexbox dirtying
     }
 
+    if (impl_ && impl_->hovered_span) {
+        if (impl_->hovered_span->on_hover) {
+            impl_->hovered_span->on_hover(false);
+        }
+        impl_->hovered_span = nullptr;
+    }
+
     bool layout_changed = (text_data_ != data ||
                            default_style_.font_size != style.font_size ||
                            default_style_.font_weight != style.font_weight ||
@@ -325,10 +348,18 @@ void RenderParagraph::setText(std::string data,
 }
 
 void RenderParagraph::setTextSpan(std::shared_ptr<InlineSpan> span) {
-    span_ = std::move(span);
-    rebuildParagraph();
-    ANUNodeMarkDirty(anuNode());
-    markNeedsLayout();
+    if (span_ != span) {
+        if (impl_ && impl_->hovered_span) {
+            if (impl_->hovered_span->on_hover) {
+                impl_->hovered_span->on_hover(false);
+            }
+            impl_->hovered_span = nullptr;
+        }
+        span_ = std::move(span);
+        rebuildParagraph();
+        ANUNodeMarkDirty(anuNode());
+        markNeedsLayout();
+    }
 }
 
 void RenderParagraph::setDefaultStyle(TextStyle style) {
@@ -445,6 +476,78 @@ void RenderParagraph::paint(PaintContext& ctx) {
 
     // Draw via canvas drawParagraph interface
     ctx.canvas.drawParagraph(impl_->paragraph.get(), ctx.offset.x, ctx.offset.y);
+}
+
+const TextSpan* findSpanAtPosition(const std::vector<ParagraphBuilderContext::SpanRange>& spans, size_t position) {
+    for (const auto& range : spans) {
+        if (position >= range.start && position < range.end) {
+            return range.span;
+        }
+    }
+    return nullptr;
+}
+
+bool RenderParagraph::hitTestSelf(Point localPoint) const {
+    if (!impl_ || !impl_->paragraph || impl_->interactive_spans.empty()) return false;
+    if (localPoint.x >= 0 && localPoint.x <= size_.width &&
+        localPoint.y >= 0 && localPoint.y <= size_.height) {
+        // optionally: only return true if we hit an interactive span
+        auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(localPoint.x, localPoint.y);
+        const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
+        return span != nullptr;
+    }
+    return false;
+}
+
+void RenderParagraph::handlePointerDown(const PointerEvent& e) {
+    // We defer actual click to pointer up.
+}
+
+void RenderParagraph::handlePointerUp(const PointerEvent& e) {
+    if (!impl_ || !impl_->paragraph) return;
+    auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
+    const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
+    if (span && span->on_click) {
+        span->on_click();
+    }
+}
+
+void RenderParagraph::handlePointerMove(const PointerEvent& e) {
+    if (!impl_ || !impl_->paragraph) return;
+    bool is_in_bounds = (e.localPosition.x >= 0 && e.localPosition.x <= size_.width &&
+                         e.localPosition.y >= 0 && e.localPosition.y <= size_.height);
+    
+    const TextSpan* new_hovered = nullptr;
+    if (is_in_bounds) {
+        auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
+        new_hovered = findSpanAtPosition(impl_->interactive_spans, pos.position);
+    }
+    
+    if (impl_->hovered_span != new_hovered) {
+        if (impl_->hovered_span && impl_->hovered_span->on_hover) {
+            impl_->hovered_span->on_hover(false);
+        }
+        impl_->hovered_span = new_hovered;
+        if (impl_->hovered_span && impl_->hovered_span->on_hover) {
+            impl_->hovered_span->on_hover(true);
+        }
+    }
+}
+
+void RenderParagraph::handlePointerExit(const PointerEvent& e) {
+    if (impl_ && impl_->hovered_span) {
+        if (impl_->hovered_span->on_hover) {
+            impl_->hovered_span->on_hover(false);
+        }
+        impl_->hovered_span = nullptr;
+    }
+}
+
+SystemCursor RenderParagraph::cursor() const {
+    if (impl_ && impl_->hovered_span && (impl_->hovered_span->on_click || impl_->hovered_span->on_hover)) {
+        return SystemCursor::Pointer;
+    }
+    return SystemCursor::Text;
 }
 
 // ════════════════════════════════════════════════════════════════

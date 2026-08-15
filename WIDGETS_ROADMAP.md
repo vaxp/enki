@@ -22,7 +22,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 
 ## 2. Basic UI (approx. 15)
 - [x] Text
-- [ ] RichText
+- [x] RichText
 - [X] Icon
 - [x] Image
 - [x] Avatar
