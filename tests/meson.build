@@ -212,3 +212,17 @@ test('test_badge',
     dependencies : test_deps,
   ),
 )
+
+test('test_icon_button',
+  executable('test_icon_button',
+    'widgets/test_icon_button.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_fab',
+  executable('test_fab',
+    'widgets/test_fab.cpp',
+    dependencies : test_deps,
+  ),
+)

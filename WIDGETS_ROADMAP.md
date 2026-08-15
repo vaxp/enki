@@ -32,8 +32,8 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Card
 - [ ] Chip
 - [x] Button
-- [ ] IconButton
-- [ ] FloatingActionButton
+- [x] IconButton
+- [x] FloatingActionButton
 - [ ] Tooltip
 - [ ] Placeholder
 
