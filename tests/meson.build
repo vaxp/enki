@@ -226,3 +226,17 @@ test('test_fab',
     dependencies : test_deps,
   ),
 )
+
+test('test_slider',
+  executable('test_slider',
+    'widgets/test_slider.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_range_slider',
+  executable('test_range_slider',
+    'widgets/test_range_slider.cpp',
+    dependencies : test_deps,
+  ),
+)

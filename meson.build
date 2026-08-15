@@ -298,6 +298,8 @@ enki_sources = files(
   'src/widgets/badge.cpp',
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',
+  'src/widgets/slider.cpp',
+  'src/widgets/range_slider.cpp',
 
   # Animation
   'src/animation/animation_controller.cpp',
