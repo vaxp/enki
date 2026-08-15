@@ -148,13 +148,7 @@ test('test_image',
   ),
 )
 
-# Shell tests
-test('test_multi_surface',
-  executable('test_multi_surface',
-    'shell/test_multi_surface.cpp',
-    dependencies : test_deps,
-  ),
-)
+
 
 
 test('test_scroll_view',

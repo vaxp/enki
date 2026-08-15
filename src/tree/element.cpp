@@ -229,6 +229,14 @@ void StatelessElement::update(WidgetPtr newWidget) {
     rebuild();
 }
 
+void StatelessElement::unmount() {
+    if (child_) {
+        deactivateChild(child_.get());
+        child_.reset();
+    }
+    Element::unmount();
+}
+
 void StatelessElement::performRebuild() {
     auto* slw = dynamic_cast<StatelessWidget*>(widget_.get());
     assert(slw && "StatelessElement must be backed by a StatelessWidget");

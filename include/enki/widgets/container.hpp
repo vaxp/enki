@@ -293,32 +293,32 @@ public:
                 style.align_items = Align::Start;
                 break;
             case Alignment::TopCenter:
-                style.justify_content = Justify::Center;
-                style.align_items = Align::Start;
-                break;
-            case Alignment::TopRight:
-                style.justify_content = Justify::End;
-                style.align_items = Align::Start;
-                break;
-            case Alignment::CenterLeft:
                 style.justify_content = Justify::Start;
                 style.align_items = Align::Center;
+                break;
+            case Alignment::TopRight:
+                style.justify_content = Justify::Start;
+                style.align_items = Align::End;
+                break;
+            case Alignment::CenterLeft:
+                style.justify_content = Justify::Center;
+                style.align_items = Align::Start;
                 break;
             case Alignment::Center:
                 style.justify_content = Justify::Center;
                 style.align_items = Align::Center;
                 break;
             case Alignment::CenterRight:
-                style.justify_content = Justify::End;
-                style.align_items = Align::Center;
-                break;
-            case Alignment::BottomLeft:
-                style.justify_content = Justify::Start;
-                style.align_items = Align::End;
-                break;
-            case Alignment::BottomCenter:
                 style.justify_content = Justify::Center;
                 style.align_items = Align::End;
+                break;
+            case Alignment::BottomLeft:
+                style.justify_content = Justify::End;
+                style.align_items = Align::Start;
+                break;
+            case Alignment::BottomCenter:
+                style.justify_content = Justify::End;
+                style.align_items = Align::Center;
                 break;
             case Alignment::BottomRight:
                 style.justify_content = Justify::End;
