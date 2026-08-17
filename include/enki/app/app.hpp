@@ -37,6 +37,11 @@
 
 namespace enki {
 
+// Forward declarations
+class SurfaceHost;
+struct WindowConfig;
+class BuildOwner;
+
 // ════════════════════════════════════════════════════════════════
 // AppConfig — Application configuration
 // ════════════════════════════════════════════════════════════════
@@ -128,6 +133,23 @@ public:
 
     /// Access the window (for advanced use).
     [[nodiscard]] Window& window();
+
+    // ── Multi-Surface & Popup Support ──────────────────────────────
+
+    /// Get active App singleton instance.
+    static App* instance();
+
+    /// Create and manage a new popup surface (xdg_popup / native popup window).
+    SurfaceHost* addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget);
+
+    /// Add an additional window surface to this application.
+    SurfaceHost* addWindow(WindowConfig config, WidgetPtr root_widget);
+
+    /// Remove and destroy an active surface.
+    void removeSurface(SurfaceHost* host);
+
+    /// Find the SurfaceHost that owns the given BuildOwner.
+    [[nodiscard]] SurfaceHost* findSurfaceByOwner(const BuildOwner* owner) const;
 
 private:
     App();

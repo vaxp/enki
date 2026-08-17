@@ -3,6 +3,7 @@
 
 #include "enki/shell/shell_app.hpp"
 #include "enki/shell/surface_host.hpp"
+#include "enki/animation/ticker.hpp"
 
 // Skia GPU
 #include <include/core/SkCanvas.h>
@@ -273,7 +274,10 @@ int ShellApp::run() {
             break;
         }
 
-        // 2. Update and render each active surface
+        // 2. Advance all animations and Ticker timers
+        SchedulerBinding::instance().tick();
+
+        // 3. Update and render each active surface
         for (size_t i = 0; i < impl_->surfaces.size(); ++i) {
             auto& host = impl_->surfaces[i];
             if (!host) continue;
