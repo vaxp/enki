@@ -79,6 +79,7 @@ std::shared_ptr<NativePopup> NativePopup::show(
         return nullptr;
     }
 
+    host->setAutoDismiss(options.auto_dismiss);
     popup->host_ = host;
     return popup;
 }
