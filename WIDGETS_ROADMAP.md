@@ -86,9 +86,9 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 *(Leveraging the core NativePopup infrastructure for true separate windows)*
 - [ ] Popup
 - [ ] Menu
-- [ ] ContextMenu
+- [x] ContextMenu
 - [ ] DropdownMenu
-- [ ] Tooltip
+- [x] Tooltip
 - [ ] Popover
 
 ## 7. Overlays (approx. 5)

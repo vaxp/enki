@@ -60,6 +60,17 @@ struct App::Impl {
 
     // Multi-surface / Popups owned by App
     std::vector<std::unique_ptr<SurfaceHost>> surfaces;
+    SurfaceHost* active_popup_host = nullptr;
+
+    SurfaceHost* findSurfaceForHandle(void* handle) {
+        if (!handle) return nullptr;
+        for (auto& s : surfaces) {
+            if (s && s->getNativeHandle() == handle) {
+                return s.get();
+            }
+        }
+        return nullptr;
+    }
 
     // Pointer state
     std::unordered_set<RenderObject*> hovered_targets;
@@ -103,18 +114,80 @@ struct App::Impl {
         window->onClose().connect([this]()  { quit_requested = true; });
         platform->onQuit().connect([this]() { quit_requested = true; });
 
-        // Connect input signals
+        // Targeted event routing for multi-surface / popups
+        platform->onTargetedMouseDown().connect([this](void* handle, float x, float y, int btn) {
+            MouseButton mb = (btn == 1) ? MouseButton::Left : (btn == 3 ? MouseButton::Right : MouseButton::Middle);
+            SurfaceHost* popup_target = findSurfaceForHandle(handle);
+
+            // Auto-dismiss check: if click is outside active popups, dismiss all active popups!
+            if (!popup_target && !surfaces.empty()) {
+                surfaces.clear();
+            }
+
+            if (popup_target) {
+                active_popup_host = popup_target;
+                popup_target->handlePointerDown(x, y, mb);
+            } else if (!window || handle == window->getNativeHandle()) {
+                dispatchPointerDown(x, y, btn);
+            }
+        });
+
+        platform->onTargetedMouseUp().connect([this](void* handle, float x, float y, int btn) {
+            MouseButton mb = (btn == 1) ? MouseButton::Left : (btn == 3 ? MouseButton::Right : MouseButton::Middle);
+            SurfaceHost* popup_target = active_popup_host ? active_popup_host : findSurfaceForHandle(handle);
+
+            if (popup_target) {
+                popup_target->handlePointerUp(x, y, mb);
+                active_popup_host = nullptr;
+            } else if (!window || handle == window->getNativeHandle()) {
+                dispatchPointerUp(x, y, btn);
+            }
+        });
+
+        platform->onTargetedMouseMove().connect([this](void* handle, float x, float y) {
+            SurfaceHost* popup_target = findSurfaceForHandle(handle);
+            if (popup_target) {
+                popup_target->handlePointerMove(x, y);
+            } else if (!window || handle == window->getNativeHandle()) {
+                dispatchPointerMove(x, y);
+            }
+        });
+
+        platform->onTargetedScroll().connect([this](void* handle, float dx, float dy) {
+            SurfaceHost* popup_target = findSurfaceForHandle(handle);
+            if (popup_target) {
+                popup_target->handleScroll(dx, dy);
+            } else if (!window || handle == window->getNativeHandle()) {
+                dispatchScroll(dx, dy);
+            }
+        });
+
+        // Connect fallback global input signals
         platform->onMouseDown().connect([this](float x, float y, int btn) {
-            dispatchPointerDown(x, y, btn);
+            if (!active_popup_host && !surfaces.empty()) {
+                surfaces.clear();
+            }
+            if (!active_popup_host) {
+                dispatchPointerDown(x, y, btn);
+            }
         });
+
         platform->onMouseUp().connect([this](float x, float y, int btn) {
-            dispatchPointerUp(x, y, btn);
+            if (!active_popup_host) {
+                dispatchPointerUp(x, y, btn);
+            }
         });
+
         platform->onMouseMove().connect([this](float x, float y) {
-            dispatchPointerMove(x, y);
+            if (!active_popup_host && surfaces.empty()) {
+                dispatchPointerMove(x, y);
+            }
         });
+
         platform->onScroll().connect([this](float dx, float dy) {
-            dispatchScroll(dx, dy);
+            if (!active_popup_host) {
+                dispatchScroll(dx, dy);
+            }
         });
 
         return true;
