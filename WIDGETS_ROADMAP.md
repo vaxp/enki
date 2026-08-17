@@ -8,18 +8,17 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Stack
 - [x] Container
 - [x] SizedBox
-- [ ] Expanded
-- [ ] Flexible
+- [x] Expanded
+- [x] Flexible
 - [x] Padding
 - [x] Align
 - [x] Center
 - [x] Positioned
 - [x] Wrap
-- [ ] Spacer
-- [ ] AspectRatio
-- [ ] ConstrainedBox
-- [ ] FractionallySizedBox
-
+- [x] Spacer
+- [x] AspectRatio
+- [x] ConstrainedBox
+- [x] FractionallySizedBox
 ## 2. Basic UI (approx. 15)
 - [x] Text
 - [x] RichText
