@@ -100,9 +100,9 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] Toast / Snackbar
 
 ## 8. Feedback (approx. 6)
-- [ ] ProgressBar
-- [ ] ProgressRing
-- [ ] Spinner
+- [x] ProgressBar
+- [x] ProgressRing
+- [x] Spinner
 - [ ] Snackbar
 - [ ] Toast
 - [ ] Notification

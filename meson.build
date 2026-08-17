@@ -301,6 +301,9 @@ enki_sources = files(
   'src/widgets/floating_action_button.cpp',
   'src/widgets/slider.cpp',
   'src/widgets/range_slider.cpp',
+  'src/widgets/progress_bar.cpp',
+  'src/widgets/progress_ring.cpp',
+  'src/widgets/spinner.cpp',
 
   # Scrolling / Lists Widgets
   'src/widgets/list_tile.cpp',
