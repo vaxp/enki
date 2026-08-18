@@ -323,6 +323,7 @@ enki_sources = files(
   'src/widgets/tree_view.cpp',
   'src/widgets/table.cpp',
   'src/widgets/data_table.cpp',
+  'src/widgets/data_grid.cpp',
 
   # Navigation Widgets
   'src/widgets/tab_bar.cpp',

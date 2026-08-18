@@ -47,6 +47,7 @@ subdir('grid_view_demo')
 subdir('tree_view_demo')
 subdir('table_demo')
 subdir('data_table_demo')
+subdir('data_grid_demo')
 
 # ── Navigation Widgets ─────────────────────────────────────────
 subdir('tab_bar_demo')
