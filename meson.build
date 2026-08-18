@@ -286,6 +286,8 @@ enki_sources = files(
   'src/widgets/text.cpp',
   'src/widgets/text_field.cpp',
   'src/widgets/text_area.cpp',
+  'src/widgets/number_field.cpp',
+  'src/widgets/search_field.cpp',
   'src/widgets/gesture_detector.cpp',
   'src/widgets/stack.cpp',
   'src/widgets/image.cpp',

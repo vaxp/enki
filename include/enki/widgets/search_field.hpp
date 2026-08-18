@@ -1,0 +1,221 @@
+#pragma once
+/// @file search_field.hpp
+/// @brief Advanced SearchField widget for ENKI Framework.
+/// Supports suggestions, command palette mode, search history, debounce, match highlighting, and custom themes.
+
+#include "enki/widgets/text.hpp"
+#include "enki/state/state.hpp"
+#include "enki/rendering/color.hpp"
+#include "enki/core/types.hpp"
+
+#include <string>
+#include <string_view>
+#include <functional>
+#include <memory>
+#include <vector>
+
+namespace enki {
+
+/// Visual styling variants for SearchField
+enum class SearchFieldVariant {
+    Filled,      ///< Solid dark container with subtle border
+    Outlined,    ///< Transparent container with crisp border
+    Pill,        ///< Fully rounded capsule search bar
+    CommandBar   ///< Spotlight/Raycast-style large command launcher
+};
+
+/// Predefined size presets
+enum class SearchFieldSize {
+    Small,   ///< Compact height ~34px
+    Medium,  ///< Standard height ~42px
+    Large    ///< Spacious command launcher height ~52px
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// Search Suggestion Item
+/// ════════════════════════════════════════════════════════════════
+
+struct SearchSuggestion {
+    std::string id = "";
+    std::string title = "";
+    std::string subtitle = "";
+    std::string category = ""; // e.g. "Commands", "Files", "Recent", "Settings"
+    std::string badge = "";    // e.g. "Ctrl+N", "Folder", "Tag"
+    std::string icon_char = "";// e.g. "📁", "⚡", "⚙️", "📄", "🔍"
+    Color icon_color = 0xFF38BDF8;
+
+    SearchSuggestion() = default;
+    SearchSuggestion(std::string t, std::string sub = "", std::string cat = "", std::string b = "", std::string ic = "🔍")
+        : title(std::move(t)), subtitle(std::move(sub)), category(std::move(cat)), badge(std::move(b)), icon_char(std::move(ic)) {}
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// SearchField Controller
+/// ════════════════════════════════════════════════════════════════
+
+class SearchFieldController {
+private:
+    std::string query_ = "";
+    std::vector<std::string> recent_searches_;
+    std::vector<SearchSuggestion> suggestions_;
+    int active_suggestion_index_ = -1;
+    bool is_loading_ = false;
+    static constexpr size_t kMaxRecentHistory = 12;
+
+public:
+    SearchFieldController(std::string initial_query = "") : query_(std::move(initial_query)) {}
+
+    [[nodiscard]] const std::string& getQuery() const { return query_; }
+    void setQuery(std::string_view q) { query_ = std::string(q); }
+
+    void addRecentSearch(const std::string& q) {
+        if (q.empty()) return;
+        // Remove existing duplicate
+        for (auto it = recent_searches_.begin(); it != recent_searches_.end(); ++it) {
+            if (*it == q) {
+                recent_searches_.erase(it);
+                break;
+            }
+        }
+        recent_searches_.insert(recent_searches_.begin(), q);
+        if (recent_searches_.size() > kMaxRecentHistory) {
+            recent_searches_.pop_back();
+        }
+    }
+
+    void removeRecentSearch(size_t index) {
+        if (index < recent_searches_.size()) {
+            recent_searches_.erase(recent_searches_.begin() + index);
+        }
+    }
+
+    void clearRecentSearches() {
+        recent_searches_.clear();
+    }
+
+    [[nodiscard]] const std::vector<std::string>& getRecentSearches() const {
+        return recent_searches_;
+    }
+
+    void setSuggestions(std::vector<SearchSuggestion> list) {
+        suggestions_ = std::move(list);
+        active_suggestion_index_ = -1;
+    }
+
+    [[nodiscard]] const std::vector<SearchSuggestion>& getSuggestions() const {
+        return suggestions_;
+    }
+
+    [[nodiscard]] int getActiveSuggestionIndex() const { return active_suggestion_index_; }
+    void setActiveSuggestionIndex(int idx) { active_suggestion_index_ = idx; }
+
+    [[nodiscard]] bool isLoading() const { return is_loading_; }
+    void setLoading(bool loading) { is_loading_ = loading; }
+
+    void clear() {
+        query_.clear();
+        suggestions_.clear();
+        active_suggestion_index_ = -1;
+        is_loading_ = false;
+    }
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// Configuration Options for SearchField
+/// ════════════════════════════════════════════════════════════════
+
+struct SearchFieldOptions {
+    std::string placeholder = "Search or type a command...";
+    SearchFieldVariant variant = SearchFieldVariant::Filled;
+    SearchFieldSize size = SearchFieldSize::Medium;
+
+    bool show_search_icon = true;
+    bool show_clear_button = true;
+    bool show_shortcut_badge = true;
+    std::string shortcut_hint = "Ctrl+K"; // e.g. "Ctrl+K" / "⌘K"
+    bool auto_focus = false;
+    bool read_only = false;
+
+    // Suggestions & Debounce
+    bool show_suggestions = true;
+    int max_visible_suggestions = 6;
+    double debounce_ms = 250.0; // Debounce query triggering
+
+    // Styling
+    TextStyle style;
+    Color background_color   = 0xFF0F172A; // Slate 900
+    Color border_color       = 0xFF334155; // Slate 700
+    Color focus_border_color = 0xFF38BDF8; // Sky 400
+    Color icon_color         = 0xFF94A3B8; // Slate 400
+    Color placeholder_color  = 0xFF64748B; // Slate 500
+    Color cursor_color       = 0xFF38BDF8; // Sky 400
+    Color selection_color    = 0x4D38BDF8; // Sky 400 alpha
+    Color badge_bg_color     = 0xFF1E293B; // Slate 800
+    Color badge_text_color   = 0xFF94A3B8; // Slate 400
+    Color popup_bg_color     = 0xFF0F172A; // Slate 900
+    Color item_hover_color   = 0xFF1E293B; // Slate 800
+    Color match_highlight_col= 0xFF38BDF8; // Sky 400
+
+    float border_radius = 10.0f;
+    EdgeInsets padding = EdgeInsets::symmetric(8.0f, 12.0f);
+
+    // Callbacks
+    std::function<std::vector<SearchSuggestion>(std::string_view query)> suggestions_provider;
+    std::function<void(std::string_view query)> on_changed;
+    std::function<void(std::string_view query)> on_search; // Debounced
+    std::function<void(std::string_view query)> on_submitted;
+    std::function<void(const SearchSuggestion& item)> on_suggestion_selected;
+};
+
+/// ════════════════════════════════════════════════════════════════
+/// SearchField Widget
+/// ════════════════════════════════════════════════════════════════
+
+class SearchField : public StatefulWidget {
+public:
+    std::shared_ptr<SearchFieldController> controller;
+    SearchFieldOptions options;
+
+    SearchField(std::shared_ptr<SearchFieldController> ctrl, SearchFieldOptions opt = {})
+        : controller(ctrl ? ctrl : std::make_shared<SearchFieldController>()),
+          options(std::move(opt)) {}
+
+    SearchField(SearchFieldOptions opt = {})
+        : controller(std::make_shared<SearchFieldController>()),
+          options(std::move(opt)) {}
+
+    // Fluent API Chaining
+    SearchField* placeholder(std::string p) { options.placeholder = std::move(p); return this; }
+    SearchField* variant(SearchFieldVariant v) { options.variant = v; return this; }
+    SearchField* sizePreset(SearchFieldSize s) { options.size = s; return this; }
+    SearchField* shortcutHint(std::string s) { options.shortcut_hint = std::move(s); return this; }
+    SearchField* debounce(double ms) { options.debounce_ms = ms; return this; }
+    SearchField* maxSuggestions(int m) { options.max_visible_suggestions = m; return this; }
+    SearchField* suggestions(std::function<std::vector<SearchSuggestion>(std::string_view)> prov) {
+        options.suggestions_provider = std::move(prov);
+        return this;
+    }
+    SearchField* onChanged(std::function<void(std::string_view)> cb) { options.on_changed = std::move(cb); return this; }
+    SearchField* onSearch(std::function<void(std::string_view)> cb) { options.on_search = std::move(cb); return this; }
+    SearchField* onSubmitted(std::function<void(std::string_view)> cb) { options.on_submitted = std::move(cb); return this; }
+    SearchField* onSuggestionSelected(std::function<void(const SearchSuggestion&)> cb) {
+        options.on_suggestion_selected = std::move(cb);
+        return this;
+    }
+
+    [[nodiscard]] std::unique_ptr<State> createState() override;
+    [[nodiscard]] std::string_view typeName() const override { return "SearchField"; }
+};
+
+inline std::shared_ptr<SearchField> searchField(
+    std::shared_ptr<SearchFieldController> ctrl,
+    SearchFieldOptions options = {}) {
+    return std::make_shared<SearchField>(std::move(ctrl), std::move(options));
+}
+
+inline std::shared_ptr<SearchField> searchField(
+    SearchFieldOptions options = {}) {
+    return std::make_shared<SearchField>(std::move(options));
+}
+
+} // namespace enki

@@ -39,7 +39,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] TextField
 - [x] TextArea
 - [ ] PasswordField
-- [ ] NumberField
+- [x] NumberField
 - [x] Checkbox
 - [x] Radio
 - [x] Switch
@@ -53,7 +53,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [ ] Form
 - [ ] FormField
 - [ ] Autocomplete
-- [ ] SearchField
+- [x] SearchField
 
 ## 4. Scrolling / Lists (approx. 10)
 - [x] ScrollView
