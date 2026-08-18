@@ -94,6 +94,7 @@ public:
 
     // Keyboard events
     void handleKeymap(uint32_t format, int fd, uint32_t size);
+    void handleKeyboardEnter(uint32_t serial, wl_surface* surface);
     void handleKey(uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
     void handleModifiers(uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
 

@@ -90,7 +90,12 @@ static void keyboard_keymap_handler(void* data, wl_keyboard* keyboard, uint32_t 
 }
 
 static void keyboard_enter_handler(void* data, wl_keyboard* keyboard, uint32_t serial,
-                                  wl_surface* surface, wl_array* keys) {}
+                                  wl_surface* surface, wl_array* keys) {
+    auto* self = static_cast<WaylandPlatformBackend*>(data);
+    if (self) {
+        self->handleKeyboardEnter(serial, surface);
+    }
+}
 static void keyboard_leave_handler(void* data, wl_keyboard* keyboard, uint32_t serial,
                                   wl_surface* surface) {}
 
@@ -1163,6 +1168,8 @@ void WaylandPlatformBackend::handlePointerMotion(uint32_t time, wl_fixed_t sx, w
 void WaylandPlatformBackend::handlePointerButton(uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
     if (!owner_) return;
 
+    last_pointer_serial_ = serial;
+
     // Linux button codes: BTN_LEFT (0x110/272)=1, BTN_RIGHT (0x111/273)=3, BTN_MIDDLE (0x112/274)=2
     int btn_code = 1;
     if (button == 273) btn_code = 3;       // Right
@@ -1211,6 +1218,10 @@ void WaylandPlatformBackend::handleKeymap(uint32_t format, int fd, uint32_t size
     }
 }
 
+void WaylandPlatformBackend::handleKeyboardEnter(uint32_t serial, wl_surface* /*surface*/) {
+    last_keyboard_serial_ = serial;
+}
+
 void WaylandPlatformBackend::setKeyRepeatInfo(int32_t rate, int32_t delay) {
     repeat_rate_ = rate;
     repeat_delay_ = delay;
@@ -1218,6 +1229,8 @@ void WaylandPlatformBackend::setKeyRepeatInfo(int32_t rate, int32_t delay) {
 
 void WaylandPlatformBackend::handleKey(uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
     if (!xkb_state_ || !owner_) return;
+
+    last_keyboard_serial_ = serial;
 
     uint32_t keycode = key + 8; // evdev -> XKB offset
     xkb_keysym_t sym = xkb_state_key_get_one_sym(xkb_state_, keycode);
@@ -1362,8 +1375,15 @@ void WaylandPlatformBackend::setClipboardData(const ClipboardData& data, Clipboa
     for (const auto& mime : data.formats()) {
         wl_data_source_offer(src_obj, mime.c_str());
     }
+    if (data.hasText()) {
+        wl_data_source_offer(src_obj, std::string(mime::TextPlainUtf8).c_str());
+        wl_data_source_offer(src_obj, std::string(mime::TextPlain).c_str());
+        wl_data_source_offer(src_obj, std::string(mime::TextUtf8).c_str());
+        wl_data_source_offer(src_obj, std::string(mime::TextString).c_str());
+    }
 
-    uint32_t serial = last_pointer_serial_ ? last_pointer_serial_ : last_keyboard_serial_;
+    uint32_t serial = last_keyboard_serial_ >= last_pointer_serial_ ? last_keyboard_serial_ : last_pointer_serial_;
+    if (serial == 0) serial = last_pointer_serial_ ? last_pointer_serial_ : last_keyboard_serial_;
     wl_data_device_set_selection(data_device_, src_obj, serial);
     wl_display_flush(display_);
 }
@@ -1405,6 +1425,7 @@ std::vector<uint8_t> WaylandPlatformBackend::getClipboardDataForMime(std::string
                 wl_data_offer_receive(current_selection_offer_->offer, std::string(mime_type).c_str(), fds[1]);
                 close(fds[1]);
                 wl_display_flush(display_);
+                wl_display_roundtrip(display_);
 
                 std::vector<uint8_t> result;
                 char buffer[4096];
@@ -1413,7 +1434,7 @@ std::vector<uint8_t> WaylandPlatformBackend::getClipboardDataForMime(std::string
                     result.insert(result.end(), buffer, buffer + bytes_read);
                 }
                 close(fds[0]);
-                return result;
+                if (!result.empty()) return result;
             }
         }
     }
