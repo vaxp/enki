@@ -92,17 +92,13 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 *(Rendered within the app's main window using a Stack or Overlay manager)*
 - [ ] DropdownMenu
 - [ ] Dialog
-- [ ] AlertDialog
 - [ ] BottomSheet
-- [ ] Modal
-- [ ] Toast / Snackbar
+- [ ] Snackbar
 
 ## 8. Feedback (approx. 6)
 - [x] ProgressBar
 - [x] ProgressRing
 - [x] Spinner
-- [ ] Snackbar
-- [ ] Toast
 - [ ] Notification
 - [ ] LoadingOverlay
 
