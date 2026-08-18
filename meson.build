@@ -300,6 +300,8 @@ enki_sources = files(
   'src/widgets/context_menu.cpp',
   'src/widgets/popover.cpp',
   'src/widgets/file_picker.cpp',
+  'src/widgets/popup.cpp',
+  'src/widgets/menu.cpp',
 
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',

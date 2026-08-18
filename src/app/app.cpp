@@ -119,13 +119,11 @@ struct App::Impl {
             MouseButton mb = (btn == 1) ? MouseButton::Left : (btn == 3 ? MouseButton::Right : MouseButton::Middle);
             SurfaceHost* popup_target = findSurfaceForHandle(handle);
 
-            // Auto-dismiss check: if click is outside active popups, dismiss auto-dismiss popups!
+            // Auto-dismiss check: if click is outside active popups, dismiss auto-dismiss popups in LIFO order (topmost first)
             if (!popup_target && !surfaces.empty()) {
-                for (auto it = surfaces.begin(); it != surfaces.end(); ) {
-                    if ((*it)->isAutoDismiss()) {
-                        it = surfaces.erase(it);
-                    } else {
-                        ++it;
+                for (int i = static_cast<int>(surfaces.size()) - 1; i >= 0; --i) {
+                    if (surfaces[i]->isAutoDismiss()) {
+                        surfaces.erase(surfaces.begin() + i);
                     }
                 }
             }
@@ -171,11 +169,9 @@ struct App::Impl {
         // Connect fallback global input signals
         platform->onMouseDown().connect([this](float x, float y, int btn) {
             if (!active_popup_host && !surfaces.empty()) {
-                for (auto it = surfaces.begin(); it != surfaces.end(); ) {
-                    if ((*it)->isAutoDismiss()) {
-                        it = surfaces.erase(it);
-                    } else {
-                        ++it;
+                for (int i = static_cast<int>(surfaces.size()) - 1; i >= 0; --i) {
+                    if (surfaces[i]->isAutoDismiss()) {
+                        surfaces.erase(surfaces.begin() + i);
                     }
                 }
             }
