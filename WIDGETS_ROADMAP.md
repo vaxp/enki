@@ -64,7 +64,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Table
 - [x] DataTable (Crucial for ENKI Desktop)
 - [x] Scrollbar
-- [ ] ReorderableList
+- [x] ReorderableList
 
 ## 5. Navigation (approx. 8–10)
 - [x] Navigator
