@@ -103,14 +103,14 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 
 ## 9. Gestures / Interaction (approx. 8)
 - [x] GestureDetector
-- [ ] Draggable
-- [ ] DragTarget
-- [ ] Dismissible
+- [x] Draggable
+- [x] DragTarget
+- [x] Dismissible
 - [x] LongPress
 - [x] HoverRegion
 - [x] MouseRegion
-- [ ] Focus
-- [ ] FocusScope
+- [x] Focus
+- [x] FocusScope
 
 ## 10. Advanced / Data UI (approx. 10)
 - [x] DataGrid

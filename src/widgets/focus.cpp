@@ -1,0 +1,113 @@
+/// @file focus.cpp
+/// @brief Implementation of Focus and FocusScope widgets for ENKI Framework.
+
+#include "enki/widgets/focus.hpp"
+#include "enki/widgets/gesture_detector.hpp"
+#include "enki/widgets/container.hpp"
+#include "enki/state/state.hpp"
+#include "enki/tree/build_context.hpp"
+#include "enki/platform/platform.hpp"
+
+#include <iostream>
+
+namespace enki {
+
+// ════════════════════════════════════════════════════════════════
+// FocusManager Implementation
+// ════════════════════════════════════════════════════════════════
+
+void FocusManager::setFocus(FocusNode* node) {
+    if (current_focus == node) return;
+
+    if (current_focus) {
+        current_focus->has_focus = false;
+        if (current_focus->on_focus_changed) {
+            current_focus->on_focus_changed(false);
+        }
+    }
+
+    current_focus = node;
+
+    if (current_focus) {
+        current_focus->has_focus = true;
+        if (current_focus->on_focus_changed) {
+            current_focus->on_focus_changed(true);
+        }
+    }
+}
+
+void FocusManager::clearFocus() {
+    if (current_focus) {
+        current_focus->has_focus = false;
+        if (current_focus->on_focus_changed) {
+            current_focus->on_focus_changed(false);
+        }
+        current_focus = nullptr;
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+// Focus Widget State
+// ════════════════════════════════════════════════════════════════
+
+class FocusState : public State {
+private:
+    std::shared_ptr<FocusNode> node_;
+
+public:
+    void initState() override {
+        State::initState();
+        auto* w = static_cast<const Focus*>(widget());
+        if (w->focus_node) {
+            node_ = w->focus_node;
+        } else {
+            node_ = std::make_shared<FocusNode>();
+        }
+
+        node_->on_focus_changed = [this](bool foc) {
+            auto* sw = static_cast<const Focus*>(widget());
+            if (sw->on_focus_change) sw->on_focus_change(foc);
+            setState([] {});
+        };
+
+        if (w->autofocus) {
+            node_->requestFocus();
+        }
+    }
+
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const Focus*>(widget());
+        bool is_focused = node_ && node_->has_focus;
+
+        auto box = container(w->child);
+        if (w->show_focus_ring && is_focused) {
+            box->border(w->focus_ring_color, 2.0f).borderRadius(8.0f);
+        }
+
+        auto gd = std::make_shared<GestureDetector>(box);
+        gd->cursor_type = SystemCursor::Pointer;
+        gd->on_tap_up = [this](const TapUpDetails&) {
+            if (node_) node_->requestFocus();
+        };
+
+        return gd;
+    }
+};
+
+std::unique_ptr<State> Focus::createState() {
+    return std::make_unique<FocusState>();
+}
+
+class FocusScopeState : public State {
+public:
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const FocusScope*>(widget());
+        return w->child ? w->child : container();
+    }
+};
+
+std::unique_ptr<State> FocusScope::createState() {
+    return std::make_unique<FocusScopeState>();
+}
+
+} // namespace enki
