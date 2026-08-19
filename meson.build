@@ -295,6 +295,7 @@ enki_sources = files(
   'src/widgets/color_picker.cpp',
   'src/widgets/placeholder.cpp',
   'src/widgets/chip.cpp',
+  'src/widgets/form.cpp',
   'src/widgets/gesture_detector.cpp',
   'src/widgets/draggable.cpp',
   'src/widgets/dismissible.cpp',

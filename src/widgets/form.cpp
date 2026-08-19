@@ -1,0 +1,308 @@
+/// @file form.cpp
+/// @brief Implementation of Advanced Form & FormField validation suite for ENKI Framework.
+
+#include "enki/widgets/form.hpp"
+#include "enki/widgets/checkbox.hpp"
+#include "enki/widgets/gesture_detector.hpp"
+#include "enki/widgets/container.hpp"
+#include "enki/widgets/flexbox.hpp"
+#include "enki/widgets/text.hpp"
+#include "enki/widgets/button.hpp"
+#include "enki/tree/build_context.hpp"
+
+#include <iostream>
+#include <vector>
+
+namespace enki {
+
+// ════════════════════════════════════════════════════════════════
+// Form Widget State
+// ════════════════════════════════════════════════════════════════
+
+class FormWidgetState : public State {
+public:
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const Form*>(widget());
+        return w->child;
+    }
+};
+
+std::unique_ptr<State> Form::createState() {
+    return std::make_unique<FormWidgetState>();
+}
+
+// ════════════════════════════════════════════════════════════════
+// TextFormField State
+// ════════════════════════════════════════════════════════════════
+
+class TextFormFieldState : public State, public FormFieldStateBase {
+private:
+    std::shared_ptr<TextFieldController> controller_;
+    std::string error_text_;
+    bool is_touched_ = false;
+
+public:
+    void initState() override {
+        State::initState();
+        auto* w = static_cast<const TextFormField*>(widget());
+        const auto& opts = w->options;
+
+        if (opts.controller) {
+            controller_ = opts.controller;
+        } else {
+            controller_ = std::make_shared<TextFieldController>(opts.initial_value);
+        }
+
+        if (opts.form_state) {
+            opts.form_state->registerField(this);
+        }
+    }
+
+    void didUpdateWidget(const Widget& old) override {
+        State::didUpdateWidget(old);
+        auto* w = static_cast<const TextFormField*>(widget());
+        if (w && w->options.controller) {
+            controller_ = w->options.controller;
+        }
+    }
+
+    void dispose() override {
+        auto* w = static_cast<const TextFormField*>(widget());
+        if (w && w->options.form_state) {
+            w->options.form_state->unregisterField(this);
+        }
+        State::dispose();
+    }
+
+    bool validate() override {
+        auto* w = static_cast<const TextFormField*>(widget());
+        if (w && w->options.validator) {
+            auto res = w->options.validator(controller_->text);
+            std::string prev_err = error_text_;
+            error_text_ = res.value_or("");
+            if (prev_err != error_text_) {
+                setState([] {});
+            }
+            return error_text_.empty();
+        }
+        return true;
+    }
+
+    void save() override {
+        auto* w = static_cast<const TextFormField*>(widget());
+        if (w && w->options.on_saved) {
+            w->options.on_saved(controller_->text);
+        }
+    }
+
+    void reset() override {
+        auto* w = static_cast<const TextFormField*>(widget());
+        if (w) {
+            controller_->text = w->options.initial_value;
+            controller_->clearSelection();
+            error_text_.clear();
+            is_touched_ = false;
+            setState([] {});
+        }
+    }
+
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const TextFormField*>(widget());
+        const auto& opts = w->options;
+
+        std::vector<WidgetPtr> col_items;
+
+        // 1. Label Row (with required asterisk)
+        if (!opts.label.empty()) {
+            auto lbl = text(opts.label);
+            lbl->fontSize(12.5f).bold().color(0xFFE2E8F0);
+
+            std::vector<WidgetPtr> lbl_items = {lbl};
+            if (opts.required) {
+                auto ast = text("*");
+                ast->fontSize(12.5f).bold().color(0xFFEF4444);
+                lbl_items.push_back(ast);
+            }
+
+            auto lbl_row = row(lbl_items);
+            lbl_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+            col_items.push_back(lbl_row);
+        }
+
+        // 2. Main TextField Input
+        TextFieldOptions tf_opts;
+        tf_opts.hint_text = opts.hint;
+        tf_opts.obscure_text = opts.obscure_text;
+        tf_opts.on_changed = [this](std::string val) {
+            is_touched_ = true;
+            auto* cur_w = static_cast<const TextFormField*>(widget());
+            if (cur_w && cur_w->options.on_changed) {
+                cur_w->options.on_changed(val);
+            }
+            if (!error_text_.empty()) {
+                validate();
+            }
+        };
+
+        auto tf = std::make_shared<TextField>(controller_, tf_opts);
+
+        auto tf_box = container(tf);
+        tf_box->color(0xFF0F172A)
+              .borderRadius(8.0f)
+              .paddingSymmetric(4.0f, 10.0f)
+              .width(opts.width);
+
+        if (!error_text_.empty()) {
+            tf_box->border(0xFFEF4444, 1.5f);
+        } else {
+            tf_box->border(0xFF334155, 1.0f);
+        }
+
+        col_items.push_back(tf_box);
+
+        // 3. Error Banner or Helper Text
+        if (!error_text_.empty()) {
+            auto err_icon = text("⚠️");
+            err_icon->fontSize(11.0f);
+
+            auto err_msg = text(error_text_);
+            err_msg->fontSize(11.5f).color(0xFFEF4444);
+
+            std::vector<WidgetPtr> err_items = {err_icon, err_msg};
+            auto err_row = row(err_items);
+            err_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+            col_items.push_back(err_row);
+        } else if (!opts.helper_text.empty()) {
+            auto hlp = text(opts.helper_text);
+            hlp->fontSize(11.0f).color(0xFF64748B);
+            col_items.push_back(hlp);
+        }
+
+        auto field_col = column(col_items);
+        field_col->gap(StyleValue::point(5.0f));
+        return field_col;
+    }
+};
+
+std::unique_ptr<State> TextFormField::createState() {
+    return std::make_unique<TextFormFieldState>();
+}
+
+// ════════════════════════════════════════════════════════════════
+// CheckboxFormField State
+// ════════════════════════════════════════════════════════════════
+
+class CheckboxFormFieldState : public State, public FormFieldStateBase {
+private:
+    bool is_checked_ = false;
+    std::string error_text_;
+
+public:
+    void initState() override {
+        State::initState();
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        is_checked_ = w->options.initial_value;
+
+        if (w->options.form_state) {
+            w->options.form_state->registerField(this);
+        }
+    }
+
+    void didUpdateWidget(const Widget& old) override {
+        State::didUpdateWidget(old);
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        if (w) {
+            is_checked_ = w->options.initial_value;
+        }
+    }
+
+    void dispose() override {
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        if (w && w->options.form_state) {
+            w->options.form_state->unregisterField(this);
+        }
+        State::dispose();
+    }
+
+    bool validate() override {
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        if (w && w->options.validator) {
+            auto res = w->options.validator(is_checked_);
+            std::string prev_err = error_text_;
+            error_text_ = res.value_or("");
+            if (prev_err != error_text_) {
+                setState([] {});
+            }
+            return error_text_.empty();
+        }
+        return true;
+    }
+
+    void save() override {
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        if (w && w->options.on_saved) {
+            w->options.on_saved(is_checked_);
+        }
+    }
+
+    void reset() override {
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        if (w) {
+            is_checked_ = w->options.initial_value;
+            error_text_.clear();
+            setState([] {});
+        }
+    }
+
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const CheckboxFormField*>(widget());
+        const auto& opts = w->options;
+
+        auto cb = checkbox(is_checked_, [this, opts](bool val) {
+            is_checked_ = val;
+            if (opts.on_changed) opts.on_changed(val);
+            if (!error_text_.empty()) {
+                validate();
+            }
+            setState([] {});
+        });
+
+        auto lbl = text(opts.label);
+        lbl->fontSize(12.5f).color(0xFFE2E8F0);
+
+        std::vector<WidgetPtr> row_items = {cb, lbl};
+        if (opts.required) {
+            auto ast = text("*");
+            ast->fontSize(12.5f).bold().color(0xFFEF4444);
+            row_items.push_back(ast);
+        }
+
+        auto cb_row = row(row_items);
+        cb_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+
+        std::vector<WidgetPtr> col_items = {cb_row};
+
+        if (!error_text_.empty()) {
+            auto err_icon = text("⚠️");
+            err_icon->fontSize(11.0f);
+
+            auto err_msg = text(error_text_);
+            err_msg->fontSize(11.5f).color(0xFFEF4444);
+
+            std::vector<WidgetPtr> err_items = {err_icon, err_msg};
+            auto err_row = row(err_items);
+            err_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+            col_items.push_back(err_row);
+        }
+
+        auto main_col = column(col_items);
+        main_col->gap(StyleValue::point(4.0f));
+        return main_col;
+    }
+};
+
+std::unique_ptr<State> CheckboxFormField::createState() {
+    return std::make_unique<CheckboxFormFieldState>();
+}
+
+} // namespace enki

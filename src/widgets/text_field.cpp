@@ -30,7 +30,9 @@ public:
 
     RenderTextField(std::shared_ptr<InlineSpan> span, std::shared_ptr<TextFieldController> ctrl, const TextFieldOptions& opt)
         : RenderParagraph(span, opt.style, TextAlign::Start, TextDirection::LTR, TextOverflow::Clip, opt.max_lines, false),
-          controller(ctrl), options(opt) {}
+          controller(ctrl), options(opt) {
+        ANUNodeStyleSetWidthPercent(anu_node_, 100.0f);
+    }
 
     void paint(PaintContext& ctx) override {
         auto* p = static_cast<skia::textlayout::Paragraph*>(getNativeParagraph());
@@ -202,8 +204,9 @@ public:
                     deleteSelection();
                 }
                 
-                controller_->text.insert(controller_->selection_start, text);
-                controller_->selection_start += text.length();
+                size_t insert_pos = std::min(controller_->selection_start, controller_->text.length());
+                controller_->text.insert(insert_pos, text);
+                controller_->selection_start = insert_pos + text.length();
                 controller_->clearSelection();
                 
                 if (current_tf->options.on_changed) current_tf->options.on_changed(controller_->text);
@@ -329,11 +332,26 @@ public:
     }
 
     void deleteSelection() {
-        size_t start = std::min(controller_->selection_start, controller_->selection_end);
-        size_t end = std::max(controller_->selection_start, controller_->selection_end);
-        controller_->text.erase(start, end - start);
+        if (!controller_ || controller_->text.empty()) {
+            if (controller_) controller_->clearSelection();
+            return;
+        }
+        size_t start = std::min({controller_->selection_start, controller_->selection_end, controller_->text.length()});
+        size_t end = std::min(std::max(controller_->selection_start, controller_->selection_end), controller_->text.length());
+        if (start < end) {
+            controller_->text.erase(start, end - start);
+        }
         controller_->selection_start = start;
         controller_->clearSelection();
+    }
+
+    void unfocus() {
+        if (is_focused_) {
+            is_focused_ = false;
+            show_cursor_ = false;
+            if (controller_) controller_->clearSelection();
+            setState([] {});
+        }
     }
 
     void resetBlink() {
@@ -369,16 +387,23 @@ public:
         );
 
         auto gesture = gestureDetector(text_field_widget);
+        gesture->cursor(SystemCursor::Text);
+        gesture->hitTestBehavior(HitTestBehavior::Opaque);
         gesture->onTapDown(
             [this, tf](const TapDownDetails& e) {
-                if (!is_focused_) {
-                    g_focused_textfield = this;
-                    is_focused_ = true;
+                if (g_focused_textfield && g_focused_textfield != this) {
+                    g_focused_textfield->unfocus();
                 }
+                g_focused_textfield = this;
+                is_focused_ = true;
                 
-                if (auto* el = element()) {
+                if (controller_->text.empty()) {
+                    controller_->selection_start = 0;
+                    controller_->selection_end = 0;
+                } else if (auto* el = element()) {
                     if (auto* rtf = dynamic_cast<RenderTextField*>(el->findRenderObject())) {
                         size_t index = rtf->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        index = std::min(index, controller_->text.length());
                         if (e.modifiers & 1) {
                             controller_->selection_end = index;
                         } else {
@@ -395,9 +420,13 @@ public:
         
         gesture->onPanUpdate(
             [this, tf](const DragUpdateDetails& e) {
-                if (auto* el = element()) {
+                if (controller_->text.empty()) {
+                    controller_->selection_start = 0;
+                    controller_->selection_end = 0;
+                } else if (auto* el = element()) {
                     if (auto* rtf = dynamic_cast<RenderTextField*>(el->findRenderObject())) {
                         size_t index = rtf->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        index = std::min(index, controller_->text.length());
                         controller_->selection_end = index;
                         resetBlink();
                         setState([]{});
