@@ -91,7 +91,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 ## 7. Overlays (approx. 5)
 *(Rendered within the app's main window using a Stack or Overlay manager)*
 - [x] DropdownMenu
-- [ ] Dialog
+- [x] Dialog
 - [x] BottomSheet
 - [ ] Snackbar
 
