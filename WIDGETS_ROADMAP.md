@@ -120,5 +120,5 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Accordion
 - [x] ExpansionPanel
 - [x] SplitView
-- [ ] ResizablePanel
+- [x] ResizablePanel
 

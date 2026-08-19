@@ -61,6 +61,7 @@ subdir('split_view_demo')
 subdir('carousel_demo')
 subdir('calendar_demo')
 subdir('expansion_panel_demo')
+subdir('resizable_panel_demo')
 
 # ── Navigation Widgets ─────────────────────────────────────────
 subdir('tab_bar_demo')
