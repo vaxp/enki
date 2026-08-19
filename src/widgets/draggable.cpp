@@ -1,9 +1,11 @@
 /// @file draggable.cpp
-/// @brief Implementation of Draggable and DragTarget widgets for ENKI Framework.
+/// @brief Ultra high-performance implementation of Draggable, DragTarget, and DragOverlay for ENKI Framework.
 
 #include "enki/widgets/draggable.hpp"
 #include "enki/widgets/gesture_detector.hpp"
 #include "enki/widgets/container.hpp"
+#include "enki/rendering/canvas.hpp"
+#include "enki/rendering/paint.hpp"
 #include "enki/state/state.hpp"
 #include "enki/tree/build_context.hpp"
 
@@ -80,16 +82,77 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// RenderDragOverlay (Direct Skia Canvas Render Object)
+// ════════════════════════════════════════════════════════════════
+
+class RenderDragOverlay : public RenderBox {
+public:
+    RenderDragOverlay() {
+        DragManager::instance().active_overlay = this;
+    }
+
+    ~RenderDragOverlay() override {
+        if (DragManager::instance().active_overlay == this) {
+            DragManager::instance().active_overlay = nullptr;
+        }
+    }
+
+    void paint(PaintContext& ctx) override {
+        // 1. Paint underlying page children without any rebuild
+        for (auto* child : children_) {
+            if (child) child->paint(ctx);
+        }
+
+        // 2. Direct fast paint for active floating drag card (zero layout / zero widget allocations)
+        if (DragManager::instance().session.is_active) {
+            Point p = DragManager::instance().session.current_pointer;
+            Rect card_rect = Rect::fromLTWH(p.x - 110.0f, p.y - 20.0f, 220.0f, 40.0f);
+
+            // Card Background
+            Paint bg_paint;
+            bg_paint.setColor(0xFA0F172A); // Deep slate
+            ctx.canvas.drawRRect(card_rect, BorderRadius::circular(8.0f), bg_paint);
+
+            // Glowing cyan border
+            Paint border_paint;
+            border_paint.setColor(0xFF38BDF8); // Sky 400
+            border_paint.setStyle(PaintStyle::Stroke);
+            border_paint.setStrokeWidth(2.0f);
+            ctx.canvas.drawRRect(card_rect, BorderRadius::circular(8.0f), border_paint);
+
+            // Card title text
+            std::string label = DragManager::instance().session.preview_label.empty()
+                                    ? "Dragging Card..."
+                                    : DragManager::instance().session.preview_label;
+            Paint text_paint;
+            text_paint.setColor(0xFFFFFFFF);
+            Point text_pos = Point(card_rect.x + 12.0f, card_rect.y + 25.0f);
+            ctx.canvas.drawText(label, text_pos, text_paint, 12.0f, nullptr, true);
+        }
+    }
+};
+
+std::unique_ptr<RenderObject> DragOverlay::createRenderObject(BuildContext&) {
+    return std::make_unique<RenderDragOverlay>();
+}
+
+void DragOverlay::updateRenderObject(BuildContext&, RenderObject&) {}
+
+// ════════════════════════════════════════════════════════════════
 // DragManager Implementation
 // ════════════════════════════════════════════════════════════════
 
-void DragManager::startDrag(std::string tag, std::any data, WidgetPtr feedback, Point start_pos) {
+void DragManager::startDrag(std::string tag, std::any data, WidgetPtr feedback, Point start_pos, std::string preview_label) {
     session.is_active = true;
     session.tag = std::move(tag);
+    session.preview_label = std::move(preview_label);
     session.data = std::move(data);
     session.feedback = std::move(feedback);
     session.current_pointer = start_pos;
-    if (on_drag_state_changed) on_drag_state_changed();
+
+    if (active_overlay) {
+        active_overlay->markNeedsPaint();
+    }
 }
 
 void DragManager::updatePointer(Point p) {
@@ -116,7 +179,10 @@ void DragManager::updatePointer(Point p) {
         }
     }
 
-    if (on_drag_state_changed) on_drag_state_changed();
+    // Only trigger ultra-fast repaint on overlay without tree rebuilds
+    if (active_overlay) {
+        active_overlay->markNeedsPaint();
+    }
 }
 
 void DragManager::endDrag() {
@@ -132,7 +198,10 @@ void DragManager::endDrag() {
 
     session.is_active = false;
     session.feedback = nullptr;
-    if (on_drag_state_changed) on_drag_state_changed();
+
+    if (active_overlay) {
+        active_overlay->markNeedsPaint();
+    }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -165,7 +234,8 @@ public:
 
         gd->on_pan_start = [this, w](const DragStartDetails& d) {
             is_dragging_ = true;
-            DragManager::instance().startDrag(w->tag, w->data, w->feedback ? w->feedback : w->child, d.global_position);
+            DragManager::instance().startDrag(w->tag, w->data, w->feedback ? w->feedback : w->child,
+                                            d.global_position, w->preview_label);
             if (w->on_drag_started) w->on_drag_started();
             setState([] {});
         };

@@ -34,7 +34,7 @@ private:
     std::vector<TaskCard> done_tasks_;
 
     std::vector<std::string> inbox_items_;
-    std::string hud_msg_ = "Drag task cards between Kanban columns, swipe notifications to dismiss, or click cards to test Focus!";
+    std::string hud_msg_ = "Drag task cards between Kanban columns (floats with mouse cursor!), swipe notifications, or test Focus!";
     std::string focused_card_name_ = "None";
 
     std::shared_ptr<FocusNode> focus_node_a_;
@@ -90,7 +90,25 @@ private:
              .width(StyleValue::percent(100.0f))
              .shadow(BoxShadow(0x66000000, {0.0f, 2.0f}, 6.0f));
 
-        return draggable("task_card", t.id, c_box);
+        // Floating feedback card that tracks the cursor in DragOverlay
+        auto f_tit = text(t.title);
+        f_tit->fontSize(12.5f).bold().color(0xFFFFFFFF);
+        auto f_tag = text(t.tag);
+        f_tag->fontSize(10.5f).bold().color(t.color);
+        auto f_tag_box = container(f_tag);
+        f_tag_box->color(0x3338BDF8).borderRadius(4.0f).paddingSymmetric(2.0f, 6.0f);
+
+        std::vector<WidgetPtr> f_items = {f_tit, f_tag_box};
+        auto f_row = row(f_items);
+        f_row->justifyContent(Justify::SpaceBetween).alignItems(Align::Center);
+
+        auto feedback_card = container(f_row);
+        feedback_card->color(0xF01E293B)
+                     .border(0xFF38BDF8, 2.0f)
+                     .borderRadius(8.0f)
+                     .paddingAll(12.0f);
+
+        return draggable("task_card", t.id, c_box, feedback_card, nullptr, t.title);
     }
 
     // ── Build Kanban Column with DragTarget ────────────────────────
@@ -244,7 +262,7 @@ public:
         auto title = text("Advanced Gestures & Interaction Suite");
         title->fontSize(22.0f).bold().color(0xFFFFFFFF);
 
-        auto sub = text("Complete Category 9: Draggable, DragTarget, Dismissible, Focus, and FocusScope");
+        auto sub = text("Complete Category 9: Draggable (with floating cursor ghost), DragTarget, Dismissible, Focus, and FocusScope");
         sub->fontSize(13.0f).color(0xFF94A3B8);
 
         std::vector<WidgetPtr> title_items = {title, sub};
@@ -329,7 +347,7 @@ public:
                        .width(StyleValue::percent(100.0f))
                        .height(StyleValue::percent(100.0f));
 
-        return background_page;
+        return dragOverlay(background_page);
     }
 };
 
@@ -352,7 +370,8 @@ int main() {
     config.height      = 720;
     config.resizable   = true;
     config.vsync       = false;
-    config.target_fps  = 60;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0B1120;
 
     return runApp(std::make_shared<GestureSuiteDemoApp>(), config);
