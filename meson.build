@@ -309,6 +309,7 @@ enki_sources = files(
   'src/widgets/dialog.cpp',
   'src/widgets/snackbar.cpp',
   'src/widgets/notification.cpp',
+  'src/widgets/loading_overlay.cpp',
   'src/widgets/popup.cpp',
   'src/widgets/menu.cpp',
 
