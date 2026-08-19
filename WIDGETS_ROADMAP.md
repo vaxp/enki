@@ -45,7 +45,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Switch
 - [x] Slider
 - [x] RangeSlider
-- [ ] ComboBox
+- [x] ComboBox
 - [ ] DatePicker
 - [ ] TimePicker
 - [ ] ColorPicker
