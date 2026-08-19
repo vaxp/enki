@@ -118,7 +118,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] Calendar
 - [x] Carousel
 - [x] Accordion
-- [ ] ExpansionPanel
+- [x] ExpansionPanel
 - [x] SplitView
 - [ ] ResizablePanel
 
