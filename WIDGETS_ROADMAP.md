@@ -116,7 +116,7 @@ This document serves as a comprehensive roadmap for the ~120 widgets planned for
 - [x] DataGrid
 - [x] Timeline
 - [ ] Calendar
-- [ ] Carousel
+- [x] Carousel
 - [x] Accordion
 - [ ] ExpansionPanel
 - [x] SplitView
