@@ -41,6 +41,7 @@ subdir('password_field_demo')
 subdir('bottom_sheet_demo')
 subdir('dropdown_menu_demo')
 subdir('dialog_demo')
+subdir('snackbar_demo')
 
 # ── Scrolling / Lists Widgets ──────────────────────────────────
 subdir('list_tile_demo')

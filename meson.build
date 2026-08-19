@@ -307,6 +307,7 @@ enki_sources = files(
   'src/widgets/bottom_sheet.cpp',
   'src/widgets/dropdown_menu.cpp',
   'src/widgets/dialog.cpp',
+  'src/widgets/snackbar.cpp',
   'src/widgets/popup.cpp',
   'src/widgets/menu.cpp',
 
