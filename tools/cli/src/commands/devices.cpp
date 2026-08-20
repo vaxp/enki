@@ -19,11 +19,11 @@ int DevicesCommand::execute(const fs::path&, const std::vector<std::string>&) {
     };
 
     std::cout << "  "
-              << Terminal::style(pad("Device ID", 20), Color::Bold)
-              << Terminal::style(pad("Name / Model", 34), Color::Bold)
+              << Terminal::style(pad("Device ID", 18), Color::Bold)
+              << Terminal::style(pad("Name / Model", 42), Color::Bold)
               << Terminal::style(pad("Platform", 18), Color::Bold)
               << Terminal::style("Status", Color::Bold) << "\n";
-    std::cout << "  " << std::string(80, '-') << "\n";
+    std::cout << "  " << std::string(88, '-') << "\n";
 
     for (const auto& dev : devices) {
         std::string platform_str;
@@ -41,8 +41,8 @@ int DevicesCommand::execute(const fs::path&, const std::vector<std::string>&) {
         }
 
         std::cout << "  "
-                  << Terminal::style(pad(dev.id, 20), Color::BrightCyan)
-                  << pad(dev.name, 34)
+                  << Terminal::style(pad(dev.id, 18), Color::BrightCyan)
+                  << pad(dev.name, 42)
                   << pad(platform_str, 18)
                   << Terminal::style(dev.status, status_color) << "\n";
     }

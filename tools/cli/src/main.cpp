@@ -35,11 +35,12 @@ static void showHelp(const std::vector<std::shared_ptr<Command>>& commands) {
     std::cout << "  -h, --help       Show help information\n";
     std::cout << "  -v, --version    Show ENKI CLI version\n\n";
     std::cout << Terminal::style("EXAMPLES:\n", Color::Bold);
-    std::cout << "  enki doctor                   # Run diagnostics on compilers and SDKs\n";
-    std::cout << "  enki devices                  # List available Desktop & Android devices\n";
-    std::cout << "  enki create my_app            # Scaffold a new application\n";
-    std::cout << "  enki run gallery android      # Build, package, sign, and run on Android\n";
-    std::cout << "  enki run gallery desktop      # Build and run on Windows Desktop\n\n";
+    std::cout << "  enki doctor                   # Run diagnostics on compilers, SDKs & backends\n";
+    std::cout << "  enki devices                  # List available Desktop, DRM & Android devices\n";
+    std::cout << "  enki create my_app            # Scaffold a new application with clean architecture\n";
+    std::cout << "  enki run gallery desktop      # Build and run on Linux/Windows Desktop\n";
+    std::cout << "  enki run gallery drm          # Build and run on bare-metal DRM/KMS direct scanout\n";
+    std::cout << "  enki run gallery android      # Build, package, sign, and deploy on Android\n\n";
 }
 
 int main(int argc, char* argv[]) {

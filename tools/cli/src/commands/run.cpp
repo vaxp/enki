@@ -18,11 +18,23 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == "android" || args[i] == "--android") {
             target = "android";
-        } else if (args[i] == "desktop" || args[i] == "--desktop" || args[i] == "windows") {
+        } else if (args[i] == "desktop" || args[i] == "--desktop" || args[i] == "windows" || args[i] == "linux") {
             target = "desktop";
+        } else if (args[i] == "drm" || args[i] == "--drm" || args[i] == "kms") {
+            target = "drm";
+        } else if (args[i] == "wayland" || args[i] == "--wayland") {
+            target = "wayland";
+        } else if (args[i] == "x11" || args[i] == "--x11") {
+            target = "x11";
         } else if (args[i] == "--device" && i + 1 < args.size()) {
             device_id = args[++i];
-            target = "android";
+            if (device_id == "drm") {
+                target = "drm";
+            } else if (device_id == "desktop") {
+                target = "desktop";
+            } else {
+                target = "android";
+            }
         } else if (args[i] == "--no-logs") {
             stream_logs = false;
         } else if (app_name.empty() && args[i][0] != '-') {
@@ -41,7 +53,7 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
         for (const auto& a : apps) {
             std::cout << "  • " << Terminal::style(a.name, Color::BrightCyan) << " (" << a.title << ")\n";
         }
-        std::cout << "\nUsage: enki run <app_name> [desktop|android]\n";
+        std::cout << "\nUsage: enki run <app_name> [desktop|drm|wayland|x11|android]\n";
         return 1;
     }
 
@@ -53,7 +65,13 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
     const auto& app = *app_opt;
 
     Terminal::banner();
-    Terminal::header("Running " + app.title + " on " + (target == "android" ? "Android" : "Desktop"));
+    std::string target_label = "Desktop";
+    if (target == "android") target_label = "Android";
+    else if (target == "drm") target_label = "Linux DRM/KMS (Direct Scanout)";
+    else if (target == "wayland") target_label = "Linux Wayland";
+    else if (target == "x11") target_label = "Linux X11";
+
+    Terminal::header("Running " + app.title + " on " + target_label);
     std::cout << "\n";
 
     if (target == "android") {
@@ -67,16 +85,36 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
         }
         return 1;
     } else {
-        // Desktop Target
-        fs::path build_dir = repo_root / "build-Win";
+        // Desktop / Linux Target
         std::error_code ec;
+#if defined(_WIN32)
+        fs::path build_dir = repo_root / "build-Win";
         if (!fs::exists(build_dir, ec)) {
-            Terminal::fail("Build Directory Missing", "build-Win directory does not exist.");
-            return 1;
+            build_dir = repo_root / "build";
+        }
+        std::string exe_name = "enki_" + app.name + ".exe";
+#else
+        fs::path build_dir = repo_root / "build";
+        if (!fs::exists(build_dir, ec)) {
+            build_dir = repo_root / "build-linux";
+        }
+        std::string exe_name = "enki_" + app.name;
+#endif
+
+        if (!fs::exists(build_dir, ec)) {
+            Terminal::warn("Build Directory Missing", "Configuring build directory with Meson...");
+            auto meson_path = Env::findMeson();
+            std::string meson_bin = meson_path ? Env::pathToUtf8(*meson_path) : "meson";
+            std::string setup_cmd = "\"" + meson_bin + "\" setup \"" + Env::pathToUtf8(build_dir) + "\"";
+            auto setup_res = Process::run(setup_cmd, Env::pathToUtf8(repo_root), true);
+            if (!setup_res.success()) {
+                Terminal::fail("Build Configuration Failed", "Run 'meson setup build' manually.");
+                return 1;
+            }
         }
 
         Terminal::step(1, 2, "Building Desktop executable (" + app.name + ")");
-        std::string ninja_target = "real_app/" + app.name + "/enki_" + app.name + ".exe";
+        std::string ninja_target = "real_app/" + app.name + "/" + exe_name;
         auto ninja_path = Env::findNinja();
         std::string ninja_bin = ninja_path ? Env::pathToUtf8(*ninja_path) : "ninja";
         std::string ninja_cmd = "\"" + ninja_bin + "\" -C \"" + Env::pathToUtf8(build_dir) + "\" " + ninja_target;
@@ -93,7 +131,7 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
         }
 
         Terminal::step(2, 2, "Launching " + app.title);
-        fs::path exe_path = build_dir / "real_app" / app.name / ("enki_" + app.name + ".exe");
+        fs::path exe_path = build_dir / "real_app" / app.name / exe_name;
         if (!fs::exists(exe_path, ec)) {
             Terminal::fail("Executable Not Found", Env::pathToUtf8(exe_path));
             return 1;
@@ -101,7 +139,17 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
 
         Terminal::ok("Process Started", Env::pathToUtf8(exe_path));
         std::cout << "\n" << Terminal::style("=== Application Output ===", Color::BrightCyan, true) << "\n";
-        Process::run("\"" + Env::pathToUtf8(exe_path) + "\"", "", true);
+
+        std::vector<std::pair<std::string, std::string>> env_vars;
+        if (target == "drm") {
+            env_vars.push_back({"ENKI_BACKEND", "drm"});
+        } else if (target == "wayland") {
+            env_vars.push_back({"ENKI_BACKEND", "wayland"});
+        } else if (target == "x11") {
+            env_vars.push_back({"ENKI_BACKEND", "x11"});
+        }
+
+        Process::run("\"" + Env::pathToUtf8(exe_path) + "\"", "", true, nullptr, env_vars);
         return 0;
     }
 }

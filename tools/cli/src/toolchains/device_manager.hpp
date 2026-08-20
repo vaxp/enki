@@ -47,12 +47,31 @@ public:
             .is_default = true
         });
 #else
+        std::string wayland_disp = Env::get("WAYLAND_DISPLAY");
+        std::string x11_disp     = Env::get("DISPLAY");
+        std::string session_name = "Linux Desktop";
+        if (!wayland_disp.empty()) {
+            session_name = "Linux Desktop (Wayland: " + wayland_disp + ")";
+        } else if (!x11_disp.empty()) {
+            session_name = "Linux Desktop (X11: " + x11_disp + ")";
+        } else {
+            session_name = "Linux Direct Console (TTY)";
+        }
+
         devices.push_back({
             .id = "desktop",
-            .name = "Linux Desktop",
+            .name = session_name,
             .type = DeviceType::Desktop,
             .status = "ready",
             .is_default = true
+        });
+
+        devices.push_back({
+            .id = "drm",
+            .name = "Linux DRM/KMS (Direct Scanout)",
+            .type = DeviceType::Desktop,
+            .status = "ready",
+            .is_default = false
         });
 #endif
 

@@ -8,7 +8,7 @@ namespace enki::cli {
 int CleanCommand::execute(const fs::path& repo_root, const std::vector<std::string>&) {
     Terminal::header("Cleaning Build Artifacts & Caches");
 
-    std::vector<std::string> dirs = { "build-Win", "build-android" };
+    std::vector<std::string> dirs = { "build", "build-linux", "build-Win", "build-android" };
     for (const auto& d : dirs) {
         fs::path p = repo_root / d;
         std::error_code ec;

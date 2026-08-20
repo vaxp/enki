@@ -1,5 +1,6 @@
 #include "commands/doctor.hpp"
 #include "toolchains/msvc_detector.hpp"
+#include "toolchains/linux_detector.hpp"
 #include "toolchains/android_detector.hpp"
 #include "toolchains/device_manager.hpp"
 #include "core/terminal.hpp"
@@ -26,13 +27,10 @@ int DoctorCommand::execute(const fs::path& repo_root, const std::vector<std::str
         Terminal::warn("C++ Compiler (MSVC)", "Not found. Install Visual Studio 2022 C++ tools.");
     }
 #else
-    auto gcc = Env::which("g++");
-    auto clang = Env::which("clang++");
-    if (clang) {
-        Terminal::ok("C++ Compiler (Clang)", Env::pathToUtf8(*clang));
-        passed++;
-    } else if (gcc) {
-        Terminal::ok("C++ Compiler (GCC)", Env::pathToUtf8(*gcc));
+    auto linux_info = LinuxDetector::detect(repo_root);
+    if (!linux_info.compiler.empty()) {
+        Terminal::ok("C++ Compiler (" + linux_info.compiler + ")",
+                     linux_info.compiler_version.empty() ? linux_info.compiler : linux_info.compiler_version);
         passed++;
     } else {
         Terminal::fail("C++ Compiler", "Neither g++ nor clang++ found in PATH.");
@@ -65,8 +63,38 @@ int DoctorCommand::execute(const fs::path& repo_root, const std::vector<std::str
         Terminal::fail("Skia Engine (Desktop)", "skia.lib missing in core/Skia-Windows");
     }
 #else
-    Terminal::ok("Skia Engine (Desktop)", "System/bundled Skia");
-    passed++;
+    if (linux_info.has_skia) {
+        Terminal::ok("Skia Engine (Desktop)", linux_info.skia_path);
+        passed++;
+    } else {
+        Terminal::ok("Skia Engine (Desktop)", "System/bundled Skia");
+        passed++;
+    }
+
+    // 3b. Linux Display Backends
+    total++;
+    std::string backends;
+    if (linux_info.has_wayland) backends += "Wayland ";
+    if (linux_info.has_x11)     backends += "X11 ";
+    if (linux_info.has_drm)     backends += "DRM/KMS ";
+    if (linux_info.has_egl)     backends += "EGL ";
+    if (!backends.empty()) {
+        Terminal::ok("Linux Display Backends", backends + "[Active: " + linux_info.active_session + "]");
+        passed++;
+    } else {
+        Terminal::warn("Linux Display Backends", "No standard display backends detected via pkg-config");
+    }
+
+    // 3c. Linux Direct KMS permissions check
+    if (linux_info.has_drm) {
+        total++;
+        if (linux_info.in_input_group) {
+            Terminal::ok("Direct KMS Permissions", "User belongs to 'input' group (Bare-metal TTY ready)");
+            passed++;
+        } else {
+            Terminal::warn("Direct KMS Permissions", "User not in 'input' group. For bare-metal TTY without sudo, run: sudo usermod -aG input,video $USER");
+        }
+    }
 #endif
 
     // 4. Android SDK & Build-Tools

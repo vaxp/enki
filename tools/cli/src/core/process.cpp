@@ -187,10 +187,14 @@ ProcessResult Process::run(
     const std::string& working_dir,
     bool stream_output,
     LineCallback on_stdout_line,
-    const std::vector<std::pair<std::string, std::string>>&
+    const std::vector<std::pair<std::string, std::string>>& extra_env
 ) {
     ProcessResult result;
-    std::string cmd = command_line + " 2>&1";
+    std::string env_prefix;
+    for (const auto& [k, v] : extra_env) {
+        env_prefix += k + "=\"" + v + "\" ";
+    }
+    std::string cmd = env_prefix + command_line + " 2>&1";
     if (!working_dir.empty()) {
         cmd = "cd \"" + working_dir + "\" && " + cmd;
     }

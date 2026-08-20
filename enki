@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# ============================================================
+# ENKI Framework CLI Launcher for Linux & macOS
+# ============================================================
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_EXE="$SCRIPT_DIR/build/tools/cli/enki"
+
+if [ ! -f "$CLI_EXE" ]; then
+    echo "[ENKI] Building CLI toolchain..."
+    if [ ! -d "$SCRIPT_DIR/build" ]; then
+        meson setup "$SCRIPT_DIR/build" "$SCRIPT_DIR"
+    fi
+    ninja -C "$SCRIPT_DIR/build" tools/cli/enki
+fi
+
+exec "$CLI_EXE" "$@"
