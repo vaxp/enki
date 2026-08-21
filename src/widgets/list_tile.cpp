@@ -14,7 +14,7 @@ namespace enki {
 // RenderListTile
 // ════════════════════════════════════════════════════════════════
 
-RenderListTile::RenderListTile(ListTileOptions options) : options_(options) {
+RenderListTile::RenderListTile(ListTileProps props) : props_(props) {
     ANUNodeStyleSetWidthPercent(anu_node_, 100.0f);
     ticker_ = createTicker([this]() {
         double now = std::chrono::duration<double>(
@@ -23,11 +23,9 @@ RenderListTile::RenderListTile(ListTileOptions options) : options_(options) {
     });
 }
 
-void RenderListTile::setOptions(const ListTileOptions& options) {
-    if (options_ != options) {
-        options_ = options;
-        markNeedsPaint();
-    }
+void RenderListTile::setProps(const ListTileProps& props) {
+    props_ = props;
+    markNeedsPaint();
 }
 
 void RenderListTile::setSelected(bool s) {
@@ -99,33 +97,33 @@ void RenderListTile::tick(double now) {
 }
 
 void RenderListTile::paintBackground(PaintContext& ctx, const Rect& bounds) {
-    Color bg = options_.tile_color;
+    Color bg = props_.tile_color;
 
     if (selected_) {
         // Blend selected color over tile color
-        bg = options_.selected_color;
+        bg = props_.selected_color;
     }
 
     if (hovered_ && enabled_) {
-        bg = bg == Colors::Transparent ? options_.hover_color :
+        bg = bg == Colors::Transparent ? props_.hover_color :
              (Color)(((bg & 0xFF000000) | ((uint8_t)((bg & 0xFF) + 13) & 0xFF)));
-        bg = options_.hover_color;
+        bg = props_.hover_color;
     }
 
     if (pressed_ && enabled_) {
-        bg = options_.pressed_color;
+        bg = props_.pressed_color;
     }
 
     if (!enabled_) {
-        bg = options_.disabled_color;
+        bg = props_.disabled_color;
     }
 
     if (bg != Colors::Transparent) {
         Paint paint;
         paint.setColor(bg);
         paint.setAntiAlias(true);
-        if (options_.shape.isUniform() && options_.shape.top_left > 0.0f) {
-            ctx.canvas.drawRRect(bounds, options_.shape, paint);
+        if (props_.shape.isUniform() && props_.shape.top_left > 0.0f) {
+            ctx.canvas.drawRRect(bounds, props_.shape, paint);
         } else {
             ctx.canvas.drawRect(bounds, paint);
         }
@@ -136,14 +134,14 @@ void RenderListTile::paintRipple(PaintContext& ctx, const Rect& bounds) {
     if (!ripple_active_ || ripple_alpha_ <= 0.0f) return;
 
     ctx.canvas.save();
-    if (options_.shape.isUniform() && options_.shape.top_left > 0.0f) {
-        ctx.canvas.clipRRect(bounds, options_.shape);
+    if (props_.shape.isUniform() && props_.shape.top_left > 0.0f) {
+        ctx.canvas.clipRRect(bounds, props_.shape);
     } else {
         ctx.canvas.clipRect(bounds);
     }
 
-    uint8_t alpha = static_cast<uint8_t>(ripple_alpha_ * ((options_.splash_color >> 24) & 0xFF));
-    Color ripple_color = (options_.splash_color & 0x00FFFFFF) | (static_cast<uint32_t>(alpha) << 24);
+    uint8_t alpha = static_cast<uint8_t>(ripple_alpha_ * ((props_.splash_color >> 24) & 0xFF));
+    Color ripple_color = (props_.splash_color & 0x00FFFFFF) | (static_cast<uint32_t>(alpha) << 24);
 
     Paint paint;
     paint.setColor(ripple_color);
@@ -173,20 +171,20 @@ void RenderListTile::paint(PaintContext& context) {
 
 class ListTileRenderWidget : public MultiChildRenderObjectWidget {
 public:
-    ListTileOptions options;
+    ListTileProps props;
     bool selected;
     bool enabled;
     std::function<void()> on_tap;
     std::function<void()> on_long_press;
     std::function<void()> on_secondary_tap;
 
-    ListTileRenderWidget(std::vector<WidgetPtr> children, ListTileOptions opt,
+    ListTileRenderWidget(std::vector<WidgetPtr> children, ListTileProps opt,
                          bool sel, bool en)
         : MultiChildRenderObjectWidget(Key::none(), std::move(children)),
-          options(std::move(opt)), selected(sel), enabled(en) {}
+          props(std::move(opt)), selected(sel), enabled(en) {}
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
-        auto r = std::make_unique<RenderListTile>(options);
+        auto r = std::make_unique<RenderListTile>(props);
         r->setSelected(selected);
         r->setEnabled(enabled);
         r->on_tap = on_tap;
@@ -197,7 +195,7 @@ public:
 
     void updateRenderObject(BuildContext&, RenderObject& ro) override {
         auto& r = static_cast<RenderListTile&>(ro);
-        r.setOptions(options);
+        r.setProps(props);
         r.setSelected(selected);
         r.setEnabled(enabled);
         r.on_tap = on_tap;
@@ -216,15 +214,15 @@ class ListTileState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* w = static_cast<const ListTile*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         // ── Build content row ──────────────────────────────────
         // The row: [padding_left] [leading?] [gap] [title/subtitle col] [gap] [trailing?] [padding_right]
         std::vector<WidgetPtr> row_children;
 
         // Leading
-        if (w->leading_widget) {
-            auto lc = container(w->leading_widget);
+        if (opts.leading_widget) {
+            auto lc = container(opts.leading_widget);
             lc->width(opts.leading_width);
             lc->align(Alignment::Center);
             lc->margin(EdgeInsets::only(0, opts.leading_gap, 0, 0));
@@ -239,8 +237,8 @@ public:
 
         // Title + subtitle column
         std::vector<WidgetPtr> title_col_children;
-        if (w->title_widget) title_col_children.push_back(w->title_widget);
-        if (w->subtitle_widget) title_col_children.push_back(w->subtitle_widget);
+        if (opts.title_widget) title_col_children.push_back(opts.title_widget);
+        if (opts.subtitle_widget) title_col_children.push_back(opts.subtitle_widget);
 
         WidgetPtr title_col;
         if (title_col_children.size() == 1) {
@@ -256,20 +254,20 @@ public:
         row_children.push_back(title_wrapper);
 
         // Trailing
-        if (w->trailing_widget) {
+        if (opts.trailing_widget) {
             auto gap = container();
             gap->width(opts.trailing_gap);
             gap->height(StyleValue::percent(100.0f));
             row_children.push_back(gap);
 
-            auto tc = container(w->trailing_widget);
+            auto tc = container(opts.trailing_widget);
             tc->width(opts.trailing_width);
             tc->align(Alignment::Center);
             row_children.push_back(tc);
         }
 
         // Compute min height based on density + subtitle presence
-        float min_h = w->subtitle_widget
+        float min_h = opts.subtitle_widget
             ? opts.min_height_two_line
             : (opts.visual_density == VisualDensity::Compact ? opts.dense_min_height : opts.min_height);
 
@@ -285,22 +283,22 @@ public:
         // ── Wrap in gesture detector ───────────────────────────
         auto detector = std::make_shared<GestureDetector>(padded);
         detector->hit_test_behavior = HitTestBehavior::Opaque;
-        if (w->enabled) {
+        if (opts.enabled) {
             detector->cursor_type = SystemCursor::Pointer;
-            auto on_tap = w->on_tap;
+            auto on_tap = opts.on_tap;
             if (on_tap) detector->on_tap = on_tap;
-            auto on_lp = w->on_long_press;
+            auto on_lp = opts.on_long_press;
             if (on_lp) detector->on_long_press = on_lp;
-            auto on_st = w->on_secondary_tap;
+            auto on_st = opts.on_secondary_tap;
             if (on_st) detector->on_secondary_tap = on_st;
         }
 
         // ── Wrap in the custom render widget for hover/press bg ─
         auto render = std::make_shared<ListTileRenderWidget>(
-            std::vector<WidgetPtr>{detector}, opts, w->selected, w->enabled);
-        render->on_tap        = w->on_tap;
-        render->on_long_press = w->on_long_press;
-        render->on_secondary_tap = w->on_secondary_tap;
+            std::vector<WidgetPtr>{detector}, opts, opts.selected, opts.enabled);
+        render->on_tap        = opts.on_tap;
+        render->on_long_press = opts.on_long_press;
+        render->on_secondary_tap = opts.on_secondary_tap;
 
         return render;
     }

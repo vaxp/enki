@@ -49,7 +49,7 @@ struct RippleAnim {
 
 class RenderButtonBackground : public RenderBox {
 public:
-    ButtonOptions options;
+    ButtonProps options;
     bool disabled;
     float hover_progress;
     float press_progress;
@@ -59,7 +59,7 @@ public:
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderButtonBackground(const ButtonOptions& opt, bool disabled, float hover, float press, 
+    RenderButtonBackground(const ButtonProps& opt, bool disabled, float hover, float press, 
                            const std::vector<RippleState>& rips, double st, Point mouse)
         : options(opt), disabled(disabled), hover_progress(hover), press_progress(press),
           ripples(rips), start_time(st), last_mouse_pos(mouse) {
@@ -200,7 +200,7 @@ public:
 
 class ButtonBackgroundWidget : public SingleChildRenderObjectWidget {
 public:
-    ButtonOptions options;
+    ButtonProps options;
     bool disabled;
     float hover_progress;
     float press_progress;
@@ -208,7 +208,7 @@ public:
     double start_time;
     Point last_mouse_pos;
 
-    ButtonBackgroundWidget(ButtonOptions opt, bool disabled, float hover, float press, 
+    ButtonBackgroundWidget(ButtonProps opt, bool disabled, float hover, float press, 
                            std::vector<RippleState> rips, double st, Point mouse, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
           options(std::move(opt)), disabled(disabled), hover_progress(hover), press_progress(press),

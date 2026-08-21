@@ -274,6 +274,12 @@ inline std::shared_ptr<NotificationBell> notificationBell(
 /// Notification Overlay Widget
 /// ════════════════════════════════════════════════════════════════
 
+struct NotificationOverlayProps {
+    Key key = Key::none();
+    WidgetPtr body;
+    std::shared_ptr<NotificationManager> manager;
+};
+
 class NotificationOverlay : public StatefulWidget {
 public:
     WidgetPtr body;                              ///< Main page body to wrap
@@ -290,6 +296,12 @@ inline std::shared_ptr<NotificationOverlay> notificationOverlay(
     WidgetPtr body,
     std::shared_ptr<NotificationManager> manager) {
     return std::make_shared<NotificationOverlay>(std::move(body), std::move(manager));
+}
+
+inline std::shared_ptr<NotificationOverlay> notificationOverlay(NotificationOverlayProps props) {
+    auto overlay = std::make_shared<NotificationOverlay>(std::move(props.body), std::move(props.manager));
+    overlay->key = props.key;
+    return overlay;
 }
 
 } // namespace enki

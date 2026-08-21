@@ -36,9 +36,9 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const Carousel*>(widget());
-        current_index_ = std::clamp(w->options.initial_index, 0, std::max(0, (int)w->slides.size() - 1));
-        auto_play_enabled_ = w->options.auto_play;
-        interval_sec_ = w->options.auto_play_interval_ms > 0 ? (w->options.auto_play_interval_ms / 1000.0) : 3.5;
+        current_index_ = std::clamp(w->props.initial_index, 0, std::max(0, (int)w->props.slides.size() - 1));
+        auto_play_enabled_ = w->props.auto_play;
+        interval_sec_ = w->props.auto_play_interval_ms > 0 ? (w->props.auto_play_interval_ms / 1000.0) : 3.5;
 
         last_tick_time_ = std::chrono::steady_clock::now();
 
@@ -48,8 +48,8 @@ public:
             last_tick_time_ = now;
 
             auto* sw = static_cast<const Carousel*>(widget());
-            if (auto_play_enabled_ && sw->slides.size() > 1) {
-                if (!(is_hovered_ && sw->options.pause_on_hover)) {
+            if (auto_play_enabled_ && sw->props.slides.size() > 1) {
+                if (!(is_hovered_ && sw->props.pause_on_hover)) {
                     elapsed_sec_ += dt;
                     if (elapsed_sec_ >= interval_sec_) {
                         nextPage();
@@ -74,71 +74,71 @@ public:
 
     void wireController() {
         auto* w = static_cast<const Carousel*>(widget());
-        if (w->controller) {
-            w->controller->next_page_fn = [this] { nextPage(); };
-            w->controller->prev_page_fn = [this] { previousPage(); };
-            w->controller->jump_to_page_fn = [this](int idx) { jumpToPage(idx); };
-            w->controller->set_auto_play_fn = [this](bool play) {
+        if (w->props.controller) {
+            w->props.controller->next_page_fn = [this] { nextPage(); };
+            w->props.controller->prev_page_fn = [this] { previousPage(); };
+            w->props.controller->jump_to_page_fn = [this](int idx) { jumpToPage(idx); };
+            w->props.controller->set_auto_play_fn = [this](bool play) {
                 auto_play_enabled_ = play;
                 elapsed_sec_ = 0.0;
                 setState([] {});
             };
-            w->controller->get_current_page_fn = [this] { return current_index_; };
-            w->controller->get_page_count_fn = [this] {
+            w->props.controller->get_current_page_fn = [this] { return current_index_; };
+            w->props.controller->get_page_count_fn = [this] {
                 auto* sw = static_cast<const Carousel*>(widget());
-                return static_cast<int>(sw->slides.size());
+                return static_cast<int>(sw->props.slides.size());
             };
         }
     }
 
     void nextPage() {
         auto* w = static_cast<const Carousel*>(widget());
-        int total = static_cast<int>(w->slides.size());
+        int total = static_cast<int>(w->props.slides.size());
         if (total <= 1) return;
 
         if (current_index_ >= total - 1) {
-            if (w->options.infinite_loop) current_index_ = 0;
+            if (w->props.infinite_loop) current_index_ = 0;
             else return;
         } else {
             current_index_++;
         }
 
         elapsed_sec_ = 0.0;
-        if (w->options.on_page_changed) w->options.on_page_changed(current_index_);
+        if (w->props.on_page_changed) w->props.on_page_changed(current_index_);
         setState([] {});
     }
 
     void previousPage() {
         auto* w = static_cast<const Carousel*>(widget());
-        int total = static_cast<int>(w->slides.size());
+        int total = static_cast<int>(w->props.slides.size());
         if (total <= 1) return;
 
         if (current_index_ <= 0) {
-            if (w->options.infinite_loop) current_index_ = total - 1;
+            if (w->props.infinite_loop) current_index_ = total - 1;
             else return;
         } else {
             current_index_--;
         }
 
         elapsed_sec_ = 0.0;
-        if (w->options.on_page_changed) w->options.on_page_changed(current_index_);
+        if (w->props.on_page_changed) w->props.on_page_changed(current_index_);
         setState([] {});
     }
 
     void jumpToPage(int idx) {
         auto* w = static_cast<const Carousel*>(widget());
-        int total = static_cast<int>(w->slides.size());
+        int total = static_cast<int>(w->props.slides.size());
         if (total == 0) return;
 
         current_index_ = std::clamp(idx, 0, total - 1);
         elapsed_sec_ = 0.0;
-        if (w->options.on_page_changed) w->options.on_page_changed(current_index_);
+        if (w->props.on_page_changed) w->props.on_page_changed(current_index_);
         setState([] {});
     }
 
     // ── Build Floating Navigation Arrow ───────────────────────────
 
-    WidgetPtr buildArrowBtn(const std::string& arrow_symbol, std::function<void()> cb, const CarouselOptions& opts) {
+    WidgetPtr buildArrowBtn(const std::string& arrow_symbol, std::function<void()> cb, const CarouselProps& opts) {
         auto arr_txt = text(arrow_symbol);
         arr_txt->fontSize(14.0f).bold().color(opts.arrow_fg_color);
 
@@ -159,7 +159,7 @@ public:
 
     // ── Build Bottom Pagination Dots ──────────────────────────────
 
-    WidgetPtr buildPaginationDots(int total, const CarouselOptions& opts) {
+    WidgetPtr buildPaginationDots(int total, const CarouselProps& opts) {
         std::vector<WidgetPtr> dots;
 
         for (int i = 0; i < total; ++i) {
@@ -190,8 +190,8 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const Carousel*>(widget());
-        const auto& opts = w->options;
-        int total = static_cast<int>(w->slides.size());
+        const auto& opts = w->props;
+        int total = static_cast<int>(w->props.slides.size());
 
         if (total == 0) {
             auto empty = container();
@@ -200,7 +200,7 @@ public:
         }
 
         // ── 1. Active Slide Content ───────────────────────────────────
-        WidgetPtr active_slide_widget = w->slides[std::clamp(current_index_, 0, total - 1)];
+        WidgetPtr active_slide_widget = w->props.slides[std::clamp(current_index_, 0, total - 1)];
 
         auto slide_box = container(active_slide_widget);
         slide_box->color(opts.background_color)

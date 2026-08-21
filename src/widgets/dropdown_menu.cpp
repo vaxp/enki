@@ -86,7 +86,7 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const DropdownMenu*>(widget());
-        selected_id_ = w->options.selected_id;
+        selected_id_ = w->props.selected_id;
         wireController();
 
         if (Platform::instance()) {
@@ -109,13 +109,13 @@ public:
 
     void wireController() {
         auto* w = static_cast<const DropdownMenu*>(widget());
-        if (!w->controller) return;
-        w->controller->open_fn         = [this] { openMenu(); };
-        w->controller->close_fn        = [this] { closeMenu(); };
-        w->controller->toggle_fn       = [this] { toggleMenu(); };
-        w->controller->select_fn       = [this](const std::string& id) { selectItem(id); };
-        w->controller->is_open_fn      = [this] { return is_open_; };
-        w->controller->get_selected_fn = [this] { return selected_id_; };
+        if (!w->props.controller) return;
+        w->props.controller->open_fn         = [this] { openMenu(); };
+        w->props.controller->close_fn        = [this] { closeMenu(); };
+        w->props.controller->toggle_fn       = [this] { toggleMenu(); };
+        w->props.controller->select_fn       = [this](const std::string& id) { selectItem(id); };
+        w->props.controller->is_open_fn      = [this] { return is_open_; };
+        w->props.controller->get_selected_fn = [this] { return selected_id_; };
     }
 
     void openMenu() {
@@ -123,7 +123,7 @@ public:
         is_open_ = true;
         hovered_idx_ = -1;
         auto* w = static_cast<const DropdownMenu*>(widget());
-        if (w->options.on_opened) w->options.on_opened();
+        if (w->props.on_opened) w->props.on_opened();
         setState([] {});
     }
 
@@ -131,7 +131,7 @@ public:
         if (!is_open_) return;
         is_open_ = false;
         auto* w = static_cast<const DropdownMenu*>(widget());
-        if (w->options.on_closed) w->options.on_closed();
+        if (w->props.on_closed) w->props.on_closed();
         setState([] {});
     }
 
@@ -140,19 +140,19 @@ public:
     void selectItem(const std::string& id) {
         selected_id_ = id;
         auto* w = static_cast<const DropdownMenu*>(widget());
-        for (const auto& item : w->items) {
-            if (item.id == id && w->options.on_selected) {
-                w->options.on_selected(item);
+        for (const auto& item : w->props.items) {
+            if (item.id == id && w->props.on_selected) {
+                w->props.on_selected(item);
                 break;
             }
         }
-        if (w->options.close_on_select) closeMenu();
+        if (w->props.close_on_select) closeMenu();
         else setState([] {});
     }
 
     const DropdownMenuItem* getSelected() const {
         auto* w = static_cast<const DropdownMenu*>(widget());
-        for (const auto& it : w->items)
+        for (const auto& it : w->props.items)
             if (it.id == selected_id_) return &it;
         return nullptr;
     }
@@ -160,7 +160,7 @@ public:
     // ── Menu Item Row Builder ─────────────────────────────────────
 
     WidgetPtr buildItemRow(const DropdownMenuItem& item, int idx,
-                           const DropdownMenuOptions& opts) {
+                           const DropdownMenuProps& opts) {
         if (item.type == DropdownMenuItemType::Divider) {
             auto div = container();
             div->color(opts.divider_color).height(1.0f)
@@ -255,8 +255,8 @@ public:
             auto* w = static_cast<const DropdownMenu*>(widget());
             if ((item.type == DropdownMenuItemType::Checkbox ||
                  item.type == DropdownMenuItemType::Radio) &&
-                w->options.on_toggle_checked) {
-                w->options.on_toggle_checked(item.id, !item.is_checked);
+                w->props.on_toggle_checked) {
+                w->props.on_toggle_checked(item.id, !item.is_checked);
             }
             selectItem(item.id);
         };
@@ -272,11 +272,11 @@ public:
     // ── Floating Panel Builder ────────────────────────────────────
 
     WidgetPtr buildFloatingPanel(const DropdownMenu* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         std::vector<WidgetPtr> list_items;
         int idx = 0;
-        for (const auto& it : w->items) {
+        for (const auto& it : w->props.items) {
             list_items.push_back(buildItemRow(it, idx, opts));
             idx++;
         }
@@ -308,8 +308,8 @@ public:
 
         // ── Body (always Positioned::fill — trigger lives INSIDE body) ──
         WidgetPtr body_fill;
-        if (w->body) {
-            auto bx = container(w->body);
+        if (w->props.body) {
+            auto bx = container(w->props.body);
             bx->flex(1.0f)
                .width(StyleValue::percent(100.0f))
                .height(StyleValue::percent(100.0f));

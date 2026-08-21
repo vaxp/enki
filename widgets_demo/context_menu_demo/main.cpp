@@ -20,17 +20,6 @@ using namespace enki;
 class ContextMenuDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        // Title & Description Header
-        auto title = text("Advanced Native ContextMenu (NativePopup)");
-        title->fontSize(24.0f).bold().color(0xFFFFFFFF);
-
-        auto sub = text("Right-click or long-press on cards below to trigger native floating desktop context menus");
-        sub->fontSize(14.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> t_children = {title, sub};
-        auto titleCol = column(t_children);
-        titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
-
         // 1. Context Menu items for Card 1 (File Operations)
         std::vector<ContextMenuItemPtr> card1_items = {
             contextMenuItem("Copy File", []() { std::cout << "[ContextMenu] Action: Copy File\n"; }, "Ctrl+C"),
@@ -43,23 +32,23 @@ public:
             contextMenuItem("Delete File", []() { std::cout << "[ContextMenu] Action: Delete File (Danger)\n"; }, "Del", nullptr, false, true),
         };
 
-        auto card1_text = text("📄 document_report_2026.pdf");
-        card1_text->fontSize(15.0f).color(0xFFF1F5F9).bold();
-
-        auto card1_desc = text("Right-click to open File Actions menu");
-        card1_desc->fontSize(12.0f).color(0xFF94A3B8);
-
-        auto card1_col = column({card1_text, card1_desc});
-        card1_col->gap(StyleValue::point(6.0f));
-
-        auto card1_box = container(card1_col);
-        card1_box->color(0xFF1E293B)
-                 .borderRadius(10.0f)
-                 .border(0xFF334155, 1.0f)
-                 .paddingAll(20.0f)
-                 .width(320.0f);
-
-        auto card1_menu = contextMenu(card1_box, card1_items);
+        auto card1_menu = contextMenu({
+            .child = container({
+                .color = 0xFF1E293B,
+                .border_radius = BorderRadius::circular(10.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .width = StyleValue::point(320.0f),
+                .padding = StyleInsets::all(20.0f),
+                .child = column({
+                    .gap = StyleValue::point(6.0f),
+                    .children = {
+                        text("📄 document_report_2026.pdf", { .color = 0xFFF1F5F9, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+                        text("Right-click to open File Actions menu", { .color = 0xFF94A3B8, .font_size = 12.0f })
+                    }
+                })
+            }),
+            .items = card1_items
+        });
 
         // 2. Context Menu items for Card 2 (Code Editor / Repository Actions)
         std::vector<ContextMenuItemPtr> card2_items = {
@@ -72,43 +61,53 @@ public:
             contextMenuItem("Force Purge Cache", []() { std::cout << "[ContextMenu] Action: Purge Cache (Danger)\n"; }, "", nullptr, false, true),
         };
 
-        auto card2_text = text("📦 enki-framework (main branch)");
-        card2_text->fontSize(15.0f).color(0xFFF1F5F9).bold();
+        auto card2_menu = contextMenu({
+            .child = container({
+                .color = 0xFF1E293B,
+                .border_radius = BorderRadius::circular(10.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .width = StyleValue::point(320.0f),
+                .padding = StyleInsets::all(20.0f),
+                .child = column({
+                    .gap = StyleValue::point(6.0f),
+                    .children = {
+                        text("📦 enki-framework (main branch)", { .color = 0xFFF1F5F9, .font_size = 15.0f, .font_weight = FontWeight::Bold }),
+                        text("Right-click for Git & Repository actions", { .color = 0xFF94A3B8, .font_size = 12.0f })
+                    }
+                })
+            }),
+            .items = card2_items,
+            .options = {
+                .background_color = 0xFA0F172A,
+                .border_color = 0xFF38BDF8
+            }
+        });
 
-        auto card2_desc = text("Right-click for Git & Repository actions");
-        card2_desc->fontSize(12.0f).color(0xFF94A3B8);
-
-        auto card2_col = column({card2_text, card2_desc});
-        card2_col->gap(StyleValue::point(6.0f));
-
-        auto card2_box = container(card2_col);
-        card2_box->color(0xFF1E293B)
-                 .borderRadius(10.0f)
-                 .border(0xFF334155, 1.0f)
-                 .paddingAll(20.0f)
-                 .width(320.0f);
-
-        ContextMenuOptions opt2;
-        opt2.background_color = 0xFA0F172A;
-        opt2.border_color = 0xFF38BDF8;
-
-        auto card2_menu = contextMenu(card2_box, card2_items, opt2);
-
-        // Layout rows
-        std::vector<WidgetPtr> r_children = {card1_menu, card2_menu};
-        auto cardsRow = row(r_children);
-        cardsRow->justifyContent(Justify::Center).alignItems(Align::Center).gap(40_px);
-
-        std::vector<WidgetPtr> m_children = {titleCol, cardsRow};
-        auto mainCol = column(m_children);
-        mainCol->alignItems(Align::Center).justifyContent(Justify::Center);
-
-        auto appRoot = container(mainCol);
-        appRoot->color(0xFF0F172A)
-               .paddingAll(40.0f)
-               .flexGrow(1.0f);
-
-        return appRoot;
+        return container({
+            .color = 0xFF0F172A,
+            .padding = StyleInsets::all(40.0f),
+            .flex_grow = 1.0f,
+            .child = column({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .children = {
+                    column({
+                        .align_items = Align::Center,
+                        .margin = StyleInsets::only(0, 0, 40.0f, 0),
+                        .children = {
+                            text("Advanced Native ContextMenu (NativePopup)", { .color = 0xFFFFFFFF, .font_size = 24.0f, .font_weight = FontWeight::Bold }),
+                            text("Right-click or long-press on cards below to trigger native floating desktop context menus", { .color = 0xFF94A3B8, .font_size = 14.0f })
+                        }
+                    }),
+                    row({
+                        .justify_content = Justify::Center,
+                        .align_items = Align::Center,
+                        .gap = StyleValue::point(40.0f),
+                        .children = { card1_menu, card2_menu }
+                    })
+                }
+            })
+        });
     }
 };
 

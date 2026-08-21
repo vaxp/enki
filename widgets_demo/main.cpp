@@ -585,7 +585,7 @@ public:
             bodyContent = buildShellShowcaseView();
         } else {
             // TextField Demo Tab
-            TextFieldOptions opt;
+            TextFieldProps opt;
             opt.style.font_size = 18.0f;
             opt.style.color = 0xFFFFFFFF;
             opt.hint_text = "Type here (Supports Arabic, UTF-8, Key Repeat)...";

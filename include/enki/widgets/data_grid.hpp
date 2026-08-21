@@ -237,7 +237,10 @@ public:
 /// Configuration Options for DataGrid
 /// ════════════════════════════════════════════════════════════════
 
-struct DataGridOptions {
+struct DataGridProps {
+    Key key = Key::none();
+    std::shared_ptr<DataGridController> controller;
+
     DataGridSelectionMode selection_mode = DataGridSelectionMode::RowMultiple;
     bool show_header = true;
     bool show_row_numbers = false;
@@ -282,35 +285,42 @@ struct DataGridOptions {
 
 class DataGrid : public StatefulWidget {
 public:
-    std::shared_ptr<DataGridController> controller;
-    DataGridOptions options;
+    DataGridProps props;
 
-    DataGrid(std::shared_ptr<DataGridController> ctrl, DataGridOptions opt = {})
-        : controller(ctrl ? ctrl : std::make_shared<DataGridController>()),
-          options(std::move(opt)) {}
+    DataGrid() = default;
+    explicit DataGrid(DataGridProps p) : props(std::move(p)) {
+        if (!props.controller) {
+            props.controller = std::make_shared<DataGridController>();
+        }
+    }
 
     // Fluent API Chaining
-    DataGrid* selectionMode(DataGridSelectionMode mode) { options.selection_mode = mode; return this; }
-    DataGrid* pagination(bool enable = true) { options.show_pagination = enable; return this; }
-    DataGrid* quickFilter(bool enable = true) { options.show_quick_filter = enable; return this; }
-    DataGrid* summaryFooter(bool enable = true) { options.show_summary_footer = enable; return this; }
-    DataGrid* zebra(bool enable = true) { options.zebra_stripes = enable; return this; }
-    DataGrid* rowHeight(float h) { options.row_height = h; return this; }
-    DataGrid* onSelectionChanged(std::function<void(const std::set<std::string>&)> cb) {
-        options.on_selection_changed = std::move(cb);
-        return this;
+    DataGrid& selectionMode(DataGridSelectionMode mode) { props.selection_mode = mode; return *this; }
+    DataGrid& pagination(bool enable = true) { props.show_pagination = enable; return *this; }
+    DataGrid& quickFilter(bool enable = true) { props.show_quick_filter = enable; return *this; }
+    DataGrid& summaryFooter(bool enable = true) { props.show_summary_footer = enable; return *this; }
+    DataGrid& zebra(bool enable = true) { props.zebra_stripes = enable; return *this; }
+    DataGrid& rowHeight(float h) { props.row_height = h; return *this; }
+    DataGrid& onSelectionChanged(std::function<void(const std::set<std::string>&)> cb) {
+        props.on_selection_changed = std::move(cb);
+        return *this;
     }
-    DataGrid* onRowTap(std::function<void(const std::string&)> cb) { options.on_row_tap = std::move(cb); return this; }
-    DataGrid* onRowDoubleTap(std::function<void(const std::string&)> cb) { options.on_row_double_tap = std::move(cb); return this; }
+    DataGrid& onRowTap(std::function<void(const std::string&)> cb) { props.on_row_tap = std::move(cb); return *this; }
+    DataGrid& onRowDoubleTap(std::function<void(const std::string&)> cb) { props.on_row_double_tap = std::move(cb); return *this; }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DataGrid"; }
 };
 
+inline std::shared_ptr<DataGrid> dataGrid(DataGridProps props = {}) {
+    return std::make_shared<DataGrid>(std::move(props));
+}
+
 inline std::shared_ptr<DataGrid> dataGrid(
-    std::shared_ptr<DataGridController> ctrl,
-    DataGridOptions options = {}) {
-    return std::make_shared<DataGrid>(std::move(ctrl), std::move(options));
+    std::shared_ptr<DataGridController> ctrl) {
+    DataGridProps props;
+    props.controller = std::move(ctrl);
+    return std::make_shared<DataGrid>(std::move(props));
 }
 
 } // namespace enki

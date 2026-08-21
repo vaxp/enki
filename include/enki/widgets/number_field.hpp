@@ -89,7 +89,11 @@ public:
 /// Configuration Options for NumberField
 /// ════════════════════════════════════════════════════════════════
 
-struct NumberFieldOptions {
+struct NumberFieldProps {
+    Key key = Key::none();
+    std::shared_ptr<NumberFieldController> controller = nullptr;
+    double initial_value = 0.0;
+
     // Value Range & Step
     double min_value = -std::numeric_limits<double>::infinity();
     double max_value = std::numeric_limits<double>::infinity();
@@ -133,9 +137,9 @@ struct NumberFieldOptions {
     bool auto_focus = false;
 
     // Callbacks
-    std::function<void(double)> on_changed;
-    std::function<void(double)> on_submitted;
-    std::function<std::string(double)> custom_formatter;
+    std::function<void(double)> on_changed = nullptr;
+    std::function<void(double)> on_submitted = nullptr;
+    std::function<std::string(double)> custom_formatter = nullptr;
 };
 
 /// ════════════════════════════════════════════════════════════════
@@ -145,14 +149,19 @@ struct NumberFieldOptions {
 class NumberField : public StatefulWidget {
 public:
     std::shared_ptr<NumberFieldController> controller;
-    NumberFieldOptions options;
+    NumberFieldProps options;
 
-    NumberField(std::shared_ptr<NumberFieldController> ctrl, NumberFieldOptions opt = {})
+    NumberField(std::shared_ptr<NumberFieldController> ctrl, NumberFieldProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<NumberFieldController>(0.0)),
           options(std::move(opt)) {}
 
-    NumberField(double initial_val, NumberFieldOptions opt = {})
+    NumberField(double initial_val, NumberFieldProps opt = {})
         : controller(std::make_shared<NumberFieldController>(initial_val)),
+          options(std::move(opt)) {}
+
+    NumberField(Key key, std::shared_ptr<NumberFieldController> ctrl, double initial_val, NumberFieldProps opt)
+        : StatefulWidget(std::move(key)),
+          controller(ctrl ? std::move(ctrl) : std::make_shared<NumberFieldController>(initial_val)),
           options(std::move(opt)) {}
 
     // Fluent API Chaining
@@ -179,14 +188,18 @@ public:
 
 inline std::shared_ptr<NumberField> numberField(
     std::shared_ptr<NumberFieldController> ctrl,
-    NumberFieldOptions options = {}) {
+    NumberFieldProps options = {}) {
     return std::make_shared<NumberField>(std::move(ctrl), std::move(options));
 }
 
 inline std::shared_ptr<NumberField> numberField(
     double initial_val = 0.0,
-    NumberFieldOptions options = {}) {
+    NumberFieldProps options = {}) {
     return std::make_shared<NumberField>(initial_val, std::move(options));
+}
+
+inline std::shared_ptr<NumberField> numberField(NumberFieldProps props) {
+    return std::make_shared<NumberField>(std::move(props.key), std::move(props.controller), props.initial_value, std::move(props));
 }
 
 } // namespace enki

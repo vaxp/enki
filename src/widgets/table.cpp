@@ -97,9 +97,9 @@ void TableBorderWidget::updateRenderObject(BuildContext& ctx, RenderObject& ro) 
 
 WidgetPtr Table::build(BuildContext& ctx) {
     std::vector<WidgetPtr> row_widgets;
-    row_widgets.reserve(rows.size());
+    row_widgets.reserve(props.rows.size());
 
-    for (const auto& table_row : rows) {
+    for (const auto& table_row : props.rows) {
         std::vector<WidgetPtr> cell_widgets;
         cell_widgets.reserve(table_row.cells.size());
 
@@ -110,8 +110,8 @@ WidgetPtr Table::build(BuildContext& ctx) {
             }
             
             // Find column width
-            TableColumnWidth col_width = default_column_width;
-            for (const auto& pair : column_widths_map) {
+            TableColumnWidth col_width = props.default_column_width;
+            for (const auto& pair : props.column_widths_map) {
                 if (pair.first == static_cast<int>(col)) {
                     col_width = pair.second;
                     break;
@@ -149,7 +149,7 @@ WidgetPtr Table::build(BuildContext& ctx) {
         auto row_widget = row(std::move(cell_widgets));
         // Apply vertical alignment to the row
         auto align = table_row.vertical_alignment != TableCellVerticalAlignment::Middle 
-                        ? table_row.vertical_alignment : default_vertical_alignment;
+                        ? table_row.vertical_alignment : props.default_vertical_alignment;
                         
         if (align == TableCellVerticalAlignment::Top) {
             row_widget->alignItems(Align::Start);
@@ -174,7 +174,7 @@ WidgetPtr Table::build(BuildContext& ctx) {
     auto col_widget = column(std::move(row_widgets));
     col_widget->width(StyleValue::percent(100.0f));
     
-    return std::make_shared<TableBorderWidget>(table_border, col_widget);
+    return std::make_shared<TableBorderWidget>(props.table_border, col_widget);
 }
 
 } // namespace enki

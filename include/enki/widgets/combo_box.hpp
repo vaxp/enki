@@ -62,10 +62,41 @@ struct ComboBoxItem {
 };
 
 /// ════════════════════════════════════════════════════════════════
+/// ComboBox Controller
+/// ════════════════════════════════════════════════════════════════
+
+class ComboBoxController {
+public:
+    std::function<void(const std::string&)> select_fn;
+    std::function<void(const std::vector<std::string>&)> select_multi_fn;
+    std::function<void()> clear_fn;
+    std::function<void()> open_fn;
+    std::function<void()> close_fn;
+    std::function<void()> toggle_fn;
+    std::function<std::string()> get_value_fn;
+    std::function<std::vector<std::string>()> get_multi_values_fn;
+    std::function<bool()> is_open_fn;
+
+    void select(const std::string& id) { if (select_fn) select_fn(id); }
+    void selectMultiple(const std::vector<std::string>& ids) { if (select_multi_fn) select_multi_fn(ids); }
+    void clear() { if (clear_fn) clear_fn(); }
+    void open() { if (open_fn) open_fn(); }
+    void close() { if (close_fn) close_fn(); }
+    void toggle() { if (toggle_fn) toggle_fn(); }
+    [[nodiscard]] std::string getValue() const { return get_value_fn ? get_value_fn() : ""; }
+    [[nodiscard]] std::vector<std::string> getMultiValues() const { return get_multi_values_fn ? get_multi_values_fn() : std::vector<std::string>{}; }
+    [[nodiscard]] bool isOpen() const { return is_open_fn ? is_open_fn() : false; }
+};
+
+/// ════════════════════════════════════════════════════════════════
 /// ComboBox Options
 /// ════════════════════════════════════════════════════════════════
 
-struct ComboBoxOptions {
+struct ComboBoxProps {
+    std::vector<ComboBoxItem> items;
+    WidgetPtr body = nullptr;                              ///< Main page body content to wrap in stack overlay
+    std::shared_ptr<ComboBoxController> controller = nullptr;
+
     ComboBoxMode mode = ComboBoxMode::Single;
     std::string placeholder = "Search or select option...";
 
@@ -101,59 +132,23 @@ struct ComboBoxOptions {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// ComboBox Controller
-/// ════════════════════════════════════════════════════════════════
-
-class ComboBoxController {
-public:
-    std::function<void(const std::string&)> select_fn;
-    std::function<void(const std::vector<std::string>&)> select_multi_fn;
-    std::function<void()> clear_fn;
-    std::function<void()> open_fn;
-    std::function<void()> close_fn;
-    std::function<void()> toggle_fn;
-    std::function<std::string()> get_value_fn;
-    std::function<std::vector<std::string>()> get_multi_values_fn;
-    std::function<bool()> is_open_fn;
-
-    void select(const std::string& id) { if (select_fn) select_fn(id); }
-    void selectMultiple(const std::vector<std::string>& ids) { if (select_multi_fn) select_multi_fn(ids); }
-    void clear() { if (clear_fn) clear_fn(); }
-    void open() { if (open_fn) open_fn(); }
-    void close() { if (close_fn) close_fn(); }
-    void toggle() { if (toggle_fn) toggle_fn(); }
-    [[nodiscard]] std::string getValue() const { return get_value_fn ? get_value_fn() : ""; }
-    [[nodiscard]] std::vector<std::string> getMultiValues() const { return get_multi_values_fn ? get_multi_values_fn() : std::vector<std::string>{}; }
-    [[nodiscard]] bool isOpen() const { return is_open_fn ? is_open_fn() : false; }
-};
-
-/// ════════════════════════════════════════════════════════════════
 /// ComboBox Widget
 /// ════════════════════════════════════════════════════════════════
 
 class ComboBox : public StatefulWidget {
 public:
-    std::vector<ComboBoxItem> items;
-    WidgetPtr body;                              ///< Main page body content to wrap in stack overlay
-    ComboBoxOptions options;
-    std::shared_ptr<ComboBoxController> controller;
+    ComboBoxProps props;
 
     ComboBox() = default;
-    ComboBox(std::vector<ComboBoxItem> items_, WidgetPtr body_, ComboBoxOptions opts = {},
-             std::shared_ptr<ComboBoxController> ctrl = nullptr)
-        : items(std::move(items_)), body(std::move(body_)),
-          options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit ComboBox(ComboBoxProps p)
+        : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ComboBox"; }
 };
 
-inline std::shared_ptr<ComboBox> comboBox(
-    std::vector<ComboBoxItem> items,
-    WidgetPtr body,
-    ComboBoxOptions options = {},
-    std::shared_ptr<ComboBoxController> controller = nullptr) {
-    return std::make_shared<ComboBox>(std::move(items), std::move(body), std::move(options), std::move(controller));
+inline std::shared_ptr<ComboBox> comboBox(ComboBoxProps props) {
+    return std::make_shared<ComboBox>(std::move(props));
 }
 
 } // namespace enki

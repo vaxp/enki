@@ -163,7 +163,7 @@ public:
         ctrl_row->gap(StyleValue::point(10.0f)).justifyContent(Justify::Center);
 
         // ── Calendar Widget ───────────────────────────────────────────
-        CalendarOptions opts;
+        CalendarProps opts;
         opts.selection_mode = current_mode_;
         opts.width = 380.0f;
         opts.on_date_selected = [this](CalendarDate d) {
@@ -176,12 +176,16 @@ public:
             setState([] {});
         };
 
-        auto cal_widget = calendar(sample_events_, opts, calendar_ctrl_);
+        opts.events = sample_events_;
+        opts.controller = calendar_ctrl_;
+        auto cal_widget = calendar(opts);
 
         // ── Agenda Panel ──────────────────────────────────────────────
         auto agenda_widget = buildAgendaPanel();
 
-        std::vector<WidgetPtr> main_row_items = {cal_widget, agenda_widget};
+        std::vector<WidgetPtr> main_row_items;
+        main_row_items.push_back(cal_widget);
+        main_row_items.push_back(agenda_widget);
         auto main_row = row(main_row_items);
         main_row->gap(StyleValue::point(20.0f)).justifyContent(Justify::Center);
 

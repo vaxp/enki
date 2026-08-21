@@ -23,7 +23,8 @@ enum class SpinnerStyle {
 };
 
 /// Options for configuring a Spinner
-struct SpinnerOptions {
+struct SpinnerProps {
+    Key key = Key::none();
     SpinnerStyle style = SpinnerStyle::Spokes;
     
     float size = 36.0f;
@@ -52,18 +53,31 @@ struct SpinnerOptions {
 class Spinner : public StatefulWidget {
 public:
     WidgetPtr child;
-    SpinnerOptions options;
+    SpinnerProps options;
 
-    explicit Spinner(SpinnerOptions options = SpinnerOptions(), WidgetPtr child = nullptr)
+    explicit Spinner(SpinnerProps options = SpinnerProps(), WidgetPtr child = nullptr)
         : child(std::move(child)), options(std::move(options)) {}
+        
+    Spinner(Key k, WidgetPtr child, SpinnerProps options)
+        : StatefulWidget(std::move(k)), child(std::move(child)), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Spinner"; }
 };
 
 /// Helper function to construct a Spinner widget
-inline WidgetPtr spinner(SpinnerOptions options = SpinnerOptions(), WidgetPtr child = nullptr) {
+inline WidgetPtr spinner(SpinnerProps options = SpinnerProps(), WidgetPtr child = nullptr) {
     return std::make_shared<Spinner>(std::move(options), std::move(child));
+}
+
+struct SpinnerDeclarativeProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    SpinnerProps options = SpinnerProps();
+};
+
+inline WidgetPtr spinner(SpinnerDeclarativeProps props) {
+    return std::make_shared<Spinner>(std::move(props.key), std::move(props.child), std::move(props.options));
 }
 
 } // namespace enki

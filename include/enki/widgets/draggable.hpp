@@ -97,6 +97,37 @@ inline std::shared_ptr<Draggable> draggable(
                                       std::move(preview_label));
 }
 
+struct DraggableProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    std::string tag = "";
+    std::string preview_label = "";
+    std::any data;
+    WidgetPtr feedback;
+    WidgetPtr child_when_dragging;
+
+    std::function<void()> on_drag_started;
+    std::function<void()> on_drag_end;
+    std::function<void()> on_drag_completed;
+};
+
+inline std::shared_ptr<Draggable> draggable(DraggableProps props) {
+    auto d = std::make_shared<Draggable>(std::move(props.tag), std::move(props.data), std::move(props.child),
+                                         std::move(props.feedback), std::move(props.child_when_dragging),
+                                         std::move(props.preview_label));
+    d->key = std::move(props.key);
+    d->on_drag_started = std::move(props.on_drag_started);
+    d->on_drag_end = std::move(props.on_drag_end);
+    d->on_drag_completed = std::move(props.on_drag_completed);
+    return d;
+}
+
+inline std::shared_ptr<Draggable> draggable(DraggableProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return draggable(std::move(props));
+}
+
 /// ════════════════════════════════════════════════════════════════
 /// DragTarget Widget
 /// ════════════════════════════════════════════════════════════════
@@ -126,6 +157,24 @@ inline std::shared_ptr<DragTarget> dragTarget(
     std::function<void(const std::any&)> on_accept = nullptr,
     std::string accepted_tag = "") {
     return std::make_shared<DragTarget>(std::move(builder), std::move(on_accept), std::move(accepted_tag));
+}
+
+struct DragTargetProps {
+    Key key = Key::none();
+    std::string accepted_tag = "";
+    DragTarget::TargetBuilder builder;
+
+    std::function<bool(const std::any& data)> on_will_accept;
+    std::function<void(const std::any& data)> on_accept;
+    std::function<void()> on_leave;
+};
+
+inline std::shared_ptr<DragTarget> dragTarget(DragTargetProps props) {
+    auto dt = std::make_shared<DragTarget>(std::move(props.builder), std::move(props.on_accept), std::move(props.accepted_tag));
+    dt->key = std::move(props.key);
+    dt->on_will_accept = std::move(props.on_will_accept);
+    dt->on_leave = std::move(props.on_leave);
+    return dt;
 }
 
 /// ════════════════════════════════════════════════════════════════

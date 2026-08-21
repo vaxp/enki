@@ -57,11 +57,11 @@ class TreeViewState : public State {
         State::initState();
         auto* w = static_cast<const TreeView*>(widget());
         // Init expanded state from TreeNodeData.initially_expanded
-        initExpandedState(w->nodes);
+        initExpandedState(w->props.nodes);
         // Init selection
-        if (w->selected_node_id.has_value())
-            selected_.insert(*w->selected_node_id);
-        selected_.insert(w->selected_node_ids.begin(), w->selected_node_ids.end());
+        if (w->props.selected_node_id.has_value())
+            selected_.insert(*w->props.selected_node_id);
+        selected_.insert(w->props.selected_node_ids.begin(), w->props.selected_node_ids.end());
     }
 
     void initExpandedState(const std::vector<TreeNodeData>& nodes) {
@@ -112,8 +112,8 @@ class TreeViewState : public State {
                             if (expanding) expanded_.insert(node_id);
                             else           expanded_.erase(node_id);
                         });
-                        if (expanding && w->on_node_expanded)   w->on_node_expanded(node_id);
-                        if (!expanding && w->on_node_collapsed) w->on_node_collapsed(node_id);
+                        if (expanding && w->props.on_node_expanded)   w->props.on_node_expanded(node_id);
+                        if (!expanding && w->props.on_node_collapsed) w->props.on_node_collapsed(node_id);
                     };
                     arrow = det;
                 } else {
@@ -173,28 +173,28 @@ class TreeViewState : public State {
             det->cursor_type = SystemCursor::Pointer;
             det->on_tap = [this, node_id, w]() {
                 // Toggle expand on label click if configured
-                if (w->toggle_on_label && expanded_.count(node_id) == 0) {
+                if (w->props.toggle_on_label && expanded_.count(node_id) == 0) {
                     setState([this, node_id]{ expanded_.insert(node_id); });
-                    if (w->on_node_expanded) w->on_node_expanded(node_id);
-                } else if (w->toggle_on_label) {
+                    if (w->props.on_node_expanded) w->props.on_node_expanded(node_id);
+                } else if (w->props.toggle_on_label) {
                     setState([this, node_id]{ expanded_.erase(node_id); });
-                    if (w->on_node_collapsed) w->on_node_collapsed(node_id);
+                    if (w->props.on_node_collapsed) w->props.on_node_collapsed(node_id);
                 }
                 // Selection
                 setState([this, node_id, w]() {
-                    if (w->multi_select) {
+                    if (w->props.multi_select) {
                         if (selected_.count(node_id)) selected_.erase(node_id);
                         else selected_.insert(node_id);
-                        if (w->on_selection_changed) w->on_selection_changed(selected_);
+                        if (w->props.on_selection_changed) w->props.on_selection_changed(selected_);
                     } else {
                         selected_.clear();
                         selected_.insert(node_id);
-                        if (w->on_node_selected) w->on_node_selected(node_id);
+                        if (w->props.on_node_selected) w->props.on_node_selected(node_id);
                     }
                 });
             };
-            if (w->on_node_context_menu) {
-                auto ctx_cb = w->on_node_context_menu;
+            if (w->props.on_node_context_menu) {
+                auto ctx_cb = w->props.on_node_context_menu;
                 det->on_secondary_tap = [ctx_cb, node_id]() { ctx_cb(node_id, {0,0}); };
             }
             row_widget = det;
@@ -222,17 +222,17 @@ public:
         auto* w = static_cast<const TreeView*>(widget());
 
         std::vector<WidgetPtr> all_nodes;
-        for (auto& n : w->nodes)
-            all_nodes.push_back(buildNode(n, 0, w->tree_theme, w));
+        for (auto& n : w->props.nodes)
+            all_nodes.push_back(buildNode(n, 0, w->props.tree_theme, w));
 
         auto root_col = std::make_shared<Column>(std::move(all_nodes));
         root_col->width(StyleValue::percent(100.0f));
         root_col->flexShrink(0.0f);
 
         WidgetPtr content;
-        if (w->list_padding != EdgeInsets{}) {
+        if (w->props.list_padding != EdgeInsets{}) {
             auto pc = container(root_col);
-            pc->padding(w->list_padding);
+            pc->padding(w->props.list_padding);
             content = pc;
         } else {
             content = root_col;
@@ -240,9 +240,9 @@ public:
 
         ScrollOptions opts;
         opts.direction = Axis::Vertical;
-        opts.scroll_speed = w->scroll_speed;
+        opts.scroll_speed = w->props.scroll_speed;
         opts.show_scrollbar = true;
-        opts.clamp_overscroll = (w->scroll_physics == ScrollPhysics::Clamped);
+        opts.clamp_overscroll = (w->props.scroll_physics == ScrollPhysics::Clamped);
         return scrollView(opts, content);
     }
 };

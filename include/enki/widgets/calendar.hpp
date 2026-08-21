@@ -77,10 +77,16 @@ struct CalendarEvent {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Calendar Options
+/// Calendar Props
 /// ════════════════════════════════════════════════════════════════
 
-struct CalendarOptions {
+class CalendarController;
+
+struct CalendarProps {
+    Key key = Key::none();
+    std::vector<CalendarEvent> events;
+    std::shared_ptr<CalendarController> controller;
+
     CalendarSelectionMode selection_mode = CalendarSelectionMode::Single;
     CalendarDate initial_date = {2026, 8, 19};
     int first_day_of_week = 1;        ///< 0 = Sunday, 1 = Monday
@@ -143,24 +149,24 @@ public:
 
 class Calendar : public StatefulWidget {
 public:
-    std::vector<CalendarEvent> events;
-    CalendarOptions options;
-    std::shared_ptr<CalendarController> controller;
+    CalendarProps props;
 
     Calendar() = default;
-    Calendar(std::vector<CalendarEvent> events_, CalendarOptions opts = {},
-             std::shared_ptr<CalendarController> ctrl = nullptr)
-        : events(std::move(events_)), options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit Calendar(CalendarProps p) : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Calendar"; }
 };
 
+inline std::shared_ptr<Calendar> calendar(CalendarProps props = {}) {
+    return std::make_shared<Calendar>(std::move(props));
+}
+
 inline std::shared_ptr<Calendar> calendar(
-    std::vector<CalendarEvent> events = {},
-    CalendarOptions options = {},
-    std::shared_ptr<CalendarController> controller = nullptr) {
-    return std::make_shared<Calendar>(std::move(events), std::move(options), std::move(controller));
+    std::vector<CalendarEvent> events) {
+    CalendarProps props;
+    props.events = std::move(events);
+    return std::make_shared<Calendar>(std::move(props));
 }
 
 } // namespace enki

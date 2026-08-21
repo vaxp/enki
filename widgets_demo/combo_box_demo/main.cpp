@@ -169,7 +169,10 @@ public:
             ComboBoxItem("ap-southeast-1", "Asia Pacific (Singapore)", "🇸🇬", "74 ms • 14 Nodes", "Asia Pacific")
         };
 
-        ComboBoxOptions reg_opts;
+        ComboBoxProps reg_opts;
+        reg_opts.items = region_items;
+        reg_opts.body = background_page;
+        reg_opts.controller = region_ctrl_;
         reg_opts.mode = ComboBoxMode::Single;
         reg_opts.width = 360.0f;
         reg_opts.input_height = 42.0f;
@@ -192,7 +195,12 @@ public:
             ComboBoxItem("vulkan", "Vulkan Compute Shaders", "🚀", "SPIR-V GPU pipeline", "Display Drivers")
         };
 
-        ComboBoxOptions tech_opts;
+        ComboBoxProps tech_opts;
+        tech_opts.items = tech_items;
+        // combo2 wraps combo1 as its body
+        auto combo1 = comboBox(std::move(reg_opts));
+        tech_opts.body = combo1;
+        tech_opts.controller = tech_ctrl_;
         tech_opts.mode = ComboBoxMode::Multi;
         tech_opts.width = 360.0f;
         tech_opts.input_height = 42.0f;
@@ -208,9 +216,7 @@ public:
             setState([] {});
         };
 
-        // Chained overlay wrapping
-        auto combo1 = comboBox(region_items, background_page, reg_opts, region_ctrl_);
-        auto combo2 = comboBox(tech_items, combo1, tech_opts, tech_ctrl_);
+        auto combo2 = comboBox(std::move(tech_opts));
 
         return combo2;
     }

@@ -97,6 +97,16 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+struct ScrollProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    Axis direction = Axis::Vertical;
+    bool clamp_overscroll = true;
+    bool show_scrollbar = false;
+    float scroll_speed = 50.0f; // Multiplier for mouse wheel
+};
+
 inline std::shared_ptr<ScrollView> scrollView(WidgetPtr child) {
     return std::make_shared<ScrollView>(std::move(child));
 }
@@ -107,6 +117,20 @@ inline std::shared_ptr<ScrollView> scrollView(ScrollOptions opt, WidgetPtr child
 
 inline std::shared_ptr<ScrollView> scrollView(Key k, ScrollOptions opt, WidgetPtr child) {
     return std::make_shared<ScrollView>(std::move(k), std::move(opt), std::move(child));
+}
+
+inline std::shared_ptr<ScrollView> scrollView(ScrollProps props) {
+    ScrollOptions opt;
+    opt.direction = props.direction;
+    opt.clamp_overscroll = props.clamp_overscroll;
+    opt.show_scrollbar = props.show_scrollbar;
+    opt.scroll_speed = props.scroll_speed;
+    return std::make_shared<ScrollView>(std::move(props.key), opt, std::move(props.child));
+}
+
+inline std::shared_ptr<ScrollView> scrollView(ScrollProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return scrollView(std::move(props));
 }
 
 } // namespace enki

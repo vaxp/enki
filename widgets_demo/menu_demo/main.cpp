@@ -109,7 +109,7 @@ public:
             MenuEntry("Help", help_items),
         };
 
-        auto app_menubar = menuBar(bar_entries);
+        auto app_menubar = menuBar({ .entries = bar_entries });
 
         // ── 2. Standalone Context/Dropdown Button ─────────────────────
         std::vector<MenuItem> quick_items = {
@@ -119,61 +119,59 @@ public:
             MenuItem::action("Clear Cache", [this]() { logAction("Quick Action -> Cache cleared"); }, "🧹"),
         };
 
-        auto quick_btn_txt = text("⚡ Quick Actions Menu  ▼");
-        quick_btn_txt->fontSize(13.0f).bold().color(0xFFFFFFFF);
-
-        auto quick_btn_box = container(quick_btn_txt);
-        quick_btn_box->color(0xFF2563EB)
-                     .borderRadius(8.0f)
-                     .paddingSymmetric(8.0f, 16.0f);
-
-        auto standalone_menu = menu(quick_btn_box, quick_items);
+        auto standalone_menu = menu({
+            .child = container({
+                .color = 0xFF2563EB,
+                .border_radius = BorderRadius::circular(8.0f),
+                .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                .child = text("⚡ Quick Actions Menu  ▼", { .color = 0xFFFFFFFF, .font_size = 13.0f, .font_weight = FontWeight::Bold })
+            }),
+            .items = quick_items
+        });
 
         // ── 3. Central Showcase Content ──────────────────────────────
-        auto heading = text("ENKI Advanced Native Menu Suite");
-        heading->fontSize(22.0f).bold().color(0xFFFFFFFF);
-
-        auto desc = text("True multi-surface NativePopup architecture with cascading submenus, checkable items, and shortcuts.");
-        desc->fontSize(13.0f).color(0xFF94A3B8);
-
-        auto log_title = text("Recent Action Log:");
-        log_title->fontSize(12.0f).bold().color(0xFF38BDF8);
-
-        auto log_content = text(last_action_);
-        log_content->fontSize(13.0f).color(0xFFF1F5F9);
-
-        std::vector<WidgetPtr> log_col_items = {log_title, log_content};
-        auto log_card = card(column(log_col_items));
-        log_card->color(0xFF1E293B)
-                .borderRadius(8.0f)
-                .border(0xFF334155, 1.0f)
-                .paddingAll(14.0f);
-
-        auto log_box = container(log_card);
-        log_box->width(550.0f);
-
-        std::vector<WidgetPtr> center_items = {heading, desc, standalone_menu, log_box};
-        auto center_col = column(center_items);
-        center_col->gap(StyleValue::point(16.0f))
-                  .alignItems(Align::Center)
-                  .justifyContent(Justify::Center);
-
-        auto content_container = container(center_col);
-        content_container->flexGrow(1.0f)
-                         .align(Alignment::Center);
+        // ── 3. Central Showcase Content ──────────────────────────────
+        auto content_container = container({
+            .align = Alignment::Center,
+            .flex_grow = 1.0f,
+            .child = column({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .gap = StyleValue::point(16.0f),
+                .children = {
+                    text("ENKI Advanced Native Menu Suite", { .color = 0xFFFFFFFF, .font_size = 22.0f, .font_weight = FontWeight::Bold }),
+                    text("True multi-surface NativePopup architecture with cascading submenus, checkable items, and shortcuts.", { .color = 0xFF94A3B8, .font_size = 13.0f }),
+                    standalone_menu,
+                    container({
+                        .width = StyleValue::point(550.0f),
+                        .child = card({
+                            .child = column({
+                                .children = {
+                                    text("Recent Action Log:", { .color = 0xFF38BDF8, .font_size = 12.0f, .font_weight = FontWeight::Bold }),
+                                    text(last_action_, { .color = 0xFFF1F5F9, .font_size = 13.0f })
+                                }
+                            }),
+                            .color = 0xFF1E293B,
+                            .border_radius = BorderRadius::circular(8.0f),
+                            .border = Border(0xFF334155, 1.0f),
+                            .padding = StyleInsets::all(14.0f)
+                        })
+                    })
+                }
+            })
+        });
 
         // ── 4. Bottom Status Bar (Toggleable) ─────────────────────────
         WidgetPtr statusbar_widget = nullptr;
         if (show_statusbar_) {
-            auto status_txt = text("🟢 System Status: Active  |  ENKI Native Popups: Ready  |  Layout: " +
-                                  std::string(layout_mode_ == 0 ? "Compact" : (layout_mode_ == 1 ? "Standard" : "Expanded")));
-            status_txt->fontSize(11.0f).color(0xFF94A3B8);
-
-            auto sb = container(status_txt);
-            sb->color(0xFF0F172A)
-              .border(0xFF334155, 1.0f)
-              .paddingSymmetric(6.0f, 16.0f);
-            statusbar_widget = sb;
+            statusbar_widget = container({
+                .color = 0xFF0F172A,
+                .border = Border(0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 16.0f),
+                .child = text("🟢 System Status: Active  |  ENKI Native Popups: Ready  |  Layout: " +
+                                std::string(layout_mode_ == 0 ? "Compact" : (layout_mode_ == 1 ? "Standard" : "Expanded")),
+                              { .color = 0xFF94A3B8, .font_size = 11.0f })
+            });
         }
 
         // Main Scaffold
@@ -184,15 +182,15 @@ public:
             main_views.push_back(statusbar_widget);
         }
 
-        auto root_col = column(main_views);
-        root_col->flexGrow(1.0f);
-
-        auto app_root = container(root_col);
-        app_root->color(0xFF0B1120)
-                .paddingAll(12.0f)
-                .flexGrow(1.0f);
-
-        return app_root;
+        return container({
+            .color = 0xFF0B1120,
+            .padding = StyleInsets::all(12.0f),
+            .flex_grow = 1.0f,
+            .child = column({
+                .flex_grow = 1.0f,
+                .children = main_views
+            })
+        });
     }
 };
 

@@ -30,7 +30,13 @@ enum class CarouselEffect {
 /// Carousel Options
 /// ════════════════════════════════════════════════════════════════
 
-struct CarouselOptions {
+class CarouselController;
+
+struct CarouselProps {
+    Key key = Key::none();
+    std::vector<WidgetPtr> slides;
+    std::shared_ptr<CarouselController> controller;
+
     CarouselEffect effect = CarouselEffect::Slide;
 
     int initial_index = 0;
@@ -85,24 +91,24 @@ public:
 
 class Carousel : public StatefulWidget {
 public:
-    std::vector<WidgetPtr> slides;
-    CarouselOptions options;
-    std::shared_ptr<CarouselController> controller;
+    CarouselProps props;
 
     Carousel() = default;
-    Carousel(std::vector<WidgetPtr> slides_, CarouselOptions opts = {},
-             std::shared_ptr<CarouselController> ctrl = nullptr)
-        : slides(std::move(slides_)), options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit Carousel(CarouselProps p) : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Carousel"; }
 };
 
+inline std::shared_ptr<Carousel> carousel(CarouselProps props = {}) {
+    return std::make_shared<Carousel>(std::move(props));
+}
+
 inline std::shared_ptr<Carousel> carousel(
-    std::vector<WidgetPtr> slides,
-    CarouselOptions options = {},
-    std::shared_ptr<CarouselController> controller = nullptr) {
-    return std::make_shared<Carousel>(std::move(slides), std::move(options), std::move(controller));
+    std::vector<WidgetPtr> slides) {
+    CarouselProps props;
+    props.slides = std::move(slides);
+    return std::make_shared<Carousel>(std::move(props));
 }
 
 } // namespace enki

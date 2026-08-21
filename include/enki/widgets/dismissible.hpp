@@ -29,7 +29,11 @@ enum class DismissDirection {
 /// Dismissible Options
 /// ════════════════════════════════════════════════════════════════
 
-struct DismissibleOptions {
+struct DismissibleProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    std::string id = "";
+
     DismissDirection direction = DismissDirection::Horizontal;
     float dismiss_threshold = 0.35f;   ///< Fraction of width needed to trigger dismissal
 
@@ -49,11 +53,13 @@ class Dismissible : public StatefulWidget {
 public:
     std::string id = "";
     WidgetPtr child;
-    DismissibleOptions options;
+    DismissibleProps options;
 
     Dismissible() = default;
-    Dismissible(std::string id_, WidgetPtr child_, DismissibleOptions opts = {})
+    Dismissible(std::string id_, WidgetPtr child_, DismissibleProps opts = {})
         : id(std::move(id_)), child(std::move(child_)), options(std::move(opts)) {}
+    Dismissible(Key key, std::string id_, WidgetPtr child_, DismissibleProps opts = {})
+        : StatefulWidget(std::move(key)), id(std::move(id_)), child(std::move(child_)), options(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Dismissible"; }
@@ -62,8 +68,17 @@ public:
 inline std::shared_ptr<Dismissible> dismissible(
     std::string id,
     WidgetPtr child,
-    DismissibleOptions options = {}) {
+    DismissibleProps options = {}) {
     return std::make_shared<Dismissible>(std::move(id), std::move(child), std::move(options));
+}
+
+inline std::shared_ptr<Dismissible> dismissible(DismissibleProps props) {
+    return std::make_shared<Dismissible>(std::move(props.key), std::move(props.id), std::move(props.child), std::move(props));
+}
+
+inline std::shared_ptr<Dismissible> dismissible(DismissibleProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return dismissible(std::move(props));
 }
 
 } // namespace enki

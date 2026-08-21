@@ -229,7 +229,7 @@ public:
 
         std::vector<AccordionItem> accordion_items = {it1, it2, it3, it4, it5};
 
-        AccordionOptions opts;
+        AccordionProps opts;
         opts.mode = current_mode_;
         opts.variant = current_variant_;
         opts.on_toggle = [this](const std::string& id, bool exp) {
@@ -237,7 +237,9 @@ public:
             setState([] {});
         };
 
-        auto acc_widget = accordion(accordion_items, opts, accordion_ctrl_);
+        opts.items = accordion_items;
+        opts.controller = accordion_ctrl_;
+        auto acc_widget = accordion(opts);
 
         auto acc_wrapper = container(acc_widget);
         acc_wrapper->width(820.0f);
@@ -255,7 +257,12 @@ public:
                .width(820.0f);
 
         // ── Assemble Page Body ────────────────────────────────────────
-        std::vector<WidgetPtr> page_items = {title_col, controls_row, prog_row, acc_wrapper, hud_box};
+        std::vector<WidgetPtr> page_items;
+        page_items.push_back(title_col);
+        page_items.push_back(controls_row);
+        page_items.push_back(prog_row);
+        page_items.push_back(acc_wrapper);
+        page_items.push_back(hud_box);
         auto page_col = column(page_items);
         page_col->gap(StyleValue::point(18.0f)).alignItems(Align::Center);
 

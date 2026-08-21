@@ -50,7 +50,7 @@ public:
         f_title->fontSize(15.5f).bold().color(0xFF38BDF8);
 
         // 1. Full Name Field
-        TextFormFieldOptions name_opts;
+        TextFormFieldProps name_opts;
         name_opts.label = "Full Name";
         name_opts.hint = "e.g. Sarah Connor";
         name_opts.required = true;
@@ -64,7 +64,7 @@ public:
         auto name_field = textFormField(name_opts);
 
         // 2. Email Field
-        TextFormFieldOptions email_opts;
+        TextFormFieldProps email_opts;
         email_opts.label = "Work Email";
         email_opts.hint = "e.g. sarah.connor@enki.dev";
         email_opts.required = true;
@@ -78,7 +78,7 @@ public:
         auto email_field = textFormField(email_opts);
 
         // 3. Password Field
-        TextFormFieldOptions pass_opts;
+        TextFormFieldProps pass_opts;
         pass_opts.label = "Password";
         pass_opts.hint = "At least 8 characters";
         pass_opts.obscure_text = true;
@@ -94,7 +94,7 @@ public:
 
         // 4. Confirm Password Field
         auto pass_ctrl_ref = pass_ctrl_;
-        TextFormFieldOptions confirm_opts;
+        TextFormFieldProps confirm_opts;
         confirm_opts.label = "Confirm Password";
         confirm_opts.hint = "Re-enter password";
         confirm_opts.obscure_text = true;
@@ -109,7 +109,7 @@ public:
         auto confirm_field = textFormField(confirm_opts);
 
         // 5. Terms Checkbox Field
-        CheckboxFormFieldOptions terms_opts;
+        CheckboxFormFieldProps terms_opts;
         terms_opts.label = "I agree to the ENKI Terms of Service & Privacy Policy";
         terms_opts.required = true;
         terms_opts.form_state = form_state_;

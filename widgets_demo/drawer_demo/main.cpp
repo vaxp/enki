@@ -17,24 +17,25 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        DrawerOptions opts;
-        opts.background_color = 0xFF1E293B;
-        opts.width = 300.0f;
-        
-        auto drawer_content = container(text("Drawer Menu"));
-        drawer_content->paddingAll(20.0f).align(Alignment::TopLeft);
-
-        auto open_btn = button(text("Open Drawer"), [this] {
-            drawer_ctrl->open();
+        return drawer({
+            .child = container({
+                .align = Alignment::TopLeft,
+                .padding = StyleInsets::all(20.0f),
+                .child = text("Drawer Menu")
+            }),
+            .body = container({
+                .color = 0xFF0F172A,
+                .flex = 1.0f,
+                .child = centerBox(button(text("Open Drawer"), [this] {
+                    drawer_ctrl->open();
+                }))
+            }),
+            .options = {
+                .width = 300.0f,
+                .background_color = 0xFF1E293B
+            },
+            .controller = drawer_ctrl
         });
-
-        auto body = centerBox(open_btn);
-        auto body_container = container(body);
-        body_container->color(0xFF0F172A).flex(1.0f);
-
-        auto d = drawer(drawer_content, body_container, opts);
-        d->setController(drawer_ctrl);
-        return d;
     }
 };
 

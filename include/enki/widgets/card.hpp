@@ -11,7 +11,10 @@
 
 namespace enki {
 
-struct CardOptions {
+struct CardProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
     Color color = 0xFF1E293B;                       ///< Background color of the card.
     Color shadow_color = 0x40000000;                ///< Color of the drop shadow.
     float elevation = 8.0f;                         ///< Elevation of the card (controls shadow size).
@@ -28,12 +31,14 @@ struct CardOptions {
 class Card : public StatelessWidget {
 public:
     WidgetPtr child;
-    CardOptions options;
+    CardProps options;
 
     Card() = default;
     explicit Card(WidgetPtr c) : child(std::move(c)) {}
-    Card(WidgetPtr c, CardOptions opt)
+    Card(WidgetPtr c, CardProps opt)
         : child(std::move(c)), options(std::move(opt)) {}
+    Card(Key key, WidgetPtr c, CardProps opt)
+        : StatelessWidget(std::move(key)), child(std::move(c)), options(std::move(opt)) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "Card"; }
@@ -57,6 +62,15 @@ public:
 
 inline std::shared_ptr<Card> card(WidgetPtr child) {
     return std::make_shared<Card>(std::move(child));
+}
+
+inline std::shared_ptr<Card> card(CardProps props) {
+    return std::make_shared<Card>(std::move(props.key), std::move(props.child), std::move(props));
+}
+
+inline std::shared_ptr<Card> card(CardProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return card(std::move(props));
 }
 
 } // namespace enki

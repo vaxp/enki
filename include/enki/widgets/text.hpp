@@ -352,6 +352,49 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Declarative Props (C++20 Designated Initializers Support)
+// ════════════════════════════════════════════════════════════════
+
+struct TextProps {
+    std::string text;
+    
+    // ── Common TextStyle Overrides ─────────────────────────────
+    std::optional<Color>          color;
+    std::optional<float>          font_size;
+    std::optional<FontWeight>     font_weight;
+    std::optional<FontStyle>      font_style;
+    std::optional<std::string>    font_family;
+    std::optional<float>          letter_spacing;
+    std::optional<float>          word_spacing;
+    std::optional<float>          height;
+    std::vector<BoxShadow>        shadows;
+    
+    // ── Full Style Override ────────────────────────────────────
+    std::optional<TextStyle>      style;
+
+    // ── Paragraph Layout ───────────────────────────────────────
+    std::optional<TextAlign>      text_align;
+    std::optional<TextDirection>  text_direction;
+    std::optional<TextOverflow>   overflow;
+    std::optional<size_t>         max_lines;
+    std::optional<bool>           soft_wrap;
+
+    Key key = Key::none();
+};
+
+struct RichTextProps {
+    std::shared_ptr<InlineSpan>   text_span;
+    std::optional<TextStyle>      default_style;
+    std::optional<TextAlign>      text_align;
+    std::optional<TextDirection>  text_direction;
+    std::optional<TextOverflow>   overflow;
+    std::optional<size_t>         max_lines;
+    std::optional<bool>           soft_wrap;
+
+    Key key = Key::none();
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -363,8 +406,46 @@ inline std::shared_ptr<Text> text(std::string text, TextStyle style) {
     return std::make_shared<Text>(std::move(text), std::move(style));
 }
 
+inline std::shared_ptr<Text> text(TextProps props) {
+    auto t = std::make_shared<Text>(std::move(props.text));
+    if (props.key != Key::none()) t->key = props.key;
+    if (props.style) t->style = *props.style;
+    
+    // Apply Common Style Overrides
+    if (props.color) t->style.color = *props.color;
+    if (props.font_size) t->style.font_size = *props.font_size;
+    if (props.font_weight) t->style.font_weight = *props.font_weight;
+    if (props.font_style) t->style.font_style = *props.font_style;
+    if (props.font_family) t->style.font_family = *props.font_family;
+    if (props.letter_spacing) t->style.letter_spacing = *props.letter_spacing;
+    if (props.word_spacing) t->style.word_spacing = *props.word_spacing;
+    if (props.height) t->style.height = *props.height;
+    for (const auto& s : props.shadows) t->style.shadows.push_back(s);
+    
+    // Apply Paragraph Configuration
+    if (props.text_align) t->text_align = *props.text_align;
+    if (props.text_direction) t->text_direction = *props.text_direction;
+    if (props.overflow) t->overflow = *props.overflow;
+    if (props.max_lines) t->max_lines = *props.max_lines;
+    if (props.soft_wrap) t->soft_wrap = *props.soft_wrap;
+    
+    return t;
+}
+
 inline std::shared_ptr<RichText> richText(std::shared_ptr<InlineSpan> span) {
     return std::make_shared<RichText>(std::move(span));
+}
+
+inline std::shared_ptr<RichText> richText(RichTextProps props) {
+    auto r = std::make_shared<RichText>(std::move(props.text_span));
+    if (props.key != Key::none()) r->key = props.key;
+    if (props.default_style) r->default_style = *props.default_style;
+    if (props.text_align) r->text_align = *props.text_align;
+    if (props.text_direction) r->text_direction = *props.text_direction;
+    if (props.overflow) r->overflow = *props.overflow;
+    if (props.max_lines) r->max_lines = *props.max_lines;
+    if (props.soft_wrap) r->soft_wrap = *props.soft_wrap;
+    return r;
 }
 
 } // namespace enki

@@ -53,7 +53,7 @@ static sk_sp<skia::textlayout::FontCollection> getTimelineFontCollection() {
 class RenderTimelineBox : public RenderBox {
 public:
     std::shared_ptr<TimelineController> controller;
-    TimelineOptions options;
+    TimelineProps options;
     int hovered_item_index = -1;
 
     struct ItemLayoutInfo {
@@ -62,7 +62,7 @@ public:
     };
     std::vector<ItemLayoutInfo> layout_cache_;
 
-    RenderTimelineBox(std::shared_ptr<TimelineController> ctrl, TimelineOptions opt)
+    RenderTimelineBox(std::shared_ptr<TimelineController> ctrl, TimelineProps opt)
         : controller(std::move(ctrl)), options(std::move(opt)) {
         updateFlexboxStyle();
     }
@@ -570,10 +570,10 @@ static RenderTimelineBox* findTimelineBox(RenderObject* ro) {
 class RenderTimelineWidget : public SingleChildRenderObjectWidget {
 public:
     std::shared_ptr<TimelineController> controller;
-    TimelineOptions options;
+    TimelineProps options;
     int hovered_item_index;
 
-    RenderTimelineWidget(std::shared_ptr<TimelineController> ctrl, TimelineOptions opt, int h_idx)
+    RenderTimelineWidget(std::shared_ptr<TimelineController> ctrl, TimelineProps opt, int h_idx)
         : SingleChildRenderObjectWidget(Key::none()), controller(std::move(ctrl)),
           options(std::move(opt)), hovered_item_index(h_idx) {}
 
@@ -609,20 +609,20 @@ public:
     void initState() override {
         State::initState();
         auto* tl = static_cast<const Timeline*>(widget());
-        controller_ = tl->controller;
+        controller_ = tl->props.controller;
     }
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
         auto* tl = static_cast<const Timeline*>(widget());
-        controller_ = tl->controller;
+        controller_ = tl->props.controller;
     }
 
     WidgetPtr build(BuildContext&) override {
         auto* tl = static_cast<const Timeline*>(widget());
 
         auto timeline_render = std::make_shared<RenderTimelineWidget>(
-            controller_, tl->options, hovered_item_index_
+            controller_, tl->props, hovered_item_index_
         );
 
         auto detector = std::make_shared<GestureDetector>();
@@ -652,22 +652,22 @@ public:
                     if (hit >= 0 && static_cast<size_t>(hit) < controller_->getItems().size()) {
                         const auto& item = controller_->getItems()[hit];
 
-                        if (tl->options.is_stepper) {
+                        if (tl->props.is_stepper) {
                             controller_->setActiveStep(hit);
-                            if (tl->options.on_step_changed) {
-                                tl->options.on_step_changed(hit);
+                            if (tl->props.on_step_changed) {
+                                tl->props.on_step_changed(hit);
                             }
                         } else {
                             if (!item.details.empty()) {
                                 controller_->toggleExpand(item.id);
-                                if (tl->options.on_item_expanded) {
-                                    tl->options.on_item_expanded(item.id, !item.is_expanded);
+                                if (tl->props.on_item_expanded) {
+                                    tl->props.on_item_expanded(item.id, !item.is_expanded);
                                 }
                             }
                         }
 
-                        if (tl->options.on_item_tap) {
-                            tl->options.on_item_tap(item);
+                        if (tl->props.on_item_tap) {
+                            tl->props.on_item_tap(item);
                         }
                         setState([] {});
                     }

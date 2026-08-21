@@ -13,18 +13,18 @@ namespace enki {
 WidgetPtr GridTileBar::build(BuildContext& ctx) {
     std::vector<WidgetPtr> row_children;
 
-    if (leading_widget) {
-        row_children.push_back(leading_widget);
+    if (props.leading_widget) {
+        row_children.push_back(props.leading_widget);
         auto gap = container();
-        gap->width(leading_gap);
+        gap->width(props.leading_gap);
         gap->height(StyleValue::percent(100.0f));
         row_children.push_back(gap);
     }
 
     // Title + subtitle
     std::vector<WidgetPtr> text_children;
-    if (title_widget)    text_children.push_back(title_widget);
-    if (subtitle_widget) text_children.push_back(subtitle_widget);
+    if (props.title_widget)    text_children.push_back(props.title_widget);
+    if (props.subtitle_widget) text_children.push_back(props.subtitle_widget);
 
     WidgetPtr text_col;
     if (text_children.size() == 1) {
@@ -41,12 +41,12 @@ WidgetPtr GridTileBar::build(BuildContext& ctx) {
         row_children.push_back(expanded);
     }
 
-    if (trailing_widget) {
+    if (props.trailing_widget) {
         auto gap = container();
-        gap->width(leading_gap);
+        gap->width(props.leading_gap);
         gap->height(StyleValue::percent(100.0f));
         row_children.push_back(gap);
-        row_children.push_back(trailing_widget);
+        row_children.push_back(props.trailing_widget);
     }
 
     auto content_row = std::make_shared<Row>(std::move(row_children));
@@ -54,8 +54,8 @@ WidgetPtr GridTileBar::build(BuildContext& ctx) {
     content_row->width(StyleValue::percent(100.0f));
 
     auto bar = container(content_row);
-    bar->color(background_color);
-    bar->padding(EdgeInsets::symmetric(padding_vertical, padding_horizontal));
+    bar->color(props.background_color);
+    bar->padding(EdgeInsets::symmetric(props.padding_vertical, props.padding_horizontal));
 
     return bar;
 }
@@ -68,20 +68,20 @@ WidgetPtr GridTile::build(BuildContext& ctx) {
     std::vector<WidgetPtr> stack_children;
 
     // Child fills the entire tile (Stack expand)
-    if (child) {
-        stack_children.push_back(Positioned::fill(child));
+    if (props.child) {
+        stack_children.push_back(Positioned::fill(props.child));
     }
 
     // Header — anchored to top
-    if (header) {
-        auto hdr = std::make_shared<Positioned>(header);
+    if (props.header) {
+        auto hdr = std::make_shared<Positioned>(props.header);
         hdr->top(0).left(0).right(0);
         stack_children.push_back(hdr);
     }
 
     // Footer — anchored to bottom
-    if (footer) {
-        auto ftr = std::make_shared<Positioned>(footer);
+    if (props.footer) {
+        auto ftr = std::make_shared<Positioned>(props.footer);
         ftr->bottom(0).left(0).right(0);
         stack_children.push_back(ftr);
     }

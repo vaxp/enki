@@ -221,31 +221,35 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "TableBorderWidget"; }
 };
 
+struct TableProps {
+    Key key = Key::none();
+    std::vector<TableRow> rows;
+    std::vector<std::pair<int, TableColumnWidth>> column_widths_map; ///< Per-column overrides.
+    TableColumnWidth default_column_width = FlexColumnWidth(1.0f);
+    TableBorder table_border;
+    TableCellVerticalAlignment default_vertical_alignment = TableCellVerticalAlignment::Middle;
+};
+
 class Table : public StatelessWidget {
 public:
-    std::vector<TableRow>                    rows;
-    std::vector<std::pair<int, TableColumnWidth>> column_widths_map; ///< Per-column overrides.
-    TableColumnWidth                         default_column_width = FlexColumnWidth(1.0f);
-    TableBorder                              table_border;
-    TableCellVerticalAlignment               default_vertical_alignment =
-                                                 TableCellVerticalAlignment::Middle;
+    TableProps props;
 
     Table() = default;
-    explicit Table(std::vector<TableRow> rows) : rows(std::move(rows)) {}
+    explicit Table(TableProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder API ─────────────────────────────────────
 
     Table& columnWidths(std::vector<std::pair<int, TableColumnWidth>> map) {
-        column_widths_map = std::move(map);
+        props.column_widths_map = std::move(map);
         return *this;
     }
     Table& defaultColumnWidth(TableColumnWidth def) {
-        default_column_width = std::move(def);
+        props.default_column_width = std::move(def);
         return *this;
     }
-    Table& border(TableBorder b) { this->table_border = std::move(b); return *this; }
+    Table& border(TableBorder b) { props.table_border = std::move(b); return *this; }
     Table& defaultVerticalAlignment(TableCellVerticalAlignment a) {
-        default_vertical_alignment = a;
+        props.default_vertical_alignment = a;
         return *this;
     }
 
@@ -257,8 +261,14 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+inline std::shared_ptr<Table> table(TableProps props = {}) {
+    return std::make_shared<Table>(std::move(props));
+}
+
 inline std::shared_ptr<Table> table(std::vector<TableRow> rows) {
-    return std::make_shared<Table>(std::move(rows));
+    TableProps props;
+    props.rows = std::move(rows);
+    return std::make_shared<Table>(std::move(props));
 }
 
 } // namespace enki

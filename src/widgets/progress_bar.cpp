@@ -37,14 +37,14 @@ inline double getSteadyTimeSeconds() {
 
 class RenderProgressBar : public RenderBox {
 public:
-    ProgressBarOptions options;
+    ProgressBarProps options;
     float value;
     float anim_time;
     double start_time;
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderProgressBar(const ProgressBarOptions& opt, float val, float anim_t, double st)
+    RenderProgressBar(const ProgressBarProps& opt, float val, float anim_t, double st)
         : options(opt), value(val), anim_time(anim_t), start_time(st) {
         
         updateAnuStyles();
@@ -67,7 +67,7 @@ public:
         }
     }
 
-    void setOptions(const ProgressBarOptions& opt) {
+    void setOptions(const ProgressBarProps& opt) {
         options = opt;
         updateAnuStyles();
         markNeedsLayout();
@@ -222,12 +222,12 @@ public:
 
 class ProgressBarRenderWidget : public SingleChildRenderObjectWidget {
 public:
-    ProgressBarOptions options;
+    ProgressBarProps options;
     float value;
     float anim_time;
     double start_time;
 
-    ProgressBarRenderWidget(ProgressBarOptions opt, float val, float anim_t, double st)
+    ProgressBarRenderWidget(ProgressBarProps opt, float val, float anim_t, double st)
         : SingleChildRenderObjectWidget(Key::none(), nullptr),
           options(std::move(opt)), value(val), anim_time(anim_t), start_time(st) {}
 

@@ -17,7 +17,7 @@ class RenderRangeSlider : public RenderBox {
 public:
     float start_value_;
     float end_value_;
-    RangeSliderOptions options_;
+    RangeSliderProps options_;
     RangeSliderCallback on_change_;
 
     PanGestureRecognizer pan_recognizer_;
@@ -26,7 +26,7 @@ public:
     Thumb hovered_thumb_ = Thumb::None;
     Thumb dragging_thumb_ = Thumb::None;
 
-    RenderRangeSlider(float start, float end, RangeSliderOptions opt, RangeSliderCallback on_change)
+    RenderRangeSlider(float start, float end, RangeSliderProps opt, RangeSliderCallback on_change)
         : start_value_(start), end_value_(end), options_(std::move(opt)), on_change_(std::move(on_change)) 
     {
         pan_recognizer_.touch_slop = 2.0f; // Respond quickly
@@ -88,7 +88,7 @@ public:
         }
     }
 
-    void setOptions(const RangeSliderOptions& opt) {
+    void setOptions(const RangeSliderProps& opt) {
         options_ = opt;
         updateAnuStyles();
         markNeedsLayout();

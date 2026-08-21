@@ -124,7 +124,10 @@ public:
 /// Configuration Options for SearchField
 /// ════════════════════════════════════════════════════════════════
 
-struct SearchFieldOptions {
+struct SearchFieldProps {
+    Key key = Key::none();
+    std::shared_ptr<SearchFieldController> controller = nullptr;
+
     std::string placeholder = "Search or type a command...";
     SearchFieldVariant variant = SearchFieldVariant::Filled;
     SearchFieldSize size = SearchFieldSize::Medium;
@@ -160,11 +163,11 @@ struct SearchFieldOptions {
     EdgeInsets padding = EdgeInsets::symmetric(8.0f, 12.0f);
 
     // Callbacks
-    std::function<std::vector<SearchSuggestion>(std::string_view query)> suggestions_provider;
-    std::function<void(std::string_view query)> on_changed;
-    std::function<void(std::string_view query)> on_search; // Debounced
-    std::function<void(std::string_view query)> on_submitted;
-    std::function<void(const SearchSuggestion& item)> on_suggestion_selected;
+    std::function<std::vector<SearchSuggestion>(std::string_view query)> suggestions_provider = nullptr;
+    std::function<void(std::string_view query)> on_changed = nullptr;
+    std::function<void(std::string_view query)> on_search = nullptr; // Debounced
+    std::function<void(std::string_view query)> on_submitted = nullptr;
+    std::function<void(const SearchSuggestion& item)> on_suggestion_selected = nullptr;
 };
 
 /// ════════════════════════════════════════════════════════════════
@@ -173,33 +176,34 @@ struct SearchFieldOptions {
 
 class SearchField : public StatefulWidget {
 public:
-    std::shared_ptr<SearchFieldController> controller;
-    SearchFieldOptions options;
+    SearchFieldProps props;
 
-    SearchField(std::shared_ptr<SearchFieldController> ctrl, SearchFieldOptions opt = {})
-        : controller(ctrl ? ctrl : std::make_shared<SearchFieldController>()),
-          options(std::move(opt)) {}
+    SearchField(SearchFieldProps p)
+        : props(std::move(p)) {
+        if (!props.controller) props.controller = std::make_shared<SearchFieldController>();
+    }
 
-    SearchField(SearchFieldOptions opt = {})
-        : controller(std::make_shared<SearchFieldController>()),
-          options(std::move(opt)) {}
+    SearchField(Key key, SearchFieldProps p)
+        : StatefulWidget(std::move(key)), props(std::move(p)) {
+        if (!props.controller) props.controller = std::make_shared<SearchFieldController>();
+    }
 
     // Fluent API Chaining
-    SearchField* placeholder(std::string p) { options.placeholder = std::move(p); return this; }
-    SearchField* variant(SearchFieldVariant v) { options.variant = v; return this; }
-    SearchField* sizePreset(SearchFieldSize s) { options.size = s; return this; }
-    SearchField* shortcutHint(std::string s) { options.shortcut_hint = std::move(s); return this; }
-    SearchField* debounce(double ms) { options.debounce_ms = ms; return this; }
-    SearchField* maxSuggestions(int m) { options.max_visible_suggestions = m; return this; }
+    SearchField* placeholder(std::string p) { props.placeholder = std::move(p); return this; }
+    SearchField* variant(SearchFieldVariant v) { props.variant = v; return this; }
+    SearchField* sizePreset(SearchFieldSize s) { props.size = s; return this; }
+    SearchField* shortcutHint(std::string s) { props.shortcut_hint = std::move(s); return this; }
+    SearchField* debounce(double ms) { props.debounce_ms = ms; return this; }
+    SearchField* maxSuggestions(int m) { props.max_visible_suggestions = m; return this; }
     SearchField* suggestions(std::function<std::vector<SearchSuggestion>(std::string_view)> prov) {
-        options.suggestions_provider = std::move(prov);
+        props.suggestions_provider = std::move(prov);
         return this;
     }
-    SearchField* onChanged(std::function<void(std::string_view)> cb) { options.on_changed = std::move(cb); return this; }
-    SearchField* onSearch(std::function<void(std::string_view)> cb) { options.on_search = std::move(cb); return this; }
-    SearchField* onSubmitted(std::function<void(std::string_view)> cb) { options.on_submitted = std::move(cb); return this; }
+    SearchField* onChanged(std::function<void(std::string_view)> cb) { props.on_changed = std::move(cb); return this; }
+    SearchField* onSearch(std::function<void(std::string_view)> cb) { props.on_search = std::move(cb); return this; }
+    SearchField* onSubmitted(std::function<void(std::string_view)> cb) { props.on_submitted = std::move(cb); return this; }
     SearchField* onSuggestionSelected(std::function<void(const SearchSuggestion&)> cb) {
-        options.on_suggestion_selected = std::move(cb);
+        props.on_suggestion_selected = std::move(cb);
         return this;
     }
 
@@ -207,15 +211,8 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "SearchField"; }
 };
 
-inline std::shared_ptr<SearchField> searchField(
-    std::shared_ptr<SearchFieldController> ctrl,
-    SearchFieldOptions options = {}) {
-    return std::make_shared<SearchField>(std::move(ctrl), std::move(options));
-}
-
-inline std::shared_ptr<SearchField> searchField(
-    SearchFieldOptions options = {}) {
-    return std::make_shared<SearchField>(std::move(options));
+inline std::shared_ptr<SearchField> searchField(SearchFieldProps props) {
+    return std::make_shared<SearchField>(std::move(props));
 }
 
 } // namespace enki

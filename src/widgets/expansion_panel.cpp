@@ -26,10 +26,10 @@ public:
         State::initState();
         auto* w = static_cast<const ExpansionPanelList*>(widget());
 
-        for (size_t i = 0; i < w->panels.size(); ++i) {
-            if (w->panels[i].is_initially_expanded && !w->panels[i].is_disabled) {
+        for (size_t i = 0; i < w->props.panels.size(); ++i) {
+            if (w->props.panels[i].is_initially_expanded && !w->props.panels[i].is_disabled) {
                 expanded_indices_.insert(static_cast<int>(i));
-                if (w->options.is_radio_mode) break;
+                if (w->props.is_radio_mode) break;
             }
         }
 
@@ -43,36 +43,36 @@ public:
 
     void wireController() {
         auto* w = static_cast<const ExpansionPanelList*>(widget());
-        if (w->controller) {
-            w->controller->expand_fn = [this](int idx) { expandPanel(idx); };
-            w->controller->collapse_fn = [this](int idx) { collapsePanel(idx); };
-            w->controller->toggle_fn = [this](int idx) { togglePanel(idx); };
-            w->controller->expand_all_fn = [this] { expandAllPanels(); };
-            w->controller->collapse_all_fn = [this] { collapseAllPanels(); };
-            w->controller->is_expanded_fn = [this](int idx) { return expanded_indices_.count(idx) > 0; };
-            w->controller->get_expanded_indices_fn = [this] { return expanded_indices_; };
+        if (w->props.controller) {
+            w->props.controller->expand_fn = [this](int idx) { expandPanel(idx); };
+            w->props.controller->collapse_fn = [this](int idx) { collapsePanel(idx); };
+            w->props.controller->toggle_fn = [this](int idx) { togglePanel(idx); };
+            w->props.controller->expand_all_fn = [this] { expandAllPanels(); };
+            w->props.controller->collapse_all_fn = [this] { collapseAllPanels(); };
+            w->props.controller->is_expanded_fn = [this](int idx) { return expanded_indices_.count(idx) > 0; };
+            w->props.controller->get_expanded_indices_fn = [this] { return expanded_indices_; };
         }
     }
 
     void expandPanel(int idx) {
         auto* w = static_cast<const ExpansionPanelList*>(widget());
-        if (idx < 0 || idx >= static_cast<int>(w->panels.size())) return;
-        if (w->panels[idx].is_disabled) return;
+        if (idx < 0 || idx >= static_cast<int>(w->props.panels.size())) return;
+        if (w->props.panels[idx].is_disabled) return;
 
-        if (w->options.is_radio_mode) {
+        if (w->props.is_radio_mode) {
             expanded_indices_.clear();
         }
         expanded_indices_.insert(idx);
-        if (w->options.on_panel_toggled) w->options.on_panel_toggled(idx, true);
-        if (w->options.on_expansion_changed) w->options.on_expansion_changed(expanded_indices_);
+        if (w->props.on_panel_toggled) w->props.on_panel_toggled(idx, true);
+        if (w->props.on_expansion_changed) w->props.on_expansion_changed(expanded_indices_);
         setState([] {});
     }
 
     void collapsePanel(int idx) {
         auto* w = static_cast<const ExpansionPanelList*>(widget());
         expanded_indices_.erase(idx);
-        if (w->options.on_panel_toggled) w->options.on_panel_toggled(idx, false);
-        if (w->options.on_expansion_changed) w->options.on_expansion_changed(expanded_indices_);
+        if (w->props.on_panel_toggled) w->props.on_panel_toggled(idx, false);
+        if (w->props.on_expansion_changed) w->props.on_expansion_changed(expanded_indices_);
         setState([] {});
     }
 
@@ -86,11 +86,11 @@ public:
 
     void expandAllPanels() {
         auto* w = static_cast<const ExpansionPanelList*>(widget());
-        if (!w->options.is_radio_mode) {
-            for (size_t i = 0; i < w->panels.size(); ++i) {
-                if (!w->panels[i].is_disabled) expanded_indices_.insert(static_cast<int>(i));
+        if (!w->props.is_radio_mode) {
+            for (size_t i = 0; i < w->props.panels.size(); ++i) {
+                if (!w->props.panels[i].is_disabled) expanded_indices_.insert(static_cast<int>(i));
             }
-            if (w->options.on_expansion_changed) w->options.on_expansion_changed(expanded_indices_);
+            if (w->props.on_expansion_changed) w->props.on_expansion_changed(expanded_indices_);
             setState([] {});
         }
     }
@@ -98,13 +98,13 @@ public:
     void collapseAllPanels() {
         auto* w = static_cast<const ExpansionPanelList*>(widget());
         expanded_indices_.clear();
-        if (w->options.on_expansion_changed) w->options.on_expansion_changed(expanded_indices_);
+        if (w->props.on_expansion_changed) w->props.on_expansion_changed(expanded_indices_);
         setState([] {});
     }
 
     // ── Build Single Panel Card ───────────────────────────────────
 
-    WidgetPtr buildPanelCard(int index, const ExpansionPanelItem& item, const ExpansionPanelOptions& opts) {
+    WidgetPtr buildPanelCard(int index, const ExpansionPanelItem& item, const ExpansionPanelListProps& opts) {
         bool is_expanded = (expanded_indices_.count(index) > 0);
 
         // ── 1. Header Left: Step Pill / Icon + Title + Subtitle ───────
@@ -239,11 +239,11 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const ExpansionPanelList*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         std::vector<WidgetPtr> panel_cards;
-        for (size_t i = 0; i < w->panels.size(); ++i) {
-            auto p = buildPanelCard(static_cast<int>(i), w->panels[i], opts);
+        for (size_t i = 0; i < w->props.panels.size(); ++i) {
+            auto p = buildPanelCard(static_cast<int>(i), w->props.panels[i], opts);
             panel_cards.push_back(p);
         }
 

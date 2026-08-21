@@ -34,7 +34,7 @@ public:
         header->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 30.0f, 0));
 
         // 1. Spokes Spinner (macOS / iOS Style)
-        SpinnerOptions opt_spokes;
+        SpinnerProps opt_spokes;
         opt_spokes.style = SpinnerStyle::Spokes;
         opt_spokes.size = size_;
         opt_spokes.rotation_speed = speed_;
@@ -42,7 +42,7 @@ public:
         auto spin_spokes = spinner(opt_spokes);
 
         // 2. OrbitDots Spinner (Material / Fluent Style)
-        SpinnerOptions opt_dots;
+        SpinnerProps opt_dots;
         opt_dots.style = SpinnerStyle::OrbitDots;
         opt_dots.size = size_;
         opt_dots.rotation_speed = speed_;
@@ -52,7 +52,7 @@ public:
         auto spin_dots = spinner(opt_dots);
 
         // 3. DualArc Spinner (Futuristic Dual Arc with Glow)
-        SpinnerOptions opt_dual;
+        SpinnerProps opt_dual;
         opt_dual.style = SpinnerStyle::DualArc;
         opt_dual.size = size_;
         opt_dual.rotation_speed = speed_;
@@ -62,7 +62,7 @@ public:
         auto spin_dual = spinner(opt_dual);
 
         // 4. Custom SkSL Shader Spinner (Vortex Particle Spiral)
-        SpinnerOptions opt_shader;
+        SpinnerProps opt_shader;
         opt_shader.style = SpinnerStyle::CustomShader;
         opt_shader.size = size_;
         opt_shader.rotation_speed = speed_;
@@ -112,7 +112,7 @@ public:
         auto size_txt = text("Adjust Spinner Size: " + std::to_string(static_cast<int>(size_)) + "px", TextStyle{
             .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
         });
-        SliderOptions sz_opt;
+        SliderProps sz_opt;
         sz_opt.min_value = 24.0f;
         sz_opt.max_value = 96.0f;
         sz_opt.active_color = 0xFF3B82F6;
@@ -123,7 +123,7 @@ public:
         auto speed_txt = text("Adjust Rotation Speed: " + std::to_string(speed_).substr(0, 4) + "x", TextStyle{
             .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
         });
-        SliderOptions sp_opt;
+        SliderProps sp_opt;
         sp_opt.min_value = 0.2f;
         sp_opt.max_value = 3.0f;
         sp_opt.active_color = 0xFF10B981;
@@ -131,14 +131,15 @@ public:
             setState([this, val] { speed_ = val; });
         }, sp_opt);
 
-        std::vector<WidgetPtr> ctrl_items = {
-            size_txt, sz_slider,
-            speed_txt, sp_slider
-        };
-        auto ctrl_col = column(ctrl_items);
-        ctrl_col->gap(StyleValue::point(10.0f)).width(StyleValue::percent(100.0f));
+        std::vector<WidgetPtr> c2_items;
+        c2_items.push_back(size_txt);
+        c2_items.push_back(sz_slider);
+        c2_items.push_back(speed_txt);
+        c2_items.push_back(sp_slider);
+        auto col_controls = column(c2_items);
+        col_controls->gap(StyleValue::point(10.0f)).width(StyleValue::percent(100.0f));
 
-        auto card_ctrl = container(ctrl_col);
+        auto card_ctrl = container(col_controls);
         card_ctrl->color(0xFF1E293B).borderRadius(12.0f).paddingAll(20.0f).width(StyleValue::percent(100.0f));
 
         std::vector<WidgetPtr> main_items = {

@@ -23,15 +23,15 @@ namespace enki {
 
 class RenderPlaceholder : public RenderBox {
 public:
-    PlaceholderOptions options;
+    PlaceholderProps options;
     float anim_phase_ = 0.0f;
 
-    explicit RenderPlaceholder(PlaceholderOptions opt) : options(std::move(opt)) {
+    explicit RenderPlaceholder(PlaceholderProps opt) : options(std::move(opt)) {
         ANUNodeStyleSetWidth(anu_node_, options.width);
         ANUNodeStyleSetHeight(anu_node_, options.height);
     }
 
-    void updateOptions(const PlaceholderOptions& new_opts) {
+    void updateOptions(const PlaceholderProps& new_opts) {
         if (options.width != new_opts.width || options.height != new_opts.height) {
             ANUNodeStyleSetWidth(anu_node_, new_opts.width);
             ANUNodeStyleSetHeight(anu_node_, new_opts.height);

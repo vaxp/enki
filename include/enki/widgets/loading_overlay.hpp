@@ -33,7 +33,8 @@ enum class LoadingIndicatorStyle {
 /// LoadingOverlay Options
 /// ════════════════════════════════════════════════════════════════
 
-struct LoadingOverlayOptions {
+struct LoadingOverlayProps {
+    Key key = Key::none();
     LoadingIndicatorStyle indicator_style = LoadingIndicatorStyle::Spinner;
 
     std::string title = "Processing...";
@@ -70,13 +71,13 @@ struct LoadingOverlayOptions {
 
 class LoadingOverlayController {
 public:
-    std::function<void(const LoadingOverlayOptions&)> show_fn;
+    std::function<void(const LoadingOverlayProps&)> show_fn;
     std::function<void()> hide_fn;
     std::function<void(float, const std::string&)> set_progress_fn;
     std::function<void(const std::string&)> set_message_fn;
     std::function<bool()> is_loading_fn;
 
-    void show(const LoadingOverlayOptions& opts) { if (show_fn) show_fn(opts); }
+    void show(const LoadingOverlayProps& opts) { if (show_fn) show_fn(opts); }
     void hide() { if (hide_fn) hide_fn(); }
     void setProgress(float p, const std::string& msg = "") { if (set_progress_fn) set_progress_fn(p, msg); }
     void setMessage(const std::string& msg) { if (set_message_fn) set_message_fn(msg); }
@@ -84,7 +85,7 @@ public:
 
     // Semantic Convenience Helpers
     void showSpinner(std::string title = "Loading...", std::string msg = "Please wait...", bool cancelable = false, std::function<void()> on_cancel = nullptr) {
-        LoadingOverlayOptions o;
+        LoadingOverlayProps o;
         o.indicator_style = LoadingIndicatorStyle::Spinner;
         o.title = std::move(title);
         o.message = std::move(msg);
@@ -94,7 +95,7 @@ public:
     }
 
     void showProgressRing(float p, std::string title = "Uploading...", std::string msg = "", bool cancelable = false, std::function<void()> on_cancel = nullptr) {
-        LoadingOverlayOptions o;
+        LoadingOverlayProps o;
         o.indicator_style = LoadingIndicatorStyle::ProgressRing;
         o.is_determinate = true;
         o.progress = p;
@@ -106,7 +107,7 @@ public:
     }
 
     void showProgressBar(float p, std::string title = "Compiling...", std::string msg = "", bool cancelable = false, std::function<void()> on_cancel = nullptr) {
-        LoadingOverlayOptions o;
+        LoadingOverlayProps o;
         o.indicator_style = LoadingIndicatorStyle::ProgressBar;
         o.is_determinate = true;
         o.progress = p;
@@ -118,7 +119,7 @@ public:
     }
 
     void showDots(std::string title = "Syncing...", std::string msg = "Connecting to peer nodes...") {
-        LoadingOverlayOptions o;
+        LoadingOverlayProps o;
         o.indicator_style = LoadingIndicatorStyle::DotsPulse;
         o.title = std::move(title);
         o.message = std::move(msg);
@@ -135,13 +136,16 @@ public:
     WidgetPtr body;                                      ///< Background content to wrap
     std::shared_ptr<LoadingOverlayController> controller;
     bool initial_loading = false;
-    LoadingOverlayOptions initial_options;
+    LoadingOverlayProps initial_options;
 
     LoadingOverlay() = default;
     LoadingOverlay(WidgetPtr body_, std::shared_ptr<LoadingOverlayController> ctrl,
-                   bool init_loading = false, LoadingOverlayOptions init_opts = {})
+                   bool init_loading = false, LoadingOverlayProps init_opts = {})
         : body(std::move(body_)), controller(std::move(ctrl)),
           initial_loading(init_loading), initial_options(std::move(init_opts)) {}
+          
+    LoadingOverlay(Key k, WidgetPtr body_, std::shared_ptr<LoadingOverlayController> ctrl, bool init_loading, LoadingOverlayProps init_opts)
+        : StatefulWidget(std::move(k)), body(std::move(body_)), controller(std::move(ctrl)), initial_loading(init_loading), initial_options(std::move(init_opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "LoadingOverlay"; }
@@ -150,8 +154,20 @@ public:
 inline std::shared_ptr<LoadingOverlay> loadingOverlay(
     WidgetPtr body,
     std::shared_ptr<LoadingOverlayController> controller,
-    LoadingOverlayOptions options = {}) {
+    LoadingOverlayProps options = {}) {
     return std::make_shared<LoadingOverlay>(std::move(body), std::move(controller), false, std::move(options));
+}
+
+struct LoadingOverlayDeclarativeProps {
+    Key key = Key::none();
+    WidgetPtr body;
+    std::shared_ptr<LoadingOverlayController> controller;
+    bool initial_loading = false;
+    LoadingOverlayProps initial_options;
+};
+
+inline std::shared_ptr<LoadingOverlay> loadingOverlay(LoadingOverlayDeclarativeProps props) {
+    return std::make_shared<LoadingOverlay>(std::move(props.key), std::move(props.body), std::move(props.controller), props.initial_loading, std::move(props.initial_options));
 }
 
 } // namespace enki

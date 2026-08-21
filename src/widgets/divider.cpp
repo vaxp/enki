@@ -67,14 +67,14 @@ static void drawVDash(Canvas& canvas, float cx, float y0, float y1,
 
 class RenderDivider : public RenderBox {
 public:
-    DividerOptions options;
+    DividerProps options;
 
-    explicit RenderDivider(DividerOptions opt) : options(std::move(opt)) {
+    explicit RenderDivider(DividerProps opt) : options(std::move(opt)) {
         ANUNodeStyleSetWidthPercent(anu_node_, 100.0f);
         ANUNodeStyleSetHeight(anu_node_, options.height);
     }
 
-    void updateOptions(const DividerOptions& o) {
+    void updateOptions(const DividerProps& o) {
         if (options.height != o.height) {
             ANUNodeStyleSetHeight(anu_node_, o.height);
             markNeedsLayout();
@@ -166,14 +166,14 @@ public:
 
 class RenderVerticalDivider : public RenderBox {
 public:
-    DividerOptions options;
+    DividerProps options;
 
-    explicit RenderVerticalDivider(DividerOptions opt) : options(std::move(opt)) {
+    explicit RenderVerticalDivider(DividerProps opt) : options(std::move(opt)) {
         ANUNodeStyleSetHeightPercent(anu_node_, 100.0f);
         ANUNodeStyleSetWidth(anu_node_, options.height);
     }
 
-    void updateOptions(const DividerOptions& o) {
+    void updateOptions(const DividerProps& o) {
         if (options.height != o.height) {
             ANUNodeStyleSetWidth(anu_node_, o.height);
             markNeedsLayout();

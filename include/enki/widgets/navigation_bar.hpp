@@ -196,6 +196,20 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Props for Declarative Syntax
+// ════════════════════════════════════════════════════════════════
+
+struct NavigationBarProps {
+    std::vector<NavigationBarItem> items;
+    int                            selected_index = 0;
+    std::function<void(int)>       on_item_selected;
+    std::function<void(int)>       on_item_reselect = nullptr;
+    std::function<void(std::string_view)> on_action_clicked = nullptr;
+    NavigationBarOptions           options = {};
+    Key                            key = Key::none();
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -207,6 +221,15 @@ inline std::shared_ptr<NavigationBar> navigationBar(
         NavigationBarOptions options = {}) {
     return std::make_shared<NavigationBar>(
         std::move(items), selected_index, std::move(on_selected), std::move(options));
+}
+
+inline std::shared_ptr<NavigationBar> navigationBar(NavigationBarProps props) {
+    auto nb = std::make_shared<NavigationBar>(std::move(props.items), props.selected_index,
+                                              std::move(props.on_item_selected), std::move(props.options));
+    if (props.on_item_reselect) nb->onReselect(std::move(props.on_item_reselect));
+    if (props.on_action_clicked) nb->onAction(std::move(props.on_action_clicked));
+    if (props.key != Key::none()) nb->key = props.key;
+    return nb;
 }
 
 /// Floating Capsule Navigation Bar (macOS Dock / iOS 18 Floating Island).
@@ -230,6 +253,20 @@ inline std::shared_ptr<NavigationBar> floatingNavBar(
         std::move(items), selected_index, std::move(on_selected), std::move(options));
 }
 
+inline std::shared_ptr<NavigationBar> floatingNavBar(NavigationBarProps props, float fixed_width = 460.0f) {
+    props.options.style = NavigationBarStyle::FloatingPill;
+    props.options.indicator_style = NavIndicatorStyle::Pill;
+    props.options.width = fixed_width;
+    props.options.height = 64.0f;
+    props.options.corner_radius = 32.0f;
+    props.options.enable_glassmorphism = true;
+    props.options.background_color = 0xEE1E293B;
+    props.options.border_color = 0x3338BDF8;
+    props.options.indicator_color = 0x3338BDF8;
+    props.options.indicator_radius = 20.0f;
+    return navigationBar(std::move(props));
+}
+
 /// Desktop / Web Top Header Navigation Bar.
 inline std::shared_ptr<NavigationBar> topNavigationBar(
         std::vector<NavigationBarItem> items,
@@ -249,6 +286,19 @@ inline std::shared_ptr<NavigationBar> topNavigationBar(
     options.show_search_placeholder = true;
     return std::make_shared<NavigationBar>(
         std::move(items), selected_index, std::move(on_selected), std::move(options));
+}
+
+inline std::shared_ptr<NavigationBar> topNavigationBar(NavigationBarProps props, std::string leading_title = "ENKI App", IconData leading_icon = {}) {
+    props.options.style = NavigationBarStyle::TopHeader;
+    props.options.indicator_style = NavIndicatorStyle::Underline;
+    props.options.item_layout = NavItemLayout::Horizontal;
+    props.options.height = 60.0f;
+    props.options.background_color = 0xFF0F172A;
+    props.options.border_color = 0xFF1E293B;
+    props.options.leading_title = std::move(leading_title);
+    props.options.leading_icon = std::move(leading_icon);
+    props.options.show_search_placeholder = true;
+    return navigationBar(std::move(props));
 }
 
 /// Segmented Capsule Navigation Tabs.
@@ -273,6 +323,23 @@ inline std::shared_ptr<NavigationBar> segmentedNavBar(
     options.indicator_h = 36.0f;
     return std::make_shared<NavigationBar>(
         std::move(items), selected_index, std::move(on_selected), std::move(options));
+}
+
+inline std::shared_ptr<NavigationBar> segmentedNavBar(NavigationBarProps props, float fixed_width = 380.0f) {
+    props.options.style = NavigationBarStyle::SegmentedCapsule;
+    props.options.indicator_style = NavIndicatorStyle::Pill;
+    props.options.item_layout = NavItemLayout::Horizontal;
+    props.options.width = fixed_width;
+    props.options.height = 44.0f;
+    props.options.corner_radius = 22.0f;
+    props.options.background_color = 0xFF0F172A;
+    props.options.indicator_color = 0xFF0284C7;
+    props.options.active_color = 0xFFFFFFFF;
+    props.options.inactive_color = 0xFF94A3B8;
+    props.options.indicator_radius = 18.0f;
+    props.options.indicator_w = 0.0f;
+    props.options.indicator_h = 36.0f;
+    return navigationBar(std::move(props));
 }
 
 } // namespace enki

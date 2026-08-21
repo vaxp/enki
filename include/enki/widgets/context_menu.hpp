@@ -108,6 +108,13 @@ struct ContextMenuOptions {
     std::string custom_shader = "";      ///< Optional SkSL shader code
 };
 
+struct ContextMenuProps {
+    Key key = Key::none();
+    WidgetPtr child;
+    std::vector<ContextMenuItemPtr> items;
+    ContextMenuOptions options;
+};
+
 /// @brief ContextMenu widget wrapping a target child widget.
 class ContextMenu : public StatefulWidget {
 public:
@@ -157,6 +164,12 @@ inline WidgetPtr contextMenu(WidgetPtr child,
                              std::vector<ContextMenuItemPtr> items,
                              ContextMenuOptions options = ContextMenuOptions()) {
     return std::make_shared<ContextMenu>(std::move(child), std::move(items), std::move(options));
+}
+
+inline WidgetPtr contextMenu(ContextMenuProps props) {
+    auto cm = std::make_shared<ContextMenu>(std::move(props.child), std::move(props.items), std::move(props.options));
+    cm->key = props.key;
+    return cm;
 }
 
 } // namespace enki

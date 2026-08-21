@@ -128,8 +128,10 @@ struct TextAreaController {
     bool pasteFromClipboard();
 };
 
-/// Configuration styling and functional options for TextArea
-struct TextAreaOptions {
+struct TextAreaProps {
+    Key key = Key::none();
+    std::shared_ptr<TextAreaController> controller = nullptr;
+
     TextStyle style;
     std::string hint_text = "";
     bool read_only = false;
@@ -155,29 +157,38 @@ struct TextAreaOptions {
     float border_radius      = 8.0f;
     EdgeInsets padding       = EdgeInsets::all(10.0f);
 
-    std::function<void(std::string)> on_changed;
-    std::function<void(std::string)> on_submitted;
-    std::function<void(size_t row, size_t col)> on_cursor_moved;
+    std::function<void(std::string)> on_changed = nullptr;
+    std::function<void(std::string)> on_submitted = nullptr;
+    std::function<void(size_t row, size_t col)> on_cursor_moved = nullptr;
 };
 
 /// @brief Advanced multi-line TextArea widget.
 class TextArea : public StatefulWidget {
 public:
     std::shared_ptr<TextAreaController> controller;
-    TextAreaOptions options;
+    TextAreaProps options;
 
-    explicit TextArea(std::shared_ptr<TextAreaController> ctrl = nullptr, TextAreaOptions opt = {})
+    explicit TextArea(std::shared_ptr<TextAreaController> ctrl = nullptr, TextAreaProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<TextAreaController>()),
+          options(std::move(opt)) {}
+          
+    explicit TextArea(Key key, std::shared_ptr<TextAreaController> ctrl, TextAreaProps opt)
+        : StatefulWidget(std::move(key)),
+          controller(ctrl ? std::move(ctrl) : std::make_shared<TextAreaController>()),
           options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TextArea"; }
 };
 
-inline WidgetPtr textArea(
+inline std::shared_ptr<TextArea> textArea(
     std::shared_ptr<TextAreaController> controller = nullptr,
-    TextAreaOptions options = {}) {
+    TextAreaProps options = {}) {
     return std::make_shared<TextArea>(std::move(controller), std::move(options));
+}
+
+inline std::shared_ptr<TextArea> textArea(TextAreaProps props) {
+    return std::make_shared<TextArea>(std::move(props.key), std::move(props.controller), std::move(props));
 }
 
 } // namespace enki

@@ -92,6 +92,15 @@ public:
     [[nodiscard]] BottomSheetDetent getDetent() const { return get_detent_fn ? get_detent_fn() : BottomSheetDetent::Hidden; }
 };
 
+struct BottomSheetProps {
+    Key key = Key::none();
+    WidgetPtr sheet_content;
+    WidgetPtr body;
+    bool initial_open = false;
+    BottomSheetOptions options;
+    std::shared_ptr<BottomSheetController> controller;
+};
+
 /// ════════════════════════════════════════════════════════════════
 /// BottomSheet Widget
 /// ════════════════════════════════════════════════════════════════
@@ -141,6 +150,16 @@ inline std::shared_ptr<BottomSheet> bottomSheet(
     WidgetPtr body,
     BottomSheetOptions options = {}) {
     return std::make_shared<BottomSheet>(std::move(sheet_content), std::move(body), std::move(options));
+}
+
+inline std::shared_ptr<BottomSheet> bottomSheet(BottomSheetProps props) {
+    auto bs = std::make_shared<BottomSheet>(std::move(props.sheet_content), std::move(props.body), std::move(props.options));
+    bs->key = props.key;
+    bs->initial_open = props.initial_open;
+    if (props.controller) {
+        bs->setController(props.controller);
+    }
+    return bs;
 }
 
 } // namespace enki

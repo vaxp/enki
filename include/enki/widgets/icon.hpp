@@ -76,6 +76,13 @@ private:
     SkPath cached_svg_path_;
 };
 
+struct IconProps {
+    Key key = Key::none();
+    IconData data;
+    std::optional<float> size;
+    std::optional<Color> color;
+};
+
 /// @brief Icon widget that can draw vector shapes from Fonts or SVG paths.
 class Icon : public SingleChildRenderObjectWidget {
 public:
@@ -83,7 +90,9 @@ public:
     float size_val = 24.0f;
     Color color_val = 0xFFFFFFFF; // Default white
 
-    Icon(IconData d) : data(std::move(d)) {}
+    Icon() = default;
+    explicit Icon(IconData d) : data(std::move(d)) {}
+    Icon(Key key, IconData d) : SingleChildRenderObjectWidget(std::move(key)), data(std::move(d)) {}
 
     // Fluent API
     std::shared_ptr<Icon> size(float s) { size_val = s; return std::static_pointer_cast<Icon>(shared_from_this()); }
@@ -104,6 +113,18 @@ public:
 /// @brief Factory function to create an Icon.
 inline std::shared_ptr<Icon> icon(IconData data) {
     return std::make_shared<Icon>(std::move(data));
+}
+
+inline std::shared_ptr<Icon> icon(IconProps props) {
+    auto i = std::make_shared<Icon>(std::move(props.key), std::move(props.data));
+    if (props.size) i->size_val = *props.size;
+    if (props.color) i->color_val = *props.color;
+    return i;
+}
+
+inline std::shared_ptr<Icon> icon(IconData data, IconProps props) {
+    props.data = std::move(data);
+    return icon(std::move(props));
 }
 
 } // namespace enki

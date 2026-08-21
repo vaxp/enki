@@ -14,15 +14,15 @@ class RenderSwitch : public RenderBox {
 public:
     bool value;
     bool hovered;
-    SwitchOptions options;
+    SwitchProps options;
 
-    RenderSwitch(bool val, bool hov, SwitchOptions opt) 
+    RenderSwitch(bool val, bool hov, SwitchProps opt) 
         : value(val), hovered(hov), options(std::move(opt)) {
         ANUNodeStyleSetWidth(anu_node_, options.width);
         ANUNodeStyleSetHeight(anu_node_, options.height);
     }
 
-    void update(bool new_value, bool new_hovered, const SwitchOptions& new_options) {
+    void update(bool new_value, bool new_hovered, const SwitchProps& new_options) {
         if (options.width != new_options.width || options.height != new_options.height) {
             ANUNodeStyleSetWidth(anu_node_, new_options.width);
             ANUNodeStyleSetHeight(anu_node_, new_options.height);
@@ -105,9 +105,9 @@ class SwitchRenderWidget : public SingleChildRenderObjectWidget {
 public:
     bool value;
     bool hovered;
-    SwitchOptions options;
+    SwitchProps options;
 
-    SwitchRenderWidget(bool val, bool hov, SwitchOptions opt)
+    SwitchRenderWidget(bool val, bool hov, SwitchProps opt)
         : value(val), hovered(hov), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {

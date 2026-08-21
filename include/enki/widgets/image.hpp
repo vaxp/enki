@@ -223,6 +223,62 @@ inline std::shared_ptr<ImageWidget> imageMemory(const std::vector<uint8_t>& data
     return ImageWidget::memory(data);
 }
 
+struct ImageProps {
+    Key key = Key::none();
+    std::shared_ptr<Image> image;
+    std::string source_path;
+
+    std::optional<StyleValue> width;
+    std::optional<StyleValue> height;
+    std::optional<StyleValue> min_width;
+    std::optional<StyleValue> min_height;
+    std::optional<StyleValue> max_width;
+    std::optional<StyleValue> max_height;
+
+    BoxFit fit = BoxFit::Cover;
+    Alignment alignment = Alignment::Center;
+    BorderRadius border_radius = BorderRadius::zero();
+    BoxShape shape = BoxShape::Rectangle;
+
+    std::optional<Color> tint_color;
+    BlendMode blend_mode = BlendMode::SrcIn;
+    float opacity = 1.0f;
+    bool clip_content = true;
+};
+
+inline std::shared_ptr<ImageWidget> image(ImageProps props) {
+    auto img = props.image ? std::make_shared<ImageWidget>(std::move(props.key), std::move(props.image)) 
+                           : std::make_shared<ImageWidget>(std::move(props.key), props.source_path);
+    
+    if (props.width) img->style.width = props.width;
+    if (props.height) img->style.height = props.height;
+    if (props.min_width) img->style.min_width = props.min_width;
+    if (props.min_height) img->style.min_height = props.min_height;
+    if (props.max_width) img->style.max_width = props.max_width;
+    if (props.max_height) img->style.max_height = props.max_height;
+    
+    img->style.fit = props.fit;
+    img->style.alignment = props.alignment;
+    img->style.border_radius = props.border_radius;
+    img->style.shape = props.shape;
+    img->style.tint_color = props.tint_color;
+    img->style.blend_mode = props.blend_mode;
+    img->style.opacity = props.opacity;
+    img->style.clip_content = props.clip_content;
+    
+    return img;
+}
+
+inline std::shared_ptr<ImageWidget> imageAsset(std::string_view path, ImageProps props) {
+    props.source_path = std::string(path);
+    return image(std::move(props));
+}
+
+inline std::shared_ptr<ImageWidget> image(std::shared_ptr<Image> img, ImageProps props) {
+    props.image = std::move(img);
+    return image(std::move(props));
+}
+
 inline std::shared_ptr<ImageWidget> image(std::shared_ptr<Image> img) {
     return ImageWidget::fromImage(std::move(img));
 }

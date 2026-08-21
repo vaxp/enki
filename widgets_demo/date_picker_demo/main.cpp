@@ -54,7 +54,7 @@ public:
         auto lbl_dest = text("Destination:");
         lbl_dest->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        TextFieldOptions dest_opts;
+        TextFieldProps dest_opts;
         dest_opts.hint_text = "Enter Destination...";
         auto dest_field = std::make_shared<TextField>(dest_ctrl_, dest_opts);
         auto dest_box = container(dest_field);
@@ -63,7 +63,7 @@ public:
         auto lbl_pass = text("Passengers & Class:");
         lbl_pass->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        TextFieldOptions pass_opts;
+        TextFieldProps pass_opts;
         pass_opts.hint_text = "Enter Passengers...";
         auto pass_field = std::make_shared<TextField>(pass_ctrl_, pass_opts);
         auto pass_box = container(pass_field);
@@ -72,7 +72,7 @@ public:
         auto label_dep = text("Departure Date (Single Date Dropdown):");
         label_dep->fontSize(11.5f).bold().color(0xFF94A3B8);
 
-        DatePickerOptions popup_opts;
+        DatePickerProps popup_opts;
         popup_opts.mode = DatePickerMode::InputPopup;
         popup_opts.selection_mode = DatePickerSelectionMode::Single;
         popup_opts.initial_date = selected_single_date_;
@@ -84,13 +84,15 @@ public:
 
         auto single_date_widget = datePicker(popup_opts);
 
-        std::vector<WidgetPtr> form_items = {
-            form_title,
-            lbl_dest, dest_box,
-            lbl_pass, pass_box,
-            label_dep, single_date_widget
-        };
-        auto form_col = column(form_items);
+        std::vector<WidgetPtr> root_children;
+        root_children.push_back(form_title);
+        root_children.push_back(lbl_dest);
+        root_children.push_back(dest_box);
+        root_children.push_back(lbl_pass);
+        root_children.push_back(pass_box);
+        root_children.push_back(label_dep);
+        root_children.push_back(single_date_widget);
+        auto form_col = column(root_children);
         form_col->gap(StyleValue::point(10.0f));
 
         auto form_card = container(form_col);
@@ -104,7 +106,7 @@ public:
         auto range_title = text("🏨 Hotel Reservation Period (Inline DateRangePicker)");
         range_title->fontSize(15.0f).bold().color(0xFF10B981);
 
-        DatePickerOptions range_opts;
+        DatePickerProps range_opts;
         range_opts.mode = DatePickerMode::Inline;
         range_opts.selection_mode = DatePickerSelectionMode::Range;
         range_opts.initial_range = selected_range_;

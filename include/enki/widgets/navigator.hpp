@@ -68,11 +68,11 @@ struct RouteConfig {
 // NavigatorOptions
 // ════════════════════════════════════════════════════════════════
 
-struct NavigatorOptions {
+struct NavigatorProps {
+    Key      key                  = Key::none();
+    std::vector<RouteConfig> initial_routes;
     Color    background_color     = 0xFF0F172A;
     int      transition_duration_ms = 300;
-
-    constexpr bool operator==(const NavigatorOptions&) const = default;
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -82,11 +82,13 @@ struct NavigatorOptions {
 class Navigator : public StatefulWidget {
 public:
     std::vector<RouteConfig>   initial_routes; ///< Initial route stack (bottom = first)
-    NavigatorOptions           options;
+    NavigatorProps           options;
 
     Navigator() = default;
-    explicit Navigator(std::vector<RouteConfig> routes, NavigatorOptions opt = {})
+    explicit Navigator(std::vector<RouteConfig> routes, NavigatorProps opt = {})
         : initial_routes(std::move(routes)), options(std::move(opt)) {}
+    
+    Navigator(Key k, NavigatorProps opt) : StatefulWidget(std::move(k)), initial_routes(std::move(opt.initial_routes)), options(std::move(opt)) {}
 
     // ── Static navigation helpers ──────────────────────────────
 
@@ -144,8 +146,12 @@ private:
 // ════════════════════════════════════════════════════════════════
 
 inline std::shared_ptr<Navigator> navigator(std::vector<RouteConfig> routes,
-                                            NavigatorOptions options = {}) {
+                                            NavigatorProps options = {}) {
     return std::make_shared<Navigator>(std::move(routes), std::move(options));
+}
+
+inline std::shared_ptr<Navigator> navigator(NavigatorProps props) {
+    return std::make_shared<Navigator>(std::move(props.key), std::move(props));
 }
 
 } // namespace enki

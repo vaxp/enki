@@ -9,7 +9,7 @@ using namespace enki;
 
 void test_default_initialization() {
     std::cout << "Testing Default Initialization..." << std::endl;
-    AvatarOptions opt;
+    AvatarProps opt;
     opt.initials = "AB";
     auto av = avatar(opt);
     

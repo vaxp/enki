@@ -127,7 +127,29 @@ struct DropdownMenuItem {
 // DropdownMenuOptions
 // ════════════════════════════════════════════════════════════════
 
-struct DropdownMenuOptions {
+class DropdownMenuController {
+public:
+    std::function<void()>               open_fn;
+    std::function<void()>               close_fn;
+    std::function<void()>               toggle_fn;
+    std::function<void(const std::string&)> select_fn;
+    std::function<bool()>               is_open_fn;
+    std::function<std::string()>        get_selected_fn;
+
+    void open()   { if (open_fn)   open_fn();   }
+    void close()  { if (close_fn)  close_fn();  }
+    void toggle() { if (toggle_fn) toggle_fn(); }
+    void select(const std::string& id) { if (select_fn) select_fn(id); }
+    [[nodiscard]] bool isOpen()          const { return is_open_fn      ? is_open_fn()      : false; }
+    [[nodiscard]] std::string getSelected() const { return get_selected_fn ? get_selected_fn() : ""; }
+};
+
+struct DropdownMenuProps {
+    std::vector<DropdownMenuItem>       items;
+    WidgetPtr                           body = nullptr;           ///< Page body to wrap
+    WidgetPtr                           custom_trigger = nullptr; ///< Optional custom trigger widget
+    std::shared_ptr<DropdownMenuController> controller = nullptr;
+
     float menu_width      = 240.0f;
     float max_menu_height = 340.0f;
     float border_radius   = 8.0f;
@@ -168,22 +190,7 @@ struct DropdownMenuOptions {
 // DropdownMenuController
 // ════════════════════════════════════════════════════════════════
 
-class DropdownMenuController {
-public:
-    std::function<void()>               open_fn;
-    std::function<void()>               close_fn;
-    std::function<void()>               toggle_fn;
-    std::function<void(const std::string&)> select_fn;
-    std::function<bool()>               is_open_fn;
-    std::function<std::string()>        get_selected_fn;
 
-    void open()   { if (open_fn)   open_fn();   }
-    void close()  { if (close_fn)  close_fn();  }
-    void toggle() { if (toggle_fn) toggle_fn(); }
-    void select(const std::string& id) { if (select_fn) select_fn(id); }
-    [[nodiscard]] bool isOpen()          const { return is_open_fn      ? is_open_fn()      : false; }
-    [[nodiscard]] std::string getSelected() const { return get_selected_fn ? get_selected_fn() : ""; }
-};
 
 // ════════════════════════════════════════════════════════════════
 // DropdownMenu Widget
@@ -196,36 +203,26 @@ public:
 /// overlay architecture exactly.
 class DropdownMenu : public StatefulWidget {
 public:
-    std::vector<DropdownMenuItem>       items;
-    WidgetPtr                           body;           ///< Page body to wrap
-    WidgetPtr                           custom_trigger; ///< Optional custom trigger widget
-    DropdownMenuOptions                 options;
-    std::shared_ptr<DropdownMenuController> controller;
+    DropdownMenuProps                 props;
 
     DropdownMenu() = default;
-    DropdownMenu(WidgetPtr trigger, std::vector<DropdownMenuItem> items_,
-                 WidgetPtr body_, DropdownMenuOptions opts = {})
-        : items(std::move(items_)), body(std::move(body_)),
-          custom_trigger(std::move(trigger)), options(std::move(opts)) {}
-
-    DropdownMenu(std::vector<DropdownMenuItem> items_, WidgetPtr body_,
-                 DropdownMenuOptions opts = {})
-        : items(std::move(items_)), body(std::move(body_)), options(std::move(opts)) {}
+    explicit DropdownMenu(DropdownMenuProps p)
+        : props(std::move(p)) {}
 
     // Fluent API
-    DropdownMenu& selected(std::string id)         { options.selected_id = std::move(id); return *this; }
-    DropdownMenu& placeholder(std::string p)       { options.placeholder = std::move(p);  return *this; }
-    DropdownMenu& menuWidth(float w)               { options.menu_width = w;              return *this; }
-    DropdownMenu& triggerWidth(float w)            { options.trigger_width = w;           return *this; }
-    DropdownMenu& anchorAt(float x, float y)       { options.anchor_x = x; options.anchor_y = y; return *this; }
+    DropdownMenu& selected(std::string id)         { props.selected_id = std::move(id); return *this; }
+    DropdownMenu& placeholder(std::string p)       { props.placeholder = std::move(p);  return *this; }
+    DropdownMenu& menuWidth(float w)               { props.menu_width = w;              return *this; }
+    DropdownMenu& triggerWidth(float w)            { props.trigger_width = w;           return *this; }
+    DropdownMenu& anchorAt(float x, float y)       { props.anchor_x = x; props.anchor_y = y; return *this; }
     DropdownMenu& setController(std::shared_ptr<DropdownMenuController> c) {
-        controller = std::move(c); return *this;
+        props.controller = std::move(c); return *this;
     }
     DropdownMenu& onSelected(std::function<void(const DropdownMenuItem&)> cb) {
-        options.on_selected = std::move(cb); return *this;
+        props.on_selected = std::move(cb); return *this;
     }
     DropdownMenu& onToggleChecked(std::function<void(const std::string&, bool)> cb) {
-        options.on_toggle_checked = std::move(cb); return *this;
+        props.on_toggle_checked = std::move(cb); return *this;
     }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
@@ -236,21 +233,8 @@ public:
 // Factory Helpers
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<DropdownMenu> dropdownMenu(
-    WidgetPtr trigger,
-    std::vector<DropdownMenuItem> items,
-    WidgetPtr body,
-    DropdownMenuOptions options = {}) {
-    return std::make_shared<DropdownMenu>(
-        std::move(trigger), std::move(items), std::move(body), std::move(options));
-}
-
-inline std::shared_ptr<DropdownMenu> dropdownMenu(
-    std::vector<DropdownMenuItem> items,
-    WidgetPtr body,
-    DropdownMenuOptions options = {}) {
-    return std::make_shared<DropdownMenu>(
-        std::move(items), std::move(body), std::move(options));
+inline std::shared_ptr<DropdownMenu> dropdownMenu(DropdownMenuProps props) {
+    return std::make_shared<DropdownMenu>(std::move(props));
 }
 
 } // namespace enki

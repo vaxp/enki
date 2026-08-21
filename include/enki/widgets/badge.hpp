@@ -11,7 +11,11 @@
 
 namespace enki {
 
-struct BadgeOptions {
+struct BadgeProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    WidgetPtr label = nullptr;
+
     Color bg_color = 0xFFEF4444;                            ///< Background color (default Red).
     Alignment alignment = Alignment::TopRight;              ///< Placement of the badge relative to the child.
     Point offset = {0.0f, 0.0f};                            ///< X,Y offset for fine-tuning positioning.
@@ -27,13 +31,15 @@ class Badge : public StatelessWidget {
 public:
     WidgetPtr child;
     WidgetPtr label;
-    BadgeOptions options;
+    BadgeProps options;
 
     Badge() = default;
     explicit Badge(WidgetPtr c) : child(std::move(c)) {}
     Badge(WidgetPtr c, WidgetPtr l) : child(std::move(c)), label(std::move(l)) {}
-    Badge(WidgetPtr c, WidgetPtr l, BadgeOptions opt)
+    Badge(WidgetPtr c, WidgetPtr l, BadgeProps opt)
         : child(std::move(c)), label(std::move(l)), options(std::move(opt)) {}
+    Badge(Key key, WidgetPtr c, WidgetPtr l, BadgeProps opt)
+        : StatelessWidget(std::move(key)), child(std::move(c)), label(std::move(l)), options(std::move(opt)) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "Badge"; }
@@ -51,6 +57,15 @@ public:
 
 inline std::shared_ptr<Badge> badge(WidgetPtr child, WidgetPtr label = nullptr) {
     return std::make_shared<Badge>(std::move(child), std::move(label));
+}
+
+inline std::shared_ptr<Badge> badge(BadgeProps props) {
+    return std::make_shared<Badge>(std::move(props.key), std::move(props.child), std::move(props.label), std::move(props));
+}
+
+inline std::shared_ptr<Badge> badge(BadgeProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return badge(std::move(props));
 }
 
 } // namespace enki

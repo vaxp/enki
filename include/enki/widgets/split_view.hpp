@@ -72,6 +72,14 @@ public:
     void reset() { if (reset_fn) reset_fn(); }
 };
 
+struct SplitViewProps {
+    Key key = Key::none();
+    WidgetPtr first_child;
+    WidgetPtr second_child;
+    SplitViewOptions options;
+    std::shared_ptr<SplitViewController> controller;
+};
+
 /// ════════════════════════════════════════════════════════════════
 /// SplitView Widget
 /// ════════════════════════════════════════════════════════════════
@@ -99,6 +107,12 @@ inline std::shared_ptr<SplitView> splitView(
     SplitViewOptions options = {},
     std::shared_ptr<SplitViewController> controller = nullptr) {
     return std::make_shared<SplitView>(std::move(leading), std::move(trailing), std::move(options), std::move(controller));
+}
+
+inline std::shared_ptr<SplitView> splitView(SplitViewProps props) {
+    auto sv = std::make_shared<SplitView>(std::move(props.first_child), std::move(props.second_child), std::move(props.options), std::move(props.controller));
+    sv->key = props.key;
+    return sv;
 }
 
 inline std::shared_ptr<SplitView> horizontalSplit(

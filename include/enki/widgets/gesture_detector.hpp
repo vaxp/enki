@@ -150,12 +150,84 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+struct GestureDetectorProps {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    
+    HitTestBehavior hit_test_behavior = HitTestBehavior::DeferToChild;
+    SystemCursor    cursor_type       = SystemCursor::Default;
+
+    GestureTapDownCallback   on_tap_down;
+    GestureTapUpCallback     on_tap_up;
+    GestureTapCallback       on_tap;
+    GestureTapCancelCallback on_tap_cancel;
+
+    GestureTapDownCallback   on_secondary_tap_down;
+    GestureTapUpCallback     on_secondary_tap_up;
+    GestureTapCallback       on_secondary_tap;
+
+    GestureTapDownCallback   on_double_tap_down;
+    GestureTapCallback       on_double_tap;
+    GestureTapCancelCallback on_double_tap_cancel;
+
+    GestureLongPressStartCallback on_long_press_start;
+    GestureLongPressMoveCallback  on_long_press_move;
+    GestureLongPressEndCallback   on_long_press_end;
+    GestureLongPressCallback      on_long_press;
+
+    GestureDragStartCallback  on_pan_start;
+    GestureDragUpdateCallback on_pan_update;
+    GestureDragEndCallback    on_pan_end;
+    GestureDragCancelCallback on_pan_cancel;
+
+    GestureHoverCallback      on_hover_enter;
+    GestureHoverCallback      on_hover_exit;
+    GestureHoverCallback      on_hover_move;
+    GestureScrollCallback     on_scroll;
+};
+
 inline std::shared_ptr<GestureDetector> gestureDetector(WidgetPtr child = nullptr) {
     return std::make_shared<GestureDetector>(std::move(child));
 }
 
 inline std::shared_ptr<GestureDetector> gestureDetector(Key key, WidgetPtr child = nullptr) {
     return std::make_shared<GestureDetector>(std::move(key), std::move(child));
+}
+
+inline std::shared_ptr<GestureDetector> gestureDetector(GestureDetectorProps props) {
+    auto gd = std::make_shared<GestureDetector>(std::move(props.key), std::move(props.child));
+    gd->hit_test_behavior = props.hit_test_behavior;
+    gd->cursor_type = props.cursor_type;
+    
+    gd->on_tap_down = std::move(props.on_tap_down);
+    gd->on_tap_up = std::move(props.on_tap_up);
+    gd->on_tap = std::move(props.on_tap);
+    gd->on_tap_cancel = std::move(props.on_tap_cancel);
+    gd->on_secondary_tap_down = std::move(props.on_secondary_tap_down);
+    gd->on_secondary_tap_up = std::move(props.on_secondary_tap_up);
+    gd->on_secondary_tap = std::move(props.on_secondary_tap);
+    gd->on_double_tap_down = std::move(props.on_double_tap_down);
+    gd->on_double_tap = std::move(props.on_double_tap);
+    gd->on_double_tap_cancel = std::move(props.on_double_tap_cancel);
+    gd->on_long_press_start = std::move(props.on_long_press_start);
+    gd->on_long_press_move = std::move(props.on_long_press_move);
+    gd->on_long_press_end = std::move(props.on_long_press_end);
+    gd->on_long_press = std::move(props.on_long_press);
+    gd->on_pan_start = std::move(props.on_pan_start);
+    gd->on_pan_update = std::move(props.on_pan_update);
+    gd->on_pan_end = std::move(props.on_pan_end);
+    gd->on_pan_cancel = std::move(props.on_pan_cancel);
+    gd->on_hover_enter = std::move(props.on_hover_enter);
+    gd->on_hover_exit = std::move(props.on_hover_exit);
+    gd->on_hover_move = std::move(props.on_hover_move);
+    gd->on_scroll = std::move(props.on_scroll);
+    
+    return gd;
+}
+
+inline std::shared_ptr<GestureDetector> gestureDetector(GestureDetectorProps props, WidgetPtr child) {
+    props.child = std::move(child);
+    return gestureDetector(std::move(props));
 }
 
 } // namespace enki

@@ -48,7 +48,7 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const TimePicker*>(widget());
-        time_ = w->options.initial_time;
+        time_ = w->props.initial_time;
         wireController();
     }
 
@@ -59,27 +59,27 @@ public:
 
     void wireController() {
         auto* w = static_cast<const TimePicker*>(widget());
-        if (w->controller) {
-            w->controller->set_time_fn = [this](const TimeVal& t) {
+        if (w->props.controller) {
+            w->props.controller->set_time_fn = [this](const TimeVal& t) {
                 time_ = t;
                 setState([] {});
             };
-            w->controller->open_fn = [this] {
+            w->props.controller->open_fn = [this] {
                 is_popup_open_ = true;
                 setState([] {});
             };
-            w->controller->close_fn = [this] {
+            w->props.controller->close_fn = [this] {
                 is_popup_open_ = false;
                 setState([] {});
             };
-            w->controller->get_time_fn = [this] { return time_; };
+            w->props.controller->get_time_fn = [this] { return time_; };
         }
     }
 
     void notifyChanged() {
         auto* w = static_cast<const TimePicker*>(widget());
-        if (w->options.on_time_selected) {
-            w->options.on_time_selected(time_);
+        if (w->props.on_time_selected) {
+            w->props.on_time_selected(time_);
         }
     }
 
@@ -98,7 +98,7 @@ public:
 
     void stepMinute(int delta) {
         auto* w = static_cast<const TimePicker*>(widget());
-        int step = (w->options.minute_step > 0) ? w->options.minute_step : 1;
+        int step = (w->props.minute_step > 0) ? w->props.minute_step : 1;
         time_.minute = (time_.minute + delta * step + 60) % 60;
         notifyChanged();
         setState([] {});
@@ -229,7 +229,7 @@ public:
 
     // ── Build Time Picker Card ────────────────────────────────────
     WidgetPtr buildTimePickerCard(const TimePicker* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
         bool is_24h = (opts.format == TimeFormat::TwentyFourHour);
 
         // Header Title
@@ -305,7 +305,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const TimePicker*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         if (opts.mode == TimePickerMode::Inline) {
             return buildTimePickerCard(w);

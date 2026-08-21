@@ -79,73 +79,58 @@ enum class ScrollPhysics {
 ///   })
 ///   ->separated([](int index) -> WidgetPtr { return divider(); });
 /// @endcode
-class ListView : public StatefulWidget {
-public:
-    // ── Build mode A: static items ─────────────────────────────
+struct ListViewProps {
+    Key key = Key::none();
     std::vector<WidgetPtr> items;
-
-    // ── Build mode B: lazy builder ─────────────────────────────
     int item_count = 0;
     std::function<WidgetPtr(int index)> item_builder;
-
-    // ── Optional separator between items ───────────────────────
-    /// Return nullptr to skip the separator at a given index.
     std::function<WidgetPtr(int index)> separator_builder;
-
-    // ── Scroll configuration ────────────────────────────────────
-    Axis       direction     = Axis::Vertical;
+    Axis direction = Axis::Vertical;
     ScrollPhysics scroll_physics = ScrollPhysics::Clamped;
-    float      scroll_speed  = 50.0f;
-
-    // ── Layout ─────────────────────────────────────────────────
-    EdgeInsets list_padding  = EdgeInsets{};
-    bool       shrink_wrap   = false;   ///< Size to content height (disables infinite scroll).
-    bool       is_reversed    = false;  ///< Reverse the scroll direction.
-    bool       primary        = true;   ///< Whether this is the primary scroll view.
-
-    // ── Selection ──────────────────────────────────────────────
+    float scroll_speed = 50.0f;
+    EdgeInsets list_padding = EdgeInsets{};
+    bool shrink_wrap = false;
+    bool is_reversed = false;
+    bool primary = true;
     std::optional<int> selected_index;
     std::function<void(int index)> on_item_selected;
-
-    // ── Callbacks ──────────────────────────────────────────────
     std::function<void()> on_scroll_start;
     std::function<void(float offset)> on_scroll;
     std::function<void()> on_scroll_end;
+};
 
-    // ─────────────────────────────────────────────────────────
+class ListView : public StatefulWidget {
+public:
+    ListViewProps props;
+
     ListView() = default;
 
-    /// Static list constructor.
-    explicit ListView(std::vector<WidgetPtr> items) : items(std::move(items)) {}
-
-    /// Builder-mode constructor.
-    ListView(int count, std::function<WidgetPtr(int)> builder)
-        : item_count(count), item_builder(std::move(builder)) {}
+    explicit ListView(ListViewProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder API ─────────────────────────────────────
 
     ListView& separated(std::function<WidgetPtr(int)> sep) {
-        separator_builder = std::move(sep);
+        props.separator_builder = std::move(sep);
         return *this;
     }
 
-    ListView& padding(EdgeInsets p)   { this->list_padding = p; return *this; }
-    ListView& paddingAll(float p)     { this->list_padding = EdgeInsets::all(p); return *this; }
-    ListView& horizontal()            { direction = Axis::Horizontal; return *this; }
-    ListView& vertical()              { direction = Axis::Vertical; return *this; }
-    ListView& reverse(bool r = true)  { this->is_reversed = r; return *this; }
-    ListView& shrinkWrap(bool s = true) { shrink_wrap = s; return *this; }
+    ListView& padding(EdgeInsets p)   { props.list_padding = p; return *this; }
+    ListView& paddingAll(float p)     { props.list_padding = EdgeInsets::all(p); return *this; }
+    ListView& horizontal()            { props.direction = Axis::Horizontal; return *this; }
+    ListView& vertical()              { props.direction = Axis::Vertical; return *this; }
+    ListView& reverse(bool r = true)  { props.is_reversed = r; return *this; }
+    ListView& shrinkWrap(bool s = true) { props.shrink_wrap = s; return *this; }
 
-    ListView& scrollSpeed(float s)   { scroll_speed = s; return *this; }
-    ListView& physics(ScrollPhysics p) { this->scroll_physics = p; return *this; }
+    ListView& scrollSpeed(float s)   { props.scroll_speed = s; return *this; }
+    ListView& physics(ScrollPhysics p) { props.scroll_physics = p; return *this; }
 
-    ListView& selectedIndex(int idx)  { selected_index = idx; return *this; }
+    ListView& selectedIndex(int idx)  { props.selected_index = idx; return *this; }
     ListView& onItemSelected(std::function<void(int)> cb) {
-        on_item_selected = std::move(cb);
+        props.on_item_selected = std::move(cb);
         return *this;
     }
     ListView& onScroll(std::function<void(float)> cb) {
-        on_scroll = std::move(cb);
+        props.on_scroll = std::move(cb);
         return *this;
     }
 
@@ -158,23 +143,35 @@ public:
 // ════════════════════════════════════════════════════════════════
 
 /// Create a static ListView from a vector of widgets.
+inline std::shared_ptr<ListView> listView(ListViewProps props = {}) {
+    return std::make_shared<ListView>(std::move(props));
+}
+
+/// Create a static ListView from a vector of widgets.
 inline std::shared_ptr<ListView> listView(std::vector<WidgetPtr> items) {
-    return std::make_shared<ListView>(std::move(items));
+    ListViewProps props;
+    props.items = std::move(items);
+    return std::make_shared<ListView>(std::move(props));
 }
 
 /// Create a static ListView from an initializer list.
 inline std::shared_ptr<ListView> listView(std::initializer_list<WidgetPtr> items) {
-    return std::make_shared<ListView>(std::vector<WidgetPtr>(items));
+    ListViewProps props;
+    props.items = std::vector<WidgetPtr>(items);
+    return std::make_shared<ListView>(std::move(props));
 }
 
 /// Create a lazy-builder ListView for large datasets.
 inline std::shared_ptr<ListView> listView(int count, std::function<WidgetPtr(int)> builder) {
-    return std::make_shared<ListView>(count, std::move(builder));
+    ListViewProps props;
+    props.item_count = count;
+    props.item_builder = std::move(builder);
+    return std::make_shared<ListView>(std::move(props));
 }
 
 /// Create an empty ListView for building via fluent API.
 inline std::shared_ptr<ListView> listView() {
-    return std::make_shared<ListView>();
+    return std::make_shared<ListView>(ListViewProps{});
 }
 
 /// Convenience: separated list with a divider between every item.
@@ -182,9 +179,10 @@ inline std::shared_ptr<ListView> listViewSeparated(
     std::vector<WidgetPtr> items,
     std::function<WidgetPtr(int)> separator)
 {
-    auto lv = std::make_shared<ListView>(std::move(items));
-    lv->separator_builder = std::move(separator);
-    return lv;
+    ListViewProps props;
+    props.items = std::move(items);
+    props.separator_builder = std::move(separator);
+    return std::make_shared<ListView>(std::move(props));
 }
 
 } // namespace enki

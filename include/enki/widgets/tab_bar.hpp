@@ -164,6 +164,24 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Props for Declarative Syntax
+// ════════════════════════════════════════════════════════════════
+
+struct TabBarProps {
+    std::vector<TabItem>          tabs;
+    int                           selected_index = 0;
+    std::function<void(int)>      on_tab_changed;
+    TabBarOptions                 options = {};
+    Key                           key = Key::none();
+};
+
+struct TabViewProps {
+    int                           selected_index = 0;
+    std::vector<WidgetPtr>        children;
+    Key                           key = Key::none();
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -176,9 +194,22 @@ inline std::shared_ptr<TabBar> tabBar(
                                    std::move(on_changed), std::move(options));
 }
 
+inline std::shared_ptr<TabBar> tabBar(TabBarProps props) {
+    auto t = std::make_shared<TabBar>(std::move(props.tabs), props.selected_index,
+                                      std::move(props.on_tab_changed), std::move(props.options));
+    if (props.key != Key::none()) t->key = props.key;
+    return t;
+}
+
 inline std::shared_ptr<TabView> tabView(int selected_index,
                                         std::vector<WidgetPtr> children) {
     return std::make_shared<TabView>(selected_index, std::move(children));
+}
+
+inline std::shared_ptr<TabView> tabView(TabViewProps props) {
+    auto t = std::make_shared<TabView>(props.selected_index, std::move(props.children));
+    if (props.key != Key::none()) t->key = props.key;
+    return t;
 }
 
 } // namespace enki

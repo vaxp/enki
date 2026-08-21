@@ -26,10 +26,10 @@ public:
         State::initState();
         auto* w = static_cast<const Accordion*>(widget());
 
-        for (const auto& it : w->items) {
+        for (const auto& it : w->props.items) {
             if (it.is_initially_expanded && !it.is_disabled) {
                 expanded_ids_.insert(it.id);
-                if (w->options.mode == AccordionMode::Single) {
+                if (w->props.mode == AccordionMode::Single) {
                     break; // Only 1 expanded in Single mode
                 }
             }
@@ -45,40 +45,40 @@ public:
 
     void wireController() {
         auto* w = static_cast<const Accordion*>(widget());
-        if (w->controller) {
-            w->controller->expand_fn = [this](const std::string& id) { expandSection(id); };
-            w->controller->collapse_fn = [this](const std::string& id) { collapseSection(id); };
-            w->controller->toggle_fn = [this](const std::string& id) { toggleSection(id); };
-            w->controller->expand_all_fn = [this] { expandAllSections(); };
-            w->controller->collapse_all_fn = [this] { collapseAllSections(); };
-            w->controller->is_expanded_fn = [this](const std::string& id) { return expanded_ids_.count(id) > 0; };
-            w->controller->get_expanded_ids_fn = [this] { return expanded_ids_; };
+        if (w->props.controller) {
+            w->props.controller->expand_fn = [this](const std::string& id) { expandSection(id); };
+            w->props.controller->collapse_fn = [this](const std::string& id) { collapseSection(id); };
+            w->props.controller->toggle_fn = [this](const std::string& id) { toggleSection(id); };
+            w->props.controller->expand_all_fn = [this] { expandAllSections(); };
+            w->props.controller->collapse_all_fn = [this] { collapseAllSections(); };
+            w->props.controller->is_expanded_fn = [this](const std::string& id) { return expanded_ids_.count(id) > 0; };
+            w->props.controller->get_expanded_ids_fn = [this] { return expanded_ids_; };
         }
     }
 
     void expandSection(const std::string& id) {
         auto* w = static_cast<const Accordion*>(widget());
-        if (w->options.mode == AccordionMode::Single) {
+        if (w->props.mode == AccordionMode::Single) {
             expanded_ids_.clear();
         }
         expanded_ids_.insert(id);
-        if (w->options.on_toggle) w->options.on_toggle(id, true);
-        if (w->options.on_change) w->options.on_change(expanded_ids_);
+        if (w->props.on_toggle) w->props.on_toggle(id, true);
+        if (w->props.on_change) w->props.on_change(expanded_ids_);
         setState([] {});
     }
 
     void collapseSection(const std::string& id) {
         auto* w = static_cast<const Accordion*>(widget());
         expanded_ids_.erase(id);
-        if (w->options.on_toggle) w->options.on_toggle(id, false);
-        if (w->options.on_change) w->options.on_change(expanded_ids_);
+        if (w->props.on_toggle) w->props.on_toggle(id, false);
+        if (w->props.on_change) w->props.on_change(expanded_ids_);
         setState([] {});
     }
 
     void toggleSection(const std::string& id) {
         auto* w = static_cast<const Accordion*>(widget());
         if (expanded_ids_.count(id) > 0) {
-            if (w->options.mode == AccordionMode::Multiple || w->options.collapsible) {
+            if (w->props.mode == AccordionMode::Multiple || w->props.collapsible) {
                 collapseSection(id);
             }
         } else {
@@ -88,11 +88,11 @@ public:
 
     void expandAllSections() {
         auto* w = static_cast<const Accordion*>(widget());
-        if (w->options.mode == AccordionMode::Multiple) {
-            for (const auto& it : w->items) {
+        if (w->props.mode == AccordionMode::Multiple) {
+            for (const auto& it : w->props.items) {
                 if (!it.is_disabled) expanded_ids_.insert(it.id);
             }
-            if (w->options.on_change) w->options.on_change(expanded_ids_);
+            if (w->props.on_change) w->props.on_change(expanded_ids_);
             setState([] {});
         }
     }
@@ -100,13 +100,13 @@ public:
     void collapseAllSections() {
         auto* w = static_cast<const Accordion*>(widget());
         expanded_ids_.clear();
-        if (w->options.on_change) w->options.on_change(expanded_ids_);
+        if (w->props.on_change) w->props.on_change(expanded_ids_);
         setState([] {});
     }
 
     // ── Build Single Accordion Item Section ───────────────────────
 
-    WidgetPtr buildItemSection(const AccordionItem& item, const AccordionOptions& opts, bool is_first, bool is_last) {
+    WidgetPtr buildItemSection(const AccordionItem& item, const AccordionProps& opts, bool is_first, bool is_last) {
         bool is_expanded = (expanded_ids_.count(item.id) > 0);
 
         // ── 1. Header Left: Icon + Title + Subtitle ───────────────────
@@ -223,16 +223,16 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const Accordion*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         std::vector<WidgetPtr> items_list;
-        size_t n = w->items.size();
+        size_t n = w->props.items.size();
 
         for (size_t i = 0; i < n; ++i) {
             bool is_first = (i == 0);
             bool is_last = (i == n - 1);
 
-            auto section = buildItemSection(w->items[i], opts, is_first, is_last);
+            auto section = buildItemSection(w->props.items[i], opts, is_first, is_last);
             items_list.push_back(section);
 
             // Divider between sections (for Bordered & Flush variants)

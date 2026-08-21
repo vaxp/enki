@@ -87,7 +87,7 @@ public:
         title_col->alignItems(Align::Center);
 
         // ── Card 1: Currency & Financial Input ────────────────────────
-        NumberFieldOptions curr_opts;
+        NumberFieldProps curr_opts;
         curr_opts.prefix_text = "$ ";
         curr_opts.precision = 2;
         curr_opts.step = 50.0;
@@ -107,7 +107,7 @@ public:
         );
 
         // ── Card 2: CSS / UI Dimensions (Expressions) ────────────────
-        NumberFieldOptions dim_opts;
+        NumberFieldProps dim_opts;
         dim_opts.suffix_text = " px";
         dim_opts.precision = 0;
         dim_opts.step = 10.0;
@@ -128,7 +128,7 @@ public:
         );
 
         // ── Card 3: Percentage & Opacity (Sides Steppers) ─────────────
-        NumberFieldOptions pct_opts;
+        NumberFieldProps pct_opts;
         pct_opts.suffix_text = " %";
         pct_opts.precision = 1;
         pct_opts.step = 0.5;
@@ -150,7 +150,7 @@ public:
         );
 
         // ── Card 4: CAD / 3D Transform Scrubbing ──────────────────────
-        NumberFieldOptions cad_opts;
+        NumberFieldProps cad_opts;
         cad_opts.prefix_text = "Rot: ";
         cad_opts.suffix_text = " deg";
         cad_opts.precision = 2;
@@ -170,7 +170,7 @@ public:
         );
 
         // ── Card 5: Compact Table / Cart Quantity ─────────────────────
-        NumberFieldOptions qty_opts;
+        NumberFieldProps qty_opts;
         qty_opts.size = NumberFieldSize::Small;
         qty_opts.precision = 0;
         qty_opts.min_value = 1.0;
@@ -189,7 +189,7 @@ public:
         );
 
         // ── Card 6: Temperature Physics & Wrap Mode ───────────────────
-        NumberFieldOptions temp_opts;
+        NumberFieldProps temp_opts;
         temp_opts.suffix_text = " °C";
         temp_opts.precision = 1;
         temp_opts.step = 0.5;
@@ -210,13 +210,19 @@ public:
         );
 
         // Row 1 of cards
-        std::vector<WidgetPtr> row1_items = {card1, card2, card3};
+        std::vector<WidgetPtr> row1_items;
+        row1_items.push_back(card1);
+        row1_items.push_back(card2);
+        row1_items.push_back(card3);
         auto row1 = row(row1_items);
         row1->gap(StyleValue::point(16.0f))
              .justifyContent(Justify::Center);
 
         // Row 2 of cards
-        std::vector<WidgetPtr> row2_items = {card4, card5, card6};
+        std::vector<WidgetPtr> row2_items;
+        row2_items.push_back(card4);
+        row2_items.push_back(card5);
+        row2_items.push_back(card6);
         auto row2 = row(row2_items);
         row2->gap(StyleValue::point(16.0f))
              .justifyContent(Justify::Center);

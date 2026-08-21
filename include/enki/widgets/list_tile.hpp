@@ -48,7 +48,26 @@ enum class VisualDensity {
 // ════════════════════════════════════════════════════════════════
 
 /// @brief Visual and behavioral configuration for ListTile.
-struct ListTileOptions {
+/// @brief Visual and behavioral configuration for ListTile.
+struct ListTileProps {
+    Key key = Key::none();
+
+    // ── Slots ──────────────────────────────────────────────────
+    WidgetPtr leading_widget;
+    WidgetPtr title_widget;
+    WidgetPtr subtitle_widget;
+    WidgetPtr trailing_widget;
+
+    // ── State ──────────────────────────────────────────────────
+    bool selected = false;
+    bool enabled  = true;
+    bool autofocus = false;
+
+    // ── Callbacks ──────────────────────────────────────────────
+    std::function<void()> on_tap;
+    std::function<void()> on_long_press;
+    std::function<void()> on_secondary_tap;
+
     // ── Sizing & Density ───────────────────────────────────────
     VisualDensity visual_density = VisualDensity::Standard;
 
@@ -88,7 +107,6 @@ struct ListTileOptions {
     // ── Interaction ────────────────────────────────────────────
     bool enable_feedback = true;   ///< Play haptic/audio feedback on tap.
 
-    constexpr bool operator==(const ListTileOptions&) const = default;
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -99,11 +117,11 @@ struct ListTileOptions {
 ///        delegates all layout (row sizing, padding, flex gaps) to Anu.
 class RenderListTile : public RenderBox {
 public:
-    explicit RenderListTile(ListTileOptions options);
+    explicit RenderListTile(ListTileProps props);
     ~RenderListTile() override = default;
 
-    void setOptions(const ListTileOptions& options);
-    [[nodiscard]] const ListTileOptions& options() const { return options_; }
+    void setProps(const ListTileProps& props);
+    [[nodiscard]] const ListTileProps& props() const { return props_; }
 
     void setSelected(bool selected);
     void setEnabled(bool enabled);
@@ -135,7 +153,7 @@ public:
     std::function<void()> on_secondary_tap;
 
 private:
-    ListTileOptions options_;
+    ListTileProps props_;
     bool            selected_   = false;
     bool            enabled_    = true;
     bool            hovered_    = false;
@@ -182,51 +200,35 @@ private:
 /// @endcode
 class ListTile : public StatefulWidget {
 public:
-    // ── Slots ──────────────────────────────────────────────────
-    WidgetPtr leading_widget;   ///< Leading slot (icon, avatar, checkbox).
-    WidgetPtr title_widget;     ///< Required: main label widget.
-    WidgetPtr subtitle_widget;  ///< Optional: secondary description.
-    WidgetPtr trailing_widget;  ///< Trailing slot (icon, switch, badge).
-
-    // ── State ──────────────────────────────────────────────────
-    bool selected = false;      ///< Whether this tile is in a selected state.
-    bool enabled  = true;       ///< Whether this tile is interactive.
-    bool autofocus = false;
-
-    // ── Callbacks ──────────────────────────────────────────────
-    std::function<void()> on_tap;
-    std::function<void()> on_long_press;
-    std::function<void()> on_secondary_tap;
-
-    // ── Configuration ──────────────────────────────────────────
-    ListTileOptions options;
+    ListTileProps props;
 
     ListTile() = default;
+    explicit ListTile(ListTileProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder API ─────────────────────────────────────
 
-    ListTile& leading(WidgetPtr w) { leading_widget = std::move(w); return *this; }
-    ListTile& title(WidgetPtr w)   { title_widget = std::move(w); return *this; }
-    ListTile& subtitle(WidgetPtr w){ subtitle_widget = std::move(w); return *this; }
-    ListTile& trailing(WidgetPtr w){ trailing_widget = std::move(w); return *this; }
+    ListTile& leading(WidgetPtr w) { props.leading_widget = std::move(w); return *this; }
+    ListTile& title(WidgetPtr w)   { props.title_widget = std::move(w); return *this; }
+    ListTile& subtitle(WidgetPtr w){ props.subtitle_widget = std::move(w); return *this; }
+    ListTile& trailing(WidgetPtr w){ props.trailing_widget = std::move(w); return *this; }
 
-    ListTile& onTap(std::function<void()> cb)          { on_tap = std::move(cb); return *this; }
-    ListTile& onLongPress(std::function<void()> cb)    { on_long_press = std::move(cb); return *this; }
-    ListTile& onSecondaryTap(std::function<void()> cb) { on_secondary_tap = std::move(cb); return *this; }
+    ListTile& onTap(std::function<void()> cb)          { props.on_tap = std::move(cb); return *this; }
+    ListTile& onLongPress(std::function<void()> cb)    { props.on_long_press = std::move(cb); return *this; }
+    ListTile& onSecondaryTap(std::function<void()> cb) { props.on_secondary_tap = std::move(cb); return *this; }
 
-    ListTile& select(bool s)  { selected = s; return *this; }
-    ListTile& enable(bool e)  { enabled = e; return *this; }
+    ListTile& select(bool s)  { props.selected = s; return *this; }
+    ListTile& enable(bool e)  { props.enabled = e; return *this; }
     ListTile& dense(bool d = true) {
-        options.visual_density = d ? VisualDensity::Compact : VisualDensity::Standard;
+        props.visual_density = d ? VisualDensity::Compact : VisualDensity::Standard;
         return *this;
     }
-    ListTile& tileColor(Color c)     { options.tile_color = c; return *this; }
-    ListTile& hoverColor(Color c)    { options.hover_color = c; return *this; }
-    ListTile& selectedColor(Color c) { options.selected_color = c; return *this; }
-    ListTile& shape(BorderRadius r)  { options.shape = r; return *this; }
-    ListTile& contentPadding(EdgeInsets p) { options.content_padding = p; return *this; }
-    ListTile& leadingGap(float g)  { options.leading_gap = g; return *this; }
-    ListTile& trailingGap(float g) { options.trailing_gap = g; return *this; }
+    ListTile& tileColor(Color c)     { props.tile_color = c; return *this; }
+    ListTile& hoverColor(Color c)    { props.hover_color = c; return *this; }
+    ListTile& selectedColor(Color c) { props.selected_color = c; return *this; }
+    ListTile& shape(BorderRadius r)  { props.shape = r; return *this; }
+    ListTile& contentPadding(EdgeInsets p) { props.content_padding = p; return *this; }
+    ListTile& leadingGap(float g)  { props.leading_gap = g; return *this; }
+    ListTile& trailingGap(float g) { props.trailing_gap = g; return *this; }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ListTile"; }
@@ -236,35 +238,34 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+inline std::shared_ptr<ListTile> listTile(ListTileProps props = {}) {
+    return std::make_shared<ListTile>(std::move(props));
+}
+
 /// Create a ListTile with title only.
 inline std::shared_ptr<ListTile> listTile(WidgetPtr title) {
-    auto t = std::make_shared<ListTile>();
-    t->title_widget = std::move(title);
-    return t;
+    ListTileProps props;
+    props.title_widget = std::move(title);
+    return std::make_shared<ListTile>(std::move(props));
 }
 
 /// Create a ListTile with leading icon and title.
 inline std::shared_ptr<ListTile> listTile(WidgetPtr leading, WidgetPtr title) {
-    auto t = std::make_shared<ListTile>();
-    t->leading_widget = std::move(leading);
-    t->title_widget   = std::move(title);
-    return t;
+    ListTileProps props;
+    props.leading_widget = std::move(leading);
+    props.title_widget = std::move(title);
+    return std::make_shared<ListTile>(std::move(props));
 }
 
 /// Create a fully specified ListTile.
 inline std::shared_ptr<ListTile> listTile(WidgetPtr leading, WidgetPtr title,
                                           WidgetPtr subtitle, WidgetPtr trailing = nullptr) {
-    auto t = std::make_shared<ListTile>();
-    t->leading_widget  = std::move(leading);
-    t->title_widget    = std::move(title);
-    t->subtitle_widget = std::move(subtitle);
-    t->trailing_widget = std::move(trailing);
-    return t;
-}
-
-/// Create an empty ListTile for building via fluent API.
-inline std::shared_ptr<ListTile> listTile() {
-    return std::make_shared<ListTile>();
+    ListTileProps props;
+    props.leading_widget = std::move(leading);
+    props.title_widget = std::move(title);
+    props.subtitle_widget = std::move(subtitle);
+    props.trailing_widget = std::move(trailing);
+    return std::make_shared<ListTile>(std::move(props));
 }
 
 } // namespace enki

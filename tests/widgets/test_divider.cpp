@@ -18,7 +18,7 @@ void test_default_initialization() {
 
 void test_custom_options() {
     std::cout << "Testing Divider Custom Options..." << std::endl;
-    DividerOptions opt;
+    DividerProps opt;
     opt.height = 32.0f;
     opt.thickness = 4.0f;
     opt.indent = 10.0f;

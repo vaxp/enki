@@ -96,6 +96,19 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
+// Props for Declarative Syntax
+// ════════════════════════════════════════════════════════════════
+
+struct NavigationRailProps {
+    std::vector<NavigationRailItem> items;
+    int                             selected_index = 0;
+    std::function<void(int)>        on_item_selected;
+    NavigationRailOptions           options = {};
+    WidgetPtr                       header = nullptr;
+    Key                             key = Key::none();
+};
+
+// ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
@@ -106,6 +119,14 @@ inline std::shared_ptr<NavigationRail> navigationRail(
         NavigationRailOptions options = {}) {
     return std::make_shared<NavigationRail>(
         std::move(items), selected_index, std::move(on_selected), std::move(options));
+}
+
+inline std::shared_ptr<NavigationRail> navigationRail(NavigationRailProps props) {
+    auto nr = std::make_shared<NavigationRail>(std::move(props.items), props.selected_index,
+                                               std::move(props.on_item_selected), std::move(props.options));
+    if (props.header) nr->setHeader(std::move(props.header));
+    if (props.key != Key::none()) nr->key = props.key;
+    return nr;
 }
 
 } // namespace enki

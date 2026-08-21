@@ -157,7 +157,7 @@ public:
         auto toolbar1 = row(tb1_items);
         toolbar1->gap(StyleValue::point(6.0f));
 
-        TextAreaOptions code_opts;
+        TextAreaProps code_opts;
         code_opts.style.font_family = "monospace";
         code_opts.style.font_size   = 13.5f;
         code_opts.style.color       = 0xFFF1F5F9;
@@ -175,7 +175,10 @@ public:
 
         auto code_editor = textArea(code_controller_, code_opts);
 
-        std::vector<WidgetPtr> code_section_items = {code_header, toolbar1, code_editor};
+        std::vector<WidgetPtr> code_section_items;
+        code_section_items.push_back(code_header);
+        code_section_items.push_back(toolbar1);
+        code_section_items.push_back(code_editor);
         auto code_col = column(code_section_items);
         code_col->gap(StyleValue::point(10.0f));
 
@@ -225,7 +228,7 @@ public:
         auto toolbar2 = row(tb2_items);
         toolbar2->gap(StyleValue::point(6.0f));
 
-        TextAreaOptions notes_opts;
+        TextAreaProps notes_opts;
         notes_opts.style.font_size   = 13.5f;
         notes_opts.style.color       = 0xFFF1F5F9;
         notes_opts.show_line_numbers = false;
@@ -239,7 +242,10 @@ public:
 
         auto notes_editor = textArea(notes_controller_, notes_opts);
 
-        std::vector<WidgetPtr> notes_section_items = {notes_header, toolbar2, notes_editor};
+        std::vector<WidgetPtr> notes_section_items;
+        notes_section_items.push_back(notes_header);
+        notes_section_items.push_back(toolbar2);
+        notes_section_items.push_back(notes_editor);
         auto notes_col = column(notes_section_items);
         notes_col->gap(StyleValue::point(10.0f));
 

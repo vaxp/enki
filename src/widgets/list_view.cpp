@@ -19,15 +19,15 @@ public:
 
         auto add_item = [&](int idx, WidgetPtr item) {
             // Separator before this item (not before first)
-            if (idx > 0 && w->separator_builder) {
-                if (auto sep = w->separator_builder(idx - 1)) {
+            if (idx > 0 && w->props.separator_builder) {
+                if (auto sep = w->props.separator_builder(idx - 1)) {
                     children.push_back(sep);
                 }
             }
 
             // Selection: wrap with gesture detection if callback present
-            if (w->on_item_selected) {
-                auto on_sel = w->on_item_selected;
+            if (w->props.on_item_selected) {
+                auto on_sel = w->props.on_item_selected;
                 auto det = std::make_shared<GestureDetector>(item);
                 det->hit_test_behavior = HitTestBehavior::Opaque;
                 det->cursor_type = SystemCursor::Pointer;
@@ -38,30 +38,30 @@ public:
             }
         };
 
-        if (w->item_builder) {
-            for (int i = 0; i < w->item_count; ++i)
-                add_item(i, w->item_builder(i));
+        if (w->props.item_builder) {
+            for (int i = 0; i < w->props.item_count; ++i)
+                add_item(i, w->props.item_builder(i));
         } else {
-            for (int i = 0; i < (int)w->items.size(); ++i)
-                add_item(i, w->items[i]);
+            for (int i = 0; i < (int)w->props.items.size(); ++i)
+                add_item(i, w->props.items[i]);
         }
 
         // ── Build flex column/row ──────────────────────────────
         auto flex = std::make_shared<Flexbox>(std::move(children));
-        flex->flexDirection(w->direction == Axis::Vertical
+        flex->flexDirection(w->props.direction == Axis::Vertical
                             ? FlexDirection::Column : FlexDirection::Row);
         flex->flexShrink(0.0f);
 
-        if (w->direction == Axis::Vertical)
+        if (w->props.direction == Axis::Vertical)
             flex->width(StyleValue::percent(100.0f));
         else
             flex->height(StyleValue::percent(100.0f));
 
         // Apply padding via a wrapper
         WidgetPtr content;
-        if (w->list_padding != EdgeInsets{}) {
+        if (w->props.list_padding != EdgeInsets{}) {
             auto pc = container(flex);
-            pc->padding(w->list_padding);
+            pc->padding(w->props.list_padding);
             content = pc;
         } else {
             content = flex;
@@ -69,12 +69,12 @@ public:
 
         // ── Wrap in ScrollView ─────────────────────────────────
         ScrollOptions scroll_opts;
-        scroll_opts.direction    = w->direction;
-        scroll_opts.scroll_speed = w->scroll_speed;
+        scroll_opts.direction    = w->props.direction;
+        scroll_opts.scroll_speed = w->props.scroll_speed;
         scroll_opts.show_scrollbar = true;
-        scroll_opts.clamp_overscroll = (w->scroll_physics == ScrollPhysics::Clamped);
+        scroll_opts.clamp_overscroll = (w->props.scroll_physics == ScrollPhysics::Clamped);
 
-        if (w->shrink_wrap) {
+        if (w->props.shrink_wrap) {
             // No scroll, just return the column directly
             return content;
         }

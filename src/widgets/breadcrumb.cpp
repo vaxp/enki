@@ -17,10 +17,10 @@ public:
     std::string            label;
     std::function<void()>  on_tap;
     bool                   active;      ///< true = last item (non-clickable, brighter)
-    BreadcrumbOptions      options;
+    BreadcrumbProps      options;
 
     BreadcrumbItemWidget(std::string label, std::function<void()> on_tap,
-                         bool active, BreadcrumbOptions opt)
+                         bool active, BreadcrumbProps opt)
         : label(std::move(label)), on_tap(std::move(on_tap)),
           active(active), options(std::move(opt)) {}
 

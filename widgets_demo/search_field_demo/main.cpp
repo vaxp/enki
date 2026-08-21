@@ -81,7 +81,7 @@ public:
         title_col->alignItems(Align::Center);
 
         // ── 1. Spotlight / Command Palette Field ──────────────────────
-        SearchFieldOptions cmd_opts;
+        SearchFieldProps cmd_opts;
         cmd_opts.placeholder = "Type a command or search actions (Try 'build', 'file', 'set')...";
         cmd_opts.variant = SearchFieldVariant::Filled;
         cmd_opts.size = SearchFieldSize::Medium;
@@ -115,7 +115,8 @@ public:
             setState([] {});
         };
 
-        auto cmd_field = searchField(cmd_ctrl_, cmd_opts);
+        cmd_opts.controller = cmd_ctrl_;
+        auto cmd_field = searchField(cmd_opts);
 
         auto c1_title = text("1. Spotlight / Command Palette (with Categories & Hotkeys)");
         c1_title->fontSize(14.0f).bold().color(0xFF38BDF8);
@@ -123,7 +124,10 @@ public:
         auto c1_desc = text("Press Ctrl+K or click to open. Use Up/Down arrows to navigate, Enter to execute, Tab to autocomplete.");
         c1_desc->fontSize(12.0f).color(0xFF94A3B8);
 
-        std::vector<WidgetPtr> c1_items = {c1_title, c1_desc, cmd_field};
+        std::vector<WidgetPtr> c1_items;
+        c1_items.push_back(c1_title);
+        c1_items.push_back(c1_desc);
+        c1_items.push_back(cmd_field);
         auto c1_col = column(c1_items);
         c1_col->gap(StyleValue::point(8.0f));
 
@@ -135,7 +139,7 @@ public:
              .width(560.0f);
 
         // ── 2. Project File Search ────────────────────────────────────
-        SearchFieldOptions file_opts;
+        SearchFieldProps file_opts;
         file_opts.placeholder = "Search files by name (e.g. 'search', 'wayland', 'meson')...";
         file_opts.variant = SearchFieldVariant::Outlined;
         file_opts.size = SearchFieldSize::Medium;
@@ -160,7 +164,8 @@ public:
             setState([] {});
         };
 
-        auto file_field = searchField(file_ctrl_, file_opts);
+        file_opts.controller = file_ctrl_;
+        auto file_field = searchField(file_opts);
 
         auto c2_title = text("2. File Explorer Search (Outlined Style)");
         c2_title->fontSize(14.0f).bold().color(0xFF10B981);
@@ -168,7 +173,10 @@ public:
         auto c2_desc = text("Instant filter with file extension badges, directory paths, and clear button.");
         c2_desc->fontSize(12.0f).color(0xFF94A3B8);
 
-        std::vector<WidgetPtr> c2_items = {c2_title, c2_desc, file_field};
+        std::vector<WidgetPtr> c2_items;
+        c2_items.push_back(c2_title);
+        c2_items.push_back(c2_desc);
+        c2_items.push_back(file_field);
         auto c2_col = column(c2_items);
         c2_col->gap(StyleValue::point(8.0f));
 
@@ -180,7 +188,7 @@ public:
              .width(560.0f);
 
         // ── 3. Pill Capsule Navbar Search ─────────────────────────────
-        SearchFieldOptions pill_opts;
+        SearchFieldProps pill_opts;
         pill_opts.placeholder = "Quick search docs...";
         pill_opts.variant = SearchFieldVariant::Pill;
         pill_opts.size = SearchFieldSize::Small;
@@ -190,7 +198,8 @@ public:
             setState([] {});
         };
 
-        auto pill_field = searchField(pill_ctrl_, pill_opts);
+        pill_opts.controller = pill_ctrl_;
+        auto pill_field = searchField(pill_opts);
 
         auto c3_title = text("3. Compact Navbar Pill Search Bar");
         c3_title->fontSize(14.0f).bold().color(0xFFF59E0B);
@@ -198,7 +207,10 @@ public:
         auto c3_desc = text("Compact ~34px pill shape ideal for application titlebars, toolbars, and navigation rails.");
         c3_desc->fontSize(12.0f).color(0xFF94A3B8);
 
-        std::vector<WidgetPtr> c3_items = {c3_title, c3_desc, pill_field};
+        std::vector<WidgetPtr> c3_items;
+        c3_items.push_back(c3_title);
+        c3_items.push_back(c3_desc);
+        c3_items.push_back(pill_field);
         auto c3_col = column(c3_items);
         c3_col->gap(StyleValue::point(8.0f));
 

@@ -44,7 +44,7 @@ public:
         profile_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
         auto profile_btn = button(profile_btn_text, nullptr);
 
-        PopoverOptions opt1;
+        PopoverProps opt1;
         opt1.direction    = PopoverDirection::Top;
         opt1.content_size = Size{240.0f, 150.0f};
         opt1.background_color = 0xFA1F242C;
@@ -78,7 +78,7 @@ public:
         settings_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
         auto settings_btn = button(settings_btn_text, nullptr);
 
-        PopoverOptions opt2;
+        PopoverProps opt2;
         opt2.direction    = PopoverDirection::Bottom;
         opt2.content_size = Size{260.0f, 140.0f};
         opt2.background_color = 0xFA0F172A;
@@ -114,7 +114,7 @@ public:
             pop_controller_->toggle();
         });
 
-        PopoverOptions opt3;
+        PopoverProps opt3;
         opt3.direction    = PopoverDirection::Top;
         opt3.trigger      = PopoverTrigger::Manual;
         opt3.content_size = Size{220.0f, 100.0f};

@@ -33,7 +33,7 @@ public:
         titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
 
         // 1. Default Button
-        ButtonOptions opt_default;
+        ButtonProps opt_default;
         auto t_def = text("Default Primary Button");
         t_def->fontSize(14.0f).color(0xFFFFFFFF).bold();
         auto btn_default = button(t_def, [](){
@@ -41,13 +41,13 @@ public:
         }, opt_default);
 
         // 2. Disabled Button
-        ButtonOptions opt_disabled;
+        ButtonProps opt_disabled;
         auto t_dis = text("Disabled Button");
         t_dis->fontSize(14.0f).color(0xFFFFFFFF).bold();
         auto btn_disabled = button(t_dis, nullptr, opt_disabled);
         
         // 3. Custom Styled Button
-        ButtonOptions opt_custom;
+        ButtonProps opt_custom;
         opt_custom.normal_color = 0xFFEF4444;
         opt_custom.hover_color = 0xFFDC2626;
         opt_custom.pressed_color = 0xFFB91C1C;
@@ -63,7 +63,7 @@ public:
         }, opt_custom);
 
         // 4. Shader Injected Button (Animated Gradient SkSL)
-        ButtonOptions opt_shader;
+        ButtonProps opt_shader;
         opt_shader.border_radius = 12.0f;
         opt_shader.shadow_blur = 15.0f;
         opt_shader.shadow_color = 0x608B5CF6;
@@ -85,11 +85,15 @@ public:
             std::cout << "Shader button clicked\n";
         }, opt_shader);
 
-        std::vector<WidgetPtr> r1_children = {btn_default, btn_disabled};
+        std::vector<WidgetPtr> r1_children;
+        r1_children.push_back(btn_default);
+        r1_children.push_back(btn_disabled);
         auto row1 = row(r1_children);
         row1->justifyContent(Justify::Center).alignItems(Align::Center).gap(30_px);
         
-        std::vector<WidgetPtr> r2_children = {btn_custom, btn_shader};
+        std::vector<WidgetPtr> r2_children;
+        r2_children.push_back(btn_custom);
+        r2_children.push_back(btn_shader);
         auto row2 = row(r2_children);
         row2->justifyContent(Justify::Center).alignItems(Align::Center).gap(30_px);
 

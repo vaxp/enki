@@ -71,7 +71,14 @@ struct ExpansionPanelItem {
 /// ExpansionPanel Options
 /// ════════════════════════════════════════════════════════════════
 
-struct ExpansionPanelOptions {
+struct ExpansionPanelListProps;
+class ExpansionPanelController;
+
+struct ExpansionPanelListProps {
+    Key key = Key::none();
+    std::vector<ExpansionPanelItem> panels;
+    std::shared_ptr<ExpansionPanelController> controller;
+
     bool is_radio_mode = false;        ///< If true, only 1 panel expanded at a time
     float gap = 12.0f;                 ///< Spacing between panels
     float expanded_elevation_gap = 16.0f; ///< Extra vertical margin for expanded panel
@@ -124,24 +131,24 @@ public:
 
 class ExpansionPanelList : public StatefulWidget {
 public:
-    std::vector<ExpansionPanelItem> panels;
-    ExpansionPanelOptions options;
-    std::shared_ptr<ExpansionPanelController> controller;
+    ExpansionPanelListProps props;
 
     ExpansionPanelList() = default;
-    ExpansionPanelList(std::vector<ExpansionPanelItem> panels_, ExpansionPanelOptions opts = {},
-                       std::shared_ptr<ExpansionPanelController> ctrl = nullptr)
-        : panels(std::move(panels_)), options(std::move(opts)), controller(std::move(ctrl)) {}
+    explicit ExpansionPanelList(ExpansionPanelListProps p) : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ExpansionPanelList"; }
 };
 
+inline std::shared_ptr<ExpansionPanelList> expansionPanelList(ExpansionPanelListProps props = {}) {
+    return std::make_shared<ExpansionPanelList>(std::move(props));
+}
+
 inline std::shared_ptr<ExpansionPanelList> expansionPanelList(
-    std::vector<ExpansionPanelItem> panels,
-    ExpansionPanelOptions options = {},
-    std::shared_ptr<ExpansionPanelController> controller = nullptr) {
-    return std::make_shared<ExpansionPanelList>(std::move(panels), std::move(options), std::move(controller));
+    std::vector<ExpansionPanelItem> panels) {
+    ExpansionPanelListProps props;
+    props.panels = std::move(panels);
+    return std::make_shared<ExpansionPanelList>(std::move(props));
 }
 
 } // namespace enki

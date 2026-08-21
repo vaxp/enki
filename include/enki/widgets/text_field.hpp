@@ -31,7 +31,10 @@ struct TextFieldController {
     }
 };
 
-struct TextFieldOptions {
+struct TextFieldProps {
+    Key key = Key::none();
+    std::shared_ptr<TextFieldController> controller = nullptr;
+
     TextStyle style;
     std::string hint_text;
     bool obscure_text = false;
@@ -42,20 +45,33 @@ struct TextFieldOptions {
     Color cursor_color = 0xFF0078D7;
     Color selection_color = 0x640078D7;
 
-    std::function<void(std::string)> on_changed;
-    std::function<void(std::string)> on_submitted;
+    std::function<void(std::string)> on_changed = nullptr;
+    std::function<void(std::string)> on_submitted = nullptr;
 };
 
 class TextField : public StatefulWidget {
 public:
     std::shared_ptr<TextFieldController> controller;
-    TextFieldOptions options;
+    TextFieldProps options;
 
-    TextField(std::shared_ptr<TextFieldController> ctrl, TextFieldOptions opt = {})
+    TextField(std::shared_ptr<TextFieldController> ctrl, TextFieldProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<TextFieldController>()), options(std::move(opt)) {}
+
+    TextField(Key key, std::shared_ptr<TextFieldController> ctrl, TextFieldProps opt)
+        : StatefulWidget(std::move(key)), controller(ctrl ? std::move(ctrl) : std::make_shared<TextFieldController>()), options(std::move(opt)) {}
 
     std::unique_ptr<State> createState() override;
     std::string_view typeName() const override { return "TextField"; }
 };
+
+inline std::shared_ptr<TextField> textField(
+    std::shared_ptr<TextFieldController> ctrl,
+    TextFieldProps options = {}) {
+    return std::make_shared<TextField>(std::move(ctrl), std::move(options));
+}
+
+inline std::shared_ptr<TextField> textField(TextFieldProps props) {
+    return std::make_shared<TextField>(std::move(props.key), std::move(props.controller), std::move(props));
+}
 
 } // namespace enki

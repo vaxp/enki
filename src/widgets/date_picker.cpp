@@ -81,8 +81,8 @@ public:
     void initState() override {
         State::initState();
         auto* w = static_cast<const DatePicker*>(widget());
-        selected_date_ = w->options.initial_date;
-        selected_range_ = w->options.initial_range;
+        selected_date_ = w->props.initial_date;
+        selected_range_ = w->props.initial_range;
         view_year_ = selected_date_.year;
         view_month_ = selected_date_.month;
 
@@ -96,14 +96,14 @@ public:
 
     void wireController() {
         auto* w = static_cast<const DatePicker*>(widget());
-        if (w->controller) {
-            w->controller->set_date_fn = [this](const DateVal& d) {
+        if (w->props.controller) {
+            w->props.controller->set_date_fn = [this](const DateVal& d) {
                 selected_date_ = d;
                 view_year_ = d.year;
                 view_month_ = d.month;
                 setState([] {});
             };
-            w->controller->set_range_fn = [this](const DateRangeVal& r) {
+            w->props.controller->set_range_fn = [this](const DateRangeVal& r) {
                 selected_range_ = r;
                 if (r.start) {
                     view_year_ = r.start->year;
@@ -111,20 +111,20 @@ public:
                 }
                 setState([] {});
             };
-            w->controller->open_fn = [this] {
+            w->props.controller->open_fn = [this] {
                 is_popup_open_ = true;
                 setState([] {});
             };
-            w->controller->close_fn = [this] {
+            w->props.controller->close_fn = [this] {
                 is_popup_open_ = false;
                 setState([] {});
             };
-            w->controller->clear_fn = [this] {
+            w->props.controller->clear_fn = [this] {
                 selected_range_ = {};
                 setState([] {});
             };
-            w->controller->get_date_fn = [this] { return selected_date_; };
-            w->controller->get_range_fn = [this] { return selected_range_; };
+            w->props.controller->get_date_fn = [this] { return selected_date_; };
+            w->props.controller->get_range_fn = [this] { return selected_range_; };
         }
     }
 
@@ -148,7 +148,7 @@ public:
 
     // ── Build Header Bar (Month & Year Switcher) ───────────────────
     WidgetPtr buildHeader(const DatePicker* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         auto makeNavArrow = [](std::string sym, std::function<void()> cb) -> WidgetPtr {
             auto t = text(sym);
@@ -210,7 +210,7 @@ public:
 
     // ── Build Days Grid ───────────────────────────────────────────
     WidgetPtr buildDaysGrid(const DatePicker* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         // Weekday header row (Mo, Tu, We...)
         std::vector<WidgetPtr> wd_items;
@@ -454,7 +454,7 @@ public:
             selected_date_ = {2026, 8, 19};
             view_year_ = 2026; view_month_ = 8;
             auto* sw = static_cast<const DatePicker*>(widget());
-            if (sw->options.on_date_selected) sw->options.on_date_selected(selected_date_);
+            if (sw->props.on_date_selected) sw->props.on_date_selected(selected_date_);
             setState([] {});
         });
 
@@ -463,7 +463,7 @@ public:
             selected_range_.end   = DateVal{2026, 8, 26};
             view_year_ = 2026; view_month_ = 8;
             auto* sw = static_cast<const DatePicker*>(widget());
-            if (sw->options.on_range_selected) sw->options.on_range_selected(selected_range_);
+            if (sw->props.on_range_selected) sw->props.on_range_selected(selected_range_);
             setState([] {});
         });
 
@@ -472,7 +472,7 @@ public:
             selected_range_.end   = DateVal{2026, 8, 31};
             view_year_ = 2026; view_month_ = 8;
             auto* sw = static_cast<const DatePicker*>(widget());
-            if (sw->options.on_range_selected) sw->options.on_range_selected(selected_range_);
+            if (sw->props.on_range_selected) sw->props.on_range_selected(selected_range_);
             setState([] {});
         });
 
@@ -484,7 +484,7 @@ public:
 
     // ── Build Full Calendar Card ──────────────────────────────────
     WidgetPtr buildCalendarCard(const DatePicker* w) {
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         std::vector<WidgetPtr> card_items;
         card_items.push_back(buildHeader(w));
@@ -524,7 +524,7 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         auto* w = static_cast<const DatePicker*>(widget());
-        const auto& opts = w->options;
+        const auto& opts = w->props;
 
         // ── Inline Mode ───────────────────────────────────────────────
         if (opts.mode == DatePickerMode::Inline) {

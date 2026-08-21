@@ -11,90 +11,74 @@ using namespace enki;
 class AvatarDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        // Title
-        auto title = text("Advanced Avatar Widget Demo");
-        title->fontSize(24.0f).color(0xFFFFFFFF).bold();
-        
-        auto sub = text("Initials, Images, Badges, and Avatar Groups in ENKI");
-        sub->fontSize(14.0f).color(0xFF94A3B8);
-        
-        std::vector<WidgetPtr> t_children = {
-            std::static_pointer_cast<Widget>(title), 
-            std::static_pointer_cast<Widget>(sub)
-        };
-        auto titleCol = column(t_children);
-        titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
-
-        // 1. Initials Avatar
-        AvatarOptions opt_init;
-        opt_init.background_color = 0xFF8B5CF6; // Purple
-        auto av_init = avatar("MK", opt_init);
-
-        // 2. Avatar with Status Badge
-        AvatarOptions opt_badge;
-        opt_badge.background_color = 0xFFF59E0B; // Amber
-        opt_badge.show_badge = true;
-        opt_badge.badge_color = 0xFF10B981; // Green online
-        opt_badge.radius = 32.0f;
-        auto av_badge = avatar("TS", opt_badge);
-
-        // 3. Avatar with Image and Border
-        AvatarOptions opt_border;
-        opt_border.image_path = "/home/x/Work/enki/assets/vaxp.png";
-        opt_border.border_width = 3.0f;
-        opt_border.border_color = 0xFFFFFFFF;
-        opt_border.radius = 40.0f;
-        opt_border.shadow_blur = 10.0f;
-        auto av_border = avatar("", opt_border);
-
-        // Row 1: Single Avatars
-        std::vector<WidgetPtr> r1_children = {
-            std::static_pointer_cast<Widget>(av_init), 
-            std::static_pointer_cast<Widget>(av_badge), 
-            std::static_pointer_cast<Widget>(av_border)
-        };
-        auto row1 = row(r1_children);
-        row1->gap(30.0f).alignItems(Align::Center).justifyContent(Justify::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
-
-        // 4. Avatar Group
-        AvatarOptions opt_g1; opt_g1.background_color = 0xFFEF4444; opt_g1.border_width = 2.0f; opt_g1.radius = 20.0f;
-        AvatarOptions opt_g2; opt_g2.background_color = 0xFF3B82F6; opt_g2.border_width = 2.0f; opt_g2.radius = 20.0f;
-        AvatarOptions opt_g3; opt_g3.background_color = 0xFF10B981; opt_g3.border_width = 2.0f; opt_g3.radius = 20.0f;
-        AvatarOptions opt_g4; opt_g4.background_color = 0xFFF59E0B; opt_g4.border_width = 2.0f; opt_g4.radius = 20.0f;
-        AvatarOptions opt_g5; opt_g5.background_color = 0xFF8B5CF6; opt_g5.border_width = 2.0f; opt_g5.radius = 20.0f;
-        
-        std::vector<WidgetPtr> group_list = {
-            std::static_pointer_cast<Widget>(avatar("A", opt_g1)),
-            std::static_pointer_cast<Widget>(avatar("B", opt_g2)),
-            std::static_pointer_cast<Widget>(avatar("C", opt_g3)),
-            std::static_pointer_cast<Widget>(avatar("D", opt_g4)),
-            std::static_pointer_cast<Widget>(avatar("E", opt_g5)), // Will be hidden in group if max=3, replaced with +2
-        };
-        
-        auto group = avatarGroup(group_list, -12.0f, 3);
-        
-        auto group_label = text("Avatar Group (Max 3)");
-        group_label->fontSize(14.0f).color(0xFF94A3B8);
-        std::vector<WidgetPtr> g_children = {
-            std::static_pointer_cast<Widget>(group), 
-            std::static_pointer_cast<Widget>(group_label)
-        };
-        auto group_col = column(g_children);
-        group_col->gap(10.0f).alignItems(Align::Center);
-
-        // Main Layout
-        std::vector<WidgetPtr> m_children = {
-            std::static_pointer_cast<Widget>(titleCol), 
-            std::static_pointer_cast<Widget>(row1), 
-            std::static_pointer_cast<Widget>(group_col)
-        };
-        auto main_col = column(m_children);
-        main_col->alignItems(Align::Center).justifyContent(Justify::Center);
-
-        auto root = container(main_col);
-        root->color(0xFF0F172A).align(Alignment::Center);
-
-        return root;
+        return container({
+            .color = 0xFF0F172A,
+            .align = Alignment::Center,
+            .child = column({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .children = {
+                    column({
+                        .align_items = Align::Center,
+                        .margin = StyleInsets::only(0, 0, 40.0f, 0),
+                        .children = {
+                            text("Advanced Avatar Widget Demo", { .color = 0xFFFFFFFF, .font_size = 24.0f, .font_weight = FontWeight::Bold }),
+                            text("Initials, Images, Badges, and Avatar Groups in ENKI", { .color = 0xFF94A3B8, .font_size = 14.0f })
+                        }
+                    }),
+                    row({
+                        .justify_content = Justify::Center,
+                        .align_items = Align::Center,
+                        .gap = StyleValue::point(30.0f),
+                        .margin = StyleInsets::only(0, 0, 40.0f, 0),
+                        .children = {
+                            // 1. Initials Avatar
+                            avatar({
+                                .background_color = 0xFF8B5CF6, // Purple
+                                .initials = "MK"
+                            }),
+                            
+                            // 2. Avatar with Status Badge
+                            avatar({
+                                .radius = 32.0f,
+                                .background_color = 0xFFF59E0B, // Amber
+                                .initials = "TS",
+                                .show_badge = true,
+                                .badge_color = 0xFF10B981 // Green online
+                            }),
+                            
+                            // 3. Avatar with Image and Border
+                            avatar({
+                                .radius = 40.0f,
+                                .image_path = "/home/x/Work/enki/assets/vaxp.png",
+                                .border_width = 3.0f,
+                                .border_color = 0xFFFFFFFF,
+                                .shadow_blur = 10.0f
+                            })
+                        }
+                    }),
+                    column({
+                        .align_items = Align::Center,
+                        .gap = StyleValue::point(10.0f),
+                        .children = {
+                            // 4. Avatar Group
+                            avatarGroup({
+                                .avatars = {
+                                    avatar({ .radius = 20.0f, .background_color = 0xFFEF4444, .initials = "A", .border_width = 2.0f }),
+                                    avatar({ .radius = 20.0f, .background_color = 0xFF3B82F6, .initials = "B", .border_width = 2.0f }),
+                                    avatar({ .radius = 20.0f, .background_color = 0xFF10B981, .initials = "C", .border_width = 2.0f }),
+                                    avatar({ .radius = 20.0f, .background_color = 0xFFF59E0B, .initials = "D", .border_width = 2.0f }),
+                                    avatar({ .radius = 20.0f, .background_color = 0xFF8B5CF6, .initials = "E", .border_width = 2.0f })
+                                },
+                                .spacing = -12.0f,
+                                .max_avatars = 3
+                            }),
+                            text("Avatar Group (Max 3)", { .color = 0xFF94A3B8, .font_size = 14.0f })
+                        }
+                    })
+                }
+            })
+        });
     }
 };
 

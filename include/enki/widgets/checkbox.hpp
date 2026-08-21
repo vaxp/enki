@@ -12,8 +12,11 @@
 
 namespace enki {
 
-/// Options for configuring a Checkbox.
-struct CheckboxOptions {
+struct CheckboxProps {
+    Key key = Key::none();
+    bool value = false;
+    std::function<void(bool)> on_changed = nullptr;
+
     float size = 18.0f;                             ///< Width and height of the checkbox.
     float border_width = 2.0f;                      ///< Thickness of the border.
     float border_radius = 4.0f;                     ///< Corner radius.
@@ -34,17 +37,25 @@ class Checkbox : public StatefulWidget {
 public:
     bool value;
     std::function<void(bool)> on_changed;
-    CheckboxOptions options;
+    CheckboxProps options;
 
-    Checkbox(bool value, std::function<void(bool)> on_changed = nullptr, CheckboxOptions options = CheckboxOptions())
+    Checkbox(bool value, std::function<void(bool)> on_changed = nullptr, CheckboxProps options = CheckboxProps())
         : value(value), on_changed(std::move(on_changed)), options(std::move(options)) {}
+
+    Checkbox(Key key, bool value, std::function<void(bool)> on_changed, CheckboxProps options)
+        : StatefulWidget(std::move(key)), value(value), on_changed(std::move(on_changed)), options(std::move(options)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Checkbox"; }
 };
 
-inline WidgetPtr checkbox(bool value, std::function<void(bool)> on_changed = nullptr, CheckboxOptions options = CheckboxOptions()) {
+inline std::shared_ptr<Checkbox> checkbox(bool value, std::function<void(bool)> on_changed = nullptr, CheckboxProps options = CheckboxProps()) {
     return std::make_shared<Checkbox>(value, std::move(on_changed), std::move(options));
+}
+
+inline std::shared_ptr<Checkbox> checkbox(CheckboxProps props) {
+    if (props.on_changed == nullptr) props.disabled = true;
+    return std::make_shared<Checkbox>(std::move(props.key), props.value, std::move(props.on_changed), std::move(props));
 }
 
 } // namespace enki

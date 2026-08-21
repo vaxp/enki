@@ -40,7 +40,7 @@ public:
         s1_title->fontSize(18.0f).bold().color(0xFF60A5FA);
 
         // 1a. Determinate with Label
-        ProgressBarOptions opt_det;
+        ProgressBarProps opt_det;
         opt_det.height = 16.0f;
         opt_det.border_radius = 8.0f;
         opt_det.progress_color = 0xFF3B82F6;
@@ -48,7 +48,7 @@ public:
         auto pb_determinate = progressBar(progress_val_, opt_det);
 
         // 1b. Gradient with Glow
-        ProgressBarOptions opt_grad;
+        ProgressBarProps opt_grad;
         opt_grad.height = 14.0f;
         opt_grad.border_radius = 7.0f;
         opt_grad.gradient_colors = {0xFFEC4899, 0xFF8B5CF6, 0xFF3B82F6};
@@ -57,7 +57,7 @@ public:
         auto pb_gradient = progressBar(progress_val_, opt_grad);
 
         // 1c. Indeterminate (Shimmer Sweep)
-        ProgressBarOptions opt_indet;
+        ProgressBarProps opt_indet;
         opt_indet.height = 12.0f;
         opt_indet.border_radius = 6.0f;
         opt_indet.indeterminate = true;
@@ -65,7 +65,7 @@ public:
         auto pb_indet = progressBar(0.0f, opt_indet);
 
         // 1d. Custom SkSL Shader Linear Bar (Neon Wave)
-        ProgressBarOptions opt_shader_bar;
+        ProgressBarProps opt_shader_bar;
         opt_shader_bar.height = 18.0f;
         opt_shader_bar.border_radius = 9.0f;
         opt_shader_bar.custom_shader = R"(
@@ -82,17 +82,16 @@ public:
         )";
         auto pb_shader = progressBar(progress_val_, opt_shader_bar);
 
-        std::vector<WidgetPtr> bar_items = {
-            text("Determinate (Interactive Slider Driven):", TextStyle{.color = 0xFFCBD5E1, .font_size = 13.0f}),
-            pb_determinate,
-            text("Multi-stop Gradient with Outer Glow:", TextStyle{.color = 0xFFCBD5E1, .font_size = 13.0f}),
-            pb_gradient,
-            text("Indeterminate Shimmer Sweep:", TextStyle{.color = 0xFFCBD5E1, .font_size = 13.0f}),
-            pb_indet,
-            text("SkSL Procedural Energy Shader:", TextStyle{.color = 0xFFCBD5E1, .font_size = 13.0f}),
-            pb_shader
-        };
-        auto col_bars = column(bar_items);
+        std::vector<WidgetPtr> col_pb_items;
+        col_pb_items.push_back(text("Determinate Bar", TextStyle{.color = 0xFF94A3B8, .font_size = 13.0f}));
+        col_pb_items.push_back(pb_determinate);
+        col_pb_items.push_back(text("Determinate Gradient", TextStyle{.color = 0xFF94A3B8, .font_size = 13.0f}));
+        col_pb_items.push_back(pb_gradient);
+        col_pb_items.push_back(text("Indeterminate Bar", TextStyle{.color = 0xFF94A3B8, .font_size = 13.0f}));
+        col_pb_items.push_back(pb_indet);
+        col_pb_items.push_back(text("SkSL Shader Integration", TextStyle{.color = 0xFF94A3B8, .font_size = 13.0f}));
+        col_pb_items.push_back(pb_shader);
+        auto col_bars = column(col_pb_items);
         col_bars->gap(StyleValue::point(10.0f)).width(StyleValue::percent(100.0f));
 
         // -------------------------------------------------------------
@@ -102,7 +101,7 @@ public:
         s2_title->fontSize(18.0f).bold().color(0xFF60A5FA);
 
         // 2a. Ring with Center Text Child
-        ProgressRingOptions opt_r1;
+        ProgressRingProps opt_r1;
         opt_r1.size = 72.0f;
         opt_r1.stroke_width = 8.0f;
         opt_r1.progress_color = 0xFF3B82F6;
@@ -116,7 +115,7 @@ public:
         auto ring_det = progressRing(progress_val_, center_txt, opt_r1);
 
         // 2b. Indeterminate Spinning Ring
-        ProgressRingOptions opt_r2;
+        ProgressRingProps opt_r2;
         opt_r2.size = 72.0f;
         opt_r2.stroke_width = 7.0f;
         opt_r2.indeterminate = true;
@@ -124,7 +123,7 @@ public:
         auto ring_indet = progressRing(0.0f, nullptr, opt_r2);
 
         // 2c. Custom SkSL Shader Ring (Rainbow Aura)
-        ProgressRingOptions opt_r3;
+        ProgressRingProps opt_r3;
         opt_r3.size = 72.0f;
         opt_r3.stroke_width = 8.0f;
         opt_r3.custom_shader = R"(
@@ -141,15 +140,21 @@ public:
         )";
         auto ring_shader = progressRing(progress_val_, nullptr, opt_r3);
 
-        std::vector<WidgetPtr> r1_items = {ring_det, text("Determinate", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> r1_items;
+        r1_items.push_back(ring_det);
+        r1_items.push_back(text("Determinate", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f}));
         auto col_r1 = column(r1_items);
         col_r1->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
-        std::vector<WidgetPtr> r2_items = {ring_indet, text("Indeterminate", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> r2_items;
+        r2_items.push_back(ring_indet);
+        r2_items.push_back(text("Indeterminate", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f}));
         auto col_r2 = column(r2_items);
         col_r2->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
-        std::vector<WidgetPtr> r3_items = {ring_shader, text("SkSL Rainbow", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
+        std::vector<WidgetPtr> r3_items;
+        r3_items.push_back(ring_shader);
+        r3_items.push_back(text("SkSL Rainbow", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f}));
         auto col_r3 = column(r3_items);
         col_r3->alignItems(Align::Center).gap(StyleValue::point(8.0f));
 
@@ -164,7 +169,7 @@ public:
             .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
         });
         
-        SliderOptions slider_opt;
+        SliderProps slider_opt;
         slider_opt.min_value = 0.0f;
         slider_opt.max_value = 1.0f;
         slider_opt.active_color = 0xFF3B82F6;
@@ -175,7 +180,9 @@ public:
             });
         }, slider_opt);
 
-        std::vector<WidgetPtr> slider_items = {ctrl_label, ctrl_slider};
+        std::vector<WidgetPtr> slider_items;
+        slider_items.push_back(ctrl_label);
+        slider_items.push_back(ctrl_slider);
         auto slider_box = column(slider_items);
         slider_box->gap(StyleValue::point(8.0f)).width(StyleValue::percent(100.0f));
 

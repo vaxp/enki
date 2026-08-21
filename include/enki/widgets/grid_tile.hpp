@@ -45,12 +45,12 @@ namespace enki {
 /// regardless of the underlying content color.
 ///
 /// Layout: Row → [leading?] [title/subtitle Column (flex=1)] [trailing?]
-class GridTileBar : public StatelessWidget {
-public:
-    WidgetPtr leading_widget;   ///< Optional leading widget (e.g., checkbox).
-    WidgetPtr title_widget;     ///< Main label.
-    WidgetPtr subtitle_widget;  ///< Optional secondary label.
-    WidgetPtr trailing_widget;  ///< Optional trailing widget (e.g., icon button).
+struct GridTileBarProps {
+    Key key = Key::none();
+    WidgetPtr leading_widget;
+    WidgetPtr title_widget;
+    WidgetPtr subtitle_widget;
+    WidgetPtr trailing_widget;
 
     // ── Visual ─────────────────────────────────────────────────
     Color    background_color = 0xCC000000; ///< Background scrim (default: 80% opaque black).
@@ -58,18 +58,24 @@ public:
     float    padding_horizontal = 8.0f;
     float    leading_gap        = 8.0f;
     float    trailing_gap       = 8.0f;
+};
+
+class GridTileBar : public StatelessWidget {
+public:
+    GridTileBarProps props;
 
     GridTileBar() = default;
+    explicit GridTileBar(GridTileBarProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder ─────────────────────────────────────────
-    GridTileBar& leading(WidgetPtr w)   { leading_widget = std::move(w); return *this; }
-    GridTileBar& title(WidgetPtr w)     { title_widget = std::move(w); return *this; }
-    GridTileBar& subtitle(WidgetPtr w)  { subtitle_widget = std::move(w); return *this; }
-    GridTileBar& trailing(WidgetPtr w)  { trailing_widget = std::move(w); return *this; }
-    GridTileBar& backgroundColor(Color c) { background_color = c; return *this; }
+    GridTileBar& leading(WidgetPtr w)   { props.leading_widget = std::move(w); return *this; }
+    GridTileBar& title(WidgetPtr w)     { props.title_widget = std::move(w); return *this; }
+    GridTileBar& subtitle(WidgetPtr w)  { props.subtitle_widget = std::move(w); return *this; }
+    GridTileBar& trailing(WidgetPtr w)  { props.trailing_widget = std::move(w); return *this; }
+    GridTileBar& backgroundColor(Color c) { props.background_color = c; return *this; }
     GridTileBar& padding(float v, float h) {
-        padding_vertical = v;
-        padding_horizontal = h;
+        props.padding_vertical = v;
+        props.padding_horizontal = h;
         return *this;
     }
 
@@ -77,8 +83,8 @@ public:
     [[nodiscard]] std::string_view typeName() const override { return "GridTileBar"; }
 };
 
-inline std::shared_ptr<GridTileBar> gridTileBar() {
-    return std::make_shared<GridTileBar>();
+inline std::shared_ptr<GridTileBar> gridTileBar(GridTileBarProps props = {}) {
+    return std::make_shared<GridTileBar>(std::move(props));
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -109,23 +115,24 @@ inline std::shared_ptr<GridTileBar> gridTileBar() {
 ///           .trailing(iconButton(Icons::Share, []{}))
 ///   );
 /// @endcode
+struct GridTileProps {
+    Key key = Key::none();
+    WidgetPtr child;           ///< Main content (fills the tile).
+    WidgetPtr header;          ///< Optional overlay at the top.
+    WidgetPtr footer;          ///< Optional overlay at the bottom.
+};
+
 class GridTile : public StatelessWidget {
 public:
-    WidgetPtr  child;           ///< Main content (fills the tile).
-    WidgetPtr  header;          ///< Optional overlay at the top.
-    WidgetPtr  footer;          ///< Optional overlay at the bottom.
+    GridTileProps props;
 
     GridTile() = default;
-    explicit GridTile(WidgetPtr child) : child(std::move(child)) {}
-    GridTile(WidgetPtr child, WidgetPtr footer)
-        : child(std::move(child)), footer(std::move(footer)) {}
-    GridTile(WidgetPtr child, WidgetPtr header, WidgetPtr footer)
-        : child(std::move(child)), header(std::move(header)), footer(std::move(footer)) {}
+    explicit GridTile(GridTileProps p) : props(std::move(p)) {}
 
     // ── Fluent Builder ─────────────────────────────────────────
-    GridTile& setChild(WidgetPtr w)  { child = std::move(w); return *this; }
-    GridTile& setHeader(WidgetPtr w) { header = std::move(w); return *this; }
-    GridTile& setFooter(WidgetPtr w) { footer = std::move(w); return *this; }
+    GridTile& setChild(WidgetPtr w)  { props.child = std::move(w); return *this; }
+    GridTile& setHeader(WidgetPtr w) { props.header = std::move(w); return *this; }
+    GridTile& setFooter(WidgetPtr w) { props.footer = std::move(w); return *this; }
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "GridTile"; }
@@ -135,16 +142,29 @@ public:
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
+inline std::shared_ptr<GridTile> gridTile(GridTileProps props = {}) {
+    return std::make_shared<GridTile>(std::move(props));
+}
+
 inline std::shared_ptr<GridTile> gridTile(WidgetPtr child) {
-    return std::make_shared<GridTile>(std::move(child));
+    GridTileProps props;
+    props.child = std::move(child);
+    return std::make_shared<GridTile>(std::move(props));
 }
 
 inline std::shared_ptr<GridTile> gridTile(WidgetPtr child, WidgetPtr footer) {
-    return std::make_shared<GridTile>(std::move(child), std::move(footer));
+    GridTileProps props;
+    props.child = std::move(child);
+    props.footer = std::move(footer);
+    return std::make_shared<GridTile>(std::move(props));
 }
 
 inline std::shared_ptr<GridTile> gridTile(WidgetPtr child, WidgetPtr header, WidgetPtr footer) {
-    return std::make_shared<GridTile>(std::move(child), std::move(header), std::move(footer));
+    GridTileProps props;
+    props.child = std::move(child);
+    props.header = std::move(header);
+    props.footer = std::move(footer);
+    return std::make_shared<GridTile>(std::move(props));
 }
 
 } // namespace enki
