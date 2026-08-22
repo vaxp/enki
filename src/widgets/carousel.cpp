@@ -253,11 +253,12 @@ public:
                 .children = {left_btn}
             });
 
-            auto pos_left = std::make_shared<Positioned>(l_col);
-            pos_left->style.left = StyleValue::point(14.0f);
-            pos_left->style.top = StyleValue::point(0.0f);
-            pos_left->style.bottom = StyleValue::point(0.0f);
-            stack_items.push_back(pos_left);
+            stack_items.push_back(Positioned {
+                .child = l_col,
+                .top = StyleValue::point(0.0f),
+                .bottom = StyleValue::point(0.0f),
+                .left = StyleValue::point(14.0f),
+            });
 
             // Right Arrow
             auto right_btn = buildArrowBtn("▶", [this] { nextPage(); }, opts);
@@ -267,11 +268,12 @@ public:
                 .children = {right_btn}
             });
 
-            auto pos_right = std::make_shared<Positioned>(r_col);
-            pos_right->style.right = StyleValue::point(14.0f);
-            pos_right->style.top = StyleValue::point(0.0f);
-            pos_right->style.bottom = StyleValue::point(0.0f);
-            stack_items.push_back(pos_right);
+            stack_items.push_back(Positioned {
+                .child = r_col,
+                .top = StyleValue::point(0.0f),
+                .right = StyleValue::point(14.0f),
+                .bottom = StyleValue::point(0.0f),
+            });
         }
 
         // ── 3. Bottom Pagination Dots ─────────────────────────────────
@@ -284,18 +286,19 @@ public:
                 .children = {dots_widget}
             });
 
-            auto pos_dots = std::make_shared<Positioned>(dot_row);
-            pos_dots->style.bottom = StyleValue::point(14.0f);
-            pos_dots->style.left = StyleValue::point(0.0f);
-            pos_dots->style.right = StyleValue::point(0.0f);
-            stack_items.push_back(pos_dots);
+            stack_items.push_back(Positioned {
+                .child = dot_row,
+                .right = StyleValue::point(0.0f),
+                .bottom = StyleValue::point(14.0f),
+                .left = StyleValue::point(0.0f),
+            });
         }
 
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::point(opts->height);
-
-        return root;
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::point(opts->height),
+            .children = std::move(stack_items),
+        };
     }
 };
 

@@ -62,31 +62,62 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Positioned Widget
+// PositionedWidget Engine Implementation
 // ════════════════════════════════════════════════════════════════
 
-class Positioned : public SingleChildRenderObjectWidget {
+class PositionedWidget : public SingleChildRenderObjectWidget {
 public:
     PositionedStyle style;
 
-    Positioned() = default;
-    explicit Positioned(WidgetPtr child)
+    PositionedWidget() = default;
+    explicit PositionedWidget(WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)) {}
-    Positioned(Key key, WidgetPtr child)
+    PositionedWidget(Key key, WidgetPtr child)
         : SingleChildRenderObjectWidget(std::move(key), std::move(child)) {}
 
     [[nodiscard]] std::string_view typeName() const override { return "Positioned"; }
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
+};
 
-    // ── Static Factories ───────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// Declarative Positioned Struct (C++20 Designated Initializers)
+// ════════════════════════════════════════════════════════════════
+
+struct Positioned {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+
+    std::optional<StyleValue> top;
+    std::optional<StyleValue> right;
+    std::optional<StyleValue> bottom;
+    std::optional<StyleValue> left;
+    std::optional<StyleValue> start;
+    std::optional<StyleValue> end;
+    std::optional<StyleValue> width;
+    std::optional<StyleValue> height;
+
+    operator WidgetPtr() const {
+        PositionedStyle st;
+        st.top = top;
+        st.right = right;
+        st.bottom = bottom;
+        st.left = left;
+        st.start = start;
+        st.end = end;
+        st.width = width;
+        st.height = height;
+        auto p = std::make_shared<PositionedWidget>(key, child);
+        p->style = st;
+        return p;
+    }
 
     /// Creates a Positioned widget that fills the entire stack with optional insets.
-    static std::shared_ptr<Positioned> fill(WidgetPtr child,
-                                            float left = 0.0f, float top = 0.0f,
-                                            float right = 0.0f, float bottom = 0.0f) {
-        auto p = std::make_shared<Positioned>(std::move(child));
+    static std::shared_ptr<PositionedWidget> fill(WidgetPtr child,
+                                                  float left = 0.0f, float top = 0.0f,
+                                                  float right = 0.0f, float bottom = 0.0f) {
+        auto p = std::make_shared<PositionedWidget>(std::move(child));
         p->style.left = StyleValue::point(left);
         p->style.top = StyleValue::point(top);
         p->style.right = StyleValue::point(right);
@@ -95,8 +126,8 @@ public:
     }
 
     /// Creates a Positioned widget from a Rect.
-    static std::shared_ptr<Positioned> fromRect(WidgetPtr child, const Rect& rect) {
-        auto p = std::make_shared<Positioned>(std::move(child));
+    static std::shared_ptr<PositionedWidget> fromRect(WidgetPtr child, const Rect& rect) {
+        auto p = std::make_shared<PositionedWidget>(std::move(child));
         p->style.left = StyleValue::point(rect.x);
         p->style.top = StyleValue::point(rect.y);
         p->style.width = StyleValue::point(rect.width);
@@ -105,46 +136,17 @@ public:
     }
 
     /// Creates a directional Positioned widget.
-    static std::shared_ptr<Positioned> directional(WidgetPtr child,
-                                                   float top = 0.0f, float end = 0.0f,
-                                                   float bottom = 0.0f, float start = 0.0f) {
-        auto p = std::make_shared<Positioned>(std::move(child));
+    static std::shared_ptr<PositionedWidget> directional(WidgetPtr child,
+                                                         float top = 0.0f, float end = 0.0f,
+                                                         float bottom = 0.0f, float start = 0.0f) {
+        auto p = std::make_shared<PositionedWidget>(std::move(child));
         p->style.top = StyleValue::point(top);
         p->style.end = StyleValue::point(end);
         p->style.bottom = StyleValue::point(bottom);
         p->style.start = StyleValue::point(start);
         return p;
     }
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    Positioned& top(float v) { style.top = StyleValue::point(v); return *this; }
-    Positioned& right(float v) { style.right = StyleValue::point(v); return *this; }
-    Positioned& bottom(float v) { style.bottom = StyleValue::point(v); return *this; }
-    Positioned& left(float v) { style.left = StyleValue::point(v); return *this; }
-    Positioned& start(float v) { style.start = StyleValue::point(v); return *this; }
-    Positioned& end(float v) { style.end = StyleValue::point(v); return *this; }
-    Positioned& width(float v) { style.width = StyleValue::point(v); return *this; }
-    Positioned& height(float v) { style.height = StyleValue::point(v); return *this; }
-
-    Positioned& top(StyleValue v) { style.top = v; return *this; }
-    Positioned& right(StyleValue v) { style.right = v; return *this; }
-    Positioned& bottom(StyleValue v) { style.bottom = v; return *this; }
-    Positioned& left(StyleValue v) { style.left = v; return *this; }
-    Positioned& width(StyleValue v) { style.width = v; return *this; }
-    Positioned& height(StyleValue v) { style.height = v; return *this; }
 };
-
-/// Global factory helper for Positioned
-inline std::shared_ptr<Positioned> positioned(WidgetPtr child) {
-    return std::make_shared<Positioned>(std::move(child));
-}
-
-inline std::shared_ptr<Positioned> positioned(float top, float right, float bottom, float left, WidgetPtr child) {
-    auto p = std::make_shared<Positioned>(std::move(child));
-    p->top(top).right(right).bottom(bottom).left(left);
-    return p;
-}
 
 struct PositionedProps {
     Key key = Key::none();
@@ -160,8 +162,21 @@ struct PositionedProps {
     std::optional<StyleValue> height;
 };
 
-inline std::shared_ptr<Positioned> positioned(PositionedProps props) {
-    auto p = std::make_shared<Positioned>(std::move(props.key), std::move(props.child));
+inline std::shared_ptr<PositionedWidget> positioned(WidgetPtr child) {
+    return std::make_shared<PositionedWidget>(std::move(child));
+}
+
+inline std::shared_ptr<PositionedWidget> positioned(float top, float right, float bottom, float left, WidgetPtr child) {
+    auto p = std::make_shared<PositionedWidget>(std::move(child));
+    p->style.top = StyleValue::point(top);
+    p->style.right = StyleValue::point(right);
+    p->style.bottom = StyleValue::point(bottom);
+    p->style.left = StyleValue::point(left);
+    return p;
+}
+
+inline std::shared_ptr<PositionedWidget> positioned(PositionedProps props) {
+    auto p = std::make_shared<PositionedWidget>(std::move(props.key), std::move(props.child));
     if (props.top) p->style.top = props.top;
     if (props.right) p->style.right = props.right;
     if (props.bottom) p->style.bottom = props.bottom;
@@ -173,7 +188,7 @@ inline std::shared_ptr<Positioned> positioned(PositionedProps props) {
     return p;
 }
 
-inline std::shared_ptr<Positioned> positioned(PositionedProps props, WidgetPtr child) {
+inline std::shared_ptr<PositionedWidget> positioned(PositionedProps props, WidgetPtr child) {
     props.child = std::move(child);
     return positioned(std::move(props));
 }
@@ -219,61 +234,60 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Stack Widget
+// StackWidget Engine Implementation
 // ════════════════════════════════════════════════════════════════
 
-class Stack : public MultiChildRenderObjectWidget {
+class StackWidget : public MultiChildRenderObjectWidget {
 public:
     StackStyle style;
 
-    Stack() = default;
-    explicit Stack(std::vector<WidgetPtr> children)
+    StackWidget() = default;
+    explicit StackWidget(std::vector<WidgetPtr> children)
         : MultiChildRenderObjectWidget(Key::none(), std::move(children)) {}
-    Stack(Key key, std::vector<WidgetPtr> children)
+    StackWidget(Key key, std::vector<WidgetPtr> children)
         : MultiChildRenderObjectWidget(std::move(key), std::move(children)) {}
 
     [[nodiscard]] std::string_view typeName() const override { return "Stack"; }
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    Stack& alignment(Alignment a) { style.alignment = a; return *this; }
-    Stack& fit(StackFit f) { style.fit = f; return *this; }
-    Stack& clip(Clip c) { style.clip_behavior = c; return *this; }
-    Stack& clipBehavior(Clip c) { style.clip_behavior = c; return *this; }
-
-    Stack& width(float w) { style.width = StyleValue::point(w); return *this; }
-    Stack& height(float h) { style.height = StyleValue::point(h); return *this; }
-    Stack& width(StyleValue w) { style.width = w; return *this; }
-    Stack& height(StyleValue h) { style.height = h; return *this; }
-
-    Stack& minWidth(float w) { style.min_width = StyleValue::point(w); return *this; }
-    Stack& minHeight(float h) { style.min_height = StyleValue::point(h); return *this; }
-    Stack& maxWidth(float w) { style.max_width = StyleValue::point(w); return *this; }
-    Stack& maxHeight(float h) { style.max_height = StyleValue::point(h); return *this; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Global Helper Functions
+// Declarative Stack Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Stack> stack(std::vector<WidgetPtr> children) {
-    return std::make_shared<Stack>(std::move(children));
-}
+struct Stack {
+    Key key = Key::none();
+    Alignment alignment = Alignment::TopLeft;
+    StackFit fit = StackFit::Loose;
+    Clip clip_behavior = Clip::HardEdge;
 
-inline std::shared_ptr<Stack> stack(Alignment alignment, std::vector<WidgetPtr> children) {
-    auto s = std::make_shared<Stack>(std::move(children));
-    s->alignment(alignment);
-    return s;
-}
+    std::optional<StyleValue> width;
+    std::optional<StyleValue> height;
+    std::optional<StyleValue> min_width;
+    std::optional<StyleValue> min_height;
+    std::optional<StyleValue> max_width;
+    std::optional<StyleValue> max_height;
 
-inline std::shared_ptr<Stack> stack(Alignment alignment, StackFit fit, std::vector<WidgetPtr> children) {
-    auto s = std::make_shared<Stack>(std::move(children));
-    s->alignment(alignment).fit(fit);
-    return s;
-}
+    std::vector<WidgetPtr> children;
+
+    operator WidgetPtr() const {
+        StackStyle st;
+        st.alignment = alignment;
+        st.fit = fit;
+        st.clip_behavior = clip_behavior;
+        st.width = width;
+        st.height = height;
+        st.min_width = min_width;
+        st.min_height = min_height;
+        st.max_width = max_width;
+        st.max_height = max_height;
+        auto s = std::make_shared<StackWidget>(key, children);
+        s->style = st;
+        return s;
+    }
+};
 
 struct StackProps {
     Key key = Key::none();
@@ -291,8 +305,29 @@ struct StackProps {
     std::optional<StyleValue> max_height;
 };
 
-inline std::shared_ptr<Stack> stack(StackProps props) {
-    auto s = std::make_shared<Stack>(std::move(props.key), std::move(props.children));
+// ════════════════════════════════════════════════════════════════
+// Global Helper Functions
+// ════════════════════════════════════════════════════════════════
+
+inline std::shared_ptr<StackWidget> stack(std::vector<WidgetPtr> children) {
+    return std::make_shared<StackWidget>(std::move(children));
+}
+
+inline std::shared_ptr<StackWidget> stack(Alignment alignment, std::vector<WidgetPtr> children) {
+    auto s = std::make_shared<StackWidget>(std::move(children));
+    s->style.alignment = alignment;
+    return s;
+}
+
+inline std::shared_ptr<StackWidget> stack(Alignment alignment, StackFit fit, std::vector<WidgetPtr> children) {
+    auto s = std::make_shared<StackWidget>(std::move(children));
+    s->style.alignment = alignment;
+    s->style.fit = fit;
+    return s;
+}
+
+inline std::shared_ptr<StackWidget> stack(StackProps props) {
+    auto s = std::make_shared<StackWidget>(std::move(props.key), std::move(props.children));
     s->style.alignment = props.alignment;
     s->style.fit = props.fit;
     s->style.clip_behavior = props.clip_behavior;
@@ -305,7 +340,7 @@ inline std::shared_ptr<Stack> stack(StackProps props) {
     return s;
 }
 
-inline std::shared_ptr<Stack> stack(StackProps props, std::vector<WidgetPtr> children) {
+inline std::shared_ptr<StackWidget> stack(StackProps props, std::vector<WidgetPtr> children) {
     props.children = std::move(children);
     return stack(std::move(props));
 }

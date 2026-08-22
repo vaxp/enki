@@ -361,14 +361,20 @@ private:
                   .color(Style::emerald)
                   .border(0xFF0A0E1A, 2.0f);
 
-        auto pos_dot = positioned(online_dot);
-        pos_dot->bottom(0.0f).right(0.0f);
+        auto pos_dot = Positioned {
+            .child = online_dot,
+            .right = StyleValue::point(0.0f),
+            .bottom = StyleValue::point(0.0f),
+        };
 
-        auto av1_stack = stack(std::vector<WidgetPtr>{
-            positioned(avatar1_box),
-            pos_dot
-        });
-        av1_stack->width(52.0f).height(52.0f);
+        auto av1_stack = Stack {
+            .width = StyleValue::point(52.0f),
+            .height = StyleValue::point(52.0f),
+            .children = {
+                avatar1_box,
+                pos_dot
+            }
+        };
 
         auto avatar2 = image({
             .source_path = "assets/2.png",

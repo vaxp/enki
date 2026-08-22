@@ -74,22 +74,29 @@ WidgetPtr GridTileWidget::build(BuildContext& ctx) {
 
     // Header — anchored to top
     if (props.header) {
-        auto hdr = std::make_shared<Positioned>(props.header);
-        hdr->top(0).left(0).right(0);
-        stack_children.push_back(hdr);
+        stack_children.push_back(Positioned {
+            .child = props.header,
+            .top = StyleValue::point(0.0f),
+            .right = StyleValue::point(0.0f),
+            .left = StyleValue::point(0.0f),
+        });
     }
 
     // Footer — anchored to bottom
     if (props.footer) {
-        auto ftr = std::make_shared<Positioned>(props.footer);
-        ftr->bottom(0).left(0).right(0);
-        stack_children.push_back(ftr);
+        stack_children.push_back(Positioned {
+            .child = props.footer,
+            .right = StyleValue::point(0.0f),
+            .bottom = StyleValue::point(0.0f),
+            .left = StyleValue::point(0.0f),
+        });
     }
 
-    auto s = std::make_shared<Stack>(std::move(stack_children));
-    s->clip(Clip::HardEdge);
-    s->fit(StackFit::Expand);
-    return s;
+    return Stack {
+        .fit = StackFit::Expand,
+        .clip_behavior = Clip::HardEdge,
+        .children = std::move(stack_children),
+    };
 }
 
 } // namespace enki

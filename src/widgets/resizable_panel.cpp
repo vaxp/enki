@@ -272,17 +272,18 @@ public:
                        .height(is_minimized_ ? 42.0f : current_height_)
                        .shadow(BoxShadow(0xCC000000, {0.0f, 10.0f}, 30.0f));
 
-            auto pos_window = std::make_shared<Positioned>(window_card);
-            pos_window->style.left = StyleValue::point(current_x_);
-            pos_window->style.top  = StyleValue::point(current_y_);
-
-            stack_items.push_back(pos_window);
+            stack_items.push_back(Positioned {
+                .child = window_card,
+                .top = StyleValue::point(current_y_),
+                .left = StyleValue::point(current_x_),
+            });
         }
 
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(stack_items),
+        };
     }
 };
 

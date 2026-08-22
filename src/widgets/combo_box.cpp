@@ -322,16 +322,18 @@ public:
             stack_items.push_back(scrim);
 
             auto menu_panel = buildFloatingMenu(w);
-            auto pos_menu = std::make_shared<Positioned>(menu_panel);
-            pos_menu->style.left = StyleValue::point(opts.anchor_x);
-            pos_menu->style.top  = StyleValue::point(opts.anchor_y + opts.input_height + 4.0f);
-            stack_items.push_back(pos_menu);
+            stack_items.push_back(Positioned {
+                .child = menu_panel,
+                .top = StyleValue::point(opts.anchor_y + opts.input_height + 4.0f),
+                .left = StyleValue::point(opts.anchor_x),
+            });
         }
 
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(stack_items),
+        };
     }
 };
 

@@ -84,17 +84,18 @@ public:
             setState([] {});
         };
 
-        auto pos_fg = std::make_shared<Positioned>(gd);
-        pos_fg->style.left = StyleValue::point(drag_offset_x_);
-        pos_fg->style.right = StyleValue::point(-drag_offset_x_);
-        pos_fg->style.top = StyleValue::point(0.0f);
-        pos_fg->style.bottom = StyleValue::point(0.0f);
+        stack_items.push_back(Positioned {
+            .child = gd,
+            .top = StyleValue::point(0.0f),
+            .right = StyleValue::point(-drag_offset_x_),
+            .bottom = StyleValue::point(0.0f),
+            .left = StyleValue::point(drag_offset_x_),
+        });
 
-        stack_items.push_back(pos_fg);
-
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        return root;
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(stack_items),
+        };
     }
 };
 

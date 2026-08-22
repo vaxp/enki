@@ -294,11 +294,12 @@ public:
                   .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f));
 
         // Floating panel positioned at anchor (below trigger)
-        auto pos = std::make_shared<Positioned>(menu_panel);
-        pos->style.left  = StyleValue::point(opts.anchor_x);
-        pos->style.top   = StyleValue::point(opts.anchor_y + opts.trigger_height + 4.0f);
-        pos->style.width = StyleValue::point(opts.menu_width);
-        return pos;
+        return Positioned {
+            .child = menu_panel,
+            .top = StyleValue::point(opts.anchor_y + opts.trigger_height + 4.0f),
+            .left = StyleValue::point(opts.anchor_x),
+            .width = StyleValue::point(opts.menu_width),
+        };
     }
 
     // ── build() ──────────────────────────────────────────────────
@@ -324,22 +325,22 @@ public:
 
         // Closed: just render the body as-is (trigger is inside body)
         if (!is_open_) {
-            std::vector<WidgetPtr> stack_items = { body_fill };
-            auto root = stack(stack_items);
-            root->style.width  = StyleValue::percent(100.0f);
-            root->style.height = StyleValue::percent(100.0f);
-            return root;
+            return Stack {
+                .width  = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = { body_fill },
+            };
         }
 
         // Open: body + transparent scrim + floating panel
         auto scrim = std::make_shared<DropdownScrimWidget>([this] { closeMenu(); });
         auto floating = buildFloatingPanel(w);
 
-        std::vector<WidgetPtr> stack_items = { body_fill, scrim, floating };
-        auto root = stack(stack_items);
-        root->style.width  = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
+        return Stack {
+            .width  = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = { body_fill, scrim, floating },
+        };
     }
 };
 

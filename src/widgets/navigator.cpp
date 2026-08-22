@@ -265,10 +265,12 @@ WidgetPtr NavigatorState::build(BuildContext& ctx) {
         }
     }
 
-    auto root_stack = std::make_shared<Stack>(std::move(layers));
-    root_stack->style.width  = StyleValue::percent(100.0f);
-    root_stack->style.height = StyleValue::percent(100.0f);
-    root_stack->style.clip_behavior = Clip::HardEdge;
+    auto root_stack = Stack {
+        .clip_behavior = Clip::HardEdge,
+        .width  = StyleValue::percent(100.0f),
+        .height = StyleValue::percent(100.0f),
+        .children = std::move(layers),
+    };
 
     auto root_box = container(root_stack);
     root_box->color(bg)

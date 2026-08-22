@@ -265,17 +265,17 @@ public:
 
         // When hidden and not animating: render only body
         if (t <= 0.001f && !is_visible_) {
-            std::vector<WidgetPtr> stack_items = {body_widget};
-            auto root = stack(stack_items);
-            root->style.width = StyleValue::percent(100.0f);
-            root->style.height = StyleValue::percent(100.0f);
-            return root;
+            return Stack {
+                .width  = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = { body_widget },
+            };
         }
 
         // ── 2. Floating Snackbar Card & Positioning ───────────────────
         auto card = buildSnackbarCard(t);
 
-        auto pos_card = std::make_shared<Positioned>(card);
+        WidgetPtr pos_card;
         float margin = opts.margin;
 
         // Slide entrance delta:
@@ -288,21 +288,28 @@ public:
                 row_wrap->justifyContent(Justify::Center)
                         .width(StyleValue::percent(100.0f));
 
-                auto pos_center = std::make_shared<Positioned>(row_wrap);
-                pos_center->style.bottom = StyleValue::point(margin + slide_offset);
-                pos_center->style.left = StyleValue::point(0.0f);
-                pos_center->style.right = StyleValue::point(0.0f);
-                pos_card = pos_center;
+                pos_card = Positioned {
+                    .child = row_wrap,
+                    .right = StyleValue::point(0.0f),
+                    .bottom = StyleValue::point(margin + slide_offset),
+                    .left = StyleValue::point(0.0f),
+                };
                 break;
             }
             case SnackbarPlacement::BottomRight: {
-                pos_card->style.bottom = StyleValue::point(margin + slide_offset);
-                pos_card->style.right  = StyleValue::point(margin);
+                pos_card = Positioned {
+                    .child = card,
+                    .right = StyleValue::point(margin),
+                    .bottom = StyleValue::point(margin + slide_offset),
+                };
                 break;
             }
             case SnackbarPlacement::BottomLeft: {
-                pos_card->style.bottom = StyleValue::point(margin + slide_offset);
-                pos_card->style.left   = StyleValue::point(margin);
+                pos_card = Positioned {
+                    .child = card,
+                    .bottom = StyleValue::point(margin + slide_offset),
+                    .left = StyleValue::point(margin),
+                };
                 break;
             }
             case SnackbarPlacement::TopCenter: {
@@ -311,35 +318,41 @@ public:
                 row_wrap->justifyContent(Justify::Center)
                         .width(StyleValue::percent(100.0f));
 
-                auto pos_center = std::make_shared<Positioned>(row_wrap);
-                pos_center->style.top   = StyleValue::point(margin - slide_offset);
-                pos_center->style.left  = StyleValue::point(0.0f);
-                pos_center->style.right = StyleValue::point(0.0f);
-                pos_card = pos_center;
+                pos_card = Positioned {
+                    .child = row_wrap,
+                    .top = StyleValue::point(margin - slide_offset),
+                    .right = StyleValue::point(0.0f),
+                    .left = StyleValue::point(0.0f),
+                };
                 break;
             }
             case SnackbarPlacement::TopRight: {
-                pos_card->style.top   = StyleValue::point(margin - slide_offset);
-                pos_card->style.right = StyleValue::point(margin);
+                pos_card = Positioned {
+                    .child = card,
+                    .top = StyleValue::point(margin - slide_offset),
+                    .right = StyleValue::point(margin),
+                };
                 break;
             }
             case SnackbarPlacement::TopLeft: {
-                pos_card->style.top  = StyleValue::point(margin - slide_offset);
-                pos_card->style.left = StyleValue::point(margin);
+                pos_card = Positioned {
+                    .child = card,
+                    .top = StyleValue::point(margin - slide_offset),
+                    .left = StyleValue::point(margin),
+                };
                 break;
             }
         }
 
         // ── 3. Stack Composition: Body + Floating Snackbar ───────────
-        std::vector<WidgetPtr> stack_items = {
-            body_widget,
-            pos_card
+        return Stack {
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = {
+                body_widget,
+                pos_card,
+            }
         };
-
-        auto root = stack(stack_items);
-        root->style.width = StyleValue::percent(100.0f);
-        root->style.height = StyleValue::percent(100.0f);
-        return root;
     }
 };
 
