@@ -47,38 +47,13 @@ struct AccordionItem {
     Color badge_bg = 0x2E38BDF8;      ///< Badge background color
     Color badge_fg = 0xFF38BDF8;      ///< Badge text color
 
-    WidgetPtr content;                ///< Arbitrary child widget revealed on expansion
+    WidgetPtr content = nullptr;      ///< Arbitrary child widget revealed on expansion
     bool is_initially_expanded = false;
     bool is_disabled = false;
-
-    AccordionItem() = default;
-    AccordionItem(std::string id_, std::string title_, WidgetPtr content_,
-                  std::string icon_ = "", std::string subtitle_ = "",
-                  bool initially_expanded = false)
-        : id(std::move(id_)), title(std::move(title_)), subtitle(std::move(subtitle_)),
-          icon(std::move(icon_)), content(std::move(content_)),
-          is_initially_expanded(initially_expanded) {}
-
-    AccordionItem& setBadge(std::string label, Color bg = 0x2E38BDF8, Color fg = 0xFF38BDF8) {
-        badge_label = std::move(label);
-        badge_bg = bg;
-        badge_fg = fg;
-        return *this;
-    }
-
-    AccordionItem& setDisabled(bool d) {
-        is_disabled = d;
-        return *this;
-    }
-
-    AccordionItem& setInitiallyExpanded(bool exp) {
-        is_initially_expanded = exp;
-        return *this;
-    }
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Accordion Options
+/// Accordion Options & Props
 /// ════════════════════════════════════════════════════════════════
 
 class AccordionController;
@@ -135,29 +110,74 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Accordion Widget
+/// Accordion Implementation Widget
 /// ════════════════════════════════════════════════════════════════
 
-class Accordion : public StatefulWidget {
+class AccordionWidget : public StatefulWidget {
 public:
     AccordionProps props;
 
-    Accordion() = default;
-    explicit Accordion(AccordionProps p) : props(std::move(p)) {}
+    AccordionWidget() = default;
+    explicit AccordionWidget(AccordionProps p) : props(std::move(p)) {}
+    AccordionWidget(Key key, AccordionProps p) : StatefulWidget(std::move(key)), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Accordion"; }
 };
 
-inline std::shared_ptr<Accordion> accordion(AccordionProps props = {}) {
-    return std::make_shared<Accordion>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Accordion Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Accordion> accordion(
-    std::vector<AccordionItem> items) {
-    AccordionProps props;
-    props.items = std::move(items);
-    return std::make_shared<Accordion>(std::move(props));
-}
+struct Accordion {
+    Key key = Key::none();
+    std::vector<AccordionItem> items;
+    std::shared_ptr<AccordionController> controller = nullptr;
+
+    AccordionMode mode = AccordionMode::Single;
+    AccordionVariant variant = AccordionVariant::Bordered;
+
+    bool collapsible = true;
+    bool show_chevron = true;
+
+    float gap = 10.0f;
+    float border_radius = 10.0f;
+
+    // Styling Colors
+    Color background_color = 0xFF1E293B; // Slate 800
+    Color border_color     = 0xFF334155; // Slate 700
+    Color header_hover_bg  = 0x33334155; // Slate 700 with opacity
+    Color title_color      = 0xFFFFFFFF; // White
+    Color subtitle_color   = 0xFF94A3B8; // Slate 400
+    Color chevron_color    = 0xFF94A3B8; // Slate 400
+    Color divider_color    = 0xFF334155; // Slate 700
+
+    // Callbacks
+    std::function<void(const std::string& id, bool is_expanded)> on_toggle = nullptr;
+    std::function<void(const std::set<std::string>& active_ids)> on_change = nullptr;
+
+    operator WidgetPtr() const {
+        AccordionProps p;
+        p.key = key;
+        p.items = items;
+        p.controller = controller;
+        p.mode = mode;
+        p.variant = variant;
+        p.collapsible = collapsible;
+        p.show_chevron = show_chevron;
+        p.gap = gap;
+        p.border_radius = border_radius;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.header_hover_bg = header_hover_bg;
+        p.title_color = title_color;
+        p.subtitle_color = subtitle_color;
+        p.chevron_color = chevron_color;
+        p.divider_color = divider_color;
+        p.on_toggle = on_toggle;
+        p.on_change = on_change;
+        return std::make_shared<AccordionWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

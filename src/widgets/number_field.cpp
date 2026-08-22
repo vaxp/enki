@@ -637,7 +637,7 @@ private:
     }
 
     double clampValue(double val) {
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         if (!nf) return val;
 
         if (nf->options.wrap_mode == NumberFieldWrapMode::Wrap &&
@@ -655,7 +655,7 @@ private:
     }
 
     void commitValue(double new_val, bool notify = true) {
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         if (!nf || nf->options.read_only || nf->options.disabled) return;
 
         new_val = clampValue(new_val);
@@ -672,7 +672,7 @@ private:
     }
 
     void commitEditText() {
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         if (!nf) return;
 
         double parsed_val = 0.0;
@@ -695,7 +695,7 @@ private:
     }
 
     void applyStep(double direction, double multiplier = 1.0) {
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         if (!nf || nf->options.read_only || nf->options.disabled) return;
 
         double current = controller_->getValue();
@@ -714,7 +714,7 @@ private:
     }
 
     void handleKey(int key, int mods) {
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         if (!nf || nf->options.disabled) return;
 
         bool shift = (mods & 1) != 0;
@@ -864,7 +864,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         controller_ = nf->controller;
         edit_text_ = formatNumberValue(controller_->getValue(), nf->options);
         cursor_pos_ = edit_text_.length();
@@ -877,7 +877,7 @@ public:
         if (Platform::instance()) {
             text_input_conn_ = Platform::instance()->onTextInput().connect([this](std::string_view text) {
                 if (g_focused_numberfield != this) return;
-                auto* current_nf = static_cast<const NumberField*>(widget());
+                auto* current_nf = static_cast<const NumberFieldWidget*>(widget());
                 if (!current_nf || current_nf->options.read_only || current_nf->options.disabled) return;
 
                 // Ignore control characters
@@ -915,7 +915,7 @@ public:
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
         controller_ = nf->controller;
         if (!is_focused_) {
             edit_text_ = formatNumberValue(controller_->getValue(), nf->options);
@@ -932,7 +932,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* nf = static_cast<const NumberField*>(widget());
+        auto* nf = static_cast<const NumberFieldWidget*>(widget());
 
         if (is_focused_ && Platform::instance()) {
             double cur = Platform::instance()->getTime();
@@ -974,7 +974,7 @@ public:
 
         // 1. Single Tap Down (Handle Steppers vs Text vs Focus)
         detector->on_tap_down = [this](const TapDownDetails& e) {
-            auto* nf = static_cast<const NumberField*>(widget());
+            auto* nf = static_cast<const NumberFieldWidget*>(widget());
             if (!nf || nf->options.disabled) return;
 
             if (auto* ro = context().element()->findRenderObject()) {
@@ -999,7 +999,7 @@ public:
 
         // 2. Drag Scrubbing (Horizontal Drag-to-Adjust)
         detector->on_pan_start = [this](const DragStartDetails& e) {
-            auto* nf = static_cast<const NumberField*>(widget());
+            auto* nf = static_cast<const NumberFieldWidget*>(widget());
             if (!nf || nf->options.read_only || nf->options.disabled || !nf->options.enable_scrubbing) return;
 
             if (auto* ro = context().element()->findRenderObject()) {
@@ -1017,7 +1017,7 @@ public:
 
         detector->on_pan_update = [this](const DragUpdateDetails& e) {
             if (!is_scrubbing_) return;
-            auto* nf = static_cast<const NumberField*>(widget());
+            auto* nf = static_cast<const NumberFieldWidget*>(widget());
             if (!nf) return;
 
             float delta_x = e.global_position.x - scrub_start_x_;
@@ -1035,7 +1035,7 @@ public:
 
         // 3. Mouse Wheel Scroll Stepping
         detector->on_scroll = [this](float, float dy) {
-            auto* nf = static_cast<const NumberField*>(widget());
+            auto* nf = static_cast<const NumberFieldWidget*>(widget());
             if (!nf || nf->options.read_only || nf->options.disabled) return;
             applyStep(dy > 0 ? 1.0 : -1.0);
         };
@@ -1045,7 +1045,7 @@ public:
     }
 };
 
-std::unique_ptr<State> NumberField::createState() {
+std::unique_ptr<State> NumberFieldWidget::createState() {
     return std::make_unique<NumberFieldState>();
 }
 

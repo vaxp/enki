@@ -28,9 +28,9 @@ enum class ComboBoxMode {
     Custom      ///< Allows typing arbitrary custom values
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// ComboBox Item Model
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ComboBox Item Model
+// ════════════════════════════════════════════════════════════════
 
 struct ComboBoxItem {
     std::string id = "";
@@ -61,9 +61,9 @@ struct ComboBoxItem {
     }
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// ComboBox Controller
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ComboBox Controller
+// ════════════════════════════════════════════════════════════════
 
 class ComboBoxController {
 public:
@@ -88,11 +88,12 @@ public:
     [[nodiscard]] bool isOpen() const { return is_open_fn ? is_open_fn() : false; }
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// ComboBox Options
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ComboBox Options
+// ════════════════════════════════════════════════════════════════
 
 struct ComboBoxProps {
+    Key key = Key::none();
     std::vector<ComboBoxItem> items;
     WidgetPtr body = nullptr;                              ///< Main page body content to wrap in stack overlay
     std::shared_ptr<ComboBoxController> controller = nullptr;
@@ -131,24 +132,96 @@ struct ComboBoxProps {
     std::function<void(const std::string& custom_val)> on_custom_value;
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// ComboBox Widget
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ComboBox Implementation Widget
+// ════════════════════════════════════════════════════════════════
 
-class ComboBox : public StatefulWidget {
+class ComboBoxWidget : public StatefulWidget {
 public:
     ComboBoxProps props;
 
-    ComboBox() = default;
-    explicit ComboBox(ComboBoxProps p)
-        : props(std::move(p)) {}
+    ComboBoxWidget() = default;
+    explicit ComboBoxWidget(ComboBoxProps p)
+        : StatefulWidget(p.key), props(std::move(p)) {}
+    ComboBoxWidget(Key k, ComboBoxProps p)
+        : StatefulWidget(std::move(k)), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ComboBox"; }
 };
 
-inline std::shared_ptr<ComboBox> comboBox(ComboBoxProps props) {
-    return std::make_shared<ComboBox>(std::move(props));
-}
+// ════════════════════════════════════════════════════════════════
+// Declarative ComboBox Struct (C++20 Designated Initializers)
+// ════════════════════════════════════════════════════════════════
+
+struct ComboBox {
+    Key key = Key::none();
+    std::vector<ComboBoxItem> items;
+    WidgetPtr body = nullptr;
+    std::shared_ptr<ComboBoxController> controller = nullptr;
+
+    ComboBoxMode mode = ComboBoxMode::Single;
+    std::string placeholder = "Search or select option...";
+
+    float width = 320.0f;
+    float input_height = 42.0f;
+    float max_menu_height = 260.0f;
+    float border_radius = 8.0f;
+
+    bool allow_clear = true;
+    bool allow_custom_value = false;
+    bool show_search_icon = true;
+
+    Color background_color   = 0xFF0F172A;
+    Color border_color       = 0xFF334155;
+    Color border_focus_color = 0xFF0284C7;
+    Color text_color         = 0xFFFFFFFF;
+    Color placeholder_color  = 0xFF64748B;
+    Color menu_bg_color      = 0xFF1E293B;
+    Color item_hover_color   = 0x3338BDF8;
+    Color item_selected_col  = 0x330284C7;
+    Color chip_bg_color      = 0xFF1E293B;
+    Color chip_border_color  = 0xFF38BDF8;
+
+    float anchor_x = 0.0f;
+    float anchor_y = 0.0f;
+
+    std::function<void(const ComboBoxItem& item)> on_selected = nullptr;
+    std::function<void(const std::vector<ComboBoxItem>& items)> on_multi_changed = nullptr;
+    std::function<void(const std::string& custom_val)> on_custom_value = nullptr;
+
+    operator WidgetPtr() const {
+        ComboBoxProps p;
+        p.key = key;
+        p.items = items;
+        p.body = body;
+        p.controller = controller;
+        p.mode = mode;
+        p.placeholder = placeholder;
+        p.width = width;
+        p.input_height = input_height;
+        p.max_menu_height = max_menu_height;
+        p.border_radius = border_radius;
+        p.allow_clear = allow_clear;
+        p.allow_custom_value = allow_custom_value;
+        p.show_search_icon = show_search_icon;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.border_focus_color = border_focus_color;
+        p.text_color = text_color;
+        p.placeholder_color = placeholder_color;
+        p.menu_bg_color = menu_bg_color;
+        p.item_hover_color = item_hover_color;
+        p.item_selected_col = item_selected_col;
+        p.chip_bg_color = chip_bg_color;
+        p.chip_border_color = chip_border_color;
+        p.anchor_x = anchor_x;
+        p.anchor_y = anchor_y;
+        p.on_selected = on_selected;
+        p.on_multi_changed = on_multi_changed;
+        p.on_custom_value = on_custom_value;
+        return std::make_shared<ComboBoxWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

@@ -110,7 +110,7 @@ public:
                         .border = Border(0xFF334155, 1.0f),
                         .width = StyleValue::point(780.0f),
                         .padding = StyleInsets::all(24.0f),
-                        .child = expansionPanelList({
+                        .child = ExpansionPanelList {
                             .panels = {
                                 ExpansionPanelItem("step1", "1. Compute Instances", buildStep1Body()),
                                 ExpansionPanelItem("step2", "2. Network & Security", buildStep2Body()),
@@ -122,7 +122,7 @@ public:
                                 hud_msg_ = "User " + std::string(expanded ? "expanded" : "collapsed") + " panel index " + std::to_string(idx);
                                 setState([] {});
                             }
-                        })
+                        }
                     }),
                     container({
                         .color = 0xFF1E293B,

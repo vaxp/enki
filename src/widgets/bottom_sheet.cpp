@@ -117,7 +117,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         is_open_ = w->initial_open;
         current_detent_ = w->options.initial_detent;
         updateFractionFromDetent();
@@ -159,7 +159,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         if (w->controller) {
             w->controller->show_fn = [this](BottomSheetDetent d) { openSheet(d); };
             w->controller->hide_fn = [this] { closeSheet(); };
@@ -179,7 +179,7 @@ public:
         is_open_ = true;
         anim_.forward();
 
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         if (w->options.on_opened) w->options.on_opened();
         if (w->options.on_detent_changed) w->options.on_detent_changed(current_detent_);
         setState([] {});
@@ -190,7 +190,7 @@ public:
         is_open_ = false;
         anim_.reverse();
 
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         if (w->options.on_closed) w->options.on_closed();
         setState([] {});
     }
@@ -205,14 +205,14 @@ public:
         if (!is_open_) {
             openSheet(detent);
         } else {
-            auto* w = static_cast<const BottomSheet*>(widget());
+            auto* w = static_cast<const BottomSheetWidget*>(widget());
             if (w->options.on_detent_changed) w->options.on_detent_changed(current_detent_);
             setState([] {});
         }
     }
 
     void updateFractionFromDetent() {
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         const auto& opt = w->options;
         switch (current_detent_) {
             case BottomSheetDetent::Hidden: current_fraction_ = 0.0f; break;
@@ -223,7 +223,7 @@ public:
     }
 
     void snapToNearest(float frac) {
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         const auto& opt = w->options;
 
         float peek_f = opt.peek_height / 700.0f;
@@ -242,7 +242,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const BottomSheet*>(widget());
+        auto* w = static_cast<const BottomSheetWidget*>(widget());
         const auto& opts = w->options;
         float t = anim_.value();
 
@@ -393,8 +393,6 @@ public:
         pos_sheet->style.right  = StyleValue::point(0.0f);
 
         // Slide up offset strictly proportional to sheet height:
-        // t=0 -> bottom = -height_pct (just below screen)
-        // t=1 -> bottom = 0 (snapped to bottom)
         pos_sheet->style.bottom = StyleValue::percent((t - 1.0f) * height_pct);
         pos_sheet->style.height = StyleValue::percent(height_pct);
 
@@ -414,7 +412,7 @@ public:
     }
 };
 
-std::unique_ptr<State> BottomSheet::createState() {
+std::unique_ptr<State> BottomSheetWidget::createState() {
     return std::make_unique<BottomSheetState>();
 }
 

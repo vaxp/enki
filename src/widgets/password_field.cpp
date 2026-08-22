@@ -593,7 +593,7 @@ private:
     }
 
     void notifyPasswordChanged() {
-        auto* pf = static_cast<const PasswordField*>(widget());
+        auto* pf = static_cast<const PasswordFieldWidget*>(widget());
         if (!pf) return;
 
         resetBlink();
@@ -607,7 +607,7 @@ private:
     }
 
     void handleKey(int key, int mods) {
-        auto* pf = static_cast<const PasswordField*>(widget());
+        auto* pf = static_cast<const PasswordFieldWidget*>(widget());
         if (!pf) return;
 
         bool shift = (mods & 1) != 0;
@@ -741,7 +741,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* pf = static_cast<const PasswordField*>(widget());
+        auto* pf = static_cast<const PasswordFieldWidget*>(widget());
         controller_ = pf->controller;
         cursor_pos_ = controller_->getPassword().length();
         selection_start_ = cursor_pos_;
@@ -755,7 +755,7 @@ public:
         if (Platform::instance()) {
             text_input_conn_ = Platform::instance()->onTextInput().connect([this](std::string_view text) {
                 if (g_focused_passwordfield != this || !is_focused_) return;
-                auto* current_pf = static_cast<const PasswordField*>(widget());
+                auto* current_pf = static_cast<const PasswordFieldWidget*>(widget());
                 if (!current_pf || current_pf->options.read_only) return;
 
                 // Ignore control characters
@@ -795,7 +795,7 @@ public:
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* pf = static_cast<const PasswordField*>(widget());
+        auto* pf = static_cast<const PasswordFieldWidget*>(widget());
         controller_ = pf->controller;
     }
 
@@ -810,7 +810,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* pf = static_cast<const PasswordField*>(widget());
+        auto* pf = static_cast<const PasswordFieldWidget*>(widget());
 
         // Caret Blink
         if (is_focused_ && Platform::instance()) {
@@ -984,7 +984,7 @@ public:
     }
 };
 
-std::unique_ptr<State> PasswordField::createState() {
+std::unique_ptr<State> PasswordFieldWidget::createState() {
     return std::make_unique<PasswordFieldState>();
 }
 

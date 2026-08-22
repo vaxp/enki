@@ -85,7 +85,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
         selected_id_ = w->props.selected_id;
         wireController();
 
@@ -108,7 +108,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
         if (!w->props.controller) return;
         w->props.controller->open_fn         = [this] { openMenu(); };
         w->props.controller->close_fn        = [this] { closeMenu(); };
@@ -122,7 +122,7 @@ public:
         if (is_open_) return;
         is_open_ = true;
         hovered_idx_ = -1;
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
         if (w->props.on_opened) w->props.on_opened();
         setState([] {});
     }
@@ -130,7 +130,7 @@ public:
     void closeMenu() {
         if (!is_open_) return;
         is_open_ = false;
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
         if (w->props.on_closed) w->props.on_closed();
         setState([] {});
     }
@@ -139,7 +139,7 @@ public:
 
     void selectItem(const std::string& id) {
         selected_id_ = id;
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
         for (const auto& item : w->props.items) {
             if (item.id == id && w->props.on_selected) {
                 w->props.on_selected(item);
@@ -151,7 +151,7 @@ public:
     }
 
     const DropdownMenuItem* getSelected() const {
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
         for (const auto& it : w->props.items)
             if (it.id == selected_id_) return &it;
         return nullptr;
@@ -252,7 +252,7 @@ public:
         auto gd = std::make_shared<GestureDetector>(item_box);
         gd->cursor_type = SystemCursor::Pointer;
         gd->on_tap_up = [this, item](const TapUpDetails&) {
-            auto* w = static_cast<const DropdownMenu*>(widget());
+            auto* w = static_cast<const DropdownMenuWidget*>(widget());
             if ((item.type == DropdownMenuItemType::Checkbox ||
                  item.type == DropdownMenuItemType::Radio) &&
                 w->props.on_toggle_checked) {
@@ -271,7 +271,7 @@ public:
 
     // ── Floating Panel Builder ────────────────────────────────────
 
-    WidgetPtr buildFloatingPanel(const DropdownMenu* w) {
+    WidgetPtr buildFloatingPanel(const DropdownMenuWidget* w) {
         const auto& opts = w->props;
 
         std::vector<WidgetPtr> list_items;
@@ -304,7 +304,7 @@ public:
     // ── build() ──────────────────────────────────────────────────
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const DropdownMenu*>(widget());
+        auto* w = static_cast<const DropdownMenuWidget*>(widget());
 
         // ── Body (always Positioned::fill — trigger lives INSIDE body) ──
         WidgetPtr body_fill;
@@ -343,7 +343,7 @@ public:
     }
 };
 
-std::unique_ptr<State> DropdownMenu::createState() {
+std::unique_ptr<State> DropdownMenuWidget::createState() {
     return std::make_unique<DropdownMenuState>();
 }
 

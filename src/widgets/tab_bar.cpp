@@ -290,7 +290,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const TabBar*>(widget());
+        auto* w = static_cast<const TabBarWidget*>(widget());
         int n = static_cast<int>(w->tabs.size());
 
         float t = anim_.value();
@@ -339,7 +339,7 @@ private:
     }
 };
 
-std::unique_ptr<State> TabBar::createState() {
+std::unique_ptr<State> TabBarWidget::createState() {
     return std::make_unique<TabBarState>();
 }
 
@@ -347,7 +347,7 @@ std::unique_ptr<State> TabBar::createState() {
 // TabView Implementation
 // ════════════════════════════════════════════════════════════════
 
-WidgetPtr TabView::build(BuildContext&) {
+WidgetPtr TabViewWidget::build(BuildContext&) {
     int idx = std::clamp(selected_index, 0,
                          children.empty() ? 0 : (int)children.size() - 1);
     if (children.empty()) {

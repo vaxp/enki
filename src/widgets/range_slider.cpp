@@ -270,11 +270,11 @@ public:
     }
 };
 
-std::unique_ptr<RenderObject> RangeSlider::createRenderObject(BuildContext& ctx) {
+std::unique_ptr<RenderObject> RangeSliderWidget::createRenderObject(BuildContext& ctx) {
     return std::make_unique<RenderRangeSlider>(start_value, end_value, options, on_change);
 }
 
-void RangeSlider::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
+void RangeSliderWidget::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
     auto* r = static_cast<RenderRangeSlider*>(&renderObject);
     r->setOptions(options);
     r->setOnChange(on_change);

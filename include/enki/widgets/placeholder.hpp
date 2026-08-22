@@ -59,16 +59,18 @@ struct PlaceholderProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Placeholder Widget
+/// Placeholder Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class Placeholder : public SingleChildRenderObjectWidget {
+class PlaceholderWidget : public SingleChildRenderObjectWidget {
 public:
     PlaceholderProps options;
 
-    Placeholder() : SingleChildRenderObjectWidget(Key::none(), nullptr) {}
-    explicit Placeholder(PlaceholderProps opts)
+    PlaceholderWidget() : SingleChildRenderObjectWidget(Key::none(), nullptr) {}
+    explicit PlaceholderWidget(PlaceholderProps opts)
         : SingleChildRenderObjectWidget(opts.key, nullptr), options(std::move(opts)) {}
+    PlaceholderWidget(Key key, PlaceholderProps opts)
+        : SingleChildRenderObjectWidget(std::move(key), nullptr), options(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
@@ -76,45 +78,58 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Convenience Factory Helpers
+/// Declarative Proxy Struct (C++20 Designated Initializers)
 /// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Placeholder> placeholder(PlaceholderProps options = {}) {
-    return std::make_shared<Placeholder>(std::move(options));
-}
+struct Placeholder {
+    Key key = Key::none();
+    PlaceholderStyle style = PlaceholderStyle::Blueprint;
 
-inline std::shared_ptr<Placeholder> placeholderBlueprint(float w = 240.0f, float h = 140.0f, std::string label = "") {
-    PlaceholderProps opts;
-    opts.style = PlaceholderStyle::Blueprint;
-    opts.width = w;
-    opts.height = h;
-    opts.label = std::move(label);
-    return std::make_shared<Placeholder>(opts);
-}
+    float width  = 200.0f;
+    float height = 120.0f;
+    float corner_radius = 8.0f;
+    float stroke_width = 1.5f;
 
-inline std::shared_ptr<Placeholder> placeholderSkeleton(float w = 200.0f, float h = 20.0f, float radius = 4.0f) {
-    PlaceholderProps opts;
-    opts.style = PlaceholderStyle::Skeleton;
-    opts.width = w;
-    opts.height = h;
-    opts.corner_radius = radius;
-    opts.show_dimensions = false;
-    return std::make_shared<Placeholder>(opts);
-}
+    std::string label;
+    std::string sublabel;
+    std::string icon = "📷";
 
-inline std::shared_ptr<Placeholder> placeholderMediaSlot(std::string label = "Upload Media",
-                                                         std::string icon = "📁",
-                                                         float w = 280.0f, float h = 160.0f,
-                                                         std::function<void()> on_tap = nullptr) {
-    PlaceholderProps opts;
-    opts.style = PlaceholderStyle::MediaSlot;
-    opts.label = std::move(label);
-    opts.icon = std::move(icon);
-    opts.width = w;
-    opts.height = h;
-    opts.on_tap = std::move(on_tap);
-    return std::make_shared<Placeholder>(opts);
-}
+    bool show_dimensions = true;
+    bool animated_shimmer = true;
+
+    Color background_color = 0x22334155;
+    Color stroke_color     = 0xFF475569;
+    Color crosshair_color  = 0x4464748B;
+    Color shimmer_color    = 0x4438BDF8;
+    Color text_color       = 0xFFCBD5E1;
+    Color badge_bg_color   = 0xCC0F172A;
+
+    std::function<void()> on_tap = nullptr;
+
+    operator WidgetPtr() const {
+        PlaceholderProps opts;
+        opts.key = key;
+        opts.style = style;
+        opts.width = width;
+        opts.height = height;
+        opts.corner_radius = corner_radius;
+        opts.stroke_width = stroke_width;
+        opts.label = label;
+        opts.sublabel = sublabel;
+        opts.icon = icon;
+        opts.show_dimensions = show_dimensions;
+        opts.animated_shimmer = animated_shimmer;
+        opts.background_color = background_color;
+        opts.stroke_color = stroke_color;
+        opts.crosshair_color = crosshair_color;
+        opts.shimmer_color = shimmer_color;
+        opts.text_color = text_color;
+        opts.badge_bg_color = badge_bg_color;
+        opts.on_tap = on_tap;
+
+        return std::make_shared<PlaceholderWidget>(key, std::move(opts));
+    }
+};
 
 /// Pre-composed skeleton card layout
 WidgetPtr placeholderCardSkeleton(float w = 280.0f);

@@ -12,7 +12,6 @@
 ///   - Left or Right placement.
 ///   - Configurable width, radius, and colors.
 ///   - Programmatic open/close via DrawerController.
-///   - Fluent builder API.
 ///
 /// @copyright ENKI Framework — MIT License
 
@@ -68,7 +67,9 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Drawer Widget
+// Drawer Widget Implementation
+// ════════════════════════════════════════════════════════════════
+
 struct DrawerProps {
     Key key = Key::none();
     WidgetPtr child;         ///< Content inside the drawer panel
@@ -80,9 +81,7 @@ struct DrawerProps {
     std::shared_ptr<DrawerController> controller;
 };
 
-// ════════════════════════════════════════════════════════════════
-
-class Drawer : public StatefulWidget {
+class DrawerWidget : public StatefulWidget {
 public:
     WidgetPtr                  drawer_content;  ///< Content inside the drawer panel
     WidgetPtr                  body;            ///< Background body content
@@ -90,50 +89,42 @@ public:
     DrawerOptions              options;
     std::function<void()>      on_close;
     std::function<void()>      on_open;
-    std::shared_ptr<DrawerController> controller; ///< Optional external controller
+    std::shared_ptr<DrawerController> controller;
 
-    Drawer() = default;
-    Drawer(WidgetPtr drawer_content, WidgetPtr body, DrawerOptions opt = {})
+    DrawerWidget() = default;
+    DrawerWidget(WidgetPtr drawer_content, WidgetPtr body, DrawerOptions opt = {})
         : drawer_content(std::move(drawer_content)), body(std::move(body)),
           options(std::move(opt)) {}
-
-    // Fluent API
-    Drawer& width(float w)           { options.width = w;              return *this; }
-    Drawer& backgroundColor(Color c) { options.background_color = c;   return *this; }
-    Drawer& overlayColor(Color c)    { options.overlay_color = c;      return *this; }
-    Drawer& side(DrawerSide s)       { options.side = s;               return *this; }
-    Drawer& borderRadius(float r)    { options.border_radius = r;      return *this; }
-    Drawer& onClose(std::function<void()> fn)  { on_close = std::move(fn); return *this; }
-    Drawer& onOpen(std::function<void()> fn)   { on_open  = std::move(fn); return *this; }
-    Drawer& setController(std::shared_ptr<DrawerController> c) {
-        controller = std::move(c);
-        return *this;
-    }
+    DrawerWidget(Key key, WidgetPtr drawer_content, WidgetPtr body, DrawerOptions opt = {})
+        : StatefulWidget(std::move(key)), drawer_content(std::move(drawer_content)), body(std::move(body)),
+          options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Drawer"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Factory Functions
+// Declarative Drawer Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Drawer> drawer(WidgetPtr drawer_content, WidgetPtr body,
-                                      DrawerOptions options = {}) {
-    return std::make_shared<Drawer>(std::move(drawer_content), std::move(body),
-                                   std::move(options));
-}
+struct Drawer {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    WidgetPtr body = nullptr;
+    bool initial_open = false;
+    DrawerOptions options;
+    std::function<void()> on_close = nullptr;
+    std::function<void()> on_open = nullptr;
+    std::shared_ptr<DrawerController> controller = nullptr;
 
-inline std::shared_ptr<Drawer> drawer(DrawerProps props) {
-    auto d = std::make_shared<Drawer>(std::move(props.child), std::move(props.body), std::move(props.options));
-    d->key = props.key;
-    d->initial_open = props.initial_open;
-    d->on_close = std::move(props.on_close);
-    d->on_open = std::move(props.on_open);
-    if (props.controller) {
-        d->setController(props.controller);
+    operator WidgetPtr() const {
+        auto w = std::make_shared<DrawerWidget>(key, child, body, options);
+        w->initial_open = initial_open;
+        w->on_close = on_close;
+        w->on_open = on_open;
+        w->controller = controller;
+        return w;
     }
-    return d;
-}
+};
 
 } // namespace enki

@@ -32,7 +32,7 @@ public:
             contextMenuItem("Delete File", []() { std::cout << "[ContextMenu] Action: Delete File (Danger)\n"; }, "Del", nullptr, false, true),
         };
 
-        auto card1_menu = contextMenu({
+        auto card1_menu = ContextMenu {
             .child = container({
                 .color = 0xFF1E293B,
                 .border_radius = BorderRadius::circular(10.0f),
@@ -48,7 +48,7 @@ public:
                 })
             }),
             .items = card1_items
-        });
+        };
 
         // 2. Context Menu items for Card 2 (Code Editor / Repository Actions)
         std::vector<ContextMenuItemPtr> card2_items = {
@@ -61,7 +61,7 @@ public:
             contextMenuItem("Force Purge Cache", []() { std::cout << "[ContextMenu] Action: Purge Cache (Danger)\n"; }, "", nullptr, false, true),
         };
 
-        auto card2_menu = contextMenu({
+        auto card2_menu = ContextMenu {
             .child = container({
                 .color = 0xFF1E293B,
                 .border_radius = BorderRadius::circular(10.0f),
@@ -81,7 +81,7 @@ public:
                 .background_color = 0xFA0F172A,
                 .border_color = 0xFF38BDF8
             }
-        });
+        };
 
         return container({
             .color = 0xFF0F172A,

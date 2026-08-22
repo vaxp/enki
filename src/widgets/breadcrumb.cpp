@@ -17,7 +17,7 @@ public:
     std::string            label;
     std::function<void()>  on_tap;
     bool                   active;      ///< true = last item (non-clickable, brighter)
-    BreadcrumbProps      options;
+    BreadcrumbProps        options;
 
     BreadcrumbItemWidget(std::string label, std::function<void()> on_tap,
                          bool active, BreadcrumbProps opt)
@@ -74,23 +74,23 @@ std::unique_ptr<State> BreadcrumbItemWidget::createState() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// Breadcrumb::build
+// BreadcrumbWidget::build
 // ════════════════════════════════════════════════════════════════
 
-WidgetPtr Breadcrumb::build(BuildContext&) {
-    if (items.empty()) {
+WidgetPtr BreadcrumbWidget::build(BuildContext&) {
+    if (options.items.empty()) {
         return container();
     }
 
     std::vector<WidgetPtr> children;
-    int n = static_cast<int>(items.size());
+    int n = static_cast<int>(options.items.size());
 
     for (int i = 0; i < n; ++i) {
         bool is_active = (i == n - 1);
 
         auto item_widget = std::make_shared<BreadcrumbItemWidget>(
-            items[i].label,
-            items[i].on_tap,
+            options.items[i].label,
+            options.items[i].on_tap,
             is_active,
             options);
         children.push_back(item_widget);

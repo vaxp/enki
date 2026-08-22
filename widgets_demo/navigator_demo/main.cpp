@@ -59,11 +59,11 @@ public:
 class NavigatorDemoApp : public StatelessWidget {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        return navigator({
+        return Navigator {
             .initial_routes = {
                 RouteConfig("home", []{ return std::make_shared<HomePage>(); })
             }
-        });
+        };
     }
     std::string_view typeName() const override { return "NavigatorDemoApp"; }
 };

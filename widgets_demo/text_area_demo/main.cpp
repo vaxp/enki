@@ -41,13 +41,18 @@ public:
     WidgetPtr build(BuildContext&) override {
         auto* btn = static_cast<const ActionBtn*>(widget());
 
-        auto txt = text(btn->label);
-        txt->fontSize(11.5f).bold().color(0xFFFFFFFF);
+        auto txt = text(btn->label, {
+            .color = 0xFFFFFFFF,
+            .font_size = 11.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto box = container(txt);
-        box->color(hovered_ ? 0xFF475569 : btn->bg_color)
-           .borderRadius(6.0f)
-           .paddingSymmetric(5.0f, 10.0f);
+        auto box = container({
+            .color = hovered_ ? 0xFF475569 : btn->bg_color,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(5.0f, 10.0f),
+            .child = txt
+        });
 
         auto detector = std::make_shared<GestureDetector>();
         detector->hit_test_behavior = HitTestBehavior::Opaque;
@@ -108,19 +113,28 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // Title Header
-        auto title = text("Advanced TextArea Widget Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced TextArea Widget Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Multi-line text editor with line numbers, clipboard (Copy/Cut/Paste), undo/redo, and word count");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Multi-line text editor with line numbers, clipboard (Copy/Cut/Paste), undo/redo, and word count", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center);
+        auto title_col = column({
+            .align_items = Align::Center,
+            .children = {title, sub}
+        });
 
         // ── 1. Code Editor Section (With Line Numbers) ─────────────────
-        auto code_header = text("1. Code / Script Editor (Line Numbers & Monospace)");
-        code_header->fontSize(14.0f).bold().color(0xFF38BDF8);
+        auto code_header = text("1. Code / Script Editor (Line Numbers & Monospace)", {
+            .color = 0xFF38BDF8,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         // Code Editor Toolbar
         auto btn_copy1 = std::make_shared<ActionBtn>("📋 Copy", [this]() {
@@ -153,45 +167,49 @@ public:
             setState([this] {});
         });
 
-        std::vector<WidgetPtr> tb1_items = {btn_copy1, btn_cut1, btn_paste1, btn_sel_all1, btn_undo1, btn_redo1};
-        auto toolbar1 = row(tb1_items);
-        toolbar1->gap(StyleValue::point(6.0f));
+        auto toolbar1 = row({
+            .gap = StyleValue::point(6.0f),
+            .children = {btn_copy1, btn_cut1, btn_paste1, btn_sel_all1, btn_undo1, btn_redo1}
+        });
 
-        TextAreaProps code_opts;
-        code_opts.style.font_family = "monospace";
-        code_opts.style.font_size   = 13.5f;
-        code_opts.style.color       = 0xFFF1F5F9;
-        code_opts.show_line_numbers = true;
-        code_opts.show_counter      = true;
-        code_opts.min_lines         = 11;
-        code_opts.max_lines         = 16;
-        code_opts.background_color  = 0xFF0F172A;
-        code_opts.border_color      = 0xFF334155;
-        code_opts.focus_border_color = 0xFF38BDF8;
-        code_opts.on_cursor_moved = [this](size_t row, size_t col) {
-            cursor_info_ = "Ln " + std::to_string(row) + ", Col " + std::to_string(col);
-            setState([this] {});
+        auto code_editor = TextArea {
+            .controller = code_controller_,
+            .style = TextStyle{
+                .color = 0xFFF1F5F9,
+                .font_size = 13.5f,
+                .font_family = "monospace"
+            },
+            .min_lines = 11,
+            .max_lines = 16,
+            .show_line_numbers = true,
+            .show_counter = true,
+            .background_color = 0xFF0F172A,
+            .border_color = 0xFF334155,
+            .focus_border_color = 0xFF38BDF8,
+            .on_cursor_moved = [this](size_t r, size_t c) {
+                cursor_info_ = "Ln " + std::to_string(r) + ", Col " + std::to_string(c);
+                setState([this] {});
+            }
         };
 
-        auto code_editor = textArea(code_controller_, code_opts);
-
-        std::vector<WidgetPtr> code_section_items;
-        code_section_items.push_back(code_header);
-        code_section_items.push_back(toolbar1);
-        code_section_items.push_back(code_editor);
-        auto code_col = column(code_section_items);
-        code_col->gap(StyleValue::point(10.0f));
-
-        auto code_box = container(code_col);
-        code_box->color(0xFF1E293B)
-                .borderRadius(10.0f)
-                .border(0xFF334155, 1.0f)
-                .paddingAll(16.0f)
-                .width(530.0f);
+        auto code_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(530.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(10.0f),
+                .children = {code_header, toolbar1, code_editor}
+            })
+        });
 
         // ── 2. Notes Editor Section (Word Counter) ───────────────────
-        auto notes_header = text("2. Notes & Documents (Word & Char Counter)");
-        notes_header->fontSize(14.0f).bold().color(0xFF10B981);
+        auto notes_header = text("2. Notes & Documents (Word & Char Counter)", {
+            .color = 0xFF10B981,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         // Notes Editor Toolbar
         auto btn_copy2 = std::make_shared<ActionBtn>("📋 Copy", [this]() {
@@ -224,56 +242,59 @@ public:
             setState([this] {});
         });
 
-        std::vector<WidgetPtr> tb2_items = {btn_copy2, btn_cut2, btn_paste2, btn_sel_all2, btn_undo2, btn_redo2};
-        auto toolbar2 = row(tb2_items);
-        toolbar2->gap(StyleValue::point(6.0f));
+        auto toolbar2 = row({
+            .gap = StyleValue::point(6.0f),
+            .children = {btn_copy2, btn_cut2, btn_paste2, btn_sel_all2, btn_undo2, btn_redo2}
+        });
 
-        TextAreaProps notes_opts;
-        notes_opts.style.font_size   = 13.5f;
-        notes_opts.style.color       = 0xFFF1F5F9;
-        notes_opts.show_line_numbers = false;
-        notes_opts.show_counter      = true;
-        notes_opts.max_characters    = 600;
-        notes_opts.min_lines         = 11;
-        notes_opts.max_lines         = 16;
-        notes_opts.background_color  = 0xFF0F172A;
-        notes_opts.border_color      = 0xFF334155;
-        notes_opts.focus_border_color = 0xFF10B981;
+        auto notes_editor = TextArea {
+            .controller = notes_controller_,
+            .style = TextStyle{
+                .color = 0xFFF1F5F9,
+                .font_size = 13.5f,
+            },
+            .min_lines = 11,
+            .max_lines = 16,
+            .show_line_numbers = false,
+            .show_counter = true,
+            .max_characters = 600,
+            .background_color = 0xFF0F172A,
+            .border_color = 0xFF334155,
+            .focus_border_color = 0xFF10B981,
+        };
 
-        auto notes_editor = textArea(notes_controller_, notes_opts);
-
-        std::vector<WidgetPtr> notes_section_items;
-        notes_section_items.push_back(notes_header);
-        notes_section_items.push_back(toolbar2);
-        notes_section_items.push_back(notes_editor);
-        auto notes_col = column(notes_section_items);
-        notes_col->gap(StyleValue::point(10.0f));
-
-        auto notes_box = container(notes_col);
-        notes_box->color(0xFF1E293B)
-                 .borderRadius(10.0f)
-                 .border(0xFF334155, 1.0f)
-                 .paddingAll(16.0f)
-                 .width(530.0f);
+        auto notes_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(530.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(10.0f),
+                .children = {notes_header, toolbar2, notes_editor}
+            })
+        });
 
         // Grid / Row of two editors
-        std::vector<WidgetPtr> editors_row_items = {code_box, notes_box};
-        auto editors_row = row(editors_row_items);
-        editors_row->gap(StyleValue::point(18.0f))
-                   .justifyContent(Justify::Center);
+        auto editors_row = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(18.0f),
+            .children = {code_box, notes_box}
+        });
 
         // Main Stack Column
-        std::vector<WidgetPtr> main_col_items = {title_col, editors_row};
-        auto main_col = column(main_col_items);
-        main_col->gap(StyleValue::point(18.0f))
-                .alignItems(Align::Center);
+        auto main_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(18.0f),
+            .children = {title_col, editors_row}
+        });
 
-        auto app_root = container(main_col);
-        app_root->color(0xFF0B1120)
-                .paddingAll(20.0f)
-                .flexGrow(1.0f);
-
-        return app_root;
+        return container({
+            .color = 0xFF0B1120,
+            .padding = StyleInsets::all(20.0f),
+            .flex_grow = 1.0f,
+            .child = main_col
+        });
     }
 };
 

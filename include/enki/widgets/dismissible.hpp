@@ -37,48 +37,67 @@ struct DismissibleProps {
     DismissDirection direction = DismissDirection::Horizontal;
     float dismiss_threshold = 0.35f;   ///< Fraction of width needed to trigger dismissal
 
-    WidgetPtr background;              ///< Revealed when swiping right (StartToEnd)
-    WidgetPtr secondary_background;    ///< Revealed when swiping left (EndToStart)
+    WidgetPtr background = nullptr;              ///< Revealed when swiping right (StartToEnd)
+    WidgetPtr secondary_background = nullptr;    ///< Revealed when swiping left (EndToStart)
 
-    std::function<void(DismissDirection dir)> on_dismissed;
-    std::function<bool(DismissDirection dir)> confirm_dismiss;
-    std::function<void()> on_resize;
+    std::function<void(DismissDirection dir)> on_dismissed = nullptr;
+    std::function<bool(DismissDirection dir)> confirm_dismiss = nullptr;
+    std::function<void()> on_resize = nullptr;
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Dismissible Widget
+/// Dismissible Implementation Widget
 /// ════════════════════════════════════════════════════════════════
 
-class Dismissible : public StatefulWidget {
+class DismissibleWidget : public StatefulWidget {
 public:
     std::string id = "";
     WidgetPtr child;
     DismissibleProps options;
 
-    Dismissible() = default;
-    Dismissible(std::string id_, WidgetPtr child_, DismissibleProps opts = {})
+    DismissibleWidget() = default;
+    DismissibleWidget(std::string id_, WidgetPtr child_, DismissibleProps opts = {})
         : id(std::move(id_)), child(std::move(child_)), options(std::move(opts)) {}
-    Dismissible(Key key, std::string id_, WidgetPtr child_, DismissibleProps opts = {})
+    DismissibleWidget(Key key, std::string id_, WidgetPtr child_, DismissibleProps opts = {})
         : StatefulWidget(std::move(key)), id(std::move(id_)), child(std::move(child_)), options(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Dismissible"; }
 };
 
-inline std::shared_ptr<Dismissible> dismissible(
-    std::string id,
-    WidgetPtr child,
-    DismissibleProps options = {}) {
-    return std::make_shared<Dismissible>(std::move(id), std::move(child), std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Dismissible> dismissible(DismissibleProps props) {
-    return std::make_shared<Dismissible>(std::move(props.key), std::move(props.id), std::move(props.child), std::move(props));
-}
+struct Dismissible {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    std::string id = "";
 
-inline std::shared_ptr<Dismissible> dismissible(DismissibleProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return dismissible(std::move(props));
-}
+    DismissDirection direction = DismissDirection::Horizontal;
+    float dismiss_threshold = 0.35f;
+
+    WidgetPtr background = nullptr;
+    WidgetPtr secondary_background = nullptr;
+
+    std::function<void(DismissDirection dir)> on_dismissed = nullptr;
+    std::function<bool(DismissDirection dir)> confirm_dismiss = nullptr;
+    std::function<void()> on_resize = nullptr;
+
+    operator WidgetPtr() const {
+        DismissibleProps opts;
+        opts.key = key;
+        opts.child = child;
+        opts.id = id;
+        opts.direction = direction;
+        opts.dismiss_threshold = dismiss_threshold;
+        opts.background = background;
+        opts.secondary_background = secondary_background;
+        opts.on_dismissed = on_dismissed;
+        opts.confirm_dismiss = confirm_dismiss;
+        opts.on_resize = on_resize;
+        return std::make_shared<DismissibleWidget>(key, id, child, std::move(opts));
+    }
+};
 
 } // namespace enki

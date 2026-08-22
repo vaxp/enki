@@ -19,9 +19,9 @@
 
 namespace enki {
 
-/// ════════════════════════════════════════════════════════════════
-/// Chip Enums & Options
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Chip Enums & Options
+// ════════════════════════════════════════════════════════════════
 
 enum class ChipType {
     Action,     ///< Action trigger chip
@@ -51,8 +51,8 @@ struct ChipProps {
 
     std::string label;
     std::string avatar_icon;            ///< Leading emoji/icon (e.g. "⚡", "👤")
-    WidgetPtr leading;                  ///< Custom leading widget
-    WidgetPtr trailing;                 ///< Custom trailing widget
+    WidgetPtr leading = nullptr;         ///< Custom leading widget
+    WidgetPtr trailing = nullptr;        ///< Custom trailing widget
 
     bool selected = false;              ///< For Filter and Choice chips
     bool enabled  = true;               ///< Interactivity flag
@@ -72,26 +72,25 @@ struct ChipProps {
     std::function<void()> on_deleted;
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// Chip Widget
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Chip Implementation Widget
+// ════════════════════════════════════════════════════════════════
 
-class Chip : public StatefulWidget {
+class ChipWidget : public StatefulWidget {
 public:
     ChipProps options;
 
-    Chip() = default;
-    explicit Chip(ChipProps opts) : options(std::move(opts)) {}
-    
-    Chip(Key k, ChipProps opt) : StatefulWidget(std::move(k)), options(std::move(opt)) {}
+    ChipWidget() = default;
+    explicit ChipWidget(ChipProps opts) : StatefulWidget(opts.key), options(std::move(opts)) {}
+    ChipWidget(Key k, ChipProps opt) : StatefulWidget(std::move(k)), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Chip"; }
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// ChipGroup Widget
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ChipGroup Implementation Widget
+// ════════════════════════════════════════════════════════════════
 
 struct ChipGroupProps {
     Key key = Key::none();
@@ -100,90 +99,94 @@ struct ChipGroupProps {
     std::function<void(int index)> on_choice_changed;
 };
 
-class ChipGroup : public StatefulWidget {
+class ChipGroupWidget : public StatefulWidget {
 public:
-    std::vector<std::shared_ptr<Chip>> chips;
+    std::vector<WidgetPtr> chips;
     ChipGroupProps options;
 
-    ChipGroup(std::vector<std::shared_ptr<Chip>> chips_, ChipGroupProps opts = {})
-        : chips(std::move(chips_)), options(std::move(opts)) {}
+    ChipGroupWidget(std::vector<WidgetPtr> chips_, ChipGroupProps opts = {})
+        : StatefulWidget(opts.key), chips(std::move(chips_)), options(std::move(opts)) {}
     
-    ChipGroup(Key k, std::vector<std::shared_ptr<Chip>> chips_, ChipGroupProps opt) : StatefulWidget(std::move(k)), chips(std::move(chips_)), options(std::move(opt)) {}
-    
-    ChipGroup(ChipGroupProps props) : StatefulWidget(std::move(props.key)), options(std::move(props)) {}
+    ChipGroupWidget(Key k, std::vector<WidgetPtr> chips_, ChipGroupProps opt)
+        : StatefulWidget(std::move(k)), chips(std::move(chips_)), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "ChipGroup"; }
 };
 
-/// ════════════════════════════════════════════════════════════════
-/// Convenience Factory Helpers
-/// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Declarative Structs (C++20 Designated Initializers)
+// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Chip> chip(ChipProps options = {}) {
-    return std::make_shared<Chip>(std::move(options.key), std::move(options));
-}
+struct Chip {
+    Key key = Key::none();
+    ChipType type = ChipType::Action;
+    ChipVariant variant = ChipVariant::Filled;
+    ChipSize size = ChipSize::Medium;
 
-inline std::shared_ptr<Chip> actionChip(std::string label, std::function<void()> on_tap,
-                                        std::string icon = "") {
-    ChipProps opts;
-    opts.type = ChipType::Action;
-    opts.label = std::move(label);
-    opts.avatar_icon = std::move(icon);
-    opts.on_tap = std::move(on_tap);
-    return std::make_shared<Chip>(opts);
-}
+    std::string label = "";
+    std::string avatar_icon = "";
+    WidgetPtr leading = nullptr;
+    WidgetPtr trailing = nullptr;
 
-inline std::shared_ptr<Chip> filterChip(std::string label, bool selected,
-                                        std::function<void(bool)> on_selected,
-                                        std::string icon = "") {
-    ChipProps opts;
-    opts.type = ChipType::Filter;
-    opts.label = std::move(label);
-    opts.selected = selected;
-    opts.avatar_icon = std::move(icon);
-    opts.on_selected = std::move(on_selected);
-    return std::make_shared<Chip>(opts);
-}
+    bool selected = false;
+    bool enabled  = true;
+    bool deletable = false;
+    bool pulsing_dot = false;
 
-inline std::shared_ptr<Chip> choiceChip(std::string label, bool selected,
-                                        std::function<void(bool)> on_selected) {
-    ChipProps opts;
-    opts.type = ChipType::Choice;
-    opts.label = std::move(label);
-    opts.selected = selected;
-    opts.on_selected = std::move(on_selected);
-    return std::make_shared<Chip>(opts);
-}
+    // Styling Colors
+    Color background_color = 0xFF1E293B;
+    Color selected_color   = 0xFF0284C7;
+    Color border_color     = 0xFF334155;
+    Color text_color       = 0xFFFFFFFF;
+    Color status_color     = 0xFF10B981;
 
-inline std::shared_ptr<Chip> inputChip(std::string label, std::function<void()> on_deleted,
-                                       std::string avatar = "") {
-    ChipProps opts;
-    opts.type = ChipType::Input;
-    opts.label = std::move(label);
-    opts.avatar_icon = std::move(avatar);
-    opts.deletable = true;
-    opts.on_deleted = std::move(on_deleted);
-    return std::make_shared<Chip>(opts);
-}
+    // Callbacks
+    std::function<void()> on_tap = nullptr;
+    std::function<void(bool selected)> on_selected = nullptr;
+    std::function<void()> on_deleted = nullptr;
 
-inline std::shared_ptr<Chip> statusChip(std::string label, Color status_color = 0xFF10B981,
-                                        bool pulsing = true) {
-    ChipProps opts;
-    opts.type = ChipType::Status;
-    opts.label = std::move(label);
-    opts.status_color = status_color;
-    opts.pulsing_dot = pulsing;
-    return std::make_shared<Chip>(opts);
-}
+    operator WidgetPtr() const {
+        ChipProps p;
+        p.key = key;
+        p.type = type;
+        p.variant = variant;
+        p.size = size;
+        p.label = label;
+        p.avatar_icon = avatar_icon;
+        p.leading = leading;
+        p.trailing = trailing;
+        p.selected = selected;
+        p.enabled = enabled;
+        p.deletable = deletable;
+        p.pulsing_dot = pulsing_dot;
+        p.background_color = background_color;
+        p.selected_color = selected_color;
+        p.border_color = border_color;
+        p.text_color = text_color;
+        p.status_color = status_color;
+        p.on_tap = on_tap;
+        p.on_selected = on_selected;
+        p.on_deleted = on_deleted;
+        return std::make_shared<ChipWidget>(key, std::move(p));
+    }
+};
 
-inline std::shared_ptr<ChipGroup> chipGroup(std::vector<std::shared_ptr<Chip>> chips,
-                                            ChipGroupProps options = {}) {
-    return std::make_shared<ChipGroup>(std::move(chips), std::move(options));
-}
+struct ChipGroup {
+    Key key = Key::none();
+    std::vector<WidgetPtr> chips;
+    bool single_choice = false;
+    float gap = 8.0f;
+    std::function<void(int index)> on_choice_changed = nullptr;
 
-inline std::shared_ptr<ChipGroup> chipGroup(ChipGroupProps props) {
-    return std::make_shared<ChipGroup>(std::move(props));
-}
+    operator WidgetPtr() const {
+        ChipGroupProps p;
+        p.key = key;
+        p.single_choice = single_choice;
+        p.gap = gap;
+        p.on_choice_changed = on_choice_changed;
+        return std::make_shared<ChipGroupWidget>(key, chips, std::move(p));
+    }
+};
 
 } // namespace enki

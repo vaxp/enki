@@ -17,15 +17,6 @@
 ///   - `onRowTap`, `onRowSecondaryTap` for row-level interaction.
 ///   - All layout via Anu — column widths via flex, no manual pixel math.
 ///
-/// Architecture:
-///   DataTable (StatefulWidget)
-///     └── build() → ScrollView (Horizontal)
-///                     └── Column (FlexDirection::Column)
-///                           ├── Header Row (Row: checkbox + [DataColumn headers])
-///                           ├── DataRow[0]  (Row: checkbox + [DataCell content])
-///                           ├── DataRow[1]
-///                           └── ...
-///
 /// @copyright ENKI Framework — MIT License
 
 #include "enki/core/types.hpp"
@@ -188,29 +179,6 @@ struct DataTableTheme {
 // DataTable Widget
 // ════════════════════════════════════════════════════════════════
 
-/// @brief A production-grade sortable data grid for desktop applications.
-///
-/// Usage:
-/// @code
-///   dataTable(
-///       {
-///           DataColumn(text("Name"))   .onSort([](int col, bool asc){ /* sort */ }),
-///           DataColumn(text("Size"))   .asNumeric().fixedWidth(100),
-///           DataColumn(text("Status")) .fixedWidth(120),
-///       },
-///       {
-///           DataRow({ DataCell(text("file.txt")),
-///                     DataCell(text("12 KB")),
-///                     DataCell(text("Active")) }).onTap([]{}),
-///           DataRow({ DataCell(text("photo.jpg")),
-///                     DataCell(text("3.4 MB")),
-///                     DataCell(text("Archived")) }).select(true),
-///       }
-///   )
-///   ->onSelectAll([](bool){ /* ... */ })
-///   ->sortColumnIndex(0)
-///   ->sortAscending(true);
-/// @endcode
 struct DataTableProps {
     Key key = Key::none();
     std::vector<DataColumn> columns;   ///< Column definitions (header).
@@ -221,7 +189,6 @@ struct DataTableProps {
     bool               sort_ascending = true;
 
     // ── Selection ──────────────────────────────────────────────
-    /// Called when the "select all" header checkbox is toggled.
     std::function<void(bool all_selected)> on_select_all;
 
     // ── Callbacks ──────────────────────────────────────────────
@@ -237,69 +204,56 @@ struct DataTableProps {
     bool          horizontal_scroll = true;  ///< Enable horizontal scroll for wide tables.
 };
 
-class DataTable : public StatefulWidget {
+class DataTableWidget : public StatefulWidget {
 public:
     DataTableProps props;
 
-    DataTable() = default;
-    explicit DataTable(DataTableProps p) : props(std::move(p)) {}
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    DataTable& sortColumnIndex(int idx)     { props.sort_column_index = idx; return *this; }
-    DataTable& sortAscending(bool asc)      { props.sort_ascending = asc; return *this; }
-    DataTable& showCheckboxColumn(bool v)   { props.theme.show_checkbox_column = v; return *this; }
-    DataTable& headingRowHeight(float h)    { props.theme.heading_row_height = h; return *this; }
-    DataTable& dataRowHeight(float h) {
-        props.theme.data_row_height = props.theme.data_row_min_height = props.theme.data_row_max_height = h;
-        return *this;
-    }
-    DataTable& columnSpacing(float s)       { props.theme.column_spacing = s; return *this; }
-    DataTable& horizontalMargin(float m)    { props.theme.horizontal_margin = m; return *this; }
-    DataTable& dividerThickness(float t)    { props.theme.divider_thickness = t; return *this; }
-    DataTable& showBottomBorder(bool v)     { props.theme.show_bottom_border = v; return *this; }
-    DataTable& alternatingRows(bool v)      { props.theme.use_alternating_rows = v; return *this; }
-    DataTable& border(TableBorder b)        { props.theme.border = std::move(b); return *this; }
-    DataTable& withTheme(DataTableTheme t)  { props.theme = std::move(t); return *this; }
-    DataTable& headingRowColor(Color c)     { props.theme.heading_row_color = c; return *this; }
-    DataTable& dataRowColor(Color c)        { props.theme.data_row_color = c; return *this; }
-    DataTable& selectedRowColor(Color c)    { props.theme.selected_row_color = c; return *this; }
-
-    DataTable& onSelectAll(std::function<void(bool)> cb) {
-        props.on_select_all = std::move(cb);
-        return *this;
-    }
-    DataTable& onRowTap(std::function<void(int)> cb) {
-        props.on_row_tap = std::move(cb);
-        return *this;
-    }
-    DataTable& onRowSecondaryTap(std::function<void(int)> cb) {
-        props.on_row_secondary_tap = std::move(cb);
-        return *this;
-    }
+    DataTableWidget() = default;
+    explicit DataTableWidget(DataTableProps p) : StatefulWidget(p.key), props(std::move(p)) {}
+    DataTableWidget(Key k, DataTableProps p) : StatefulWidget(std::move(k)), props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DataTable"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Factory Functions
+// Declarative DataTable Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<DataTable> dataTable(DataTableProps props = {}) {
-    return std::make_shared<DataTable>(std::move(props));
-}
+struct DataTable {
+    Key key = Key::none();
+    std::vector<DataColumn> columns;
+    std::vector<DataRow>    rows;
 
-inline std::shared_ptr<DataTable> dataTable(std::vector<DataColumn> columns,
-                                             std::vector<DataRow>    rows) {
-    DataTableProps props;
-    props.columns = std::move(columns);
-    props.rows = std::move(rows);
-    return std::make_shared<DataTable>(std::move(props));
-}
+    std::optional<int> sort_column_index = std::nullopt;
+    bool               sort_ascending = true;
 
-inline std::shared_ptr<DataTable> dataTable() {
-    return std::make_shared<DataTable>();
-}
+    std::function<void(bool all_selected)> on_select_all = nullptr;
+    std::function<void(int row_index)> on_row_tap = nullptr;
+    std::function<void(int row_index)> on_row_secondary_tap = nullptr;
+
+    DataTableTheme theme;
+
+    ScrollPhysics scroll_physics = ScrollPhysics::Clamped;
+    float         scroll_speed   = 50.0f;
+    bool          horizontal_scroll = true;
+
+    operator WidgetPtr() const {
+        DataTableProps p;
+        p.key = key;
+        p.columns = columns;
+        p.rows = rows;
+        p.sort_column_index = sort_column_index;
+        p.sort_ascending = sort_ascending;
+        p.on_select_all = on_select_all;
+        p.on_row_tap = on_row_tap;
+        p.on_row_secondary_tap = on_row_secondary_tap;
+        p.theme = theme;
+        p.scroll_physics = scroll_physics;
+        p.scroll_speed = scroll_speed;
+        p.horizontal_scroll = horizontal_scroll;
+        return std::make_shared<DataTableWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

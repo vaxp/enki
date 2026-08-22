@@ -19,7 +19,7 @@ public:
             .child = column({
                 .height = StyleValue::percent(100.0f),
                 .children = {
-                    tabBar({
+                    TabBar {
                         .tabs = {
                             {"Discover", Icons::Material::explore(), ""},
                             {"Library", Icons::Material::library_books(), ""},
@@ -30,10 +30,10 @@ public:
                         .on_tab_changed = [this](int idx) {
                             setState([this, idx] { selected_tab = idx; });
                         }
-                    }),
+                    },
                     container({
                         .flex_grow = 1.0f,
-                        .child = tabView({
+                        .child = TabView {
                             .selected_index = selected_tab,
                             .children = {
                                 centerBox(text("Welcome to the Home Page", { .color = 0xFFFFFFFF })),
@@ -41,7 +41,7 @@ public:
                                 centerBox(text("You have 3 unread messages", { .color = 0xFFFFFFFF })),
                                 centerBox(text("Settings Configuration", { .color = 0xFFFFFFFF }))
                             }
-                        })
+                        }
                     })
                 }
             })

@@ -47,15 +47,19 @@ public:
     WidgetPtr makeTriggerBtn(const std::string& label, float width,
                              std::shared_ptr<DropdownMenuController> ctrl,
                              bool highlighted = false) {
-        auto lbl = text(label);
-        lbl->fontSize(12.5f).color(highlighted ? 0xFFF1F5F9 : 0xFFF1F5F9);
+        auto lbl = text(label, {
+            .color = highlighted ? 0xFFF1F5F9 : 0xFFF1F5F9,
+            .font_size = 12.5f,
+        });
 
-        auto box = container(lbl);
-        box->color(0xFF0F172A)
-           .borderRadius(6.0f)
-           .border(highlighted ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-           .paddingSymmetric(6.0f, 12.0f)
-           .width(width);
+        auto box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(highlighted ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+            .width = StyleValue::point(width),
+            .padding = StyleInsets::symmetric(6.0f, 12.0f),
+            .child = lbl,
+        });
 
         auto gd = std::make_shared<GestureDetector>(box);
         gd->cursor_type = SystemCursor::Pointer;
@@ -72,22 +76,34 @@ public:
 
     WidgetPtr buildPageBody() {
         // Title
-        auto title = text("Advanced DropdownMenu Overlay Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced DropdownMenu Overlay Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("In-window stack overlay (Category 7. Overlays) — select triggers, custom triggers, rich item types");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("In-window stack overlay (Category 7. Overlays) — select triggers, custom triggers, rich item types", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center).gap(StyleValue::point(6.0f));
+        auto title_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {title, sub},
+        });
 
         // ── Card 1 — Technology Selector ─────────────────────────
-        auto c1_title = text("1. Select Framework");
-        c1_title->fontSize(14.0f).bold().color(0xFF38BDF8);
+        auto c1_title = text("1. Select Framework", {
+            .color = 0xFF38BDF8,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c1_sub = text("Standard select trigger with icons & badges");
-        c1_sub->fontSize(11.5f).color(0xFF94A3B8);
+        auto c1_sub = text("Standard select trigger with icons & badges", {
+            .color = 0xFF94A3B8,
+            .font_size = 11.5f,
+        });
 
         // Show currently selected value in trigger
         std::string tech_label = "⚡ C++20 (Enki Native)  ▼";
@@ -98,70 +114,101 @@ public:
         else if (sel_tech_ == "kt") tech_label = "☕ Kotlin  ▼";
         auto tech_btn = makeTriggerBtn(tech_label, 260.0f, ctrl_tech_);
 
-        std::vector<WidgetPtr> c1_items = {c1_title, c1_sub, tech_btn};
-        auto c1_col = column(c1_items);
-        c1_col->gap(StyleValue::point(10.0f));
-        auto card1 = container(c1_col);
-        card1->color(0xFF1E293B).borderRadius(10.0f)
-              .border(0xFF334155, 1.0f).paddingAll(16.0f).width(300.0f);
+        auto card1 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(300.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(10.0f),
+                .children = {c1_title, c1_sub, tech_btn},
+            }),
+        });
 
         // ── Card 2 — Workspace Actions ───────────────────────────
-        auto c2_title = text("2. Workspace Actions");
-        c2_title->fontSize(14.0f).bold().color(0xFF10B981);
+        auto c2_title = text("2. Workspace Actions", {
+            .color = 0xFF10B981,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c2_sub = text("Custom kebab (⋮) trigger with shortcuts & toggles");
-        c2_sub->fontSize(11.5f).color(0xFF94A3B8);
+        auto c2_sub = text("Custom kebab (⋮) trigger with shortcuts & toggles", {
+            .color = 0xFF94A3B8,
+            .font_size = 11.5f,
+        });
 
         auto ws_btn = makeTriggerBtn("⋮  Options ▾", 130.0f, ctrl_ws_);
 
-        std::vector<WidgetPtr> c2_items = {c2_title, c2_sub, ws_btn};
-        auto c2_col = column(c2_items);
-        c2_col->gap(StyleValue::point(10.0f));
-        auto card2 = container(c2_col);
-        card2->color(0xFF1E293B).borderRadius(10.0f)
-              .border(0xFF334155, 1.0f).paddingAll(16.0f).width(300.0f);
+        auto card2 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(300.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(10.0f),
+                .children = {c2_title, c2_sub, ws_btn},
+            }),
+        });
 
         // ── Card 3 — Environment Selector ────────────────────────
-        auto c3_title = text("3. Cloud Deployment Target");
-        c3_title->fontSize(14.0f).bold().color(0xFFF59E0B);
+        auto c3_title = text("3. Cloud Deployment Target", {
+            .color = 0xFFF59E0B,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c3_sub = text("Radio group with status badges");
-        c3_sub->fontSize(11.5f).color(0xFF94A3B8);
+        auto c3_sub = text("Radio group with status badges", {
+            .color = 0xFF94A3B8,
+            .font_size = 11.5f,
+        });
 
         std::string env_label = "🌐 Production (US-East)  ▼";
         if (sel_env_ == "local") env_label = "💻 Localhost (Port 8080)  ▼";
         else if (sel_env_ == "stage") env_label = "🧪 Staging Cluster (QA)  ▼";
         auto env_btn = makeTriggerBtn(env_label, 260.0f, ctrl_env_, true);
 
-        std::vector<WidgetPtr> c3_items = {c3_title, c3_sub, env_btn};
-        auto c3_col = column(c3_items);
-        c3_col->gap(StyleValue::point(10.0f));
-        auto card3 = container(c3_col);
-        card3->color(0xFF1E293B).borderRadius(10.0f)
-              .border(0xFF334155, 1.0f).paddingAll(16.0f).width(300.0f);
+        auto card3 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(300.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(10.0f),
+                .children = {c3_title, c3_sub, env_btn},
+            }),
+        });
 
         // Cards row
-        std::vector<WidgetPtr> cards = {card1, card2, card3};
-        auto cards_row = row(cards);
-        cards_row->gap(StyleValue::point(16.0f)).justifyContent(Justify::Center);
+        auto cards_row = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {card1, card2, card3},
+        });
 
         // HUD
-        auto hud_txt = text("💡 " + hud_msg_);
-        hud_txt->fontSize(12.5f).color(0xFF38BDF8);
-        auto hud_box = container(hud_txt);
-        hud_box->color(0xFF1E293B).borderRadius(6.0f)
-               .border(0xFF334155, 1.0f).paddingSymmetric(8.0f, 16.0f)
-               .width(960.0f);
+        auto hud_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(960.0f),
+            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+            .child = text("💡 " + hud_msg_, { .color = 0xFF38BDF8, .font_size = 12.5f }),
+        });
 
-        std::vector<WidgetPtr> page_items = {title_col, cards_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(24.0f)).alignItems(Align::Center);
-
-        auto body = container(page_col);
-        body->color(0xFF0B1120).paddingAll(24.0f)
-             .width(StyleValue::percent(100.0f))
-             .height(StyleValue::percent(100.0f));
-        return body;
+        return container({
+            .color = 0xFF0B1120,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(24.0f),
+                .children = {title_col, cards_row, hud_box},
+            }),
+        });
     }
 
     WidgetPtr build(BuildContext&) override {
@@ -179,21 +226,22 @@ public:
             DropdownMenuItem::standard("py",   "Python 3.12 Bindings",   "🐍").setBadge("AI", 0x20F59E0B, 0xFFF59E0B),
             DropdownMenuItem::standard("kt",   "Kotlin Multiplatform",   "☕"),
         };
-        DropdownMenuProps tech_opts;
-        tech_opts.items          = tech_items;
-        tech_opts.body           = body;
-        tech_opts.controller     = ctrl_tech_;
-        tech_opts.selected_id    = sel_tech_;
-        tech_opts.menu_width     = 280.0f;
-        tech_opts.trigger_height = 38.0f;
-        tech_opts.anchor_x       = 125.0f;   // x of Card 1 trigger
-        tech_opts.anchor_y       = 165.0f;   // y of Card 1 trigger top
-        tech_opts.on_selected    = [this](const DropdownMenuItem& it) {
-            sel_tech_ = it.id;
-            hud_msg_ = "Technology: " + it.label;
-            setState([] {});
+
+        WidgetPtr dm1 = DropdownMenu {
+            .items          = std::move(tech_items),
+            .body           = body,
+            .controller     = ctrl_tech_,
+            .menu_width     = 280.0f,
+            .selected_id    = sel_tech_,
+            .trigger_height = 38.0f,
+            .anchor_x       = 125.0f,
+            .anchor_y       = 165.0f,
+            .on_selected    = [this](const DropdownMenuItem& it) {
+                sel_tech_ = it.id;
+                hud_msg_ = "Technology: " + it.label;
+                setState([] {});
+            },
         };
-        auto dm1 = dropdownMenu(std::move(tech_opts));
 
         // ── Dropdown 2 — Workspace Actions ────────────────────────
         std::vector<DropdownMenuItem> ws_items = {
@@ -209,26 +257,27 @@ public:
             DropdownMenuItem::divider(),
             DropdownMenuItem::standard("del",  "Delete Workspace",  "🗑️", "Shift+Del").setDanger(true),
         };
-        DropdownMenuProps ws_opts;
-        ws_opts.items          = ws_items;
-        ws_opts.body           = dm1;
-        ws_opts.controller     = ctrl_ws_;
-        ws_opts.menu_width     = 260.0f;
-        ws_opts.trigger_height = 38.0f;
-        ws_opts.anchor_x       = 453.0f;  // x of Card 2 trigger
-        ws_opts.anchor_y       = 165.0f;
-        ws_opts.on_selected    = [this](const DropdownMenuItem& it) {
-            hud_msg_ = "Action: " + it.label;
-            setState([] {});
+
+        WidgetPtr dm2 = DropdownMenu {
+            .items          = std::move(ws_items),
+            .body           = dm1,
+            .controller     = ctrl_ws_,
+            .menu_width     = 260.0f,
+            .trigger_height = 38.0f,
+            .anchor_x       = 453.0f,
+            .anchor_y       = 165.0f,
+            .on_selected    = [this](const DropdownMenuItem& it) {
+                hud_msg_ = "Action: " + it.label;
+                setState([] {});
+            },
+            .on_toggle_checked = [this](const std::string& id, bool chk) {
+                if (id == "dark") dark_theme_ = chk;
+                else if (id == "auto") auto_save_ = chk;
+                else if (id == "gpu")  gpu_skia_ = chk;
+                hud_msg_ = "Setting [" + id + "] → " + (chk ? "ON" : "OFF");
+                setState([] {});
+            },
         };
-        ws_opts.on_toggle_checked = [this](const std::string& id, bool chk) {
-            if (id == "dark") dark_theme_ = chk;
-            else if (id == "auto") auto_save_ = chk;
-            else if (id == "gpu")  gpu_skia_ = chk;
-            hud_msg_ = "Setting [" + id + "] → " + (chk ? "ON" : "OFF");
-            setState([] {});
-        };
-        auto dm2 = dropdownMenu(std::move(ws_opts));
 
         // ── Dropdown 3 — Environment ──────────────────────────────
         std::vector<DropdownMenuItem> env_items = {
@@ -238,24 +287,22 @@ public:
             DropdownMenuItem::radio("prod",  "Production (US-East)",   sel_env_ == "prod",  "🌐")
                 .setBadge("LIVE", 0x20F59E0B, 0xFFF59E0B).setSubtitle("99.99% HA SLA"),
         };
-        DropdownMenuProps env_opts;
-        env_opts.items         = env_items;
-        env_opts.body          = dm2;
-        env_opts.controller    = ctrl_env_;
-        env_opts.selected_id   = sel_env_;
-        env_opts.menu_width    = 290.0f;
-        env_opts.trigger_height = 38.0f;
-        env_opts.anchor_x      = 780.0f;  // x of Card 3 trigger
-        env_opts.anchor_y      = 165.0f;
-        env_opts.on_selected   = [this](const DropdownMenuItem& it) {
-            sel_env_ = it.id;
-            hud_msg_ = "Cluster: " + it.label;
-            setState([] {});
+
+        return DropdownMenu {
+            .items          = std::move(env_items),
+            .body           = dm2,
+            .controller     = ctrl_env_,
+            .menu_width     = 290.0f,
+            .selected_id    = sel_env_,
+            .trigger_height = 38.0f,
+            .anchor_x       = 780.0f,
+            .anchor_y       = 165.0f,
+            .on_selected    = [this](const DropdownMenuItem& it) {
+                sel_env_ = it.id;
+                hud_msg_ = "Cluster: " + it.label;
+                setState([] {});
+            },
         };
-
-        auto dm3 = dropdownMenu(std::move(env_opts));
-
-        return dm3;
     }
 };
 

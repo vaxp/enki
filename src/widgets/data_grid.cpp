@@ -782,7 +782,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* dg = static_cast<const DataGrid*>(widget());
+        auto* dg = static_cast<const DataGridWidget*>(widget());
         controller_ = dg->props.controller;
         if (!controller_) {
             controller_ = std::make_shared<DataGridController>();
@@ -797,7 +797,7 @@ public:
 
     void didUpdateWidget(const Widget& old_widget) override {
         State::didUpdateWidget(old_widget);
-        auto* dg = static_cast<const DataGrid*>(widget());
+        auto* dg = static_cast<const DataGridWidget*>(widget());
         controller_ = dg->props.controller;
         if (!controller_) {
             controller_ = std::make_shared<DataGridController>();
@@ -812,7 +812,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* dg = static_cast<const DataGrid*>(widget());
+        auto* dg = static_cast<const DataGridWidget*>(widget());
 
         auto grid_render = std::make_shared<RenderDataGridWidget>(
             controller_, dg->props, hovered_row_index_,
@@ -1004,7 +1004,7 @@ public:
     }
 };
 
-std::unique_ptr<State> DataGrid::createState() {
+std::unique_ptr<State> DataGridWidget::createState() {
     return std::make_unique<DataGridState>();
 }
 

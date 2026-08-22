@@ -57,7 +57,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Focus*>(widget());
+        auto* w = static_cast<const FocusWidget*>(widget());
         if (w->focus_node) {
             node_ = w->focus_node;
         } else {
@@ -65,7 +65,7 @@ public:
         }
 
         node_->on_focus_changed = [this](bool foc) {
-            auto* sw = static_cast<const Focus*>(widget());
+            auto* sw = static_cast<const FocusWidget*>(widget());
             if (sw->on_focus_change) sw->on_focus_change(foc);
             setState([] {});
         };
@@ -76,7 +76,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Focus*>(widget());
+        auto* w = static_cast<const FocusWidget*>(widget());
         bool is_focused = node_ && node_->has_focus;
 
         auto box = container(w->child);
@@ -94,19 +94,19 @@ public:
     }
 };
 
-std::unique_ptr<State> Focus::createState() {
+std::unique_ptr<State> FocusWidget::createState() {
     return std::make_unique<FocusState>();
 }
 
 class FocusScopeState : public State {
 public:
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const FocusScope*>(widget());
+        auto* w = static_cast<const FocusScopeWidget*>(widget());
         return w->child ? w->child : container();
     }
 };
 
-std::unique_ptr<State> FocusScope::createState() {
+std::unique_ptr<State> FocusScopeWidget::createState() {
     return std::make_unique<FocusScopeState>();
 }
 

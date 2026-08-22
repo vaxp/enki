@@ -22,7 +22,7 @@ namespace enki {
 // NotificationBell Implementation
 // ════════════════════════════════════════════════════════════════
 
-WidgetPtr NotificationBell::build(BuildContext&) {
+WidgetPtr NotificationBellWidget::build(BuildContext&) {
     auto ic_txt = text(bell_icon);
     ic_txt->fontSize(16.0f);
 
@@ -120,7 +120,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const NotificationOverlay*>(widget());
+        auto* w = static_cast<const NotificationOverlayWidget*>(widget());
         if (w->manager) {
             w->manager->addListener([this] {
                 setState([] {});
@@ -130,7 +130,7 @@ public:
         if (Platform::instance()) {
             key_down_conn_ = Platform::instance()->onKeyDown().connect([this](int key, int) {
                 if (key == 0xff1b) { // Escape key
-                    auto* w = static_cast<const NotificationOverlay*>(widget());
+                    auto* w = static_cast<const NotificationOverlayWidget*>(widget());
                     if (w->manager && w->manager->isCenterOpen()) {
                         w->manager->closeCenter();
                     }
@@ -418,7 +418,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const NotificationOverlay*>(widget());
+        auto* w = static_cast<const NotificationOverlayWidget*>(widget());
 
         // ── 1. Invariant Page Body ────────────────────────────────────
         WidgetPtr body_widget;
@@ -473,7 +473,7 @@ public:
     }
 };
 
-std::unique_ptr<State> NotificationOverlay::createState() {
+std::unique_ptr<State> NotificationOverlayWidget::createState() {
     return std::make_unique<NotificationOverlayState>();
 }
 

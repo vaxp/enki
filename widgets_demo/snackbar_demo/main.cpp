@@ -33,34 +33,43 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // ── Header ────────────────────────────────────────────────────
-        auto title = text("Advanced In-Window Overlay Snackbar Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced In-Window Overlay Snackbar Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Non-blocking floating toasts (Category 7. Overlays), auto-dismiss timers, countdown progress bar, and pause-on-hover");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Non-blocking floating toasts (Category 7. Overlays), auto-dismiss timers, countdown progress bar, and pause-on-hover", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center).gap(StyleValue::point(6.0f));
+        auto title_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {title, sub}
+        });
 
         // ── Helper: Action Buttons Grid ───────────────────────────────
         auto makeTriggerBtn = [this](std::string icon, std::string label, Color bg, Color border, std::function<void()> cb) -> WidgetPtr {
-            auto ic = text(icon);
-            ic->fontSize(15.0f);
+            auto ic = text(icon, { .font_size = 15.0f });
+            auto lbl = text(label, { .color = 0xFFFFFFFF, .font_size = 12.5f, .font_weight = FontWeight::Bold });
 
-            auto lbl = text(label);
-            lbl->fontSize(12.5f).bold().color(0xFFFFFFFF);
+            auto b_row = row({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .gap = StyleValue::point(8.0f),
+                .children = {ic, lbl}
+            });
 
-            std::vector<WidgetPtr> b_items = {ic, lbl};
-            auto b_row = row(b_items);
-            b_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center).justifyContent(Justify::Center);
-
-            auto box = container(b_row);
-            box->color(bg)
-               .border(border, 1.0f)
-               .borderRadius(8.0f)
-               .paddingSymmetric(10.0f, 16.0f)
-               .width(220.0f);
+            auto box = container({
+                .color = bg,
+                .border_radius = BorderRadius::circular(8.0f),
+                .border = Border(border, 1.0f),
+                .width = StyleValue::point(220.0f),
+                .padding = StyleInsets::symmetric(10.0f, 16.0f),
+                .child = b_row
+            });
 
             auto gd = std::make_shared<GestureDetector>(box);
             gd->cursor_type = SystemCursor::Pointer;
@@ -125,53 +134,75 @@ public:
             setState([] {});
         });
 
-        std::vector<WidgetPtr> trigger_row1 = {btn_success, btn_error};
-        auto r1 = row(trigger_row1);
-        r1->gap(StyleValue::point(14.0f)).justifyContent(Justify::Center);
+        auto r1 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(14.0f),
+            .children = {btn_success, btn_error}
+        });
 
-        std::vector<WidgetPtr> trigger_row2 = {btn_warning, btn_info};
-        auto r2 = row(trigger_row2);
-        r2->gap(StyleValue::point(14.0f)).justifyContent(Justify::Center);
+        auto r2 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(14.0f),
+            .children = {btn_warning, btn_info}
+        });
 
-        std::vector<WidgetPtr> triggers_col_items = {r1, r2};
-        auto triggers_col = column(triggers_col_items);
-        triggers_col->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
+        auto triggers_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(12.0f),
+            .children = {r1, r2}
+        });
 
-        auto c1_title = text("1. Interactive Feedback Trigger Actions");
-        c1_title->fontSize(14.5f).bold().color(0xFF38BDF8);
+        auto c1_title = text("1. Interactive Feedback Trigger Actions", {
+            .color = 0xFF38BDF8,
+            .font_size = 14.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c1_sub = text("Click buttons below to launch rich snackbars. Hover mouse over the active card to pause the timer!");
-        c1_sub->fontSize(12.0f).color(0xFF94A3B8);
+        auto c1_sub = text("Click buttons below to launch rich snackbars. Hover mouse over the active card to pause the timer!", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
-        std::vector<WidgetPtr> card1_items = {c1_title, c1_sub, triggers_col};
-        auto card1_col = column(card1_items);
-        card1_col->gap(StyleValue::point(14.0f)).alignItems(Align::Center);
-
-        auto trigger_card = container(card1_col);
-        trigger_card->color(0xFF1E293B)
-                    .borderRadius(10.0f)
-                    .border(0xFF334155, 1.0f)
-                    .paddingAll(20.0f)
-                    .width(580.0f);
+        auto trigger_card = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(580.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(14.0f),
+                .children = {c1_title, c1_sub, triggers_col}
+            })
+        });
 
         // ── 2. Placement Switcher Card ────────────────────────────────
-        auto c2_title = text("2. Viewport Placement Configuration");
-        c2_title->fontSize(14.5f).bold().color(0xFF10B981);
+        auto c2_title = text("2. Viewport Placement Configuration", {
+            .color = 0xFF10B981,
+            .font_size = 14.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c2_sub = text("Select screen alignment for incoming toast notifications:");
-        c2_sub->fontSize(12.0f).color(0xFF94A3B8);
+        auto c2_sub = text("Select screen alignment for incoming toast notifications:", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
         auto makePosPill = [this](std::string label, SnackbarPlacement p) -> WidgetPtr {
             bool is_active = (current_placement_ == p);
-            auto t_lbl = text(label);
-            t_lbl->fontSize(12.0f).color(is_active ? 0xFFFFFFFF : 0xFF94A3B8);
-            if (is_active) t_lbl->bold();
+            auto t_lbl = text(label, {
+                .color = is_active ? 0xFFFFFFFF : 0xFF94A3B8,
+                .font_size = 12.0f,
+                .font_weight = is_active ? FontWeight::Bold : FontWeight::Normal,
+            });
 
-            auto box = container(t_lbl);
-            box->color(is_active ? 0xFF0284C7 : 0xFF0F172A)
-               .border(is_active ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-               .borderRadius(6.0f)
-               .paddingSymmetric(6.0f, 14.0f);
+            auto box = container({
+                .color = is_active ? 0xFF0284C7 : 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(is_active ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 14.0f),
+                .child = t_lbl
+            });
 
             auto gd = std::make_shared<GestureDetector>(box);
             gd->cursor_type = SystemCursor::Pointer;
@@ -183,35 +214,41 @@ public:
             return gd;
         };
 
-        std::vector<WidgetPtr> pos_row1_items = {
-            makePosPill("Top-Left", SnackbarPlacement::TopLeft),
-            makePosPill("Top-Center", SnackbarPlacement::TopCenter),
-            makePosPill("Top-Right (Toast)", SnackbarPlacement::TopRight)
-        };
-        auto pos_r1 = row(pos_row1_items);
-        pos_r1->gap(StyleValue::point(8.0f)).justifyContent(Justify::Center);
+        auto pos_r1 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = {
+                makePosPill("Top-Left", SnackbarPlacement::TopLeft),
+                makePosPill("Top-Center", SnackbarPlacement::TopCenter),
+                makePosPill("Top-Right (Toast)", SnackbarPlacement::TopRight)
+            }
+        });
 
-        std::vector<WidgetPtr> pos_row2_items = {
-            makePosPill("Bottom-Left", SnackbarPlacement::BottomLeft),
-            makePosPill("Bottom-Center", SnackbarPlacement::BottomCenter),
-            makePosPill("Bottom-Right (Desktop)", SnackbarPlacement::BottomRight)
-        };
-        auto pos_r2 = row(pos_row2_items);
-        pos_r2->gap(StyleValue::point(8.0f)).justifyContent(Justify::Center);
+        auto pos_r2 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = {
+                makePosPill("Bottom-Left", SnackbarPlacement::BottomLeft),
+                makePosPill("Bottom-Center", SnackbarPlacement::BottomCenter),
+                makePosPill("Bottom-Right (Desktop)", SnackbarPlacement::BottomRight)
+            }
+        });
 
-        std::vector<WidgetPtr> card2_items = {c2_title, c2_sub, pos_r1, pos_r2};
-        auto card2_col = column(card2_items);
-        card2_col->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
-
-        auto pos_card = container(card2_col);
-        pos_card->color(0xFF1E293B)
-                .borderRadius(10.0f)
-                .border(0xFF334155, 1.0f)
-                .paddingAll(20.0f)
-                .width(480.0f);
+        auto pos_card = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(480.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(12.0f),
+                .children = {c2_title, c2_sub, pos_r1, pos_r2}
+            })
+        });
 
         // ── Wrap with Snackbar Overlay ────────────────────────────────
-        return snackbar({
+        return Snackbar {
             .body = container({
                 .color = 0xFF0B1120,
                 .width = StyleValue::percent(100.0f),
@@ -241,7 +278,7 @@ public:
                 })
             }),
             .controller = snackbar_ctrl_
-        });
+        };
     }
 };
 

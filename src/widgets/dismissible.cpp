@@ -28,7 +28,7 @@ public:
             return empty;
         }
 
-        auto* w = static_cast<const Dismissible*>(widget());
+        auto* w = static_cast<const DismissibleWidget*>(widget());
         const auto& opts = w->options;
 
         // ── 1. Background Action Layers ───────────────────────────────
@@ -98,7 +98,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Dismissible::createState() {
+std::unique_ptr<State> DismissibleWidget::createState() {
     return std::make_unique<DismissibleState>();
 }
 

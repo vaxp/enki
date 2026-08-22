@@ -14,73 +14,82 @@ static const Color kColors[] = {
 };
 
 static WidgetPtr swatch(int i) {
-    auto c = container();
-    c->color(kColors[i % 6]);
-    c->width(StyleValue::percent(100.0f));
-    c->height(StyleValue::percent(100.0f));
-    return c;
+    return container({
+        .color = kColors[i % 6],
+        .width = StyleValue::percent(100.0f),
+        .height = StyleValue::percent(100.0f),
+    });
 }
 
 class GridTileDemoState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto header = std::make_shared<Text>("GridTile Demo");
-        header->fontSize(24.0f).bold().color(0xFFFFFFFF);
-        auto hdr_wrap = container(header);
-        hdr_wrap->padding(EdgeInsets::symmetric(16.0f, 20.0f));
-        hdr_wrap->color(0xFF0D1117);
-        hdr_wrap->width(StyleValue::percent(100.0f));
+        auto hdr_wrap = container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(16.0f, 20.0f),
+            .child = text("GridTile Demo", {
+                .color = 0xFFFFFFFF,
+                .font_size = 24.0f,
+                .font_weight = FontWeight::Bold,
+            })
+        });
 
         // 2×3 manual grid using Wrap
         std::vector<WidgetPtr> tiles;
         for (int i = 0; i < 6; ++i) {
-            auto footer = std::make_shared<GridTileBar>();
-            footer->title(std::make_shared<Text>("Tile " + std::to_string(i+1),
-                          TextStyle{.color=0xFFFFFFFF,.font_size=13.0f}));
-            footer->subtitle(std::make_shared<Text>("Header + Footer overlay",
-                             TextStyle{.color=0xFFCCCCCC,.font_size=11.0f}));
+            auto tile = GridTile {
+                .child = swatch(i),
+                .header = GridTileBar {
+                    .trailing = text("★", { .color = 0xFFFCD34D, .font_size = 14.0f }),
+                    .background_color = 0x99000000,
+                },
+                .footer = GridTileBar {
+                    .title = text("Tile " + std::to_string(i + 1), { .color = 0xFFFFFFFF, .font_size = 13.0f }),
+                    .subtitle = text("Header + Footer overlay", { .color = 0xFFCCCCCC, .font_size = 11.0f }),
+                }
+            };
 
-            auto header_bar = std::make_shared<GridTileBar>();
-            header_bar->backgroundColor(0x99000000);
-            header_bar->trailing(std::make_shared<Text>("★", TextStyle{.color=0xFFFCD34D,.font_size=14.0f}));
-
-            auto tile = gridTile(swatch(i), header_bar, footer);
-
-            auto cell = std::make_shared<FlexItem>(tile);
-            cell->flexBasis(StyleValue::percent(50.0f));
-            cell->flexGrow(0.0f);
-            cell->flexShrink(0.0f);
-            cell->aspectRatio(1.0f);
+            auto cell = container({
+                .aspect_ratio = 1.0f,
+                .flex_grow = 0.0f,
+                .flex_shrink = 0.0f,
+                .flex_basis = StyleValue::percent(50.0f),
+                .child = tile
+            });
 
             tiles.push_back(cell);
         }
 
-        auto grid = std::make_shared<Wrap>(std::move(tiles));
-        grid->rowGap(StyleValue::point(4.0f));
-        grid->columnGap(StyleValue::point(4.0f));
-        grid->padding(StyleInsets::all(8.0f));
-        grid->width(StyleValue::percent(100.0f));
-        grid->flexShrink(0.0f);
+        auto grid = wrap({
+            .flex_shrink = 0.0f,
+            .row_gap = StyleValue::point(4.0f),
+            .column_gap = StyleValue::point(4.0f),
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(8.0f),
+            .children = std::move(tiles),
+        });
 
         auto scroll = scrollView(
-            ScrollOptions{.direction=Axis::Vertical,.show_scrollbar=true},
+            ScrollOptions{.direction = Axis::Vertical, .show_scrollbar = true},
             grid
         );
-        auto scroll_flex = std::make_shared<FlexItem>(scroll);
-        scroll_flex->flexGrow(1.0f).flexShrink(1.0f);
 
-        std::vector<WidgetPtr> root_col_items;
-        root_col_items.push_back(hdr_wrap);
-        root_col_items.push_back(scroll_flex);
-        auto root_col = column(root_col_items);
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->height(StyleValue::percent(100.0f));
-
-        auto root = container(root_col);
-        root->color(0xFF0D1117);
-        root->width(StyleValue::percent(100.0f));
-        root->height(StyleValue::percent(100.0f));
-        return root;
+        return container({
+            .color = 0xFF0D1117,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .child = column({
+                .children = {
+                    hdr_wrap,
+                    container({
+                        .flex_grow = 1.0f,
+                        .flex_shrink = 1.0f,
+                        .child = scroll
+                    })
+                }
+            })
+        });
     }
 };
 

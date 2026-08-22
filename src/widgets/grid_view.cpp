@@ -10,7 +10,7 @@ namespace enki {
 class GridViewState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const GridView*>(widget());
+        auto* w = static_cast<const GridViewWidget*>(widget());
 
         // ── Gather items ───────────────────────────────────────
         std::vector<WidgetPtr> raw_items;
@@ -119,7 +119,7 @@ public:
     }
 };
 
-std::unique_ptr<State> GridView::createState() {
+std::unique_ptr<State> GridViewWidget::createState() {
     return std::make_unique<GridViewState>();
 }
 

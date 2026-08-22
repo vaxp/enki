@@ -227,12 +227,10 @@ public:
                        .width(StyleValue::percent(100.0f))
                        .height(StyleValue::percent(100.0f));
 
-        // Wrap with LoadingOverlay
-        auto overlay = loadingOverlay({
+        return LoadingOverlay {
             .body = background_page,
             .controller = loading_ctrl_
-        });
-        return overlay;
+        };
     }
 };
 

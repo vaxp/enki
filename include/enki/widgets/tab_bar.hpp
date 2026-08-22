@@ -9,20 +9,7 @@
 ///   - Animated indicator that slides between tabs (AnimationController).
 ///   - Optional icons and/or labels per tab item.
 ///   - Hover feedback on each tab.
-///   - Fluent builder API.
 ///   - Badge support per tab item.
-///
-/// Usage:
-/// @code
-///   int selected = 0;
-///   auto tabs = tabBar({
-///       TabItem{"Home", "🏠"},
-///       TabItem{"Settings", "⚙"},
-///       TabItem{"Profile", "👤"},
-///   }, selected, [&](int i){ selected = i; });
-///
-///   auto content = tabView(selected, {home_page, settings_page, profile_page});
-/// @endcode
 ///
 /// @copyright ENKI Framework — MIT License
 
@@ -117,99 +104,76 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// TabBar Widget
+// TabBar Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-class TabBar : public StatefulWidget {
+class TabBarWidget : public StatefulWidget {
 public:
     std::vector<TabItem>          tabs;
     int                           selected_index = 0;
     std::function<void(int)>      on_tab_changed;
     TabBarOptions                 options;
 
-    TabBar() = default;
-    TabBar(std::vector<TabItem> tabs, int selected, std::function<void(int)> on_changed,
-           TabBarOptions opt = {})
+    TabBarWidget() = default;
+    TabBarWidget(std::vector<TabItem> tabs, int selected, std::function<void(int)> on_changed,
+                 TabBarOptions opt = {})
         : tabs(std::move(tabs)), selected_index(selected),
           on_tab_changed(std::move(on_changed)), options(std::move(opt)) {}
-
-    // Fluent API
-    TabBar& activeColor(Color c)     { options.active_color = c;     return *this; }
-    TabBar& indicatorColor(Color c)  { options.indicator_color = c;  return *this; }
-    TabBar& backgroundColor(Color c) { options.background_color = c; return *this; }
-    TabBar& tabHeight(float h)       { options.tab_height = h;       return *this; }
-    TabBar& showIcons(bool v)        { options.show_icons = v;       return *this; }
-    TabBar& showLabels(bool v)       { options.show_labels = v;      return *this; }
+    TabBarWidget(Key key, std::vector<TabItem> tabs, int selected, std::function<void(int)> on_changed,
+                 TabBarOptions opt = {})
+        : StatefulWidget(std::move(key)),
+          tabs(std::move(tabs)), selected_index(selected),
+          on_tab_changed(std::move(on_changed)), options(std::move(opt)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TabBar"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// TabView Widget
+// TabView Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
 /// @brief Displays the child at `selected_index`. Children outside are not built.
-class TabView : public StatelessWidget {
+class TabViewWidget : public StatelessWidget {
 public:
     int                    selected_index = 0;
     std::vector<WidgetPtr> children;
 
-    TabView() = default;
-    TabView(int selected, std::vector<WidgetPtr> kids)
+    TabViewWidget() = default;
+    TabViewWidget(int selected, std::vector<WidgetPtr> kids)
         : selected_index(selected), children(std::move(kids)) {}
+    TabViewWidget(Key key, int selected, std::vector<WidgetPtr> kids)
+        : StatelessWidget(std::move(key)),
+          selected_index(selected), children(std::move(kids)) {}
 
     [[nodiscard]] WidgetPtr build(BuildContext& ctx) override;
     [[nodiscard]] std::string_view typeName() const override { return "TabView"; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Props for Declarative Syntax
+// Declarative Proxy Structs (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-struct TabBarProps {
+struct TabBar {
+    Key                           key = Key::none();
     std::vector<TabItem>          tabs;
     int                           selected_index = 0;
-    std::function<void(int)>      on_tab_changed;
+    std::function<void(int)>      on_tab_changed = nullptr;
     TabBarOptions                 options = {};
-    Key                           key = Key::none();
+
+    operator WidgetPtr() const {
+        return std::make_shared<TabBarWidget>(key, tabs, selected_index, on_tab_changed, options);
+    }
 };
 
-struct TabViewProps {
+struct TabView {
+    Key                           key = Key::none();
     int                           selected_index = 0;
     std::vector<WidgetPtr>        children;
-    Key                           key = Key::none();
+
+    operator WidgetPtr() const {
+        return std::make_shared<TabViewWidget>(key, selected_index, children);
+    }
 };
-
-// ════════════════════════════════════════════════════════════════
-// Factory Functions
-// ════════════════════════════════════════════════════════════════
-
-inline std::shared_ptr<TabBar> tabBar(
-        std::vector<TabItem> tabs,
-        int selected_index,
-        std::function<void(int)> on_changed,
-        TabBarOptions options = {}) {
-    return std::make_shared<TabBar>(std::move(tabs), selected_index,
-                                   std::move(on_changed), std::move(options));
-}
-
-inline std::shared_ptr<TabBar> tabBar(TabBarProps props) {
-    auto t = std::make_shared<TabBar>(std::move(props.tabs), props.selected_index,
-                                      std::move(props.on_tab_changed), std::move(props.options));
-    if (props.key != Key::none()) t->key = props.key;
-    return t;
-}
-
-inline std::shared_ptr<TabView> tabView(int selected_index,
-                                        std::vector<WidgetPtr> children) {
-    return std::make_shared<TabView>(selected_index, std::move(children));
-}
-
-inline std::shared_ptr<TabView> tabView(TabViewProps props) {
-    auto t = std::make_shared<TabView>(props.selected_index, std::move(props.children));
-    if (props.key != Key::none()) t->key = props.key;
-    return t;
-}
 
 } // namespace enki

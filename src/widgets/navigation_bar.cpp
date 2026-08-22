@@ -794,7 +794,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const NavigationBar*>(widget());
+        auto* w = static_cast<const NavigationBarWidget*>(widget());
         int sel = w->selected_index;
 
         // Calculate target geometry
@@ -853,7 +853,7 @@ public:
     }
 };
 
-std::unique_ptr<State> NavigationBar::createState() {
+std::unique_ptr<State> NavigationBarWidget::createState() {
     return std::make_unique<NavigationBarState>();
 }
 

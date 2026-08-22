@@ -145,7 +145,7 @@ public:
                                     .children = {
                                         container({
                                             .width = StyleValue::point(420.0f),
-                                            .child = searchField({
+                                            .child = SearchField({
                                                 .controller = search_ctrl_,
                                                 .placeholder = "Filter by name, dept, role, status, salary...",
                                                 .size = SearchFieldSize::Small,
@@ -203,7 +203,7 @@ public:
                                         })
                                     }
                                 }),
-                                dataGrid({
+                                DataGrid {
                                     .controller = grid_ctrl_,
                                     .selection_mode = DataGridSelectionMode::RowMultiple,
                                     .show_pagination = true,
@@ -248,7 +248,7 @@ public:
                                         }
                                         return "";
                                     }
-                                }),
+                                },
                                 container({
                                     .padding = StyleInsets::symmetric(4.0f, 8.0f),
                                     .child = row({

@@ -26,18 +26,18 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const Chip*>(widget());
+        auto* w = static_cast<const ChipWidget*>(widget());
         is_selected_ = w->options.selected;
     }
 
     void didUpdateWidget(const Widget& old) override {
         State::didUpdateWidget(old);
-        auto* w = static_cast<const Chip*>(widget());
+        auto* w = static_cast<const ChipWidget*>(widget());
         is_selected_ = w->options.selected;
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const Chip*>(widget());
+        auto* w = static_cast<const ChipWidget*>(widget());
         const auto& opts = w->options;
 
         // Size attributes
@@ -151,7 +151,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Chip::createState() {
+std::unique_ptr<State> ChipWidget::createState() {
     return std::make_unique<ChipState>();
 }
 
@@ -162,7 +162,7 @@ std::unique_ptr<State> Chip::createState() {
 class ChipGroupState : public State {
 public:
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const ChipGroup*>(widget());
+        auto* w = static_cast<const ChipGroupWidget*>(widget());
 
         std::vector<WidgetPtr> chip_items;
         for (const auto& c : w->chips) {
@@ -175,7 +175,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ChipGroup::createState() {
+std::unique_ptr<State> ChipGroupWidget::createState() {
     return std::make_unique<ChipGroupState>();
 }
 

@@ -15,8 +15,8 @@ class BreadcrumbDemoState : public State {
         std::vector<BreadcrumbItem> items;
         for (size_t i = 0; i < path_names.size(); ++i) {
             items.push_back(BreadcrumbItem{
-                path_names[i],
-                [this, i]() {
+                .label = path_names[i],
+                .on_tap = [this, i]() {
                     setState([this, i] {
                         path_names.erase(path_names.begin() + i + 1, path_names.end());
                     });
@@ -29,9 +29,9 @@ class BreadcrumbDemoState : public State {
             .padding = StyleInsets::all(20.0f),
             .child = column({
                 .children = {
-                    breadcrumb({
-                        .items = items
-                    }),
+                    Breadcrumb {
+                        .items = std::move(items)
+                    },
                     container({
                         .margin = StyleInsets::all(20.0f),
                         .child = gestureDetector({

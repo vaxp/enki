@@ -9,8 +9,8 @@ using namespace enki;
 
 class SidebarDemoState : public State {
 public:
-    WidgetPtr build(BuildContext& ctx) override {
-        return sidebar({
+    WidgetPtr build(BuildContext&) override {
+        return Sidebar {
             .sidebar_content = container({
                 .align = Alignment::TopCenter,
                 .padding = StyleInsets::all(20.0f),
@@ -27,7 +27,7 @@ public:
                 .background_color = 0xFF1E293B,
                 .side = SidebarSide::Left
             }
-        });
+        };
     }
 };
 

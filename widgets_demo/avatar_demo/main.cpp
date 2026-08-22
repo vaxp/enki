@@ -33,28 +33,28 @@ public:
                         .margin = StyleInsets::only(0, 0, 40.0f, 0),
                         .children = {
                             // 1. Initials Avatar
-                            avatar({
+                            Avatar {
                                 .background_color = 0xFF8B5CF6, // Purple
                                 .initials = "MK"
-                            }),
+                            },
                             
                             // 2. Avatar with Status Badge
-                            avatar({
+                            Avatar {
                                 .radius = 32.0f,
                                 .background_color = 0xFFF59E0B, // Amber
                                 .initials = "TS",
                                 .show_badge = true,
                                 .badge_color = 0xFF10B981 // Green online
-                            }),
+                            },
                             
                             // 3. Avatar with Image and Border
-                            avatar({
+                            Avatar {
                                 .radius = 40.0f,
                                 .image_path = "/home/x/Work/enki/assets/vaxp.png",
                                 .border_width = 3.0f,
                                 .border_color = 0xFFFFFFFF,
                                 .shadow_blur = 10.0f
-                            })
+                            }
                         }
                     }),
                     column({
@@ -62,17 +62,17 @@ public:
                         .gap = StyleValue::point(10.0f),
                         .children = {
                             // 4. Avatar Group
-                            avatarGroup({
+                            AvatarGroup {
                                 .avatars = {
-                                    avatar({ .radius = 20.0f, .background_color = 0xFFEF4444, .initials = "A", .border_width = 2.0f }),
-                                    avatar({ .radius = 20.0f, .background_color = 0xFF3B82F6, .initials = "B", .border_width = 2.0f }),
-                                    avatar({ .radius = 20.0f, .background_color = 0xFF10B981, .initials = "C", .border_width = 2.0f }),
-                                    avatar({ .radius = 20.0f, .background_color = 0xFFF59E0B, .initials = "D", .border_width = 2.0f }),
-                                    avatar({ .radius = 20.0f, .background_color = 0xFF8B5CF6, .initials = "E", .border_width = 2.0f })
+                                    Avatar { .radius = 20.0f, .background_color = 0xFFEF4444, .initials = "A", .border_width = 2.0f },
+                                    Avatar { .radius = 20.0f, .background_color = 0xFF3B82F6, .initials = "B", .border_width = 2.0f },
+                                    Avatar { .radius = 20.0f, .background_color = 0xFF10B981, .initials = "C", .border_width = 2.0f },
+                                    Avatar { .radius = 20.0f, .background_color = 0xFFF59E0B, .initials = "D", .border_width = 2.0f },
+                                    Avatar { .radius = 20.0f, .background_color = 0xFF8B5CF6, .initials = "E", .border_width = 2.0f }
                                 },
                                 .spacing = -12.0f,
                                 .max_avatars = 3
-                            }),
+                            },
                             text("Avatar Group (Max 3)", { .color = 0xFF94A3B8, .font_size = 14.0f })
                         }
                     })

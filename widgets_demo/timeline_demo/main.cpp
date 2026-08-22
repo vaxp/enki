@@ -171,7 +171,7 @@ public:
                                         })
                                     }
                                 }),
-                                timeline({
+                                Timeline {
                                     .controller = pipeline_ctrl_,
                                     .orientation = TimelineOrientation::Horizontal,
                                     .node_size = 28.0f,
@@ -181,7 +181,7 @@ public:
                                         hud_msg_ = "Switched to Pipeline Step #" + std::to_string(step + 1);
                                         setState([] {});
                                     }
-                                })
+                                }
                             }
                         })
                     }),
@@ -208,7 +208,7 @@ public:
                                             .color = 0xFF94A3B8,
                                             .font_size = 12.0f
                                         }),
-                                        timeline({
+                                        Timeline {
                                             .controller = milestone_ctrl_,
                                             .orientation = TimelineOrientation::Vertical,
                                             .alignment = TimelineAlignment::Alternate,
@@ -218,7 +218,7 @@ public:
                                                 hud_msg_ = "Toggled milestone " + id + (exp ? " (Expanded details)" : " (Collapsed)");
                                                 setState([] {});
                                             }
-                                        })
+                                        }
                                     }
                                 })
                             }),
@@ -240,7 +240,7 @@ public:
                                             .color = 0xFF94A3B8,
                                             .font_size = 12.0f
                                         }),
-                                        timeline({
+                                        Timeline {
                                             .controller = logistics_ctrl_,
                                             .orientation = TimelineOrientation::Vertical,
                                             .alignment = TimelineAlignment::Start,
@@ -250,7 +250,7 @@ public:
                                                 hud_msg_ = "Selected Logistics Event: " + it.title;
                                                 setState([] {});
                                             }
-                                        })
+                                        }
                                     }
                                 })
                             })

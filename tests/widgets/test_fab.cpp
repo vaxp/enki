@@ -11,8 +11,14 @@ void test_fab_initialization() {
     bool clicked = false;
     auto child = icon(IconData::font(0xe7f4, "Material Icons"));
     
-    auto btn = floatingActionButton(child, [&](){ clicked = true; });
+    FloatingActionButton btn_decl {
+        .child = child,
+        .on_pressed = [&](){ clicked = true; }
+    };
     
+    WidgetPtr ptr = btn_decl;
+    auto btn = std::dynamic_pointer_cast<FloatingActionButtonWidget>(ptr);
+    assert(btn != nullptr);
     assert(btn->child != nullptr);
     assert(btn->on_pressed != nullptr);
     assert(btn->options.size == 56.0f);
@@ -25,17 +31,22 @@ void test_fab_initialization() {
     std::cout << "FAB Default Initialization passed." << std::endl;
 }
 
-void test_fab_fluent_api() {
-    std::cout << "Testing FAB Fluent API..." << std::endl;
+void test_fab_declarative_props() {
+    std::cout << "Testing FAB Declarative Props..." << std::endl;
     auto child = icon(IconData::font(0xe7f4, "Material Icons"));
-    auto btn = floatingActionButton(child);
+    FloatingActionButton btn_decl {
+        .child = child,
+        .normal_color = 0xFF00FF00,
+        .hover_color = 0xFF00DD00,
+        .size = 80.0f,
+        .border_radius = 16.0f,
+        .shadow_blur = 20.0f,
+        .shadow_offset_dy = 10.0f
+    };
     
-    btn->bgColor(0xFF00FF00)
-       ->hoverColor(0xFF00DD00)
-       ->size(80.0f)
-       ->borderRadius(16.0f)
-       ->elevation(20.0f, 10.0f);
-                
+    WidgetPtr ptr = btn_decl;
+    auto btn = std::dynamic_pointer_cast<FloatingActionButtonWidget>(ptr);
+    assert(btn != nullptr);
     assert(btn->options.normal_color == 0xFF00FF00);
     assert(btn->options.hover_color == 0xFF00DD00);
     assert(btn->options.size == 80.0f);
@@ -43,12 +54,12 @@ void test_fab_fluent_api() {
     assert(btn->options.shadow_blur == 20.0f);
     assert(btn->options.shadow_offset_dy == 10.0f);
     
-    std::cout << "FAB Fluent API passed." << std::endl;
+    std::cout << "FAB Declarative Props passed." << std::endl;
 }
 
 int main() {
     test_fab_initialization();
-    test_fab_fluent_api();
+    test_fab_declarative_props();
     std::cout << "All FAB tests passed!" << std::endl;
     return 0;
 }

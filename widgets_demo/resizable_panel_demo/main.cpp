@@ -121,7 +121,7 @@ public:
             })
         });
 
-        return resizablePanel({
+        return ResizablePanel {
             .child = buildInspectorContent(),
             .body = background_page,
             .options = {
@@ -141,7 +141,7 @@ public:
                 }
             },
             .controller = panel_ctrl_
-        });
+        };
     }
 };
 

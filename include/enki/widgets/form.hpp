@@ -88,7 +88,7 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Form Widget
+/// Form Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
 struct FormProps {
@@ -97,13 +97,16 @@ struct FormProps {
     std::function<void()> on_changed;
 };
 
-class Form : public StatefulWidget {
+class FormWidget : public StatefulWidget {
 public:
     WidgetPtr child;
     FormProps props;
 
-    Form(WidgetPtr child_, FormProps opts = {})
+    FormWidget(WidgetPtr child_, FormProps opts = {})
         : child(std::move(child_)), props(std::move(opts)) {}
+
+    FormWidget(Key key, WidgetPtr child_, FormProps opts = {})
+        : StatefulWidget(std::move(key)), child(std::move(child_)), props(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Form"; }
@@ -171,7 +174,7 @@ struct Validators {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// TextFormField Widget
+/// TextFormField Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
 struct TextFormFieldProps {
@@ -190,19 +193,20 @@ struct TextFormFieldProps {
     std::function<void(const std::string&)> on_changed;
 };
 
-class TextFormField : public StatefulWidget {
+class TextFormFieldWidget : public StatefulWidget {
 public:
     TextFormFieldProps props;
 
-    TextFormField() = default;
-    explicit TextFormField(TextFormFieldProps opts) : props(std::move(opts)) {}
+    TextFormFieldWidget() = default;
+    explicit TextFormFieldWidget(TextFormFieldProps opts) : props(std::move(opts)) {}
+    TextFormFieldWidget(Key key, TextFormFieldProps opts) : StatefulWidget(std::move(key)), props(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "TextFormField"; }
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// CheckboxFormField Widget
+/// CheckboxFormField Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
 struct CheckboxFormFieldProps {
@@ -216,31 +220,94 @@ struct CheckboxFormFieldProps {
     std::function<void(bool)> on_changed;
 };
 
-class CheckboxFormField : public StatefulWidget {
+class CheckboxFormFieldWidget : public StatefulWidget {
 public:
     CheckboxFormFieldProps props;
 
-    CheckboxFormField() = default;
-    explicit CheckboxFormField(CheckboxFormFieldProps opts) : props(std::move(opts)) {}
+    CheckboxFormFieldWidget() = default;
+    explicit CheckboxFormFieldWidget(CheckboxFormFieldProps opts) : props(std::move(opts)) {}
+    CheckboxFormFieldWidget(Key key, CheckboxFormFieldProps opts) : StatefulWidget(std::move(key)), props(std::move(opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "CheckboxFormField"; }
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Convenience Factory Helpers
+/// Declarative Proxy Structs (C++20 Designated Initializers)
 /// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Form> form(WidgetPtr child, FormProps props = {}) {
-    return std::make_shared<Form>(std::move(child), std::move(props));
-}
+struct Form {
+    Key key = Key::none();
+    WidgetPtr child = nullptr;
+    AutoValidateMode autovalidate_mode = AutoValidateMode::Disabled;
+    std::shared_ptr<FormState> controller = nullptr;
+    std::function<void()> on_changed = nullptr;
 
-inline std::shared_ptr<TextFormField> textFormField(TextFormFieldProps props) {
-    return std::make_shared<TextFormField>(std::move(props));
-}
+    operator WidgetPtr() const {
+        FormProps p;
+        p.autovalidate_mode = autovalidate_mode;
+        p.controller = controller;
+        p.on_changed = on_changed;
+        return std::make_shared<FormWidget>(key, child, std::move(p));
+    }
+};
 
-inline std::shared_ptr<CheckboxFormField> checkboxFormField(CheckboxFormFieldProps props) {
-    return std::make_shared<CheckboxFormField>(std::move(props));
-}
+struct TextFormField {
+    Key key = Key::none();
+    std::string label;
+    std::string hint;
+    std::string initial_value;
+    std::string helper_text;
+    bool required = false;
+    bool obscure_text = false;
+    float width = 340.0f;
+
+    std::shared_ptr<FormState> form_state = nullptr;
+    std::shared_ptr<TextFieldController> controller = nullptr;
+    ValidatorFn validator = nullptr;
+    std::function<void(const std::string&)> on_saved = nullptr;
+    std::function<void(const std::string&)> on_changed = nullptr;
+
+    operator WidgetPtr() const {
+        TextFormFieldProps p;
+        p.label = label;
+        p.hint = hint;
+        p.initial_value = initial_value;
+        p.helper_text = helper_text;
+        p.required = required;
+        p.obscure_text = obscure_text;
+        p.width = width;
+        p.form_state = form_state;
+        p.controller = controller;
+        p.validator = validator;
+        p.on_saved = on_saved;
+        p.on_changed = on_changed;
+        return std::make_shared<TextFormFieldWidget>(key, std::move(p));
+    }
+};
+
+struct CheckboxFormField {
+    Key key = Key::none();
+    std::string label;
+    bool initial_value = false;
+    bool required = false;
+
+    std::shared_ptr<FormState> form_state = nullptr;
+    std::function<std::optional<std::string>(bool value)> validator = nullptr;
+    std::function<void(bool)> on_saved = nullptr;
+    std::function<void(bool)> on_changed = nullptr;
+
+    operator WidgetPtr() const {
+        CheckboxFormFieldProps p;
+        p.label = label;
+        p.initial_value = initial_value;
+        p.required = required;
+        p.form_state = form_state;
+        p.validator = validator;
+        p.on_saved = on_saved;
+        p.on_changed = on_changed;
+        return std::make_shared<CheckboxFormFieldWidget>(key, std::move(p));
+    }
+};
 
 } // namespace enki

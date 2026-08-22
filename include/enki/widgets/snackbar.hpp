@@ -172,7 +172,7 @@ public:
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// Snackbar Widget
+/// Snackbar Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
 struct SnackbarProps {
@@ -182,32 +182,36 @@ struct SnackbarProps {
     SnackbarOptions initial_options;
 };
 
-class Snackbar : public StatefulWidget {
+class SnackbarWidget : public StatefulWidget {
 public:
     WidgetPtr body;                              ///< Main page body content to wrap
     std::shared_ptr<SnackbarController> controller;
     SnackbarOptions initial_options;
 
-    Snackbar() = default;
-    Snackbar(WidgetPtr body_, std::shared_ptr<SnackbarController> ctrl, SnackbarOptions init_opts = {})
+    SnackbarWidget() = default;
+    SnackbarWidget(WidgetPtr body_, std::shared_ptr<SnackbarController> ctrl, SnackbarOptions init_opts = {})
         : body(std::move(body_)), controller(std::move(ctrl)), initial_options(std::move(init_opts)) {}
+    SnackbarWidget(Key key, WidgetPtr body_, std::shared_ptr<SnackbarController> ctrl, SnackbarOptions init_opts = {})
+        : StatefulWidget(std::move(key)),
+          body(std::move(body_)), controller(std::move(ctrl)), initial_options(std::move(init_opts)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Snackbar"; }
 };
 
-/// Factory function to wrap body with Snackbar overlay layer
-inline std::shared_ptr<Snackbar> snackbar(
-    WidgetPtr body,
-    std::shared_ptr<SnackbarController> controller,
-    SnackbarOptions options = {}) {
-    return std::make_shared<Snackbar>(std::move(body), std::move(controller), std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Snackbar> snackbar(SnackbarProps props) {
-    auto sb = std::make_shared<Snackbar>(std::move(props.body), std::move(props.controller), std::move(props.initial_options));
-    sb->key = props.key;
-    return sb;
-}
+struct Snackbar {
+    Key key = Key::none();
+    WidgetPtr body = nullptr;
+    std::shared_ptr<SnackbarController> controller = nullptr;
+    SnackbarOptions initial_options = {};
+
+    operator WidgetPtr() const {
+        return std::make_shared<SnackbarWidget>(key, body, controller, initial_options);
+    }
+};
 
 } // namespace enki

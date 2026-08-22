@@ -10,14 +10,10 @@
 using namespace enki;
 
 static WidgetPtr folder(Color c = 0xFFF59E0B) {
-    auto t = std::make_shared<Text>("📁");
-    t->fontSize(14.0f);
-    return t;
+    return text("📁", { .font_size = 14.0f });
 }
 static WidgetPtr file_icon() {
-    auto t = std::make_shared<Text>("📄");
-    t->fontSize(14.0f);
-    return t;
+    return text("📄", { .font_size = 14.0f });
 }
 
 class TreeViewDemoState : public State {
@@ -86,7 +82,7 @@ public:
                         { .flex_grow = 1.0f, .flex_shrink = 1.0f },
                         container({
                             .padding = StyleInsets::all(8.0f),
-                            .child = treeView({
+                            .child = TreeView {
                                 .nodes = std::move(nodes),
                                 .tree_theme = {
                                     .indent_width = 18.0f,
@@ -101,9 +97,9 @@ public:
                                 },
                                 .on_node_selected = [this](const std::string& id) {
                                     setState([this, id]{ last_action_ = "Selected: " + id; });
-                                    std::cout << "[TreeView] Selected: " << id << "\\n";
+                                    std::cout << "[TreeView] Selected: " << id << "\n";
                                 }
-                            })
+                            }
                         })
                     )
                 }

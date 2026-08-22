@@ -143,63 +143,126 @@ struct NumberFieldProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// NumberField Widget
+/// NumberField Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class NumberField : public StatefulWidget {
+class NumberFieldWidget : public StatefulWidget {
 public:
     std::shared_ptr<NumberFieldController> controller;
     NumberFieldProps options;
 
-    NumberField(std::shared_ptr<NumberFieldController> ctrl, NumberFieldProps opt = {})
+    NumberFieldWidget(std::shared_ptr<NumberFieldController> ctrl, NumberFieldProps opt = {})
         : controller(ctrl ? ctrl : std::make_shared<NumberFieldController>(0.0)),
           options(std::move(opt)) {}
 
-    NumberField(double initial_val, NumberFieldProps opt = {})
+    NumberFieldWidget(double initial_val, NumberFieldProps opt = {})
         : controller(std::make_shared<NumberFieldController>(initial_val)),
           options(std::move(opt)) {}
 
-    NumberField(Key key, std::shared_ptr<NumberFieldController> ctrl, double initial_val, NumberFieldProps opt)
+    NumberFieldWidget(Key key, std::shared_ptr<NumberFieldController> ctrl, double initial_val, NumberFieldProps opt)
         : StatefulWidget(std::move(key)),
           controller(ctrl ? std::move(ctrl) : std::make_shared<NumberFieldController>(initial_val)),
           options(std::move(opt)) {}
-
-    // Fluent API Chaining
-    NumberField* min(double m) { options.min_value = m; return this; }
-    NumberField* max(double m) { options.max_value = m; return this; }
-    NumberField* range(double mn, double mx) { options.min_value = mn; options.max_value = mx; return this; }
-    NumberField* step(double s) { options.step = s; return this; }
-    NumberField* largeStep(double ls) { options.large_step = ls; return this; }
-    NumberField* precision(int p) { options.precision = p; return this; }
-    NumberField* prefix(std::string p) { options.prefix_text = std::move(p); return this; }
-    NumberField* suffix(std::string s) { options.suffix_text = std::move(s); return this; }
-    NumberField* steppers(NumberFieldStepperPosition sp) { options.stepper_position = sp; return this; }
-    NumberField* sizePreset(NumberFieldSize s) { options.size = s; return this; }
-    NumberField* wrap(NumberFieldWrapMode wm) { options.wrap_mode = wm; return this; }
-    NumberField* thousandsSeparator(bool enable = true) { options.show_thousands_separator = enable; return this; }
-    NumberField* scrubbing(bool enable = true) { options.enable_scrubbing = enable; return this; }
-    NumberField* expressions(bool enable = true) { options.allow_expressions = enable; return this; }
-    NumberField* onChanged(std::function<void(double)> cb) { options.on_changed = std::move(cb); return this; }
-    NumberField* onSubmitted(std::function<void(double)> cb) { options.on_submitted = std::move(cb); return this; }
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "NumberField"; }
 };
 
-inline std::shared_ptr<NumberField> numberField(
-    std::shared_ptr<NumberFieldController> ctrl,
-    NumberFieldProps options = {}) {
-    return std::make_shared<NumberField>(std::move(ctrl), std::move(options));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<NumberField> numberField(
-    double initial_val = 0.0,
-    NumberFieldProps options = {}) {
-    return std::make_shared<NumberField>(initial_val, std::move(options));
-}
+struct NumberField {
+    Key key = Key::none();
+    std::shared_ptr<NumberFieldController> controller = nullptr;
+    double initial_value = 0.0;
 
-inline std::shared_ptr<NumberField> numberField(NumberFieldProps props) {
-    return std::make_shared<NumberField>(std::move(props.key), std::move(props.controller), props.initial_value, std::move(props));
-}
+    double min_value = -std::numeric_limits<double>::infinity();
+    double max_value = std::numeric_limits<double>::infinity();
+    double step = 1.0;
+    double large_step = 10.0;
+    double fine_step = 0.1;
+    int precision = 0;
+
+    bool allow_decimals = true;
+    bool allow_negative = true;
+    bool allow_expressions = true;
+    bool enable_scrubbing = true;
+    bool enable_auto_repeat = true;
+    bool show_thousands_separator = false;
+
+    NumberFieldStepperPosition stepper_position = NumberFieldStepperPosition::RightVertical;
+    NumberFieldSize size = NumberFieldSize::Medium;
+    NumberFieldWrapMode wrap_mode = NumberFieldWrapMode::Clamp;
+
+    std::string prefix_text = "";
+    std::string suffix_text = "";
+
+    TextStyle style;
+    Color background_color   = 0xFF0F172A;
+    Color border_color       = 0xFF334155;
+    Color focus_border_color = 0xFF38BDF8;
+    Color button_color       = 0xFF1E293B;
+    Color button_hover_color = 0xFF334155;
+    Color button_icon_color  = 0xFF94A3B8;
+    Color prefix_suffix_color= 0xFF64748B;
+    Color cursor_color       = 0xFF38BDF8;
+    Color selection_color    = 0x4D38BDF8;
+
+    float border_radius = 8.0f;
+    EdgeInsets padding = EdgeInsets::symmetric(8.0f, 10.0f);
+
+    bool read_only = false;
+    bool disabled = false;
+    bool auto_focus = false;
+
+    std::function<void(double)> on_changed = nullptr;
+    std::function<void(double)> on_submitted = nullptr;
+    std::function<std::string(double)> custom_formatter = nullptr;
+
+    operator WidgetPtr() const {
+        NumberFieldProps opts;
+        opts.key = key;
+        opts.controller = controller;
+        opts.initial_value = initial_value;
+        opts.min_value = min_value;
+        opts.max_value = max_value;
+        opts.step = step;
+        opts.large_step = large_step;
+        opts.fine_step = fine_step;
+        opts.precision = precision;
+        opts.allow_decimals = allow_decimals;
+        opts.allow_negative = allow_negative;
+        opts.allow_expressions = allow_expressions;
+        opts.enable_scrubbing = enable_scrubbing;
+        opts.enable_auto_repeat = enable_auto_repeat;
+        opts.show_thousands_separator = show_thousands_separator;
+        opts.stepper_position = stepper_position;
+        opts.size = size;
+        opts.wrap_mode = wrap_mode;
+        opts.prefix_text = prefix_text;
+        opts.suffix_text = suffix_text;
+        opts.style = style;
+        opts.background_color = background_color;
+        opts.border_color = border_color;
+        opts.focus_border_color = focus_border_color;
+        opts.button_color = button_color;
+        opts.button_hover_color = button_hover_color;
+        opts.button_icon_color = button_icon_color;
+        opts.prefix_suffix_color = prefix_suffix_color;
+        opts.cursor_color = cursor_color;
+        opts.selection_color = selection_color;
+        opts.border_radius = border_radius;
+        opts.padding = padding;
+        opts.read_only = read_only;
+        opts.disabled = disabled;
+        opts.auto_focus = auto_focus;
+        opts.on_changed = on_changed;
+        opts.on_submitted = on_submitted;
+        opts.custom_formatter = custom_formatter;
+
+        return std::make_shared<NumberFieldWidget>(key, controller, initial_value, std::move(opts));
+    }
+};
 
 } // namespace enki

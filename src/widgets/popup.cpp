@@ -222,7 +222,7 @@ static Point calculatePopupPosition(
     return {pop_x, pop_y};
 }
 
-std::shared_ptr<NativePopup> Popup::show(
+std::shared_ptr<NativePopup> PopupWidget::show(
     BuildContext& context,
     std::function<WidgetPtr(BuildContext&, std::shared_ptr<NativePopup>)> popup_builder,
     PopupWidgetOptions options) {
@@ -268,7 +268,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* pop_widget = static_cast<const Popup*>(widget());
+        auto* pop_widget = static_cast<const PopupWidget*>(widget());
         if (pop_widget && pop_widget->controller) {
             pop_widget->controller->setToggleCallback([this](bool show) {
                 if (show) showPopupNow();
@@ -285,7 +285,7 @@ public:
     void showPopupNow() {
         if (active_popup_) return;
 
-        auto* pop_widget = static_cast<const Popup*>(widget());
+        auto* pop_widget = static_cast<const PopupWidget*>(widget());
         if (!pop_widget || !pop_widget->popup_builder) return;
 
         Element* elem = element();
@@ -342,7 +342,7 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* pop_widget = static_cast<const Popup*>(widget());
+        auto* pop_widget = static_cast<const PopupWidget*>(widget());
 
         auto gesture = gestureDetector(pop_widget->child);
         gesture->hit_test_behavior = HitTestBehavior::Translucent;
@@ -370,7 +370,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Popup::createState() {
+std::unique_ptr<State> PopupWidget::createState() {
     return std::make_unique<PopupState>();
 }
 

@@ -70,205 +70,230 @@ public:
 
     WidgetPtr build(BuildContext&) override {
         // Main Header
-        auto title = text("Advanced SearchField & Command Palette Suite");
-        title->fontSize(22.0f).bold().color(0xFFFFFFFF);
+        auto title = text("Advanced SearchField & Command Palette Suite", {
+            .color = 0xFFFFFFFF,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Live debounced search, autocomplete suggestions, categorized command palette, history, and shortcuts");
-        sub->fontSize(13.0f).color(0xFF94A3B8);
+        auto sub = text("Live debounced search, autocomplete suggestions, categorized command palette, history, and shortcuts", {
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+        });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center);
+        auto title_col = column({
+            .align_items = Align::Center,
+            .children = {title, sub}
+        });
 
         // ── 1. Spotlight / Command Palette Field ──────────────────────
-        SearchFieldProps cmd_opts;
-        cmd_opts.placeholder = "Type a command or search actions (Try 'build', 'file', 'set')...";
-        cmd_opts.variant = SearchFieldVariant::Filled;
-        cmd_opts.size = SearchFieldSize::Medium;
-        cmd_opts.show_shortcut_badge = true;
-        cmd_opts.shortcut_hint = "Ctrl+K";
-        cmd_opts.suggestions_provider = [](std::string_view query) -> std::vector<SearchSuggestion> {
-            auto all = getMockCommands();
-            if (query.empty()) return all;
-            std::vector<SearchSuggestion> filtered;
-            std::string lq(query);
-            std::transform(lq.begin(), lq.end(), lq.begin(), ::tolower);
-            for (const auto& item : all) {
-                std::string lt = item.title;
-                std::transform(lt.begin(), lt.end(), lt.begin(), ::tolower);
-                if (lt.find(lq) != std::string::npos) {
-                    filtered.push_back(item);
+        auto cmd_field = SearchField {
+            .controller = cmd_ctrl_,
+            .placeholder = "Type a command or search actions (Try 'build', 'file', 'set')...",
+            .variant = SearchFieldVariant::Filled,
+            .size = SearchFieldSize::Medium,
+            .show_shortcut_badge = true,
+            .shortcut_hint = "Ctrl+K",
+            .suggestions_provider = [](std::string_view query) -> std::vector<SearchSuggestion> {
+                auto all = getMockCommands();
+                if (query.empty()) return all;
+                std::vector<SearchSuggestion> filtered;
+                std::string lq(query);
+                std::transform(lq.begin(), lq.end(), lq.begin(), ::tolower);
+                for (const auto& item : all) {
+                    std::string lt = item.title;
+                    std::transform(lt.begin(), lt.end(), lt.begin(), ::tolower);
+                    if (lt.find(lq) != std::string::npos) {
+                        filtered.push_back(item);
+                    }
                 }
+                return filtered;
+            },
+            .on_search = [this](std::string_view) {
+                debounce_search_count_++;
+                setState([] {});
+            },
+            .on_submitted = [this](std::string_view q) {
+                last_submitted_query_ = std::string(q);
+                setState([] {});
+            },
+            .on_suggestion_selected = [this](const SearchSuggestion& item) {
+                last_selected_item_ = item.title + " (" + item.category + ")";
+                setState([] {});
             }
-            return filtered;
-        };
-        cmd_opts.on_search = [this](std::string_view) {
-            debounce_search_count_++;
-            setState([] {});
-        };
-        cmd_opts.on_submitted = [this](std::string_view q) {
-            last_submitted_query_ = std::string(q);
-            setState([] {});
-        };
-        cmd_opts.on_suggestion_selected = [this](const SearchSuggestion& item) {
-            last_selected_item_ = item.title + " (" + item.category + ")";
-            setState([] {});
         };
 
-        cmd_opts.controller = cmd_ctrl_;
-        auto cmd_field = searchField(cmd_opts);
+        auto c1_title = text("1. Spotlight / Command Palette (with Categories & Hotkeys)", {
+            .color = 0xFF38BDF8,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c1_title = text("1. Spotlight / Command Palette (with Categories & Hotkeys)");
-        c1_title->fontSize(14.0f).bold().color(0xFF38BDF8);
+        auto c1_desc = text("Press Ctrl+K or click to open. Use Up/Down arrows to navigate, Enter to execute, Tab to autocomplete.", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
-        auto c1_desc = text("Press Ctrl+K or click to open. Use Up/Down arrows to navigate, Enter to execute, Tab to autocomplete.");
-        c1_desc->fontSize(12.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> c1_items;
-        c1_items.push_back(c1_title);
-        c1_items.push_back(c1_desc);
-        c1_items.push_back(cmd_field);
-        auto c1_col = column(c1_items);
-        c1_col->gap(StyleValue::point(8.0f));
-
-        auto card1 = container(c1_col);
-        card1->color(0xFF1E293B)
-             .borderRadius(10.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(16.0f)
-             .width(560.0f);
+        auto card1 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(560.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(8.0f),
+                .children = {c1_title, c1_desc, cmd_field}
+            })
+        });
 
         // ── 2. Project File Search ────────────────────────────────────
-        SearchFieldProps file_opts;
-        file_opts.placeholder = "Search files by name (e.g. 'search', 'wayland', 'meson')...";
-        file_opts.variant = SearchFieldVariant::Outlined;
-        file_opts.size = SearchFieldSize::Medium;
-        file_opts.focus_border_color = 0xFF10B981;
-        file_opts.suggestions_provider = [](std::string_view query) -> std::vector<SearchSuggestion> {
-            auto all = getMockFiles();
-            if (query.empty()) return all;
-            std::vector<SearchSuggestion> filtered;
-            std::string lq(query);
-            std::transform(lq.begin(), lq.end(), lq.begin(), ::tolower);
-            for (const auto& item : all) {
-                std::string lt = item.title;
-                std::transform(lt.begin(), lt.end(), lt.begin(), ::tolower);
-                if (lt.find(lq) != std::string::npos) {
-                    filtered.push_back(item);
+        auto file_field = SearchField {
+            .controller = file_ctrl_,
+            .placeholder = "Search files by name (e.g. 'search', 'wayland', 'meson')...",
+            .variant = SearchFieldVariant::Outlined,
+            .size = SearchFieldSize::Medium,
+            .focus_border_color = 0xFF10B981,
+            .suggestions_provider = [](std::string_view query) -> std::vector<SearchSuggestion> {
+                auto all = getMockFiles();
+                if (query.empty()) return all;
+                std::vector<SearchSuggestion> filtered;
+                std::string lq(query);
+                std::transform(lq.begin(), lq.end(), lq.begin(), ::tolower);
+                for (const auto& item : all) {
+                    std::string lt = item.title;
+                    std::transform(lt.begin(), lt.end(), lt.begin(), ::tolower);
+                    if (lt.find(lq) != std::string::npos) {
+                        filtered.push_back(item);
+                    }
                 }
+                return filtered;
+            },
+            .on_suggestion_selected = [this](const SearchSuggestion& item) {
+                last_selected_item_ = item.title + " [" + item.badge + "]";
+                setState([] {});
             }
-            return filtered;
-        };
-        file_opts.on_suggestion_selected = [this](const SearchSuggestion& item) {
-            last_selected_item_ = item.title + " [" + item.badge + "]";
-            setState([] {});
         };
 
-        file_opts.controller = file_ctrl_;
-        auto file_field = searchField(file_opts);
+        auto c2_title = text("2. File Explorer Search (Outlined Style)", {
+            .color = 0xFF10B981,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c2_title = text("2. File Explorer Search (Outlined Style)");
-        c2_title->fontSize(14.0f).bold().color(0xFF10B981);
+        auto c2_desc = text("Instant filter with file extension badges, directory paths, and clear button.", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
-        auto c2_desc = text("Instant filter with file extension badges, directory paths, and clear button.");
-        c2_desc->fontSize(12.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> c2_items;
-        c2_items.push_back(c2_title);
-        c2_items.push_back(c2_desc);
-        c2_items.push_back(file_field);
-        auto c2_col = column(c2_items);
-        c2_col->gap(StyleValue::point(8.0f));
-
-        auto card2 = container(c2_col);
-        card2->color(0xFF1E293B)
-             .borderRadius(10.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(16.0f)
-             .width(560.0f);
+        auto card2 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(560.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(8.0f),
+                .children = {c2_title, c2_desc, file_field}
+            })
+        });
 
         // ── 3. Pill Capsule Navbar Search ─────────────────────────────
-        SearchFieldProps pill_opts;
-        pill_opts.placeholder = "Quick search docs...";
-        pill_opts.variant = SearchFieldVariant::Pill;
-        pill_opts.size = SearchFieldSize::Small;
-        pill_opts.focus_border_color = 0xFFF59E0B;
-        pill_opts.on_submitted = [this](std::string_view q) {
-            last_submitted_query_ = std::string(q);
-            setState([] {});
+        auto pill_field = SearchField {
+            .controller = pill_ctrl_,
+            .placeholder = "Quick search docs...",
+            .variant = SearchFieldVariant::Pill,
+            .size = SearchFieldSize::Small,
+            .focus_border_color = 0xFFF59E0B,
+            .on_submitted = [this](std::string_view q) {
+                last_submitted_query_ = std::string(q);
+                setState([] {});
+            }
         };
 
-        pill_opts.controller = pill_ctrl_;
-        auto pill_field = searchField(pill_opts);
+        auto c3_title = text("3. Compact Navbar Pill Search Bar", {
+            .color = 0xFFF59E0B,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto c3_title = text("3. Compact Navbar Pill Search Bar");
-        c3_title->fontSize(14.0f).bold().color(0xFFF59E0B);
+        auto c3_desc = text("Compact ~34px pill shape ideal for application titlebars, toolbars, and navigation rails.", {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
-        auto c3_desc = text("Compact ~34px pill shape ideal for application titlebars, toolbars, and navigation rails.");
-        c3_desc->fontSize(12.0f).color(0xFF94A3B8);
-
-        std::vector<WidgetPtr> c3_items;
-        c3_items.push_back(c3_title);
-        c3_items.push_back(c3_desc);
-        c3_items.push_back(pill_field);
-        auto c3_col = column(c3_items);
-        c3_col->gap(StyleValue::point(8.0f));
-
-        auto card3 = container(c3_col);
-        card3->color(0xFF1E293B)
-             .borderRadius(10.0f)
-             .border(0xFF334155, 1.0f)
-             .paddingAll(16.0f)
-             .width(560.0f);
+        auto card3 = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(560.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = column({
+                .gap = StyleValue::point(8.0f),
+                .children = {c3_title, c3_desc, pill_field}
+            })
+        });
 
         // ── Live Status Panel ─────────────────────────────────────────
-        auto status_hdr = text("📊 Live Interactive Search State");
-        status_hdr->fontSize(13.5f).bold().color(0xFFFFFFFF);
+        auto status_hdr = text("📊 Live Interactive Search State", {
+            .color = 0xFFFFFFFF,
+            .font_size = 13.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto st_sel = text("Last Executed Action: " + last_selected_item_);
-        st_sel->fontSize(12.0f).color(0xFF38BDF8);
+        auto st_sel = text("Last Executed Action: " + last_selected_item_, {
+            .color = 0xFF38BDF8,
+            .font_size = 12.0f,
+        });
 
-        auto st_sub = text("Last Submitted Query: " + last_submitted_query_);
-        st_sub->fontSize(12.0f).color(0xFF10B981);
+        auto st_sub = text("Last Submitted Query: " + last_submitted_query_, {
+            .color = 0xFF10B981,
+            .font_size = 12.0f,
+        });
 
-        auto st_deb = text("Debounced Queries Dispatched: " + std::to_string(debounce_search_count_));
-        st_deb->fontSize(12.0f).color(0xFF94A3B8);
+        auto st_deb = text("Debounced Queries Dispatched: " + std::to_string(debounce_search_count_), {
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+        });
 
-        std::vector<WidgetPtr> status_items = {status_hdr, st_sel, st_sub, st_deb};
-        auto status_col = column(status_items);
-        status_col->gap(StyleValue::point(4.0f));
-
-        auto status_box = container(status_col);
-        status_box->color(0xFF0F172A)
-                  .borderRadius(8.0f)
-                  .border(0xFF334155, 1.0f)
-                  .paddingAll(12.0f)
-                  .width(560.0f);
+        auto status_box = container({
+            .color = 0xFF0F172A,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(560.0f),
+            .padding = StyleInsets::all(12.0f),
+            .child = column({
+                .gap = StyleValue::point(4.0f),
+                .children = {status_hdr, st_sel, st_sub, st_deb}
+            })
+        });
 
         // Top Row: Card1 & Card2
-        std::vector<WidgetPtr> row1_items = {card1, card2};
-        auto row1 = row(row1_items);
-        row1->gap(StyleValue::point(16.0f))
-             .justifyContent(Justify::Center);
+        auto row1 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {card1, card2}
+        });
 
         // Bottom Row: Card3 & Status Box
-        std::vector<WidgetPtr> row2_items = {card3, status_box};
-        auto row2 = row(row2_items);
-        row2->gap(StyleValue::point(16.0f))
-             .justifyContent(Justify::Center);
+        auto row2 = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {card3, status_box}
+        });
 
         // Main Column
-        std::vector<WidgetPtr> main_items = {title_col, row1, row2};
-        auto main_col = column(main_items);
-        main_col->gap(StyleValue::point(16.0f))
-                .alignItems(Align::Center);
+        auto main_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {title_col, row1, row2}
+        });
 
-        auto app_root = container(main_col);
-        app_root->color(0xFF0B1120)
-                .paddingAll(20.0f)
-                .flexGrow(1.0f);
-
-        return app_root;
+        return container({
+            .color = 0xFF0B1120,
+            .padding = StyleInsets::all(20.0f),
+            .flex_grow = 1.0f,
+            .child = main_col
+        });
     }
 };
 

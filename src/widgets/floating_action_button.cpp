@@ -2,7 +2,7 @@
 
 namespace enki {
 
-WidgetPtr FloatingActionButton::build(BuildContext& context) {
+WidgetPtr FloatingActionButtonWidget::build(BuildContext& context) {
     ButtonProps btn_options;
     btn_options.normal_color = options.normal_color;
     btn_options.hover_color = options.hover_color;

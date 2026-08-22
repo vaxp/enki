@@ -55,7 +55,7 @@ class TreeViewState : public State {
 
     void initState() override {
         State::initState();
-        auto* w = static_cast<const TreeView*>(widget());
+        auto* w = static_cast<const TreeViewWidget*>(widget());
         // Init expanded state from TreeNodeData.initially_expanded
         initExpandedState(w->props.nodes);
         // Init selection
@@ -71,7 +71,7 @@ class TreeViewState : public State {
         }
     }
 
-    WidgetPtr buildNode(const TreeNodeData& data, int depth, const TreeViewTheme& theme, const TreeView* w) {
+    WidgetPtr buildNode(const TreeNodeData& data, int depth, const TreeViewTheme& theme, const TreeViewWidget* w) {
         bool is_expanded = expanded_.count(data.id) > 0;
         bool is_selected = selected_.count(data.id) > 0;
         bool is_leaf     = data.children.empty() && !data.loading;
@@ -219,7 +219,7 @@ class TreeViewState : public State {
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const TreeView*>(widget());
+        auto* w = static_cast<const TreeViewWidget*>(widget());
 
         std::vector<WidgetPtr> all_nodes;
         for (auto& n : w->props.nodes)
@@ -247,7 +247,7 @@ public:
     }
 };
 
-std::unique_ptr<State> TreeView::createState() {
+std::unique_ptr<State> TreeViewWidget::createState() {
     return std::make_unique<TreeViewState>();
 }
 

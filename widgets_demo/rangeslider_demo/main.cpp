@@ -24,50 +24,73 @@ class RangeSliderDemoState : public State {
 
 public:
     WidgetPtr build(BuildContext&) override {
-        auto title = std::make_shared<Text>("RangeSlider Demo", TextStyle{.color = 0xFFFFFFFF, .font_size = 24.0f, .font_weight = FontWeight::Bold});
+        auto title = text("RangeSlider Demo", {
+            .color = 0xFFFFFFFF,
+            .font_size = 24.0f,
+            .font_weight = FontWeight::Bold,
+        });
         
         // 1. Standard RangeSlider
         std::stringstream ss1;
         ss1 << std::fixed << std::setprecision(0) << "$" << price_min << " - $" << price_max;
-        auto txt1 = std::make_shared<Text>("Price: " + ss1.str(), TextStyle{.color = 0xFFCCCCCC});
+        auto txt1 = text("Price: " + ss1.str(), { .color = 0xFFCCCCCC });
         
-        auto rs1 = rangeSlider(price_min, price_max, [this](float s, float e) {
-            price_min = s;
-            price_max = e;
-            setState([]{});
+        auto rs1 = RangeSlider {
+            .start_value = price_min,
+            .end_value = price_max,
+            .on_change = [this](float s, float e) {
+                price_min = s;
+                price_max = e;
+                setState([]{});
+            },
+            .min_value = 0.0f,
+            .max_value = 100.0f
+        };
+        
+        auto row1 = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(24.0f),
+            .children = {txt1, expanded(rs1)}
         });
-        rs1->min(0.0f)->max(100.0f);
-        
-        auto row1 = row(std::vector<WidgetPtr>{txt1, expanded(rs1)});
-        row1->gap(StyleValue::point(24.0f)).alignItems(Align::Center);
         
         // 2. Custom Colored RangeSlider
         std::stringstream ss2;
         ss2 << std::fixed << std::setprecision(1) << time_min << "h - " << time_max << "h";
-        auto txt2 = std::make_shared<Text>("Time: " + ss2.str(), TextStyle{.color = 0xFFCCCCCC});
+        auto txt2 = text("Time: " + ss2.str(), { .color = 0xFFCCCCCC });
         
-        auto rs2 = rangeSlider(time_min, time_max, [this](float s, float e) {
-            time_min = s;
-            time_max = e;
-            setState([]{});
-        });
-        rs2->min(0.0f)->max(24.0f)
-           ->activeColor(0xFF8B5CF6) // Violet
-           ->inactiveColor(0xFF4C1D95) // Dark Violet
-           ->thumbColor(0xFFEDE9FE) // Light Violet
-           ->trackHeight(8.0f)
-           ->thumbRadius(12.0f);
+        auto rs2 = RangeSlider {
+            .start_value = time_min,
+            .end_value = time_max,
+            .on_change = [this](float s, float e) {
+                time_min = s;
+                time_max = e;
+                setState([]{});
+            },
+            .active_color = 0xFF8B5CF6,
+            .inactive_color = 0xFF4C1D95,
+            .thumb_color = 0xFFEDE9FE,
+            .track_height = 8.0f,
+            .thumb_radius = 12.0f,
+            .min_value = 0.0f,
+            .max_value = 24.0f
+        };
           
-        auto row2 = row(std::vector<WidgetPtr>{txt2, expanded(rs2)});
-        row2->gap(StyleValue::point(24.0f)).alignItems(Align::Center);
+        auto row2 = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(24.0f),
+            .children = {txt2, expanded(rs2)}
+        });
 
-        auto col = column(std::vector<WidgetPtr>{title, row1, row2});
-        col->gap(StyleValue::point(40.0f)).padding(StyleInsets::all(40.0f));
+        auto col = column({
+            .gap = StyleValue::point(40.0f),
+            .children = {title, row1, row2}
+        });
 
-        auto bg = container(col);
-        bg->color(0xFF1E293B); // Dark slate background
-
-        return bg;
+        return container({
+            .color = 0xFF1E293B,
+            .padding = StyleInsets::all(40.0f),
+            .child = col
+        });
     }
 };
 
