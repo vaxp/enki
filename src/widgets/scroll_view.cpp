@@ -178,11 +178,11 @@ void RenderScrollView::handlePointerUp(const PointerEvent& e) {
 // ScrollView Widget
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> ScrollView::createRenderObject(BuildContext& ctx) {
+std::unique_ptr<RenderObject> ScrollViewWidget::createRenderObject(BuildContext& ctx) {
     return std::make_unique<RenderScrollView>(options);
 }
 
-void ScrollView::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
+void ScrollViewWidget::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
     if (auto* rsv = dynamic_cast<RenderScrollView*>(&renderObject)) {
         rsv->setOptions(options);
     }

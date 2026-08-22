@@ -79,6 +79,20 @@ int main() {
     // Actually, RenderObject children are just raw pointers and we own it via child_render unique_ptr. 
     // RenderObject destructor doesn't delete children!
     
+    // 7. Test declarative syntax
+    WidgetPtr sv = ScrollView {
+        .child = container(),
+        .direction = Axis::Horizontal,
+        .clamp_overscroll = true,
+        .show_scrollbar = true,
+        .scroll_speed = 60.0f,
+    };
+    assert(sv != nullptr);
+    auto* sv_widget = static_cast<ScrollViewWidget*>(sv.get());
+    assert(sv_widget->options.direction == Axis::Horizontal);
+    assert(sv_widget->options.show_scrollbar == true);
+    assert(sv_widget->options.scroll_speed == 60.0f);
+
     std::cout << "test_scroll_view PASSED" << std::endl;
     return 0;
 }
