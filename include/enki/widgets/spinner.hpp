@@ -22,9 +22,9 @@ enum class SpinnerStyle {
     CustomShader  ///< Direct developer SkSL procedural shader injection
 };
 
-/// Options for configuring a Spinner
-struct SpinnerProps {
-    Key key = Key::none();
+/// An advanced loading spinner indicator widget with optional center child
+class SpinnerWidget : public StatefulWidget {
+public:
     SpinnerStyle style = SpinnerStyle::Spokes;
     
     float size = 36.0f;
@@ -47,37 +47,60 @@ struct SpinnerProps {
     
     // Custom SkSL Shader
     std::string custom_shader = "";
-};
 
-/// An advanced loading spinner indicator widget with optional center child
-class Spinner : public StatefulWidget {
-public:
-    WidgetPtr child;
-    SpinnerProps options;
+    WidgetPtr child = nullptr;
 
-    explicit Spinner(SpinnerProps options = SpinnerProps(), WidgetPtr child = nullptr)
-        : child(std::move(child)), options(std::move(options)) {}
-        
-    Spinner(Key k, WidgetPtr child, SpinnerProps options)
-        : StatefulWidget(std::move(k)), child(std::move(child)), options(std::move(options)) {}
+    explicit SpinnerWidget(Key key) : StatefulWidget(std::move(key)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Spinner"; }
 };
 
-/// Helper function to construct a Spinner widget
-inline WidgetPtr spinner(SpinnerProps options = SpinnerProps(), WidgetPtr child = nullptr) {
-    return std::make_shared<Spinner>(std::move(options), std::move(child));
-}
+struct Spinner {
+    SpinnerStyle style = SpinnerStyle::Spokes;
+    
+    float size = 36.0f;
+    Color color = 0xFF3B82F6; // Primary blue
+    std::vector<Color> gradient_colors = {}; // Optional multi-color sequence
+    
+    // Spokes parameters (for SpinnerStyle::Spokes)
+    int spoke_count = 12;
+    float spoke_width = 3.0f;
+    float spoke_length = 8.0f;
+    
+    // OrbitDots parameters (for SpinnerStyle::OrbitDots)
+    int dot_count = 5;
+    float dot_size = 6.0f;
+    
+    // Animation & Effects
+    float rotation_speed = 1.0f;
+    Color glow_color = 0x00000000;
+    float glow_blur = 0.0f;
+    
+    // Custom SkSL Shader
+    std::string custom_shader = "";
 
-struct SpinnerDeclarativeProps {
+    WidgetPtr child = nullptr;
     Key key = Key::none();
-    WidgetPtr child;
-    SpinnerProps options = SpinnerProps();
-};
 
-inline WidgetPtr spinner(SpinnerDeclarativeProps props) {
-    return std::make_shared<Spinner>(std::move(props.key), std::move(props.child), std::move(props.options));
-}
+    operator WidgetPtr() const {
+        auto w = std::make_shared<SpinnerWidget>(key);
+        w->style = style;
+        w->size = size;
+        w->color = color;
+        w->gradient_colors = gradient_colors;
+        w->spoke_count = spoke_count;
+        w->spoke_width = spoke_width;
+        w->spoke_length = spoke_length;
+        w->dot_count = dot_count;
+        w->dot_size = dot_size;
+        w->rotation_speed = rotation_speed;
+        w->glow_color = glow_color;
+        w->glow_blur = glow_blur;
+        w->custom_shader = custom_shader;
+        w->child = child;
+        return w;
+    }
+};
 
 } // namespace enki

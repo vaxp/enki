@@ -37,20 +37,38 @@ inline double getSteadyTimeSeconds() {
 
 class RenderProgressBar : public RenderBox {
 public:
-    ProgressBarProps options;
+    float height_;
+    float border_radius_;
+    Color background_color_;
+    Color progress_color_;
+    std::vector<Color> gradient_colors_;
+    Color glow_color_;
+    float glow_blur_;
+    bool indeterminate_;
+    std::string custom_shader_;
+    bool show_label_;
+    std::string label_format_;
+    float min_width_;
+
     float value;
     float anim_time;
     double start_time;
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderProgressBar(const ProgressBarProps& opt, float val, float anim_t, double st)
-        : options(opt), value(val), anim_time(anim_t), start_time(st) {
+    RenderProgressBar(const ProgressBarWidget* opt, float val, float anim_t, double st)
+        : height_(opt->height), border_radius_(opt->border_radius),
+          background_color_(opt->background_color), progress_color_(opt->progress_color),
+          gradient_colors_(opt->gradient_colors), glow_color_(opt->glow_color),
+          glow_blur_(opt->glow_blur), indeterminate_(opt->indeterminate),
+          custom_shader_(opt->custom_shader), show_label_(opt->show_label),
+          label_format_(opt->label_format), min_width_(opt->min_width),
+          value(val), anim_time(anim_t), start_time(st) {
         
         updateAnuStyles();
 
-        if (!options.custom_shader.empty()) {
-            auto [eff, err] = SkRuntimeEffect::MakeForShader(SkString(options.custom_shader.c_str()));
+        if (!custom_shader_.empty()) {
+            auto [eff, err] = SkRuntimeEffect::MakeForShader(SkString(custom_shader_.c_str()));
             if (!eff) {
                 std::cerr << "ProgressBar SkSL Shader Compile Error: " << err.c_str() << "\n";
             } else {
@@ -61,14 +79,26 @@ public:
 
     void updateAnuStyles() {
         if (anu_node_) {
-            ANUNodeStyleSetHeight(anu_node_, options.height);
+            ANUNodeStyleSetHeight(anu_node_, height_);
             ANUNodeStyleSetWidthPercent(anu_node_, 100.0f);
-            ANUNodeStyleSetMinWidth(anu_node_, options.min_width);
+            ANUNodeStyleSetMinWidth(anu_node_, min_width_);
         }
     }
 
-    void setOptions(const ProgressBarProps& opt) {
-        options = opt;
+    void setOptions(const ProgressBarWidget* opt) {
+        height_ = opt->height;
+        border_radius_ = opt->border_radius;
+        background_color_ = opt->background_color;
+        progress_color_ = opt->progress_color;
+        gradient_colors_ = opt->gradient_colors;
+        glow_color_ = opt->glow_color;
+        glow_blur_ = opt->glow_blur;
+        indeterminate_ = opt->indeterminate;
+        custom_shader_ = opt->custom_shader;
+        show_label_ = opt->show_label;
+        label_format_ = opt->label_format;
+        min_width_ = opt->min_width;
+        
         updateAnuStyles();
         markNeedsLayout();
     }
@@ -82,11 +112,11 @@ public:
         // 1. Background Track
         SkRect track_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
         SkRRect track_rrect;
-        track_rrect.setRectXY(track_rect, options.border_radius, options.border_radius);
+        track_rrect.setRectXY(track_rect, border_radius_, border_radius_);
 
         SkPaint track_paint;
         track_paint.setAntiAlias(true);
-        track_paint.setColor(options.background_color);
+        track_paint.setColor(background_color_);
         canvas->drawRRect(track_rrect, track_paint);
 
         // Clip subsequent progress rendering to the rounded track
@@ -94,7 +124,7 @@ public:
         canvas->clipRRect(track_rrect, true);
 
         // 2. Active Progress Fill
-        if (options.indeterminate) {
+        if (indeterminate_) {
             // Indeterminate shimmer sweep animation
             float shimmer_width = size_.width * 0.4f;
             float cycle = fmod(anim_time * 1.2f, 1.0f);
@@ -125,9 +155,9 @@ public:
                     {ctx.offset.x + start_x + shimmer_width, ctx.offset.y}
                 };
                 SkColor colors[3] = {
-                    options.background_color,
-                    options.progress_color,
-                    options.background_color
+                    background_color_,
+                    progress_color_,
+                    background_color_
                 };
                 fill_paint.setShader(SkGradientShader::MakeLinear(pts, colors, nullptr, 3, SkTileMode::kClamp));
             }
@@ -141,13 +171,13 @@ public:
             if (fill_width > 0.0f) {
                 SkRect fill_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, fill_width, size_.height);
                 SkRRect fill_rrect;
-                fill_rrect.setRectXY(fill_rect, options.border_radius, options.border_radius);
+                fill_rrect.setRectXY(fill_rect, border_radius_, border_radius_);
 
                 // Glow Effect
-                if (options.glow_blur > 0.0f && options.glow_color != 0) {
+                if (glow_blur_ > 0.0f && glow_color_ != 0) {
                     SkPaint glow_paint;
-                    glow_paint.setColor(options.glow_color);
-                    glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.glow_blur * 0.5f));
+                    glow_paint.setColor(glow_color_);
+                    glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
                     canvas->drawRRect(fill_rrect, glow_paint);
                 }
 
@@ -168,9 +198,9 @@ public:
                     sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
                     SkMatrix local_matrix = SkMatrix::Translate(-ctx.offset.x, -ctx.offset.y);
                 fill_paint.setShader(effect->makeShader(uniform_data, nullptr, 0)->makeWithLocalMatrix(local_matrix));
-                } else if (options.gradient_colors.size() >= 2) {
+                } else if (gradient_colors_.size() >= 2) {
                     std::vector<SkColor> sk_colors;
-                    for (auto c : options.gradient_colors) sk_colors.push_back(c);
+                    for (auto c : gradient_colors_) sk_colors.push_back(c);
 
                     SkPoint pts[2] = {
                         {ctx.offset.x, ctx.offset.y},
@@ -179,7 +209,7 @@ public:
                     fill_paint.setShader(SkGradientShader::MakeLinear(
                         pts, sk_colors.data(), nullptr, static_cast<int>(sk_colors.size()), SkTileMode::kClamp));
                 } else {
-                    fill_paint.setColor(options.progress_color);
+                    fill_paint.setColor(progress_color_);
                 }
 
                 canvas->drawRRect(fill_rrect, fill_paint);
@@ -189,9 +219,9 @@ public:
         canvas->restore(); // Restore track clip
 
         // 3. Optional Percentage / Text Label
-        if (options.show_label && size_.height >= 12.0f) {
+        if (show_label_ && size_.height >= 12.0f) {
             std::string label_str;
-            if (options.indeterminate) {
+            if (indeterminate_) {
                 label_str = "Loading...";
             } else {
                 int pct = static_cast<int>(std::clamp(value, 0.0f, 1.0f) * 100.0f);
@@ -222,14 +252,14 @@ public:
 
 class ProgressBarRenderWidget : public SingleChildRenderObjectWidget {
 public:
-    ProgressBarProps options;
+    const ProgressBarWidget* options;
     float value;
     float anim_time;
     double start_time;
 
-    ProgressBarRenderWidget(ProgressBarProps opt, float val, float anim_t, double st)
+    ProgressBarRenderWidget(const ProgressBarWidget* opt, float val, float anim_t, double st)
         : SingleChildRenderObjectWidget(Key::none(), nullptr),
-          options(std::move(opt)), value(val), anim_time(anim_t), start_time(st) {}
+          options(opt), value(val), anim_time(anim_t), start_time(st) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override {
         return std::make_unique<RenderProgressBar>(options, value, anim_time, start_time);
@@ -262,8 +292,8 @@ public:
         State::initState();
         start_time_ = getSteadyTimeSeconds();
 
-        auto* pb = static_cast<const ProgressBar*>(widget());
-        if (pb->options.indeterminate || !pb->options.custom_shader.empty()) {
+        auto* pb = static_cast<const ProgressBarWidget*>(widget());
+        if (pb->indeterminate || !pb->custom_shader.empty()) {
             ticker_ = createTicker([this]() {
                 anim_time_ = static_cast<float>(getSteadyTimeSeconds() - start_time_);
                 setState([]{});
@@ -278,15 +308,15 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* pb = static_cast<const ProgressBar*>(widget());
+        auto* pb = static_cast<const ProgressBarWidget*>(widget());
 
         return std::make_shared<ProgressBarRenderWidget>(
-            pb->options, pb->value, anim_time_, start_time_
+            pb, pb->value, anim_time_, start_time_
         );
     }
 };
 
-std::unique_ptr<State> ProgressBar::createState() {
+std::unique_ptr<State> ProgressBarWidget::createState() {
     return std::make_unique<ProgressBarState>();
 }
 

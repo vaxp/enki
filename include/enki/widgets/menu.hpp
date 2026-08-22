@@ -135,70 +135,63 @@ struct MenuEntry {
         : label(std::move(label)), items(std::move(items)), enabled(enabled) {}
 };
 
-struct MenuBarProps {
-    Key key = Key::none();
-    std::vector<MenuEntry> entries;
-    MenuOptions options;
-};
-
 // ════════════════════════════════════════════════════════════════
 // MenuBar Widget
 // ════════════════════════════════════════════════════════════════
 
-class MenuBar : public StatefulWidget {
+class MenuBarWidget : public StatefulWidget {
 public:
     std::vector<MenuEntry> entries;
     MenuOptions options;
 
-    MenuBar(std::vector<MenuEntry> entries, MenuOptions options = MenuOptions())
-        : entries(std::move(entries)), options(std::move(options)) {}
+    explicit MenuBarWidget(Key key) : StatefulWidget(std::move(key)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "MenuBar"; }
 };
 
-inline WidgetPtr menuBar(std::vector<MenuEntry> entries, MenuOptions options = MenuOptions()) {
-    return std::make_shared<MenuBar>(std::move(entries), std::move(options));
-}
-
-inline WidgetPtr menuBar(MenuBarProps props) {
-    auto mb = std::make_shared<MenuBar>(std::move(props.entries), std::move(props.options));
-    mb->key = props.key;
-    return mb;
-}
-
-struct MenuProps {
+struct MenuBar {
+    std::vector<MenuEntry> entries;
+    MenuOptions options = MenuOptions();
     Key key = Key::none();
-    WidgetPtr child;
-    std::vector<MenuItem> items;
-    MenuOptions options;
+
+    operator WidgetPtr() const {
+        auto w = std::make_shared<MenuBarWidget>(key);
+        w->entries = entries;
+        w->options = options;
+        return w;
+    }
 };
 
 // ════════════════════════════════════════════════════════════════
 // Standalone / Anchor Menu Widget
 // ════════════════════════════════════════════════════════════════
 
-class Menu : public StatefulWidget {
+class MenuWidget : public StatefulWidget {
 public:
     WidgetPtr child;
     std::vector<MenuItem> items;
     MenuOptions options;
 
-    Menu(WidgetPtr child, std::vector<MenuItem> items, MenuOptions options = MenuOptions())
-        : child(std::move(child)), items(std::move(items)), options(std::move(options)) {}
+    explicit MenuWidget(Key key) : StatefulWidget(std::move(key)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Menu"; }
 };
 
-inline WidgetPtr menu(WidgetPtr child, std::vector<MenuItem> items, MenuOptions options = MenuOptions()) {
-    return std::make_shared<Menu>(std::move(child), std::move(items), std::move(options));
-}
+struct Menu {
+    WidgetPtr child;
+    std::vector<MenuItem> items;
+    MenuOptions options = MenuOptions();
+    Key key = Key::none();
 
-inline WidgetPtr menu(MenuProps props) {
-    auto m = std::make_shared<Menu>(std::move(props.child), std::move(props.items), std::move(props.options));
-    m->key = props.key;
-    return m;
-}
+    operator WidgetPtr() const {
+        auto w = std::make_shared<MenuWidget>(key);
+        w->child = child;
+        w->items = items;
+        w->options = options;
+        return w;
+    }
+};
 
 } // namespace enki

@@ -6,9 +6,12 @@ using namespace enki;
 
 void test_slider_initialization() {
     float current_val = 0.5f;
-    auto child = slider(current_val, [&current_val](float v) {
-        current_val = v;
-    });
+    std::shared_ptr<SliderWidget> child = std::dynamic_pointer_cast<SliderWidget>(static_cast<WidgetPtr>(Slider {
+        .value = current_val,
+        .on_change = [&current_val](float v) {
+            current_val = v;
+        }
+    }));
 
     assert(child != nullptr);
     assert(child->value == 0.5f);
@@ -16,23 +19,25 @@ void test_slider_initialization() {
 
 void test_slider_fluent_api() {
     float current_val = 0.2f;
-    auto child = slider(current_val, [](float){});
-    
-    child->activeColor(0xFF00FF00)
-         ->inactiveColor(0xFF333333)
-         ->thumbColor(0xFFFF0000)
-         ->trackHeight(10.0f)
-         ->thumbRadius(20.0f)
-         ->min(-1.0f)
-         ->max(1.0f);
+    std::shared_ptr<SliderWidget> child = std::dynamic_pointer_cast<SliderWidget>(static_cast<WidgetPtr>(Slider {
+        .value = current_val,
+        .on_change = [](float){},
+        .active_color = 0xFF00FF00,
+        .inactive_color = 0xFF333333,
+        .thumb_color = 0xFFFF0000,
+        .track_height = 10.0f,
+        .thumb_radius = 20.0f,
+        .min_value = -1.0f,
+        .max_value = 1.0f
+    }));
                 
-    assert(child->options.active_color == 0xFF00FF00);
-    assert(child->options.inactive_color == 0xFF333333);
-    assert(child->options.thumb_color == 0xFFFF0000);
-    assert(child->options.track_height == 10.0f);
-    assert(child->options.thumb_radius == 20.0f);
-    assert(child->options.min_value == -1.0f);
-    assert(child->options.max_value == 1.0f);
+    assert(child->active_color == 0xFF00FF00);
+    assert(child->inactive_color == 0xFF333333);
+    assert(child->thumb_color == 0xFFFF0000);
+    assert(child->track_height == 10.0f);
+    assert(child->thumb_radius == 20.0f);
+    assert(child->min_value == -1.0f);
+    assert(child->max_value == 1.0f);
 }
 
 int main() {

@@ -33,20 +33,36 @@ inline double getSteadyTimeSecs() {
 
 class RenderProgressRing : public RenderBox {
 public:
-    ProgressRingProps options;
+    float ring_size_;
+    float stroke_width_;
+    Color background_color_;
+    Color progress_color_;
+    std::vector<Color> gradient_colors_;
+    Color glow_color_;
+    float glow_blur_;
+    bool round_cap_;
+    float start_angle_;
+    bool indeterminate_;
+    std::string custom_shader_;
+
     float value;
     float anim_time;
     double start_time;
 
     sk_sp<SkRuntimeEffect> effect;
 
-    RenderProgressRing(const ProgressRingProps& opt, float val, float anim_t, double st)
-        : options(opt), value(val), anim_time(anim_t), start_time(st) {
+    RenderProgressRing(const ProgressRingWidget* opt, float val, float anim_t, double st)
+        : ring_size_(opt->size), stroke_width_(opt->stroke_width),
+          background_color_(opt->background_color), progress_color_(opt->progress_color),
+          gradient_colors_(opt->gradient_colors), glow_color_(opt->glow_color),
+          glow_blur_(opt->glow_blur), round_cap_(opt->round_cap),
+          start_angle_(opt->start_angle), indeterminate_(opt->indeterminate),
+          custom_shader_(opt->custom_shader), value(val), anim_time(anim_t), start_time(st) {
         
         updateAnuStyles();
 
-        if (!options.custom_shader.empty()) {
-            auto [eff, err] = SkRuntimeEffect::MakeForShader(SkString(options.custom_shader.c_str()));
+        if (!custom_shader_.empty()) {
+            auto [eff, err] = SkRuntimeEffect::MakeForShader(SkString(custom_shader_.c_str()));
             if (!eff) {
                 std::cerr << "ProgressRing SkSL Shader Compile Error: " << err.c_str() << "\n";
             } else {
@@ -57,15 +73,26 @@ public:
 
     void updateAnuStyles() {
         if (anu_node_) {
-            ANUNodeStyleSetWidth(anu_node_, options.size);
-            ANUNodeStyleSetHeight(anu_node_, options.size);
+            ANUNodeStyleSetWidth(anu_node_, ring_size_);
+            ANUNodeStyleSetHeight(anu_node_, ring_size_);
             ANUNodeStyleSetJustifyContent(anu_node_, ANUJustifyCenter);
             ANUNodeStyleSetAlignItems(anu_node_, ANUAlignCenter);
         }
     }
 
-    void setOptions(const ProgressRingProps& opt) {
-        options = opt;
+    void setOptions(const ProgressRingWidget* opt) {
+        ring_size_ = opt->size;
+        stroke_width_ = opt->stroke_width;
+        background_color_ = opt->background_color;
+        progress_color_ = opt->progress_color;
+        gradient_colors_ = opt->gradient_colors;
+        glow_color_ = opt->glow_color;
+        glow_blur_ = opt->glow_blur;
+        round_cap_ = opt->round_cap;
+        start_angle_ = opt->start_angle;
+        indeterminate_ = opt->indeterminate;
+        custom_shader_ = opt->custom_shader;
+        
         updateAnuStyles();
         markNeedsLayout();
     }
@@ -77,7 +104,7 @@ public:
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
 
         float diameter = std::min(size_.width, size_.height);
-        float stroke = std::clamp(options.stroke_width, 1.0f, diameter / 2.0f);
+        float stroke = std::clamp(stroke_width_, 1.0f, diameter / 2.0f);
         float radius = (diameter - stroke) / 2.0f;
 
         float cx = ctx.offset.x + size_.width / 2.0f;
@@ -90,7 +117,7 @@ public:
         bg_paint.setAntiAlias(true);
         bg_paint.setStyle(SkPaint::kStroke_Style);
         bg_paint.setStrokeWidth(stroke);
-        bg_paint.setColor(options.background_color);
+        bg_paint.setColor(background_color_);
         canvas->drawOval(arc_rect, bg_paint);
 
         // 2. Active Progress Arc
@@ -98,7 +125,7 @@ public:
         fill_paint.setAntiAlias(true);
         fill_paint.setStyle(SkPaint::kStroke_Style);
         fill_paint.setStrokeWidth(stroke);
-        if (options.round_cap) {
+        if (round_cap_) {
             fill_paint.setStrokeCap(SkPaint::kRound_Cap);
         }
 
@@ -119,25 +146,25 @@ public:
             float top_left_y = cy - radius;
             SkMatrix local_matrix = SkMatrix::Translate(-top_left_x, -top_left_y);
             fill_paint.setShader(effect->makeShader(uniform_data, nullptr, 0)->makeWithLocalMatrix(local_matrix));
-        } else if (options.gradient_colors.size() >= 2) {
+        } else if (gradient_colors_.size() >= 2) {
             std::vector<SkColor> sk_colors;
-            for (auto c : options.gradient_colors) sk_colors.push_back(c);
+            for (auto c : gradient_colors_) sk_colors.push_back(c);
 
             fill_paint.setShader(SkGradientShader::MakeSweep(
                 cx, cy, sk_colors.data(), nullptr, static_cast<int>(sk_colors.size())));
         } else {
-            fill_paint.setColor(options.progress_color);
+            fill_paint.setColor(progress_color_);
         }
 
         // Draw Arc
-        if (options.indeterminate) {
-            float start_deg = fmod(anim_time * 240.0f, 360.0f) + options.start_angle;
+        if (indeterminate_) {
+            float start_deg = fmod(anim_time * 240.0f, 360.0f) + start_angle_;
             float sweep_deg = 60.0f + 120.0f * (0.5f + 0.5f * sin(anim_time * 3.0f));
 
-            if (options.glow_blur > 0.0f && options.glow_color != 0) {
+            if (glow_blur_ > 0.0f && glow_color_ != 0) {
                 SkPaint glow_paint = fill_paint;
-                glow_paint.setColor(options.glow_color);
-                glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.glow_blur * 0.5f));
+                glow_paint.setColor(glow_color_);
+                glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
                 canvas->drawArc(arc_rect, start_deg, sweep_deg, false, glow_paint);
             }
 
@@ -147,24 +174,24 @@ public:
             float sweep_deg = clamped_val * 360.0f;
 
             if (sweep_deg > 0.0f) {
-                if (options.glow_blur > 0.0f && options.glow_color != 0) {
+                if (glow_blur_ > 0.0f && glow_color_ != 0) {
                     SkPaint glow_paint = fill_paint;
-                    glow_paint.setColor(options.glow_color);
-                    glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.glow_blur * 0.5f));
-                    canvas->drawArc(arc_rect, options.start_angle, sweep_deg, false, glow_paint);
+                    glow_paint.setColor(glow_color_);
+                    glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
+                    canvas->drawArc(arc_rect, start_angle_, sweep_deg, false, glow_paint);
                 }
 
-                canvas->drawArc(arc_rect, options.start_angle, sweep_deg, false, fill_paint);
+                canvas->drawArc(arc_rect, start_angle_, sweep_deg, false, fill_paint);
             }
         }
 
         // 3. Paint Center Child Widget if provided
         if (!children().empty()) {
             RenderBox* child_ro = static_cast<RenderBox*>(children()[0]);
-            Point child_offset = {
+            Point child_offset(
                 (size_.width - child_ro->size().width) / 2.0f,
                 (size_.height - child_ro->size().height) / 2.0f
-            };
+            );
             PaintContext child_ctx = ctx.withOffset(child_offset);
             child_ro->paint(child_ctx);
         }
@@ -177,14 +204,14 @@ public:
 
 class ProgressRingRenderWidget : public SingleChildRenderObjectWidget {
 public:
-    ProgressRingProps options;
+    const ProgressRingWidget* options;
     float value;
     float anim_time;
     double start_time;
 
-    ProgressRingRenderWidget(ProgressRingProps opt, float val, float anim_t, double st, WidgetPtr child)
+    ProgressRingRenderWidget(const ProgressRingWidget* opt, float val, float anim_t, double st, WidgetPtr child)
         : SingleChildRenderObjectWidget(Key::none(), std::move(child)),
-          options(std::move(opt)), value(val), anim_time(anim_t), start_time(st) {}
+          options(opt), value(val), anim_time(anim_t), start_time(st) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override {
         return std::make_unique<RenderProgressRing>(options, value, anim_time, start_time);
@@ -217,8 +244,8 @@ public:
         State::initState();
         start_time_ = getSteadyTimeSecs();
 
-        auto* pr = static_cast<const ProgressRing*>(widget());
-        if (pr->options.indeterminate || !pr->options.custom_shader.empty()) {
+        auto* pr = static_cast<const ProgressRingWidget*>(widget());
+        if (pr->indeterminate || !pr->custom_shader.empty()) {
             ticker_ = createTicker([this]() {
                 anim_time_ = static_cast<float>(getSteadyTimeSecs() - start_time_);
                 setState([]{});
@@ -233,15 +260,15 @@ public:
     }
 
     WidgetPtr build(BuildContext& ctx) override {
-        auto* pr = static_cast<const ProgressRing*>(widget());
+        auto* pr = static_cast<const ProgressRingWidget*>(widget());
 
         return std::make_shared<ProgressRingRenderWidget>(
-            pr->options, pr->value, anim_time_, start_time_, pr->child
+            pr, pr->value, anim_time_, start_time_, pr->child
         );
     }
 };
 
-std::unique_ptr<State> ProgressRing::createState() {
+std::unique_ptr<State> ProgressRingWidget::createState() {
     return std::make_unique<ProgressRingState>();
 }
 

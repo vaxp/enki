@@ -34,39 +34,39 @@ public:
         header->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 30.0f, 0));
 
         // 1. Spokes Spinner (macOS / iOS Style)
-        SpinnerProps opt_spokes;
-        opt_spokes.style = SpinnerStyle::Spokes;
-        opt_spokes.size = size_;
-        opt_spokes.rotation_speed = speed_;
-        opt_spokes.color = 0xFF60A5FA;
-        auto spin_spokes = spinner(opt_spokes);
+        auto spin_spokes = Spinner {
+            .style = SpinnerStyle::Spokes,
+            .size = size_,
+            .color = 0xFF60A5FA,
+            .rotation_speed = speed_
+        };
 
         // 2. OrbitDots Spinner (Material / Fluent Style)
-        SpinnerProps opt_dots;
-        opt_dots.style = SpinnerStyle::OrbitDots;
-        opt_dots.size = size_;
-        opt_dots.rotation_speed = speed_;
-        opt_dots.color = 0xFF10B981;
-        opt_dots.dot_count = 6;
-        opt_dots.dot_size = 7.0f;
-        auto spin_dots = spinner(opt_dots);
+        auto spin_dots = Spinner {
+            .style = SpinnerStyle::OrbitDots,
+            .size = size_,
+            .color = 0xFF10B981,
+            .dot_count = 6,
+            .dot_size = 7.0f,
+            .rotation_speed = speed_
+        };
 
         // 3. DualArc Spinner (Futuristic Dual Arc with Glow)
-        SpinnerProps opt_dual;
-        opt_dual.style = SpinnerStyle::DualArc;
-        opt_dual.size = size_;
-        opt_dual.rotation_speed = speed_;
-        opt_dual.color = 0xFFEC4899;
-        opt_dual.glow_color = 0x80EC4899;
-        opt_dual.glow_blur = 12.0f;
-        auto spin_dual = spinner(opt_dual);
+        auto spin_dual = Spinner {
+            .style = SpinnerStyle::DualArc,
+            .size = size_,
+            .color = 0xFFEC4899,
+            .rotation_speed = speed_,
+            .glow_color = 0x80EC4899,
+            .glow_blur = 12.0f
+        };
 
         // 4. Custom SkSL Shader Spinner (Vortex Particle Spiral)
-        SpinnerProps opt_shader;
-        opt_shader.style = SpinnerStyle::CustomShader;
-        opt_shader.size = size_;
-        opt_shader.rotation_speed = speed_;
-        opt_shader.custom_shader = R"(
+        auto spin_shader = Spinner {
+            .style = SpinnerStyle::CustomShader,
+            .size = size_,
+            .rotation_speed = speed_,
+            .custom_shader = R"(
             uniform vec2 resolution;
             uniform float time;
 
@@ -81,8 +81,8 @@ public:
                 vec3 col = 0.5 + 0.5 * cos(time + a + vec3(0.0, 2.0, 4.0));
                 return vec4(col * ring * (0.5 + 0.5 * spiral), ring);
             }
-        )";
-        auto spin_shader = spinner(opt_shader);
+        )"
+        };
 
         // Row of Spinners
         std::vector<WidgetPtr> s1 = {spin_spokes, text("Spokes (iOS)", TextStyle{.color = 0xFF94A3B8, .font_size = 12.0f})};
@@ -112,24 +112,28 @@ public:
         auto size_txt = text("Adjust Spinner Size: " + std::to_string(static_cast<int>(size_)) + "px", TextStyle{
             .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
         });
-        SliderProps sz_opt;
-        sz_opt.min_value = 24.0f;
-        sz_opt.max_value = 96.0f;
-        sz_opt.active_color = 0xFF3B82F6;
-        auto sz_slider = std::make_shared<Slider>(size_, [this](float val) {
-            setState([this, val] { size_ = val; });
-        }, sz_opt);
+        auto sz_slider = Slider {
+            .value = size_,
+            .on_change = [this](float val) {
+                setState([this, val] { size_ = val; });
+            },
+            .active_color = 0xFF3B82F6,
+            .min_value = 24.0f,
+            .max_value = 96.0f
+        };
 
         auto speed_txt = text("Adjust Rotation Speed: " + std::to_string(speed_).substr(0, 4) + "x", TextStyle{
             .color = 0xFFF1F5F9, .font_size = 14.0f, .font_weight = FontWeight::Bold
         });
-        SliderProps sp_opt;
-        sp_opt.min_value = 0.2f;
-        sp_opt.max_value = 3.0f;
-        sp_opt.active_color = 0xFF10B981;
-        auto sp_slider = std::make_shared<Slider>(speed_, [this](float val) {
-            setState([this, val] { speed_ = val; });
-        }, sp_opt);
+        auto sp_slider = Slider {
+            .value = speed_,
+            .on_change = [this](float val) {
+                setState([this, val] { speed_ = val; });
+            },
+            .active_color = 0xFF10B981,
+            .min_value = 0.2f,
+            .max_value = 3.0f
+        };
 
         std::vector<WidgetPtr> c2_items;
         c2_items.push_back(size_txt);
