@@ -78,6 +78,10 @@ struct ImageStyle {
                source_path == other.source_path &&
                width == other.width &&
                height == other.height &&
+               min_width == other.min_width &&
+               min_height == other.min_height &&
+               max_width == other.max_width &&
+               max_height == other.max_height &&
                fit == other.fit &&
                alignment == other.alignment &&
                border_radius == other.border_radius &&
@@ -118,7 +122,7 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// ImageWidget — Declarative Leaf Widget for Images
+// ImageWidget — Leaf Widget Implementation for Images
 // ════════════════════════════════════════════════════════════════
 
 class ImageWidget : public SingleChildRenderObjectWidget {
@@ -142,6 +146,8 @@ public:
         style.source_path = std::string(path);
         style.image = ImageCache::getOrLoad(path);
     }
+    ImageWidget(Key key, ImageStyle style_)
+        : SingleChildRenderObjectWidget(std::move(key)), style(std::move(style_)) {}
 
     [[nodiscard]] std::string_view typeName() const override { return "ImageWidget"; }
 
@@ -149,7 +155,6 @@ public:
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
 
     // ── Static Factories ───────────────────────────────────────
-
     static std::shared_ptr<ImageWidget> asset(std::string_view path) {
         return std::make_shared<ImageWidget>(path);
     }
@@ -169,64 +174,16 @@ public:
     static std::shared_ptr<ImageWidget> fromImage(std::shared_ptr<Image> img) {
         return std::make_shared<ImageWidget>(std::move(img));
     }
-
-    // ── Fluent Builder API ─────────────────────────────────────
-
-    ImageWidget& fit(BoxFit f) { style.fit = f; return *this; }
-    ImageWidget& alignment(Alignment a) { style.alignment = a; return *this; }
-
-    ImageWidget& width(float w) { style.width = StyleValue::point(w); return *this; }
-    ImageWidget& height(float h) { style.height = StyleValue::point(h); return *this; }
-    ImageWidget& width(StyleValue w) { style.width = w; return *this; }
-    ImageWidget& height(StyleValue h) { style.height = h; return *this; }
-    ImageWidget& size(float w, float h) {
-        style.width = StyleValue::point(w);
-        style.height = StyleValue::point(h);
-        return *this;
-    }
-
-    ImageWidget& minWidth(float w) { style.min_width = StyleValue::point(w); return *this; }
-    ImageWidget& minHeight(float h) { style.min_height = StyleValue::point(h); return *this; }
-    ImageWidget& maxWidth(float w) { style.max_width = StyleValue::point(w); return *this; }
-    ImageWidget& maxHeight(float h) { style.max_height = StyleValue::point(h); return *this; }
-
-    ImageWidget& borderRadius(float r) { style.border_radius = BorderRadius::all(r); return *this; }
-    ImageWidget& borderRadius(BorderRadius r) { style.border_radius = r; return *this; }
-    ImageWidget& shape(BoxShape s) { style.shape = s; return *this; }
-    ImageWidget& circle() { style.shape = BoxShape::Circle; return *this; }
-
-    ImageWidget& color(Color c, BlendMode mode = BlendMode::SrcIn) {
-        style.tint_color = c;
-        style.blend_mode = mode;
-        return *this;
-    }
-    ImageWidget& tint(Color c, BlendMode mode = BlendMode::SrcIn) {
-        return color(c, mode);
-    }
-    ImageWidget& opacity(float o) { style.opacity = o; return *this; }
-    ImageWidget& clip(bool c) { style.clip_content = c; return *this; }
 };
 
 // ════════════════════════════════════════════════════════════════
-// Global Factory Helpers
+// Declarative ImageProps (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
-
-inline std::shared_ptr<ImageWidget> imageAsset(std::string_view path) {
-    return ImageWidget::asset(path);
-}
-
-inline std::shared_ptr<ImageWidget> imageFile(std::string_view path) {
-    return ImageWidget::file(path);
-}
-
-inline std::shared_ptr<ImageWidget> imageMemory(const std::vector<uint8_t>& data) {
-    return ImageWidget::memory(data);
-}
 
 struct ImageProps {
     Key key = Key::none();
-    std::shared_ptr<Image> image;
-    std::string source_path;
+    std::shared_ptr<Image> image = nullptr;
+    std::string source_path = "";
 
     std::optional<StyleValue> width;
     std::optional<StyleValue> height;
@@ -244,43 +201,70 @@ struct ImageProps {
     BlendMode blend_mode = BlendMode::SrcIn;
     float opacity = 1.0f;
     bool clip_content = true;
+
+    operator WidgetPtr() const;
 };
 
+// ════════════════════════════════════════════════════════════════
+// Factory Functions
+// ════════════════════════════════════════════════════════════════
+
 inline std::shared_ptr<ImageWidget> image(ImageProps props) {
-    auto img = props.image ? std::make_shared<ImageWidget>(std::move(props.key), std::move(props.image)) 
-                           : std::make_shared<ImageWidget>(std::move(props.key), props.source_path);
-    
-    if (props.width) img->style.width = props.width;
-    if (props.height) img->style.height = props.height;
-    if (props.min_width) img->style.min_width = props.min_width;
-    if (props.min_height) img->style.min_height = props.min_height;
-    if (props.max_width) img->style.max_width = props.max_width;
-    if (props.max_height) img->style.max_height = props.max_height;
-    
-    img->style.fit = props.fit;
-    img->style.alignment = props.alignment;
-    img->style.border_radius = props.border_radius;
-    img->style.shape = props.shape;
-    img->style.tint_color = props.tint_color;
-    img->style.blend_mode = props.blend_mode;
-    img->style.opacity = props.opacity;
-    img->style.clip_content = props.clip_content;
-    
-    return img;
+    ImageStyle s;
+    if (props.image) {
+        s.image = std::move(props.image);
+    } else if (!props.source_path.empty()) {
+        s.source_path = props.source_path;
+        s.image = ImageCache::getOrLoad(props.source_path);
+    }
+    s.width = props.width;
+    s.height = props.height;
+    s.min_width = props.min_width;
+    s.min_height = props.min_height;
+    s.max_width = props.max_width;
+    s.max_height = props.max_height;
+    s.fit = props.fit;
+    s.alignment = props.alignment;
+    s.border_radius = props.border_radius;
+    s.shape = props.shape;
+    s.tint_color = props.tint_color;
+    s.blend_mode = props.blend_mode;
+    s.opacity = props.opacity;
+    s.clip_content = props.clip_content;
+
+    return std::make_shared<ImageWidget>(props.key, std::move(s));
 }
 
-inline std::shared_ptr<ImageWidget> imageAsset(std::string_view path, ImageProps props) {
+inline std::shared_ptr<ImageWidget> image(std::string_view path, ImageProps props = {}) {
     props.source_path = std::string(path);
     return image(std::move(props));
 }
 
-inline std::shared_ptr<ImageWidget> image(std::shared_ptr<Image> img, ImageProps props) {
+inline std::shared_ptr<ImageWidget> image(std::shared_ptr<Image> img, ImageProps props = {}) {
     props.image = std::move(img);
     return image(std::move(props));
 }
 
-inline std::shared_ptr<ImageWidget> image(std::shared_ptr<Image> img) {
-    return ImageWidget::fromImage(std::move(img));
+inline std::shared_ptr<ImageWidget> imageAsset(std::string_view path, ImageProps props = {}) {
+    props.source_path = std::string(path);
+    return image(std::move(props));
+}
+
+inline std::shared_ptr<ImageWidget> imageFile(std::string_view path, ImageProps props = {}) {
+    props.source_path = std::string(path);
+    return image(std::move(props));
+}
+
+inline std::shared_ptr<ImageWidget> imageMemory(const std::vector<uint8_t>& data, ImageProps props = {}) {
+    auto res = Image::loadFromMemory(data);
+    if (res.isOk()) {
+        props.image = res.value();
+    }
+    return image(std::move(props));
+}
+
+inline ImageProps::operator WidgetPtr() const {
+    return ::enki::image(*this);
 }
 
 } // namespace enki

@@ -155,16 +155,20 @@ void test_render_image_layout() {
 // ════════════════════════════════════════════════════════════════
 
 void test_image_widget_builder() {
-    std::cout << "[Test 5] ImageWidget Fluent Builder & Element Lifecycle...\n";
+    std::cout << "[Test 5] ImageWidget Declarative Builder & Element Lifecycle...\n";
 
-    auto w = imageAsset("assets/vaxp.png");
-    w->fit(BoxFit::Cover)
-     .alignment(Alignment::Center)
-     .size(120.0f, 120.0f)
-     .borderRadius(16.0f)
-     .circle()
-     .opacity(0.85f)
-     .tint(0xFF00E5FF, BlendMode::SrcIn);
+    auto w = image({
+        .source_path = "assets/vaxp.png",
+        .width = StyleValue::point(120.0f),
+        .height = StyleValue::point(120.0f),
+        .fit = BoxFit::Cover,
+        .alignment = Alignment::Center,
+        .border_radius = BorderRadius::all(16.0f),
+        .shape = BoxShape::Circle,
+        .tint_color = 0xFF00E5FF,
+        .blend_mode = BlendMode::SrcIn,
+        .opacity = 0.85f,
+    });
 
     assert(w->style.fit == BoxFit::Cover);
     assert(w->style.alignment == Alignment::Center);
@@ -181,7 +185,7 @@ void test_image_widget_builder() {
     assert(rimg != nullptr);
     assert(rimg->style().shape == BoxShape::Circle);
 
-    std::cout << "  ✓ ImageWidget fluent builder & render object creation verified.\n";
+    std::cout << "  ✓ ImageWidget declarative builder & render object creation verified.\n";
 }
 
 // ════════════════════════════════════════════════════════════════

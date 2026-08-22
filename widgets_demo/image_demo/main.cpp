@@ -257,16 +257,16 @@ private:
     // ── 3. Center Hero Preview Card ────────────────────────────
 
     WidgetPtr buildHeroPreviewCard() {
-        auto img = imageAsset(current_image);
-        img->fit(current_fit)
-           .alignment(Alignment::Center)
-           .shape(current_shape)
-           .borderRadius(current_radius)
-           .opacity(current_opacity);
-
-        if (enable_tint) {
-            img->tint(tint_color, BlendMode::SrcIn);
-        }
+        auto img = image({
+            .source_path = current_image,
+            .fit = current_fit,
+            .alignment = Alignment::Center,
+            .border_radius = BorderRadius::circular(current_radius),
+            .shape = current_shape,
+            .tint_color = enable_tint ? std::optional<Color>(tint_color) : std::nullopt,
+            .blend_mode = BlendMode::SrcIn,
+            .opacity = current_opacity,
+        });
 
         auto img_holder = container(img);
         img_holder->size(452.0f, 320.0f)
@@ -345,8 +345,13 @@ private:
         auto title1 = text("👤 Circular Avatars (Stack)");
         title1->fontSize(13.0f).bold().color(Style::text_white);
 
-        auto avatar1 = imageAsset("assets/1.png");
-        avatar1->size(52.0f, 52.0f).circle().fit(BoxFit::Cover);
+        auto avatar1 = image({
+            .source_path = "assets/1.png",
+            .width = StyleValue::point(52.0f),
+            .height = StyleValue::point(52.0f),
+            .fit = BoxFit::Cover,
+            .shape = BoxShape::Circle,
+        });
         auto avatar1_box = container(avatar1);
         avatar1_box->borderRadius(26.0f).border(Style::primary_light, 2.0f);
 
@@ -365,13 +370,23 @@ private:
         });
         av1_stack->width(52.0f).height(52.0f);
 
-        auto avatar2 = imageAsset("assets/2.png");
-        avatar2->size(52.0f, 52.0f).circle().fit(BoxFit::Cover);
+        auto avatar2 = image({
+            .source_path = "assets/2.png",
+            .width = StyleValue::point(52.0f),
+            .height = StyleValue::point(52.0f),
+            .fit = BoxFit::Cover,
+            .shape = BoxShape::Circle,
+        });
         auto avatar2_box = container(avatar2);
         avatar2_box->borderRadius(26.0f).border(Style::purple_neon, 2.0f);
 
-        auto avatar3 = imageAsset("assets/12.png");
-        avatar3->size(52.0f, 52.0f).circle().fit(BoxFit::Cover);
+        auto avatar3 = image({
+            .source_path = "assets/12.png",
+            .width = StyleValue::point(52.0f),
+            .height = StyleValue::point(52.0f),
+            .fit = BoxFit::Cover,
+            .shape = BoxShape::Circle,
+        });
         auto avatar3_box = container(avatar3);
         avatar3_box->borderRadius(26.0f).border(Style::cyan_neon, 2.0f);
 
@@ -426,10 +441,13 @@ private:
     }
 
     WidgetPtr buildGalleryCard(const std::string& asset_path, const std::string& label, Color accent) {
-        auto img = imageAsset(asset_path);
-        img->size(114.0f, 68.0f)
-           .fit(BoxFit::Cover)
-           .borderRadius(8.0f);
+        auto img = image({
+            .source_path = asset_path,
+            .width = StyleValue::point(114.0f),
+            .height = StyleValue::point(68.0f),
+            .fit = BoxFit::Cover,
+            .border_radius = BorderRadius::circular(8.0f),
+        });
 
         auto t = text(label);
         t->fontSize(10.0f).bold().color(Style::text_white);

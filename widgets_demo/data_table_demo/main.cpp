@@ -111,16 +111,17 @@ class TableDemoState : public State {
             }));
         }
 
-        auto t_widget = table(std::move(rows));
-        t_widget->columnWidths({
+        return Table {
+            .rows = std::move(rows),
+            .column_widths = {
                 {0, FlexColumnWidth(2.0f)},
                 {1, FlexColumnWidth(1.5f)},
                 {2, FixedColumnWidth(70.0f)},
                 {3, FixedColumnWidth(90.0f)},
-            });
-        t_widget->border(TableBorder::symmetric(0x20FFFFFF, 1.0f));
-        t_widget->defaultVerticalAlignment(TableCellVerticalAlignment::Middle);
-        return t_widget;
+            },
+            .border = TableBorder::symmetric(0x20FFFFFF, 1.0f),
+            .default_vertical_alignment = TableCellVerticalAlignment::Middle,
+        };
     }
 
     WidgetPtr buildDataTable() {

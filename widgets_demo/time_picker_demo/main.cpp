@@ -84,7 +84,7 @@ public:
                                             .border = Border(0xFF334155, 1.0f),
                                             .width = StyleValue::point(340.0f),
                                             .padding = StyleInsets::symmetric(8.0f, 12.0f),
-                                            .child = std::make_shared<TextField>(flight_no_ctrl_, TextFieldProps{ .hint_text = "Enter flight..." })
+                                            .child = TextField { .controller = flight_no_ctrl_, .hint_text = "Enter flight..." }
                                         }),
                                         text("Departure Time (12-Hour Dropdown):", { .color = 0xFF94A3B8, .font_size = 11.5f, .font_weight = FontWeight::Bold }),
                                         TimePicker {
