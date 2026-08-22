@@ -12,7 +12,7 @@ namespace enki {
 class ListViewState : public State {
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const ListView*>(widget());
+        auto* w = static_cast<const ListViewWidget*>(widget());
 
         // ── Gather items ───────────────────────────────────────
         std::vector<WidgetPtr> children;
@@ -83,7 +83,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ListView::createState() {
+std::unique_ptr<State> ListViewWidget::createState() {
     return std::make_unique<ListViewState>();
 }
 

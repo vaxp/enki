@@ -1,6 +1,5 @@
 ### Least to Most Dependent Widgets (Filtered: Only Mixed Widgets)
 
-- **list_view**: (Used by 3 widgets) -> tree_view, data_table, grid_view
 - **icon**: (Used by 5 widgets) -> navigation_rail, navigation_bar, tab_bar, sidebar
 - **scroll_view**: (Used by 8 widgets) -> notification, tree_view, data_table, list_view, grid_view
 - **button**: (Used by 13 widgets) -> form, expansion_panel, data_grid, resizable_panel, notification, accordion, calendar, floating_action_button, loading_overlay, snackbar, chip, bottom_sheet, combo_box
