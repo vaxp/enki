@@ -21,96 +21,128 @@ using namespace enki;
 
 class ButtonDemoState : public State {
 public:
-    WidgetPtr build(BuildContext& ctx) override {
-        auto title = text("Advanced Interactive Buttons");
-        title->fontSize(24.0f).bold().color(0xFFFFFFFF);
-        
-        auto sub = text("Hover, Ripples, and SkSL Shaders in ENKI");
-        sub->fontSize(14.0f).color(0xFF94A3B8);
-        
-        std::vector<WidgetPtr> t_children = {title, sub};
-        auto titleCol = column(t_children);
-        titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
-
-        // 1. Default Button
-        ButtonProps opt_default;
-        auto t_def = text("Default Primary Button");
-        t_def->fontSize(14.0f).color(0xFFFFFFFF).bold();
-        auto btn_default = button(t_def, [](){
-            std::cout << "Default clicked\n";
-        }, opt_default);
-
-        // 2. Disabled Button
-        ButtonProps opt_disabled;
-        auto t_dis = text("Disabled Button");
-        t_dis->fontSize(14.0f).color(0xFFFFFFFF).bold();
-        auto btn_disabled = button(t_dis, nullptr, opt_disabled);
-        
-        // 3. Custom Styled Button
-        ButtonProps opt_custom;
-        opt_custom.normal_color = 0xFFEF4444;
-        opt_custom.hover_color = 0xFFDC2626;
-        opt_custom.pressed_color = 0xFFB91C1C;
-        opt_custom.shadow_color = 0x80EF4444;
-        opt_custom.shadow_blur = 12.0f;
-        opt_custom.shadow_offset_dy = 6.0f;
-        opt_custom.border_radius = 24.0f;
-        opt_custom.padding = EdgeInsets::symmetric(14.0f, 32.0f);
-        auto t_cus = text("Danger Action");
-        t_cus->fontSize(15.0f).color(0xFFFFFFFF).bold();
-        auto btn_custom = button(t_cus, [](){
-            std::cout << "Danger clicked\n";
-        }, opt_custom);
-
-        // 4. Shader Injected Button (Animated Gradient SkSL)
-        ButtonProps opt_shader;
-        opt_shader.border_radius = 12.0f;
-        opt_shader.shadow_blur = 15.0f;
-        opt_shader.shadow_color = 0x608B5CF6;
-        opt_shader.enable_ripple = true;
-        opt_shader.custom_shader = R"(
-            uniform float time;
-            uniform vec2 resolution;
-            
-            vec4 main(vec2 fragCoord) {
-                vec2 uv = fragCoord / resolution;
-                float t = time * 0.5;
-                vec3 color = 0.5 + 0.5 * cos(t + uv.xyx + vec3(0.0, 2.0, 4.0));
-                return vec4(color * 0.8, 1.0);
+    WidgetPtr build(BuildContext&) override {
+        // 1. Header Section
+        auto titleCol = column({
+            .align_items = Align::Center,
+            .margin = StyleInsets::only(0, 0, 30.0f, 0),
+            .children = {
+                text("Advanced Interactive Buttons", {
+                    .color = 0xFFFFFFFF,
+                    .font_size = 24.0f,
+                    .font_weight = FontWeight::Bold,
+                }),
+                text("Hover, Ripples, and SkSL Shaders in ENKI", {
+                    .color = 0xFF94A3B8,
+                    .font_size = 14.0f,
+                })
             }
-        )";
-        auto t_sha = text("Shader Button (Live)");
-        t_sha->fontSize(16.0f).color(0xFFFFFFFF).bold();
-        auto btn_shader = button(t_sha, [](){
-            std::cout << "Shader button clicked\n";
-        }, opt_shader);
+        });
 
-        std::vector<WidgetPtr> r1_children;
-        r1_children.push_back(btn_default);
-        r1_children.push_back(btn_disabled);
-        auto row1 = row(r1_children);
-        row1->justifyContent(Justify::Center).alignItems(Align::Center).gap(30_px);
-        
-        std::vector<WidgetPtr> r2_children;
-        r2_children.push_back(btn_custom);
-        r2_children.push_back(btn_shader);
-        auto row2 = row(r2_children);
-        row2->justifyContent(Justify::Center).alignItems(Align::Center).gap(30_px);
+        // 2. Button 1: Default Primary Button
+        auto btn_default = Button {
+            .child = text("Default Primary Button", {
+                .color = 0xFFFFFFFF,
+                .font_size = 14.0f,
+                .font_weight = FontWeight::Bold,
+            }),
+            .on_pressed = []() {
+                std::cout << "Default clicked\n";
+            }
+        };
 
-        std::vector<WidgetPtr> b_children = {row1, row2};
-        auto buttonsCol = column(b_children);
-        buttonsCol->alignItems(Align::Center).gap(40_px);
+        // 3. Button 2: Disabled Button
+        auto btn_disabled = Button {
+            .child = text("Disabled Button", {
+                .color = 0xFFFFFFFF,
+                .font_size = 14.0f,
+                .font_weight = FontWeight::Bold,
+            }),
+            .disabled = true
+        };
 
-        std::vector<WidgetPtr> m_children = {titleCol, buttonsCol};
-        auto mainCol = column(m_children);
-        mainCol->alignItems(Align::Center).justifyContent(Justify::Center);
+        // 4. Button 3: Custom Danger Button
+        auto btn_custom = Button {
+            .child = text("Danger Action", {
+                .color = 0xFFFFFFFF,
+                .font_size = 15.0f,
+                .font_weight = FontWeight::Bold,
+            }),
+            .on_pressed = []() {
+                std::cout << "Danger clicked\n";
+            },
+            .normal_color = 0xFFEF4444,
+            .hover_color = 0xFFDC2626,
+            .pressed_color = 0xFFB91C1C,
+            .border_radius = 24.0f,
+            .padding = EdgeInsets::symmetric(14.0f, 32.0f),
+            .shadow_color = 0x80EF4444,
+            .shadow_blur = 12.0f,
+            .shadow_offset_dy = 6.0f,
+        };
 
-        auto appRoot = container(mainCol);
-        appRoot->color(0xFF0F172A)
-               .paddingAll(40.0f)
-               .flexGrow(1.0f);
+        // 5. Button 4: Live Shader Injected Button (SkSL)
+        auto btn_shader = Button {
+            .child = text("Shader Button (Live)", {
+                .color = 0xFFFFFFFF,
+                .font_size = 16.0f,
+                .font_weight = FontWeight::Bold,
+            }),
+            .on_pressed = []() {
+                std::cout << "Shader button clicked\n";
+            },
+            .border_radius = 12.0f,
+            .shadow_color = 0x608B5CF6,
+            .shadow_blur = 15.0f,
+            .enable_ripple = true,
+            .custom_shader = R"(
+                uniform float time;
+                uniform vec2 resolution;
+                
+                vec4 main(vec2 fragCoord) {
+                    vec2 uv = fragCoord / resolution;
+                    float t = time * 0.5;
+                    vec3 color = 0.5 + 0.5 * cos(t + uv.xyx + vec3(0.0, 2.0, 4.0));
+                    return vec4(color * 0.8, 1.0);
+                }
+            )"
+        };
 
-        return appRoot;
+        // Row 1
+        auto row1 = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .gap = StyleValue::point(30.0f),
+            .children = {btn_default, btn_disabled}
+        });
+
+        // Row 2
+        auto row2 = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .gap = StyleValue::point(30.0f),
+            .children = {btn_custom, btn_shader}
+        });
+
+        auto buttonsCol = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(30.0f),
+            .children = {row1, row2}
+        });
+
+        auto mainCol = column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .children = {titleCol, buttonsCol}
+        });
+
+        return container({
+            .color = 0xFF0F172A,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(40.0f),
+            .child = mainCol
+        });
     }
 };
 
@@ -130,7 +162,7 @@ int main() {
     AppConfig config;
     config.title       = "Enki Engine — Button Demo";
     config.width       = 800;
-    config.height      = 300;
+    config.height      = 400;
     config.resizable   = true;
     config.vsync       = false;
     config.target_fps  = 0;
