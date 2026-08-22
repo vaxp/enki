@@ -14,47 +14,66 @@ public:
     std::string_view typeName() const override { return "CardDemoWidget"; }
 
     WidgetPtr build(BuildContext&) override {
-        auto title = std::make_shared<Text>("Card Widget Demo", TextStyle{.color = 0xFFFFFFFF, .font_size = 24.0f});
+        auto title = text("Card Widget Demo", { .color = 0xFFFFFFFF, .font_size = 24.0f });
         
         // Simple Card
-        auto text1 = std::make_shared<Text>("This is a simple card.", TextStyle{.color = 0xFFCCCCCC});
-        auto card1 = card(text1);
-        card1->paddingAll(20.0f);
+        auto card1 = Card {
+            .padding = StyleInsets::all(20.0f),
+            .child = text("This is a simple card.", { .color = 0xFFCCCCCC })
+        };
         
         // Elevated Card with Border
-        auto text2 = std::make_shared<Text>("Elevated Card with a Border.", TextStyle{.color = 0xFFFFFFFF, .font_size = 18.0f});
-        auto card2 = card(text2);
-        card2->paddingAll(24.0f).elevation(16.0f).color(0xFF2D3748).border(0xFF4A5568, 1.0f).borderRadius(16.0f);
+        auto card2 = Card {
+            .color = 0xFF2D3748,
+            .elevation = 16.0f,
+            .border_radius = BorderRadius::circular(16.0f),
+            .border = Border(0xFF4A5568, 1.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = text("Elevated Card with a Border.", { .color = 0xFFFFFFFF, .font_size = 18.0f })
+        };
                         
         // Interactive Card
-        auto avatar_placeholder = container(nullptr);
-        avatar_placeholder->size(40.0f, 40.0f).color(0xFF4FD1C5).borderRadius(20.0f);
+        auto avatar_placeholder = container({
+            .color = 0xFF4FD1C5,
+            .border_radius = BorderRadius::circular(20.0f),
+            .width = StyleValue::point(40.0f),
+            .height = StyleValue::point(40.0f)
+        });
         
-        auto name = std::make_shared<Text>("Jane Doe", TextStyle{.color = 0xFFFFFFFF, .font_size = 16.0f, .font_weight = FontWeight::Bold});
-        auto desc = std::make_shared<Text>("Software Engineer", TextStyle{.color = 0xFFA0AEC0, .font_size = 12.0f});
-        std::vector<WidgetPtr> name_desc = {name, desc};
-        auto name_col = column(name_desc);
+        auto name = text("Jane Doe", { .color = 0xFFFFFFFF, .font_size = 16.0f, .font_weight = FontWeight::Bold });
+        auto desc = text("Software Engineer", { .color = 0xFFA0AEC0, .font_size = 12.0f });
         
-        std::vector<WidgetPtr> header_items = {avatar_placeholder, name_col};
-        auto header = row(header_items);
-        header->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
+        auto header = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(12.0f),
+            .children = {
+                avatar_placeholder,
+                column({
+                    .children = {name, desc}
+                })
+            }
+        });
         
-        auto action_btn = button(std::make_shared<Text>("Follow", TextStyle{.color = 0xFFFFFFFF}), []{});
-        std::vector<WidgetPtr> content_items = {header, action_btn};
-        auto card_content = column(content_items);
-        card_content->gap(StyleValue::point(16.0f));
+        auto action_btn = button(text("Follow", { .color = 0xFFFFFFFF }), []{});
         
-        auto card3 = card(card_content);
-        card3->paddingAll(20.0f).color(0xFF1A202C).border(0xFF2D3748, 1.0f);
+        auto card3 = Card {
+            .color = 0xFF1A202C,
+            .border = Border(0xFF2D3748, 1.0f),
+            .padding = StyleInsets::all(20.0f),
+            .child = column({
+                .gap = StyleValue::point(16.0f),
+                .children = {header, action_btn}
+            })
+        };
 
-        std::vector<WidgetPtr> col_items = {title, card1, card2, card3};
-        auto col = column(col_items);
-        col->gap(StyleValue::point(24.0f)).padding(StyleInsets::all(32.0f));
-
-        auto bg = container(col);
-        bg->color(0xFF0F172A);
-
-        return bg;
+        return container({
+            .color = 0xFF0F172A,
+            .child = column({
+                .gap = StyleValue::point(24.0f),
+                .padding = StyleInsets::all(32.0f),
+                .children = {title, card1, card2, card3}
+            })
+        });
     }
 };
 

@@ -139,29 +139,86 @@ struct DatePickerProps {
 };
 
 /// ════════════════════════════════════════════════════════════════
-/// DatePicker Widget
+/// DatePicker Widget Implementation
 /// ════════════════════════════════════════════════════════════════
 
-class DatePicker : public StatefulWidget {
+class DatePickerWidget : public StatefulWidget {
 public:
     DatePickerProps props;
     WidgetPtr body; ///< Workspace body layer when in InputPopup mode
 
-    DatePicker() = default;
-    explicit DatePicker(DatePickerProps p)
+    DatePickerWidget() = default;
+    explicit DatePickerWidget(DatePickerProps p)
         : props(std::move(p)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "DatePicker"; }
 };
 
-inline std::shared_ptr<DatePicker> datePicker(DatePickerProps props) {
-    return std::make_shared<DatePicker>(std::move(props));
-}
+/// ════════════════════════════════════════════════════════════════
+/// Declarative Proxy Struct (C++20 Designated Initializers)
+/// ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<DatePicker> dateRangePicker(DatePickerProps props) {
-    props.selection_mode = DatePickerSelectionMode::Range;
-    return std::make_shared<DatePicker>(std::move(props));
-}
+struct DatePicker {
+    WidgetPtr body = nullptr;
+    std::shared_ptr<DatePickerController> controller = nullptr;
+    DatePickerMode mode = DatePickerMode::InputPopup;
+    DatePickerSelectionMode selection_mode = DatePickerSelectionMode::Single;
+    DateVal initial_date = {2026, 8, 19};
+    DateRangeVal initial_range;
+    std::optional<DateVal> min_date;
+    std::optional<DateVal> max_date;
+    bool disable_weekends = false;
+    std::string placeholder = "Select a date...";
+    bool show_quick_presets = true;
+    bool show_action_buttons = true;
+    Color background_color = 0xFF1E293B;
+    Color border_color = 0xFF334155;
+    Color active_color = 0xFF0284C7;
+    Color highlight_color = 0xFF38BDF8;
+    Color range_fill_color = 0x440284C7;
+    Color text_color = 0xFFFFFFFF;
+    Color muted_text_color = 0xFF94A3B8;
+    std::function<void(const DateVal& date)> on_date_selected;
+    std::function<void(const DateRangeVal& range)> on_range_selected;
+    std::function<void()> on_popup_opened;
+    std::function<void()> on_popup_closed;
+    std::function<bool(const DateVal& date)> is_date_disabled;
+
+    operator WidgetPtr() const {
+        DatePickerProps p;
+        p.body = body;
+        p.controller = controller;
+        p.mode = mode;
+        p.selection_mode = selection_mode;
+        p.initial_date = initial_date;
+        p.initial_range = initial_range;
+        p.min_date = min_date;
+        p.max_date = max_date;
+        p.disable_weekends = disable_weekends;
+        p.placeholder = placeholder;
+        p.show_quick_presets = show_quick_presets;
+        p.show_action_buttons = show_action_buttons;
+        p.background_color = background_color;
+        p.border_color = border_color;
+        p.active_color = active_color;
+        p.highlight_color = highlight_color;
+        p.range_fill_color = range_fill_color;
+        p.text_color = text_color;
+        p.muted_text_color = muted_text_color;
+        p.on_date_selected = on_date_selected;
+        p.on_range_selected = on_range_selected;
+        p.on_popup_opened = on_popup_opened;
+        p.on_popup_closed = on_popup_closed;
+        p.is_date_disabled = is_date_disabled;
+        return std::make_shared<DatePickerWidget>(std::move(p));
+    }
+};
+
+struct DateRangePicker : public DatePicker {
+    DateRangePicker() {
+        selection_mode = DatePickerSelectionMode::Range;
+    }
+};
 
 } // namespace enki

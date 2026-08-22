@@ -348,7 +348,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const ColorPicker*>(widget());
+        auto* w = static_cast<const ColorPickerWidget*>(widget());
         initial_color_ = w->props.initial_color;
         current_color_ = initial_color_;
         current_format_ = w->props.default_format;
@@ -363,7 +363,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const ColorPicker*>(widget());
+        auto* w = static_cast<const ColorPickerWidget*>(widget());
         if (w->props.controller) {
             w->props.controller->set_color_fn = [this](Color c) {
                 current_color_ = c;
@@ -385,7 +385,7 @@ public:
 
     void updateColorFromHSV() {
         current_color_ = HSVtoRGB(hue_, saturation_, value_, alpha_);
-        auto* w = static_cast<const ColorPicker*>(widget());
+        auto* w = static_cast<const ColorPickerWidget*>(widget());
         if (w->props.on_color_changed) {
             w->props.on_color_changed(current_color_);
         }
@@ -522,7 +522,7 @@ public:
     }
 
     // ── Build Swatch Palette ──────────────────────────────────────
-    WidgetPtr buildPalette(const ColorPicker* w) {
+    WidgetPtr buildPalette(const ColorPickerWidget* w) {
         std::vector<WidgetPtr> swatch_boxes;
         for (Color sw_color : w->props.palette) {
             auto b = container();
@@ -562,7 +562,7 @@ public:
     }
 
     // ── Build Full Color Picker Card ──────────────────────────────
-    WidgetPtr buildColorPickerCard(const ColorPicker* w) {
+    WidgetPtr buildColorPickerCard(const ColorPickerWidget* w) {
         const auto& opts = w->props;
 
         // Header Title & Comparison
@@ -609,7 +609,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const ColorPicker*>(widget());
+        auto* w = static_cast<const ColorPickerWidget*>(widget());
         const auto& opts = w->props;
 
         if (opts.mode == ColorPickerMode::Inline) {
@@ -657,7 +657,7 @@ public:
     }
 };
 
-std::unique_ptr<State> ColorPicker::createState() {
+std::unique_ptr<State> ColorPickerWidget::createState() {
     return std::make_unique<ColorPickerState>();
 }
 

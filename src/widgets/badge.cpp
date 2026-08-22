@@ -2,43 +2,56 @@
 
 namespace enki {
 
-WidgetPtr Badge::build(BuildContext&) {
-    auto badge_box = container(label);
-    badge_box->color(options.bg_color);
-    badge_box->borderRadius(options.border_radius);
+WidgetPtr BadgeWidget::build(BuildContext&) {
+    ContainerProps c_props = {
+        .color = bg_color,
+        .border_radius = border_radius,
+        .child = label
+    };
     
     // If it has a label, add padding, else set fixed size for a dot
     if (label) {
-        badge_box->padding(options.padding);
+        c_props.padding = padding;
     } else {
-        badge_box->size(options.size, options.size);
+        c_props.width = StyleValue::point(size);
+        c_props.height = StyleValue::point(size);
     }
     
-    // Position the badge using Positioned relative to the stack
-    auto p = positioned(badge_box);
+    auto badge_box = container(c_props);
     
-    float ox = options.offset.x;
-    float oy = options.offset.y;
+    PositionedProps p_props = {
+        .child = badge_box
+    };
     
-    if (options.alignment == Alignment::TopRight) {
-        p->top(oy).right(-ox);
-    } else if (options.alignment == Alignment::TopLeft) {
-        p->top(oy).left(ox);
-    } else if (options.alignment == Alignment::BottomRight) {
-        p->bottom(-oy).right(-ox);
-    } else if (options.alignment == Alignment::BottomLeft) {
-        p->bottom(-oy).left(ox);
+    float ox = offset.x;
+    float oy = offset.y;
+    
+    if (alignment == Alignment::TopRight) {
+        p_props.top = StyleValue::point(oy);
+        p_props.right = StyleValue::point(-ox);
+    } else if (alignment == Alignment::TopLeft) {
+        p_props.top = StyleValue::point(oy);
+        p_props.left = StyleValue::point(ox);
+    } else if (alignment == Alignment::BottomRight) {
+        p_props.bottom = StyleValue::point(-oy);
+        p_props.right = StyleValue::point(-ox);
+    } else if (alignment == Alignment::BottomLeft) {
+        p_props.bottom = StyleValue::point(-oy);
+        p_props.left = StyleValue::point(ox);
     } else {
         // Fallback for center, etc.
-        p->top(oy).right(-ox);
+        p_props.top = StyleValue::point(oy);
+        p_props.right = StyleValue::point(-ox);
     }
+    
+    auto p = positioned(p_props);
     
     // Create stack to overlay badge on top of child
     // Clip::None allows the badge to render outside the child's bounds if offset pushes it
-    auto s = stack({child, p});
-    s->clip(Clip::None);
-    
-    return s;
+    return stack({
+        .children = {child, p},
+        .clip_behavior = Clip::None
+    });
 }
 
 } // namespace enki

@@ -22,105 +22,102 @@ private:
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        // Title & Description Header
-        auto title = text("Advanced Native FilePicker (NativePopup)");
-        title->fontSize(24.0f).bold().color(0xFFFFFFFF);
+        return container({
+            .color = 0xFF0F172A,
+            .padding = StyleInsets::all(40.0f),
+            .child = column({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .children = {
+                    // Title & Description Header
+                    column({
+                        .align_items = Align::Center,
+                        .children = {
+                            text("Advanced Native FilePicker (NativePopup)", {
+                                .color = 0xFFFFFFFF,
+                                .font_size = 24.0f,
+                                .font_weight = FontWeight::Bold
+                            }),
+                            text("Click buttons below to launch standalone desktop file/folder picker dialogs", {
+                                .color = 0xFF94A3B8,
+                                .font_size = 14.0f
+                            })
+                        }
+                    }),
 
-        auto sub = text("Click buttons below to launch standalone desktop file/folder picker dialogs");
-        sub->fontSize(14.0f).color(0xFF94A3B8);
+                    // Layout rows for pickers
+                    container({
+                        .margin = StyleInsets::only(40.0f, 0.0f, 0.0f, 0.0f),
+                        .child = row({
+                            .justify_content = Justify::Center,
+                            .align_items = Align::Center,
+                            .gap = StyleValue::point(30.0f),
+                            .children = {
+                                // 1. Open File Button
+                                FilePicker {
+                                    .child = button(text("📂 Open File...", { .color = 0xFFFFFFFF, .font_size = 14.0f, .font_weight = FontWeight::Bold }), nullptr),
+                                    .on_result = [this](const FilePickerResult& res) {
+                                        if (!res.canceled && !res.selected_paths.empty()) {
+                                            setState([this, res]() {
+                                                selected_file_path_ = "Opened File: " + res.selected_paths[0];
+                                            });
+                                            std::cout << "[FilePicker] Selected file: " << res.selected_paths[0] << "\n";
+                                        }
+                                    },
+                                    .mode = FilePickerMode::OpenFile
+                                },
 
-        std::vector<WidgetPtr> t_children = {title, sub};
-        auto titleCol = column(t_children);
-        titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
+                                // 2. Select Folder Button
+                                FilePicker {
+                                    .child = button(text("📁 Select Folder...", { .color = 0xFFFFFFFF, .font_size = 14.0f, .font_weight = FontWeight::Bold }), nullptr),
+                                    .on_result = [this](const FilePickerResult& res) {
+                                        if (!res.canceled && !res.selected_paths.empty()) {
+                                            setState([this, res]() {
+                                                selected_file_path_ = "Selected Folder: " + res.selected_paths[0];
+                                            });
+                                            std::cout << "[FilePicker] Selected folder: " << res.selected_paths[0] << "\n";
+                                        }
+                                    },
+                                    .mode = FilePickerMode::SelectFolder
+                                },
 
-        // 1. Open File Button
-        auto open_btn_text = text("📂 Open File...");
-        open_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
+                                // 3. Save File Button
+                                FilePicker {
+                                    .child = button(text("💾 Save File As...", { .color = 0xFFFFFFFF, .font_size = 14.0f, .font_weight = FontWeight::Bold }), nullptr),
+                                    .on_result = [this](const FilePickerResult& res) {
+                                        if (!res.canceled && !res.selected_paths.empty()) {
+                                            setState([this, res]() {
+                                                selected_file_path_ = "Save Destination: " + res.selected_paths[0];
+                                            });
+                                            std::cout << "[FilePicker] Save destination: " << res.selected_paths[0] << "\n";
+                                        }
+                                    },
+                                    .mode = FilePickerMode::SaveFile,
+                                    .default_filename = "export_project.json"
+                                }
+                            }
+                        })
+                    }),
 
-        FilePickerProps open_opt;
-        open_opt.mode = FilePickerMode::OpenFile;
-        open_opt.child = button(open_btn_text, nullptr);
-        open_opt.on_result = [this](const FilePickerResult& res) {
-            if (!res.canceled && !res.selected_paths.empty()) {
-                setState([this, res]() {
-                    selected_file_path_ = "Opened File: " + res.selected_paths[0];
-                });
-                std::cout << "[FilePicker] Selected file: " << res.selected_paths[0] << "\n";
-            }
-        };
-
-        auto open_picker = filePicker(std::move(open_opt));
-
-        // 2. Select Folder Button
-        auto folder_btn_text = text("📁 Select Folder...");
-        folder_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
-
-        FilePickerProps folder_opt;
-        folder_opt.mode = FilePickerMode::SelectFolder;
-        folder_opt.child = button(folder_btn_text, nullptr);
-        folder_opt.on_result = [this](const FilePickerResult& res) {
-            if (!res.canceled && !res.selected_paths.empty()) {
-                setState([this, res]() {
-                    selected_file_path_ = "Selected Folder: " + res.selected_paths[0];
-                });
-                std::cout << "[FilePicker] Selected folder: " << res.selected_paths[0] << "\n";
-            }
-        };
-
-        auto folder_picker = filePicker(std::move(folder_opt));
-
-        // 3. Save File Button
-        auto save_btn_text = text("💾 Save File As...");
-        save_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
-
-        FilePickerProps save_opt;
-        save_opt.mode = FilePickerMode::SaveFile;
-        save_opt.default_filename = "export_project.json";
-        save_opt.child = button(save_btn_text, nullptr);
-        save_opt.on_result = [this](const FilePickerResult& res) {
-            if (!res.canceled && !res.selected_paths.empty()) {
-                setState([this, res]() {
-                    selected_file_path_ = "Save Destination: " + res.selected_paths[0];
-                });
-                std::cout << "[FilePicker] Save destination: " << res.selected_paths[0] << "\n";
-            }
-        };
-
-        auto save_picker = filePicker(std::move(save_opt));
-
-        // Result Card
-        auto res_title = text("Current Selection Payload:");
-        res_title->fontSize(13.0f).bold().color(0xFF38BDF8);
-
-        auto res_path_txt = text(selected_file_path_);
-        res_path_txt->fontSize(13.0f).color(0xFFF1F5F9);
-
-        auto res_col = column({res_title, res_path_txt});
-        res_col->gap(StyleValue::point(6.0f));
-
-        auto res_box = container(res_col);
-        res_box->color(0xFF1E293B)
-               .borderRadius(10.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingAll(20.0f)
-               .margin(StyleInsets::only(30.0f, 0, 0, 0))
-               .width(550.0f);
-
-        // Layout rows
-        std::vector<WidgetPtr> r_children = {open_picker, folder_picker, save_picker};
-        auto buttonsRow = row(r_children);
-        buttonsRow->justifyContent(Justify::Center).alignItems(Align::Center).gap(30_px);
-
-        std::vector<WidgetPtr> m_children = {titleCol, buttonsRow, res_box};
-        auto mainCol = column(m_children);
-        mainCol->alignItems(Align::Center).justifyContent(Justify::Center);
-
-        auto appRoot = container(mainCol);
-        appRoot->color(0xFF0F172A)
-               .paddingAll(40.0f)
-               .flexGrow(1.0f);
-
-        return appRoot;
+                    // Result Card
+                    container({
+                        .color = 0xFF1E293B,
+                        .border_radius = BorderRadius::circular(10.0f),
+                        .border = Border(0xFF334155, 1.0f),
+                        .width = StyleValue::point(550.0f),
+                        .padding = StyleInsets::all(20.0f),
+                        .margin = StyleInsets::only(30.0f, 0.0f, 0.0f, 0.0f),
+                        .child = column({
+                            .gap = StyleValue::point(6.0f),
+                            .children = {
+                                text("Current Selection Payload:", { .color = 0xFF38BDF8, .font_size = 13.0f, .font_weight = FontWeight::Bold }),
+                                text(selected_file_path_, { .color = 0xFFF1F5F9, .font_size = 13.0f })
+                            }
+                        })
+                    })
+                }
+            })
+        });
     }
 };
 

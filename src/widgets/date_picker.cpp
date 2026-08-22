@@ -80,7 +80,7 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const DatePicker*>(widget());
+        auto* w = static_cast<const DatePickerWidget*>(widget());
         selected_date_ = w->props.initial_date;
         selected_range_ = w->props.initial_range;
         view_year_ = selected_date_.year;
@@ -95,7 +95,7 @@ public:
     }
 
     void wireController() {
-        auto* w = static_cast<const DatePicker*>(widget());
+        auto* w = static_cast<const DatePickerWidget*>(widget());
         if (w->props.controller) {
             w->props.controller->set_date_fn = [this](const DateVal& d) {
                 selected_date_ = d;
@@ -147,7 +147,7 @@ public:
     }
 
     // ── Build Header Bar (Month & Year Switcher) ───────────────────
-    WidgetPtr buildHeader(const DatePicker* w) {
+    WidgetPtr buildHeader(const DatePickerWidget* w) {
         const auto& opts = w->props;
 
         auto makeNavArrow = [](std::string sym, std::function<void()> cb) -> WidgetPtr {
@@ -209,7 +209,7 @@ public:
     }
 
     // ── Build Days Grid ───────────────────────────────────────────
-    WidgetPtr buildDaysGrid(const DatePicker* w) {
+    WidgetPtr buildDaysGrid(const DatePickerWidget* w) {
         const auto& opts = w->props;
 
         // Weekday header row (Mo, Tu, We...)
@@ -349,7 +349,7 @@ public:
     }
 
     // ── Build Months Grid ─────────────────────────────────────────
-    WidgetPtr buildMonthsGrid(const DatePicker* w) {
+    WidgetPtr buildMonthsGrid(const DatePickerWidget* w) {
         std::vector<WidgetPtr> month_rows;
 
         for (int r = 0; r < 4; ++r) {
@@ -393,7 +393,7 @@ public:
     }
 
     // ── Build Years Grid ──────────────────────────────────────────
-    WidgetPtr buildYearsGrid(const DatePicker* w) {
+    WidgetPtr buildYearsGrid(const DatePickerWidget* w) {
         std::vector<WidgetPtr> year_rows;
         int start_year = view_year_ - 5;
 
@@ -437,7 +437,7 @@ public:
     }
 
     // ── Build Quick Presets ───────────────────────────────────────
-    WidgetPtr buildQuickPresets(const DatePicker* w) {
+    WidgetPtr buildQuickPresets(const DatePickerWidget* w) {
         auto makePreset = [this](std::string label, std::function<void()> cb) -> WidgetPtr {
             auto t = text(label);
             t->fontSize(11.0f).color(0xFF38BDF8);
@@ -453,7 +453,7 @@ public:
         auto p_today = makePreset("Today", [this] {
             selected_date_ = {2026, 8, 19};
             view_year_ = 2026; view_month_ = 8;
-            auto* sw = static_cast<const DatePicker*>(widget());
+            auto* sw = static_cast<const DatePickerWidget*>(widget());
             if (sw->props.on_date_selected) sw->props.on_date_selected(selected_date_);
             setState([] {});
         });
@@ -462,7 +462,7 @@ public:
             selected_range_.start = DateVal{2026, 8, 19};
             selected_range_.end   = DateVal{2026, 8, 26};
             view_year_ = 2026; view_month_ = 8;
-            auto* sw = static_cast<const DatePicker*>(widget());
+            auto* sw = static_cast<const DatePickerWidget*>(widget());
             if (sw->props.on_range_selected) sw->props.on_range_selected(selected_range_);
             setState([] {});
         });
@@ -471,7 +471,7 @@ public:
             selected_range_.start = DateVal{2026, 8, 1};
             selected_range_.end   = DateVal{2026, 8, 31};
             view_year_ = 2026; view_month_ = 8;
-            auto* sw = static_cast<const DatePicker*>(widget());
+            auto* sw = static_cast<const DatePickerWidget*>(widget());
             if (sw->props.on_range_selected) sw->props.on_range_selected(selected_range_);
             setState([] {});
         });
@@ -483,7 +483,7 @@ public:
     }
 
     // ── Build Full Calendar Card ──────────────────────────────────
-    WidgetPtr buildCalendarCard(const DatePicker* w) {
+    WidgetPtr buildCalendarCard(const DatePickerWidget* w) {
         const auto& opts = w->props;
 
         std::vector<WidgetPtr> card_items;
@@ -523,7 +523,7 @@ public:
     }
 
     WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const DatePicker*>(widget());
+        auto* w = static_cast<const DatePickerWidget*>(widget());
         const auto& opts = w->props;
 
         // ── Inline Mode ───────────────────────────────────────────────
@@ -583,7 +583,7 @@ public:
     }
 };
 
-std::unique_ptr<State> DatePicker::createState() {
+std::unique_ptr<State> DatePickerWidget::createState() {
     return std::make_unique<DatePickerState>();
 }
 

@@ -144,18 +144,18 @@ public:
                     standalone_menu,
                     container({
                         .width = StyleValue::point(550.0f),
-                        .child = card({
+                        .child = Card {
+                            .color = 0xFF1E293B,
+                            .border_radius = BorderRadius::circular(8.0f),
+                            .border = Border(0xFF334155, 1.0f),
+                            .padding = StyleInsets::all(14.0f),
                             .child = column({
                                 .children = {
                                     text("Recent Action Log:", { .color = 0xFF38BDF8, .font_size = 12.0f, .font_weight = FontWeight::Bold }),
                                     text(last_action_, { .color = 0xFFF1F5F9, .font_size = 13.0f })
                                 }
-                            }),
-                            .color = 0xFF1E293B,
-                            .border_radius = BorderRadius::circular(8.0f),
-                            .border = Border(0xFF334155, 1.0f),
-                            .padding = StyleInsets::all(14.0f)
-                        })
+                            })
+                        }
                     })
                 }
             })
