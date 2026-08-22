@@ -20,37 +20,51 @@ class RadioDemoState : public State {
 
 public:
     WidgetPtr build(BuildContext&) override {
-        auto title = std::make_shared<Text>("Radio Widget Demo", TextStyle{.color = 0xFFFFFFFF, .font_size = 24.0f});
+        auto title = text("Radio Widget Demo", { .color = 0xFFFFFFFF, .font_size = 24.0f });
         
         auto create_radio_row = [this](int value, const std::string& label) {
-            auto r = radio(value, group_value_, [this](int val){
-                setState([this, val]{ group_value_ = val; });
+            return row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(16.0f),
+                .children = {
+                    Radio {
+                        .value = value,
+                        .group_value = group_value_,
+                        .on_changed = [this](int val){
+                            setState([this, val]{ group_value_ = val; });
+                        }
+                    },
+                    text(label, { .color = 0xFFCCCCCC })
+                }
             });
-            auto t = std::make_shared<Text>(label, TextStyle{.color = 0xFFCCCCCC});
-            auto r_row = row({r, t});
-            r_row->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
-            return r_row;
         };
 
         auto r1 = create_radio_row(1, "Option 1 (Selected by default)");
         auto r2 = create_radio_row(2, "Option 2");
         auto r3 = create_radio_row(3, "Option 3");
         
-        RadioProps disabled_opt;
-        disabled_opt.disabled = true;
-        auto rb_disabled = radio(4, group_value_, nullptr, disabled_opt);
-        auto text_disabled = std::make_shared<Text>("Disabled Option", TextStyle{.color = 0xFF888888});
-        auto row_disabled = row(std::vector<WidgetPtr>{rb_disabled, text_disabled});
-        row_disabled->gap(StyleValue::point(16.0f)).alignItems(Align::Center);
+        auto row_disabled = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(16.0f),
+            .children = {
+                Radio {
+                    .value = 4,
+                    .group_value = group_value_,
+                    .on_changed = nullptr,
+                    .disabled = true
+                },
+                text("Disabled Option", { .color = 0xFF888888 })
+            }
+        });
 
-        auto col = column(std::vector<WidgetPtr>{title, r1, r2, r3, row_disabled});
-        col->gap(StyleValue::point(20.0f));
-        col->padding(StyleInsets::all(32.0f));
-
-        auto bg = container(col);
-        bg->color(0xFF1E1E1E);
-
-        return bg;
+        return container({
+            .color = 0xFF1E1E1E,
+            .child = column({
+                .gap = StyleValue::point(20.0f),
+                .padding = StyleInsets::all(32.0f),
+                .children = {title, r1, r2, r3, row_disabled}
+            })
+        });
     }
 };
 

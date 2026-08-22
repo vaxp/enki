@@ -258,14 +258,17 @@ public:
         auto* w = static_cast<const CheckboxFormField*>(widget());
         const auto& opts = w->props;
 
-        auto cb = checkbox(is_checked_, [this, opts](bool val) {
-            is_checked_ = val;
-            if (opts.on_changed) opts.on_changed(val);
-            if (!error_text_.empty()) {
-                validate();
+        auto cb = (WidgetPtr)Checkbox {
+            .value = is_checked_,
+            .on_changed = [this, opts](bool val) {
+                is_checked_ = val;
+                if (opts.on_changed) opts.on_changed(val);
+                if (!error_text_.empty()) {
+                    validate();
+                }
+                setState([] {});
             }
-            setState([] {});
-        });
+        };
 
         auto lbl = text(opts.label);
         lbl->fontSize(12.5f).color(0xFFE2E8F0);

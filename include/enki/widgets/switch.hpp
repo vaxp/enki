@@ -12,53 +12,75 @@
 
 namespace enki {
 
-struct SwitchProps {
-    Key key = Key::none();
-    bool value = false;
-    std::function<void(bool)> on_changed = nullptr;
-
-    float width = 44.0f;                            ///< Width of the switch track.
-    float height = 24.0f;                           ///< Height of the switch track.
-    float thumb_padding = 2.0f;                     ///< Padding between the track and the thumb.
-    
-    Color active_color = 0xFF34C759;                ///< Background color when on (default green).
-    Color active_thumb_color = 0xFFFFFFFF;          ///< Thumb color when on.
-    
-    Color inactive_color = 0xFFE5E5EA;              ///< Background color when off (default light gray).
-    Color inactive_thumb_color = 0xFFFFFFFF;        ///< Thumb color when off.
-    
-    Color hover_color = 0xFF28A745;                 ///< Background color when on and hovered.
-    Color hover_inactive_color = 0xFFD1D1D6;        ///< Background color when off and hovered.
-    
-    bool disabled = false;                          ///< If true, the switch is non-interactive.
-    Color disabled_color = 0xFFF2F2F7;              ///< Background color when disabled.
-    Color disabled_thumb_color = 0xFFE5E5EA;        ///< Thumb color when disabled.
-};
-
 /// @brief A material/iOS-style switch for boolean selection.
-class Switch : public StatefulWidget {
+class SwitchWidget : public StatefulWidget {
 public:
     bool value;
     std::function<void(bool)> on_changed;
-    SwitchProps options;
+    
+    float width = 44.0f;                            
+    float height = 24.0f;                           
+    float thumb_padding = 2.0f;                     
+    
+    Color active_color = 0xFF34C759;                
+    Color active_thumb_color = 0xFFFFFFFF;          
+    
+    Color inactive_color = 0xFFE5E5EA;              
+    Color inactive_thumb_color = 0xFFFFFFFF;        
+    
+    Color hover_color = 0xFF28A745;                 
+    Color hover_inactive_color = 0xFFD1D1D6;        
+    
+    bool disabled = false;                          
+    Color disabled_color = 0xFFF2F2F7;              
+    Color disabled_thumb_color = 0xFFE5E5EA;        
 
-    Switch(bool value, std::function<void(bool)> on_changed = nullptr, SwitchProps options = SwitchProps())
-        : value(value), on_changed(std::move(on_changed)), options(std::move(options)) {}
-
-    Switch(Key key, bool value, std::function<void(bool)> on_changed, SwitchProps options)
-        : StatefulWidget(std::move(key)), value(value), on_changed(std::move(on_changed)), options(std::move(options)) {}
+    SwitchWidget(Key key) : StatefulWidget(std::move(key)) {}
 
     [[nodiscard]] std::unique_ptr<State> createState() override;
     [[nodiscard]] std::string_view typeName() const override { return "Switch"; }
 };
 
-inline WidgetPtr toggleSwitch(bool value, std::function<void(bool)> on_changed = nullptr, SwitchProps options = SwitchProps()) {
-    return std::make_shared<Switch>(value, std::move(on_changed), std::move(options));
-}
+struct Switch {
+    bool value = false;
+    std::function<void(bool)> on_changed = nullptr;
+    
+    float width = 44.0f;                            
+    float height = 24.0f;                           
+    float thumb_padding = 2.0f;                     
+    
+    Color active_color = 0xFF34C759;                
+    Color active_thumb_color = 0xFFFFFFFF;          
+    
+    Color inactive_color = 0xFFE5E5EA;              
+    Color inactive_thumb_color = 0xFFFFFFFF;        
+    
+    Color hover_color = 0xFF28A745;                 
+    Color hover_inactive_color = 0xFFD1D1D6;        
+    
+    bool disabled = false;                          
+    Color disabled_color = 0xFFF2F2F7;              
+    Color disabled_thumb_color = 0xFFE5E5EA;        
+    Key key = Key::none();
 
-inline std::shared_ptr<Switch> toggleSwitch(SwitchProps props) {
-    if (props.on_changed == nullptr) props.disabled = true;
-    return std::make_shared<Switch>(std::move(props.key), props.value, std::move(props.on_changed), std::move(props));
-}
+    operator WidgetPtr() const {
+        auto w = std::make_shared<SwitchWidget>(key);
+        w->value = value;
+        w->on_changed = on_changed;
+        w->width = width;
+        w->height = height;
+        w->thumb_padding = thumb_padding;
+        w->active_color = active_color;
+        w->active_thumb_color = active_thumb_color;
+        w->inactive_color = inactive_color;
+        w->inactive_thumb_color = inactive_thumb_color;
+        w->hover_color = hover_color;
+        w->hover_inactive_color = hover_inactive_color;
+        w->disabled = disabled || on_changed == nullptr;
+        w->disabled_color = disabled_color;
+        w->disabled_thumb_color = disabled_thumb_color;
+        return w;
+    }
+};
 
 } // namespace enki

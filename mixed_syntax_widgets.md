@@ -4,9 +4,7 @@ This document contains a list of all widget demos that currently mix the legacy 
 This list can be used as a checklist to systematically refactor the codebase to completely remove the legacy syntax.
 
 ## List of Mixed Syntax Demos (28 Total)
-- [ ] `checkbox_demo` ([widgets_demo/checkbox_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/checkbox_demo/main.cpp))
 - [ ] `scroll_demo` ([widgets_demo/scroll_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/scroll_demo/main.cpp))
-- [ ] `carousel_demo` ([widgets_demo/carousel_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/carousel_demo/main.cpp))
 - [ ] `split_view_demo` ([widgets_demo/split_view_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/split_view_demo/main.cpp))
 - [ ] `data_grid_demo` ([widgets_demo/data_grid_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/data_grid_demo/main.cpp))
 - [ ] `spinner_demo` ([widgets_demo/spinner_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/spinner_demo/main.cpp))
@@ -14,7 +12,6 @@ This list can be used as a checklist to systematically refactor the codebase to 
 - [ ] `grid_view_demo` ([widgets_demo/grid_view_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/grid_view_demo/main.cpp))
 - [ ] `resizable_panel_demo` ([widgets_demo/resizable_panel_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/resizable_panel_demo/main.cpp))
 - [ ] `rangeslider_demo` ([widgets_demo/rangeslider_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/rangeslider_demo/main.cpp))
-- [ ] `switch_demo` ([widgets_demo/switch_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/switch_demo/main.cpp))
 - [ ] `menu_demo` ([widgets_demo/menu_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/menu_demo/main.cpp))
 - [ ] `bottom_sheet_demo` ([widgets_demo/bottom_sheet_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/bottom_sheet_demo/main.cpp))
 - [ ] `snackbar_demo` ([widgets_demo/snackbar_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/snackbar_demo/main.cpp))
@@ -26,7 +23,6 @@ This list can be used as a checklist to systematically refactor the codebase to 
 - [ ] `navigation_bar_demo` ([widgets_demo/navigation_bar_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/navigation_bar_demo/main.cpp))
 - [ ] `list_tile_demo` ([widgets_demo/list_tile_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/list_tile_demo/main.cpp))
 
-- [ ] `radio_demo` ([widgets_demo/radio_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/radio_demo/main.cpp))
 - [ ] `popup_demo` ([widgets_demo/popup_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/popup_demo/main.cpp))
 - [ ] `table_demo` ([widgets_demo/table_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/table_demo/main.cpp))
 - [ ] `tree_view_demo` ([widgets_demo/tree_view_demo/main.cpp](file:///home/x/Work/enki/widgets_demo/tree_view_demo/main.cpp))

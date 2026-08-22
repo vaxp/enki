@@ -7,13 +7,15 @@ using namespace enki;
 void test_radio_initialization() {
     std::cout << "Testing Radio Default Initialization..." << std::endl;
     // value = 1, group_value = 1 (selected)
-    auto rb = radio(1, 1, nullptr);
-    auto* r = static_cast<Radio*>(rb.get());
+    Radio r {
+        .value = 1,
+        .group_value = 1
+    };
     
-    assert(r->value == 1);
-    assert(r->group_value == 1);
-    assert(r->options.size == 20.0f);
-    assert(r->options.disabled == false);
+    assert(r.value == 1);
+    assert(r.group_value == 1);
+    assert(r.size == 20.0f);
+    assert(r.disabled == false);
     std::cout << "  ✓ Default Initialization passed." << std::endl;
 }
 
@@ -22,15 +24,17 @@ void test_radio_callback() {
     bool clicked = false;
     int new_val = 0;
     // value = 2, group_value = 1 (unselected)
-    auto rb = radio(2, 1, [&](int v) {
-        clicked = true;
-        new_val = v;
-    });
+    Radio r {
+        .value = 2,
+        .group_value = 1,
+        .on_changed = [&](int v) {
+            clicked = true;
+            new_val = v;
+        }
+    };
     
-    auto* r = static_cast<Radio*>(rb.get());
-    
-    if (r->on_changed) {
-        r->on_changed(r->value);
+    if (r.on_changed) {
+        r.on_changed(r.value);
     }
     
     assert(clicked == true);

@@ -14,61 +14,88 @@ class RenderRadio : public RenderBox {
 public:
     bool is_selected;
     bool hovered;
-    RadioProps options;
+    
+    float size;
+    float inner_size;
+    float border_width;
+    Color active_color;
+    Color inactive_color;
+    Color hover_color;
+    Color bg_color;
+    bool disabled;
+    Color disabled_color;
 
-    RenderRadio(bool sel, bool hov, RadioProps opt) 
-        : is_selected(sel), hovered(hov), options(std::move(opt)) {
-        ANUNodeStyleSetWidth(anu_node_, options.size);
-        ANUNodeStyleSetHeight(anu_node_, options.size);
+    RenderRadio(bool sel, bool hov, const RadioWidget* options) 
+        : is_selected(sel), hovered(hov),
+          size(options->size),
+          inner_size(options->inner_size),
+          border_width(options->border_width),
+          active_color(options->active_color),
+          inactive_color(options->inactive_color),
+          hover_color(options->hover_color),
+          bg_color(options->bg_color),
+          disabled(options->disabled),
+          disabled_color(options->disabled_color) {
+        ANUNodeStyleSetWidth(anu_node_, size);
+        ANUNodeStyleSetHeight(anu_node_, size);
     }
 
-    void update(bool new_sel, bool new_hovered, const RadioProps& new_options) {
-        if (options.size != new_options.size) {
-            ANUNodeStyleSetWidth(anu_node_, new_options.size);
-            ANUNodeStyleSetHeight(anu_node_, new_options.size);
+    void update(bool new_sel, bool new_hovered, const RadioWidget* new_options) {
+        if (size != new_options->size) {
+            ANUNodeStyleSetWidth(anu_node_, new_options->size);
+            ANUNodeStyleSetHeight(anu_node_, new_options->size);
             markNeedsLayout();
         }
         if (is_selected != new_sel || hovered != new_hovered || 
-            options.active_color != new_options.active_color ||
-            options.inactive_color != new_options.inactive_color) {
+            active_color != new_options->active_color ||
+            inactive_color != new_options->inactive_color) {
             markNeedsPaint();
         }
         is_selected = new_sel;
         hovered = new_hovered;
-        options = new_options;
+        
+        size = new_options->size;
+        inner_size = new_options->inner_size;
+        border_width = new_options->border_width;
+        active_color = new_options->active_color;
+        inactive_color = new_options->inactive_color;
+        hover_color = new_options->hover_color;
+        bg_color = new_options->bg_color;
+        disabled = new_options->disabled;
+        disabled_color = new_options->disabled_color;
     }
 
     void paint(PaintContext& context) override {
-        float center_x = context.offset.x + (options.size / 2.0f);
-        float center_y = context.offset.y + (options.size / 2.0f);
+        float center_x = context.offset.x + (size / 2.0f);
+        float center_y = context.offset.y + (size / 2.0f);
         
         Point center{center_x, center_y};
-        float outer_radius = options.size / 2.0f;
+        float outer_radius = size / 2.0f;
 
         // 1. Draw outer circle (background if any)
-        if (options.bg_color != 0x00000000) {
+        if (bg_color != 0x00000000) {
             Paint bg_paint;
             bg_paint.setStyle(PaintStyle::Fill);
-            bg_paint.setColor(options.bg_color);
+            bg_paint.setColor(bg_color);
             context.canvas.drawCircle(center, outer_radius, bg_paint);
         }
 
         // 2. Draw outer border
         Paint border_paint;
         border_paint.setStyle(PaintStyle::Stroke);
-        border_paint.setStrokeWidth(options.border_width);
+        border_paint.setStrokeWidth(border_width);
         
-        if (options.disabled) {
-            border_paint.setColor(options.disabled_color);
+        if (disabled) {
+            border_paint.setColor(disabled_color);
         } else if (is_selected) {
-            border_paint.setColor(options.active_color);
+            border_paint.setColor(active_color);
         } else {
-            border_paint.setColor(hovered ? options.hover_color : options.inactive_color);
+            border_paint.setColor(hovered ? hover_color : inactive_color);
         }
         
         // Draw the outer border circle with a radius adjusted by half the stroke width
-        // so it fits exactly inside the `options.size` bounding box.
-        float adjusted_outer_radius = outer_radius - (options.border_width / 2.0f);
+        // so it fits exactly inside the `size` bounding box.
+        float adjusted_outer_radius = outer_radius - (border_width / 2.0f);
         if (adjusted_outer_radius > 0) {
             context.canvas.drawCircle(center, adjusted_outer_radius, border_paint);
         }
@@ -78,15 +105,15 @@ public:
             Paint inner_paint;
             inner_paint.setStyle(PaintStyle::Fill);
             
-            if (options.disabled) {
-                inner_paint.setColor(options.disabled_color);
+            if (disabled) {
+                inner_paint.setColor(disabled_color);
             } else {
-                inner_paint.setColor(options.active_color);
+                inner_paint.setColor(active_color);
             }
 
-            float inner_radius = options.inner_size / 2.0f;
-            if (inner_radius > 0) {
-                context.canvas.drawCircle(center, inner_radius, inner_paint);
+            float inner_rad = inner_size / 2.0f;
+            if (inner_rad > 0) {
+                context.canvas.drawCircle(center, inner_rad, inner_paint);
             }
         }
     }
@@ -100,10 +127,10 @@ class RadioRenderWidget : public SingleChildRenderObjectWidget {
 public:
     bool is_selected;
     bool hovered;
-    RadioProps options;
+    const RadioWidget* options;
 
-    RadioRenderWidget(bool sel, bool hov, RadioProps opt)
-        : is_selected(sel), hovered(hov), options(std::move(opt)) {}
+    RadioRenderWidget(bool sel, bool hov, const RadioWidget* opt)
+        : is_selected(sel), hovered(hov), options(opt) {}
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext&) override {
         return std::make_unique<RenderRadio>(is_selected, hovered, options);
@@ -126,12 +153,12 @@ class RadioState : public State {
 
 public:
     WidgetPtr build(BuildContext& ctx) override {
-        auto* w = static_cast<const Radio*>(widget());
+        auto* w = static_cast<const RadioWidget*>(widget());
 
         bool is_selected = (w->value == w->group_value);
-        auto render_widget = std::make_shared<RadioRenderWidget>(is_selected, hovered_, w->options);
+        auto render_widget = std::make_shared<RadioRenderWidget>(is_selected, hovered_, w);
 
-        if (w->options.disabled) {
+        if (w->disabled) {
             return render_widget;
         }
 
@@ -157,7 +184,7 @@ public:
     }
 };
 
-std::unique_ptr<State> Radio::createState() {
+std::unique_ptr<State> RadioWidget::createState() {
     return std::make_unique<RadioState>();
 }
 
