@@ -89,8 +89,7 @@ public:
             Color text_col = active ? opts.active_color : opts.inactive_color;
 
             // Icon
-            auto icon_w = icon(item.icon)->size(opts.icon_font_size)->color(text_col);
-            WidgetPtr icon_node = std::static_pointer_cast<Widget>(icon_w);
+            WidgetPtr icon_node = Icon { .data = item.icon, .size = opts.icon_font_size, .color = text_col };
 
             WidgetPtr row_content;
 

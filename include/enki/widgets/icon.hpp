@@ -9,6 +9,7 @@
 #include <string>
 #include <memory>
 #include <cstdint>
+#include <optional>
 
 namespace enki {
 
@@ -78,25 +79,23 @@ private:
 
 struct IconProps {
     Key key = Key::none();
-    IconData data;
-    std::optional<float> size;
-    std::optional<Color> color;
+    IconData data = {};
+    std::optional<float> size = std::nullopt;
+    std::optional<Color> color = std::nullopt;
 };
 
 /// @brief Icon widget that can draw vector shapes from Fonts or SVG paths.
-class Icon : public SingleChildRenderObjectWidget {
+class IconWidget : public SingleChildRenderObjectWidget {
 public:
     IconData data;
     float size_val = 24.0f;
     Color color_val = 0xFFFFFFFF; // Default white
 
-    Icon() = default;
-    explicit Icon(IconData d) : data(std::move(d)) {}
-    Icon(Key key, IconData d) : SingleChildRenderObjectWidget(std::move(key)), data(std::move(d)) {}
-
-    // Fluent API
-    std::shared_ptr<Icon> size(float s) { size_val = s; return std::static_pointer_cast<Icon>(shared_from_this()); }
-    std::shared_ptr<Icon> color(Color c) { color_val = c; return std::static_pointer_cast<Icon>(shared_from_this()); }
+    IconWidget() = default;
+    explicit IconWidget(IconData d, float size = 24.0f, Color color = 0xFFFFFFFF)
+        : data(std::move(d)), size_val(size), color_val(color) {}
+    IconWidget(Key key, IconData d, float size = 24.0f, Color color = 0xFFFFFFFF)
+        : SingleChildRenderObjectWidget(std::move(key)), data(std::move(d)), size_val(size), color_val(color) {}
 
     std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override {
         return std::make_unique<RenderIcon>(data, size_val, color_val);
@@ -110,21 +109,42 @@ public:
     std::string_view typeName() const override { return "Icon"; }
 };
 
-/// @brief Factory function to create an Icon.
-inline std::shared_ptr<Icon> icon(IconData data) {
-    return std::make_shared<Icon>(std::move(data));
+// ════════════════════════════════════════════════════════════════
+// Declarative Icon Struct (C++20 Designated Initializers)
+// ════════════════════════════════════════════════════════════════
+
+struct Icon {
+    Key key = Key::none();
+    IconData data = {};
+    IconData icon = {}; // alias
+    float size = 24.0f;
+    Color color = 0xFFFFFFFF;
+
+    operator WidgetPtr() const {
+        IconData d = !data.empty() ? data : icon;
+        return std::make_shared<IconWidget>(key, std::move(d), size, color);
+    }
+};
+
+// ════════════════════════════════════════════════════════════════
+// Factory Functions
+// ════════════════════════════════════════════════════════════════
+
+inline std::shared_ptr<IconWidget> icon(IconData data, IconProps props = {}) {
+    float sz = props.size.value_or(24.0f);
+    Color col = props.color.value_or(0xFFFFFFFF);
+    return std::make_shared<IconWidget>(std::move(props.key), std::move(data), sz, col);
 }
 
-inline std::shared_ptr<Icon> icon(IconProps props) {
-    auto i = std::make_shared<Icon>(std::move(props.key), std::move(props.data));
-    if (props.size) i->size_val = *props.size;
-    if (props.color) i->color_val = *props.color;
-    return i;
+inline std::shared_ptr<IconWidget> icon(IconProps props) {
+    auto d = std::move(props.data);
+    float sz = props.size.value_or(24.0f);
+    Color col = props.color.value_or(0xFFFFFFFF);
+    return std::make_shared<IconWidget>(std::move(props.key), std::move(d), sz, col);
 }
 
-inline std::shared_ptr<Icon> icon(IconData data, IconProps props) {
-    props.data = std::move(data);
-    return icon(std::move(props));
+inline std::shared_ptr<IconWidget> icon(IconData data, float size, Color color = 0xFFFFFFFF) {
+    return std::make_shared<IconWidget>(std::move(data), size, color);
 }
 
 } // namespace enki
