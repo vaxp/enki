@@ -1,0 +1,56 @@
+### Least to Most Dependent Widgets (Filtered: Only Mixed Widgets)
+
+- **accordion**: (Used by 0 other widgets)
+- **avatar**: (Used by 0 other widgets)
+- **bottom_sheet**: (Used by 0 other widgets)
+- **breadcrumb**: (Used by 0 other widgets)
+- **calendar**: (Used by 0 other widgets)
+- **chip**: (Used by 0 other widgets)
+- **combo_box**: (Used by 0 other widgets)
+- **context_menu**: (Used by 0 other widgets)
+- **data_grid**: (Used by 0 other widgets)
+- **data_table**: (Used by 0 other widgets)
+- **dismissible**: (Used by 0 other widgets)
+- **draggable**: (Used by 0 other widgets)
+- **drawer**: (Used by 0 other widgets)
+- **dropdown_menu**: (Used by 0 other widgets)
+- **expansion_panel**: (Used by 0 other widgets)
+- **floating_action_button**: (Used by 0 other widgets)
+- **focus**: (Used by 0 other widgets)
+- **form**: (Used by 0 other widgets)
+- **grid_tile**: (Used by 0 other widgets)
+- **grid_view**: (Used by 0 other widgets)
+- **list_tile**: (Used by 0 other widgets)
+- **loading_overlay**: (Used by 0 other widgets)
+- **navigation_bar**: (Used by 0 other widgets)
+- **navigation_rail**: (Used by 0 other widgets)
+- **navigator**: (Used by 0 other widgets)
+- **notification**: (Used by 0 other widgets)
+- **number_field**: (Used by 0 other widgets)
+- **password_field**: (Used by 0 other widgets)
+- **placeholder**: (Used by 0 other widgets)
+- **popup**: (Used by 0 other widgets)
+- **range_slider**: (Used by 0 other widgets)
+- **reorderable_list**: (Used by 0 other widgets)
+- **resizable_panel**: (Used by 0 other widgets)
+- **search_field**: (Used by 0 other widgets)
+- **sidebar**: (Used by 0 other widgets)
+- **snackbar**: (Used by 0 other widgets)
+- **split_view**: (Used by 0 other widgets)
+- **tab_bar**: (Used by 0 other widgets)
+- **text_area**: (Used by 0 other widgets)
+- **timeline**: (Used by 0 other widgets)
+- **tree_view**: (Used by 0 other widgets)
+- **image**: (Used by 1 widgets) -> avatar
+- **table**: (Used by 1 widgets) -> data_table
+- **text_field**: (Used by 1 widgets) -> form
+- **divider**: (Used by 3 widgets) -> data_table, list_view, context_menu
+- **list_view**: (Used by 3 widgets) -> tree_view, data_table, grid_view
+- **icon**: (Used by 5 widgets) -> navigation_rail, navigation_bar, tab_bar, sidebar
+- **scroll_view**: (Used by 8 widgets) -> notification, tree_view, data_table, list_view, grid_view
+- **button**: (Used by 13 widgets) -> form, expansion_panel, data_grid, resizable_panel, notification, accordion, calendar, floating_action_button, loading_overlay, snackbar, chip, bottom_sheet, combo_box
+- **stack**: (Used by 15 widgets) -> grid_tile, bottom_sheet, split_view, dropdown_menu, resizable_panel, tab_bar, notification, drawer, dismissible, avatar, snackbar, navigator, loading_overlay, navigation_rail, combo_box
+- **text**: (Used by 35 widgets) -> breadcrumb, calendar, tree_view, avatar, snackbar, text_field, loading_overlay, accordion, sidebar, reorderable_list, split_view, data_grid, dropdown_menu, password_field, timeline, placeholder, bottom_sheet, number_field, text_area, search_field, form, notification, resizable_panel, data_table, combo_box, expansion_panel, tab_bar, context_menu, chip, navigation_rail
+- **flexbox**: (Used by 38 widgets) -> breadcrumb, calendar, tree_view, snackbar, loading_overlay, drawer, accordion, sidebar, reorderable_list, split_view, data_grid, dropdown_menu, password_field, table, button, timeline, placeholder, bottom_sheet, text_area, grid_view, container, search_field, form, grid_tile, notification, resizable_panel, dismissible, list_view, data_table, combo_box, expansion_panel, tab_bar, context_menu, list_tile, navigator, chip, navigation_rail
+- **gesture_detector**: (Used by 38 widgets) -> breadcrumb, calendar, tree_view, snackbar, text_field, loading_overlay, drawer, accordion, sidebar, split_view, dropdown_menu, data_grid, password_field, button, draggable, timeline, placeholder, bottom_sheet, number_field, text_area, search_field, form, notification, resizable_panel, dismissible, focus, list_view, data_table, combo_box, expansion_panel, tab_bar, popup, context_menu, list_tile, chip, navigation_rail
+- **container**: (Used by 44 widgets) -> breadcrumb, calendar, tree_view, avatar, snackbar, text_field, loading_overlay, drawer, accordion, sidebar, reorderable_list, split_view, data_grid, dropdown_menu, password_field, table, button, draggable, timeline, placeholder, bottom_sheet, number_field, text_area, grid_view, search_field, form, grid_tile, notification, resizable_panel, dismissible, focus, list_view, data_table, combo_box, expansion_panel, tab_bar, popup, context_menu, list_tile, text, navigator, chip, navigation_rail
