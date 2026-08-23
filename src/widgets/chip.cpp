@@ -62,35 +62,46 @@ public:
 
         // 1. Leading Component
         if (opts.type == ChipType::Filter && is_selected_) {
-            auto check = text("✓");
-            check->fontSize(font_size).bold().color(0xFFFFFFFF);
+            auto check = text({
+                .text = "✓",
+                .color = 0xFFFFFFFF,
+                .font_size = font_size,
+                .font_weight = FontWeight::Bold,
+            });
             items.push_back(check);
         } else if (opts.type == ChipType::Status && opts.pulsing_dot) {
             auto dot = container();
             dot->color(opts.status_color).width(8.0f).height(8.0f).borderRadius(4.0f);
             items.push_back(dot);
         } else if (!opts.avatar_icon.empty()) {
-            auto av = text(opts.avatar_icon);
-            av->fontSize(font_size + 1.0f);
+            auto av = text({
+                .text = opts.avatar_icon,
+                .font_size = font_size + 1.0f,
+            });
             items.push_back(av);
         } else if (opts.leading) {
             items.push_back(opts.leading);
         }
 
         // 2. Chip Label
-        auto lbl_txt = text(opts.label);
-        lbl_txt->fontSize(font_size);
-        if (is_selected_) {
-            lbl_txt->bold().color(0xFFFFFFFF);
-        } else {
-            lbl_txt->color(opts.text_color);
-        }
+        Color lbl_color = is_selected_ ? 0xFFFFFFFF : opts.text_color;
+        FontWeight lbl_weight = is_selected_ ? FontWeight::Bold : FontWeight::Normal;
+        auto lbl_txt = text({
+            .text = opts.label,
+            .color = lbl_color,
+            .font_size = font_size,
+            .font_weight = lbl_weight,
+        });
         items.push_back(lbl_txt);
 
         // 3. Trailing Component
         if (opts.deletable) {
-            auto del_txt = text("✕");
-            del_txt->fontSize(font_size - 1.5f).bold().color(0xFF94A3B8);
+            auto del_txt = text({
+                .text = "✕",
+                .color = 0xFF94A3B8,
+                .font_size = font_size - 1.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto del_box = container(del_txt);
             del_box->borderRadius(8.0f).paddingSymmetric(1.0f, 3.0f);

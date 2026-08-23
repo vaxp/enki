@@ -299,13 +299,20 @@ public:
         // B. Title & Subtitle + Close Button
         std::vector<WidgetPtr> title_items;
         if (!opts.title.empty()) {
-            auto t_lbl = text(opts.title);
-            t_lbl->fontSize(16.0f).bold().color(opts.title_color);
+            auto t_lbl = text({
+                .text = opts.title,
+                .color = opts.title_color,
+                .font_size = 16.0f,
+                .font_weight = FontWeight::Bold,
+            });
             title_items.push_back(t_lbl);
 
             if (!opts.subtitle.empty()) {
-                auto sub_lbl = text(opts.subtitle);
-                sub_lbl->fontSize(12.0f).color(opts.subtitle_color);
+                auto sub_lbl = text({
+                    .text = opts.subtitle,
+                    .color = opts.subtitle_color,
+                    .font_size = 12.0f,
+                });
                 title_items.push_back(sub_lbl);
             }
         }

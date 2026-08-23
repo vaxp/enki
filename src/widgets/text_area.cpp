@@ -832,14 +832,20 @@ public:
             controller_->getCursorPosition(curr_row, curr_col);
 
             std::string pos_str = "Ln " + std::to_string(curr_row) + ", Col " + std::to_string(curr_col);
-            auto pos_txt = text(pos_str);
-            pos_txt->fontSize(11.0f).color(0xFF94A3B8);
+            auto pos_txt = text({
+                .text = pos_str,
+                .color = 0xFF94A3B8,
+                .font_size = 11.0f,
+            });
 
             std::string count_str = std::to_string(controller_->text.length()) +
                                     (ta->options.max_characters > 0 ? " / " + std::to_string(ta->options.max_characters) : "") +
                                     " chars • " + std::to_string(controller_->getWordCount()) + " words";
-            auto count_txt = text(count_str);
-            count_txt->fontSize(11.0f).color(0xFF94A3B8);
+            auto count_txt = text({
+                .text = count_str,
+                .color = 0xFF94A3B8,
+                .font_size = 11.0f,
+            });
 
             std::vector<WidgetPtr> footer_items = {pos_txt, count_txt};
             auto footer_row = row(footer_items);

@@ -181,8 +181,12 @@ public:
         }
 
         if (item.type == DropdownMenuItemType::Header) {
-            auto hdr = text(item.label);
-            hdr->fontSize(10.5f).bold().color(opts.header_color);
+            auto hdr = text({
+                .text = item.label,
+                .color = opts.header_color,
+                .font_size = 10.5f,
+                .font_weight = FontWeight::Bold,
+            });
             auto hdr_box = container(hdr);
             hdr_box->padding(EdgeInsets(6.0f, 10.0f, 2.0f, 10.0f))
                    .width(StyleValue::percent(100.0f));
@@ -192,31 +196,46 @@ public:
         // Left: check/radio + icon + label+subtitle
         std::vector<WidgetPtr> left;
         if (item.type == DropdownMenuItemType::Checkbox) {
-            auto c = text(item.is_checked ? "[x]" : "[ ]");
-            c->fontSize(14.0f).color(item.is_checked ? 0xFF38BDF8 : 0xFF64748B);
+            auto c = text({
+                .text = item.is_checked ? "[x]" : "[ ]",
+                .color = item.is_checked ? 0xFF38BDF8 : 0xFF64748B,
+                .font_size = 14.0f,
+            });
             left.push_back(c);
         } else if (item.type == DropdownMenuItemType::Radio) {
-            auto r = text(item.is_checked ? "(x)" : "( )");
-            r->fontSize(13.0f).color(item.is_checked ? 0xFF38BDF8 : 0xFF64748B);
+            auto r = text({
+                .text = item.is_checked ? "(x)" : "( )",
+                .color = item.is_checked ? 0xFF38BDF8 : 0xFF64748B,
+                .font_size = 13.0f,
+            });
             left.push_back(r);
         }
 
         if (!item.leading_icon.empty()) {
-            auto ic = text(item.leading_icon);
-            ic->fontSize(13.0f);
+            auto ic = text({
+                .text = item.leading_icon,
+                .font_size = 13.0f,
+            });
             left.push_back(ic);
         }
 
         std::vector<WidgetPtr> txt_col_items;
         Color lbl_col = item.is_disabled ? 0xFF64748B
                       : (item.is_danger ? opts.danger_color : opts.text_color);
-        auto lbl = text(item.label);
-        lbl->fontSize(12.5f).color(lbl_col);
-        if (item.id == selected_id_ && !selected_id_.empty()) lbl->bold();
+        bool is_bold = (item.id == selected_id_ && !selected_id_.empty());
+        auto lbl = text({
+            .text = item.label,
+            .color = lbl_col,
+            .font_size = 12.5f,
+            .font_weight = is_bold ? FontWeight::Bold : FontWeight::Normal,
+        });
         txt_col_items.push_back(lbl);
         if (!item.subtitle.empty()) {
-            auto sub = text(item.subtitle);
-            sub->fontSize(10.5f).color(opts.subtitle_color);
+            auto sub = text({
+                .text = item.subtitle,
+                .color = opts.subtitle_color,
+                .font_size = 10.5f,
+            });
             txt_col_items.push_back(sub);
         }
         auto txt_col = column(txt_col_items);
@@ -229,15 +248,22 @@ public:
         // Right: badge + shortcut
         std::vector<WidgetPtr> right;
         if (!item.badge_text.empty()) {
-            auto bd = text(item.badge_text);
-            bd->fontSize(9.5f).bold().color(item.badge_fg);
+            auto bd = text({
+                .text = item.badge_text,
+                .color = item.badge_fg,
+                .font_size = 9.5f,
+                .font_weight = FontWeight::Bold,
+            });
             auto bd_box = container(bd);
             bd_box->color(item.badge_bg).borderRadius(3.0f).paddingSymmetric(2.0f, 5.0f);
             right.push_back(bd_box);
         }
         if (!item.trailing_shortcut.empty()) {
-            auto sc = text(item.trailing_shortcut);
-            sc->fontSize(10.5f).color(opts.shortcut_color);
+            auto sc = text({
+                .text = item.trailing_shortcut,
+                .color = opts.shortcut_color,
+                .font_size = 10.5f,
+            });
             right.push_back(sc);
         }
         auto right_row = row(right);

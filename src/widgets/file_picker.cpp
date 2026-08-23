@@ -201,8 +201,11 @@ public:
     }
 
     WidgetPtr buildQuickLocationButton(const std::string& label, const std::string& target_path) {
-        auto txt = text(label);
-        txt->fontSize(13.0f).color(0xFFCBD5E1);
+        auto txt = text({
+            .text = label,
+            .color = 0xFFCBD5E1,
+            .font_size = 13.0f,
+        });
 
         auto btn_w = container(txt);
         btn_w->paddingSymmetric(6.0f, 10.0f)
@@ -250,11 +253,18 @@ public:
         else if (opt.mode == FilePickerMode::SelectFolder) mode_title = "Select Folder";
         else if (opt.mode == FilePickerMode::SaveFile) mode_title = "Save File";
 
-        auto header_title = text(mode_title);
-        header_title->fontSize(16.0f).bold().color(opt.text_color);
+        auto header_title = text({
+            .text = mode_title,
+            .color = opt.text_color,
+            .font_size = 16.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto current_path_txt = text(current_path_.string());
-        current_path_txt->fontSize(12.0f).color(opt.subtext_color);
+        auto current_path_txt = text({
+            .text = current_path_.string(),
+            .color = opt.subtext_color,
+            .font_size = 12.0f,
+        });
 
         auto header_col = column({header_title, current_path_txt});
         header_col->gap(StyleValue::point(2.0f));
@@ -271,8 +281,11 @@ public:
             std::string icon_str = entry.is_directory ? "📁 " : "📄 ";
             if (entry.name == "..") icon_str = "⬆️ ";
 
-            auto entry_lbl = text(icon_str + entry.name);
-            entry_lbl->fontSize(13.0f).color(opt.text_color);
+            auto entry_lbl = text({
+                .text = icon_str + entry.name,
+                .color = opt.text_color,
+                .font_size = 13.0f,
+            });
 
             Color bg_col = (selected_path_ == entry.path) ? 0xFF1E3A8A : 0x00000000;
 
@@ -312,8 +325,11 @@ public:
                     .paddingAll(4.0f);
 
         // 4. Bottom Action Bar (Cancel & Confirm buttons)
-        auto cancel_lbl = text("Cancel");
-        cancel_lbl->fontSize(13.0f).color(opt.text_color);
+        auto cancel_lbl = text({
+            .text = "Cancel",
+            .color = opt.text_color,
+            .font_size = 13.0f,
+        });
         auto cancel_btn = button(cancel_lbl, [view]() {
             if (view->on_result) {
                 view->on_result({true, {}});
@@ -330,8 +346,12 @@ public:
         ButtonProps confirm_opt;
         confirm_opt.normal_color = opt.accent_color;
 
-        auto confirm_lbl = text(confirm_label);
-        confirm_lbl->fontSize(13.0f).bold().color(0xFFFFFFFF);
+        auto confirm_lbl = text({
+            .text = confirm_label,
+            .color = 0xFFFFFFFF,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto confirm_btn = button(confirm_lbl, [this, view]() {
             std::string final_path = selected_path_;

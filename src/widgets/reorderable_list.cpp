@@ -21,8 +21,12 @@ namespace enki {
 
 WidgetPtr ReorderableDragHandleWidget::build(BuildContext&) {
     if (child) return child;
-    auto grip = text("⋮⋮");
-    grip->fontSize(16.0f).bold().color(0xFF94A3B8);
+    auto grip = text({
+        .text = "⋮⋮",
+        .color = 0xFF94A3B8,
+        .font_size = 16.0f,
+        .font_weight = FontWeight::Bold,
+    });
     auto grip_box = container(grip);
     grip_box->paddingSymmetric(4.0f, 6.0f).borderRadius(4.0f);
     return grip_box;

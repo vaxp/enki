@@ -330,12 +330,11 @@ public:
         BuildContext ctx(elem);
         WidgetPtr msg_content;
         if (!tooltip_widget->message.empty()) {
-            msg_content = text(
-                tooltip_widget->message,
-                TextStyle()
-                    .setColor(tooltip_widget->options.text_color)
-                    .setFontSize(tooltip_widget->options.font_size)
-            );
+            msg_content = text({
+                .text = tooltip_widget->message,
+                .color = tooltip_widget->options.text_color,
+                .font_size = tooltip_widget->options.font_size,
+            });
         } else if (tooltip_widget->rich_message) {
             msg_content = tooltip_widget->rich_message;
         }

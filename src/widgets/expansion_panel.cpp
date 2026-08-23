@@ -111,8 +111,12 @@ public:
         std::vector<WidgetPtr> left_items;
 
         if (!item.icon_or_step.empty()) {
-            auto step_txt = text(item.icon_or_step);
-            step_txt->fontSize(12.0f).bold().color(is_expanded ? 0xFFFFFFFF : opts.step_pill_fg);
+            auto step_txt = text({
+                .text = item.icon_or_step,
+                .color = is_expanded ? 0xFFFFFFFF : opts.step_pill_fg,
+                .font_size = 12.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto step_box = container(step_txt);
             step_box->color(is_expanded ? 0xFF0284C7 : opts.step_pill_bg)
@@ -122,14 +126,21 @@ public:
         }
 
         std::vector<WidgetPtr> title_col_items;
-        auto title_txt = text(item.title);
-        title_txt->fontSize(14.0f).bold();
-        title_txt->color(item.is_disabled ? 0xFF64748B : (is_expanded ? 0xFF38BDF8 : opts.title_color));
+        Color title_col_val = item.is_disabled ? 0xFF64748B : (is_expanded ? 0xFF38BDF8 : opts.title_color);
+        auto title_txt = text({
+            .text = item.title,
+            .color = title_col_val,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
         title_col_items.push_back(title_txt);
 
         if (!item.subtitle.empty()) {
-            auto sub_txt = text(item.subtitle);
-            sub_txt->fontSize(11.5f).color(item.is_disabled ? 0xFF475569 : opts.subtitle_color);
+            auto sub_txt = text({
+                .text = item.subtitle,
+                .color = item.is_disabled ? 0xFF475569 : opts.subtitle_color,
+                .font_size = 11.5f,
+            });
             title_col_items.push_back(sub_txt);
         }
 
@@ -144,8 +155,12 @@ public:
         std::vector<WidgetPtr> right_items;
 
         if (!item.badge_label.empty()) {
-            auto b_txt = text(item.badge_label);
-            b_txt->fontSize(10.5f).bold().color(item.badge_fg);
+            auto b_txt = text({
+                .text = item.badge_label,
+                .color = item.badge_fg,
+                .font_size = 10.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto b_box = container(b_txt);
             b_box->color(item.badge_bg).borderRadius(4.0f).paddingSymmetric(3.0f, 8.0f);
@@ -153,8 +168,13 @@ public:
         }
 
         if (opts.show_chevron) {
-            auto chv_txt = text(is_expanded ? "⌃" : "⌄");
-            chv_txt->fontSize(15.0f).bold().color(item.is_disabled ? 0xFF475569 : (is_expanded ? 0xFF38BDF8 : opts.chevron_color));
+            Color chv_col = item.is_disabled ? 0xFF475569 : (is_expanded ? 0xFF38BDF8 : opts.chevron_color);
+            auto chv_txt = text({
+                .text = is_expanded ? "⌃" : "⌄",
+                .color = chv_col,
+                .font_size = 15.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto chv_box = container(chv_txt);
             chv_box->paddingAll(2.0f);

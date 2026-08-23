@@ -61,16 +61,18 @@ public:
 
         std::vector<WidgetPtr> items;
         if (!w->icon.empty()) {
-            items.push_back(std::make_shared<Text>(w->icon, TextStyle{
+            items.push_back(text({
+                .text = w->icon,
                 .color = hovered_ ? theme::accent : theme::text_prim,
                 .font_size = 13.0f,
-                .font_weight = FontWeight::Bold
+                .font_weight = FontWeight::Bold,
             }));
         }
         if (!w->label.empty()) {
-            items.push_back(std::make_shared<Text>(w->label, TextStyle{
+            items.push_back(text({
+                .text = w->label,
                 .color = hovered_ ? theme::text_prim : theme::text_sec,
-                .font_size = 12.0f
+                .font_size = 12.0f,
             }));
         }
 
@@ -113,9 +115,10 @@ std::unique_ptr<State> BarButton::createState() {
 
 WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
     auto search_box = container(
-        std::make_shared<Text>("🔍  Search applications, files, commands...", TextStyle{
+        text({
+            .text = "🔍  Search applications, files, commands...",
             .color = theme::text_sec,
-            .font_size = 12.0f
+            .font_size = 12.0f,
         })
     );
     search_box->color(theme::surface)
@@ -124,9 +127,9 @@ WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) 
               .paddingSymmetric(8.0f, 12.0f);
 
     auto makeAppItem = [popup](const std::string& icon, const std::string& name, const std::string& category) {
-        auto icon_t = std::make_shared<Text>(icon, TextStyle{.color = theme::accent, .font_size = 16.0f});
-        auto name_t = std::make_shared<Text>(name, TextStyle{.color = theme::text_prim, .font_size = 13.0f, .font_weight = FontWeight::Bold});
-        auto cat_t  = std::make_shared<Text>(category, TextStyle{.color = theme::text_sec, .font_size = 11.0f});
+        auto icon_t = text({.text = icon, .color = theme::accent, .font_size = 16.0f});
+        auto name_t = text({.text = name, .color = theme::text_prim, .font_size = 13.0f, .font_weight = FontWeight::Bold});
+        auto cat_t  = text({.text = category, .color = theme::text_sec, .font_size = 11.0f});
 
         auto text_col = column({name_t, cat_t});
         text_col->gap(StyleValue::point(2.0f));
@@ -166,18 +169,23 @@ WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) 
 }
 
 WidgetPtr buildWifiPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
-    auto title = std::make_shared<Text>("Wi-Fi Networks", TextStyle{
-        .color = theme::text_prim, .font_size = 14.0f, .font_weight = FontWeight::Bold
+    auto title = text({
+        .text = "Wi-Fi Networks",
+        .color = theme::text_prim,
+        .font_size = 14.0f,
+        .font_weight = FontWeight::Bold,
     });
 
     auto makeNet = [popup](const std::string& name, const std::string& strength, bool active) {
-        auto name_t = std::make_shared<Text>(name, TextStyle{
+        auto name_t = text({
+            .text = name,
             .color = active ? theme::accent_green : theme::text_prim,
-            .font_size = 13.0f
+            .font_size = 13.0f,
         });
-        auto sig_t = std::make_shared<Text>(strength, TextStyle{
+        auto sig_t = text({
+            .text = strength,
             .color = active ? theme::accent_green : theme::text_sec,
-            .font_size = 12.0f
+            .font_size = 12.0f,
         });
 
         auto r = row({name_t, sig_t});
@@ -258,8 +266,11 @@ public:
         left_row->gap(StyleValue::point(4.0f));
 
         // Center: Clock
-        auto time_t = std::make_shared<Text>("Sat Aug 8  22:30", TextStyle{
-            .color = theme::text_prim, .font_size = 13.0f, .font_weight = FontWeight::Bold
+        auto time_t = text({
+            .text = "Sat Aug 8  22:30",
+            .color = theme::text_prim,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
         });
         auto center_box = container(time_t);
         center_box->paddingSymmetric(4.0f, 12.0f);

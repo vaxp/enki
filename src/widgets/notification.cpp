@@ -23,16 +23,22 @@ namespace enki {
 // ════════════════════════════════════════════════════════════════
 
 WidgetPtr NotificationBellWidget::build(BuildContext&) {
-    auto ic_txt = text(bell_icon);
-    ic_txt->fontSize(16.0f);
+    auto ic_txt = text({
+        .text = bell_icon,
+        .font_size = 16.0f,
+    });
 
     std::vector<WidgetPtr> bell_items = {ic_txt};
 
     int unread = manager ? manager->getUnreadCount() : 0;
     if (unread > 0) {
         std::string count_str = unread > 99 ? "99+" : std::to_string(unread);
-        auto badge_txt = text(count_str);
-        badge_txt->fontSize(10.0f).bold().color(0xFFFFFFFF);
+        auto badge_txt = text({
+            .text = count_str,
+            .color = 0xFFFFFFFF,
+            .font_size = 10.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto badge_box = container(badge_txt);
         badge_box->color(0xFFEF4444)
@@ -163,25 +169,37 @@ public:
         }
 
         // Icon Badge
-        auto ic_txt = text(item.icon);
-        ic_txt->fontSize(16.0f);
+        auto ic_txt = text({
+            .text = item.icon,
+            .font_size = 16.0f,
+        });
         auto ic_box = container(ic_txt);
         ic_box->color(badge_bg).borderRadius(6.0f).paddingAll(6.0f);
 
         // Title + Timestamp
-        auto title_txt = text(item.title);
-        title_txt->fontSize(13.0f).bold().color(0xFFFFFFFF);
+        auto title_txt = text({
+            .text = item.title,
+            .color = 0xFFFFFFFF,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto time_txt = text(item.timestamp_str);
-        time_txt->fontSize(11.0f).color(0xFF94A3B8);
+        auto time_txt = text({
+            .text = item.timestamp_str,
+            .color = 0xFF94A3B8,
+            .font_size = 11.0f,
+        });
 
         std::vector<WidgetPtr> top_row_items = {title_txt, time_txt};
         auto top_row = row(top_row_items);
         top_row->justifyContent(Justify::SpaceBetween).alignItems(Align::Center);
 
         // Message text
-        auto msg_txt = text(item.message);
-        msg_txt->fontSize(12.0f).color(0xFFCBD5E1);
+        auto msg_txt = text({
+            .text = item.message,
+            .color = 0xFFCBD5E1,
+            .font_size = 12.0f,
+        });
 
         std::vector<WidgetPtr> text_col_items = {top_row, msg_txt};
 
@@ -189,12 +207,15 @@ public:
         if (!item.actions.empty()) {
             std::vector<WidgetPtr> act_btns;
             for (const auto& act : item.actions) {
-                auto b_txt = text(act.label);
-                b_txt->fontSize(11.5f).bold();
-
                 Color bg = act.is_danger ? 0xFFDC2626 : (act.is_primary ? 0xFF0284C7 : 0xFF0F172A);
                 Color border = act.is_danger ? 0xFFEF4444 : (act.is_primary ? 0xFF38BDF8 : 0xFF334155);
-                b_txt->color(0xFFFFFFFF);
+
+                auto b_txt = text({
+                    .text = act.label,
+                    .color = 0xFFFFFFFF,
+                    .font_size = 11.5f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 auto b_box = container(b_txt);
                 b_box->color(bg).border(border, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f);
@@ -218,8 +239,12 @@ public:
         text_col->gap(StyleValue::point(4.0f)).flex(1.0f);
 
         // Close button ✕
-        auto cls_txt = text("✕");
-        cls_txt->fontSize(12.0f).bold().color(0xFF94A3B8);
+        auto cls_txt = text({
+            .text = "✕",
+            .color = 0xFF94A3B8,
+            .font_size = 12.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto cls_box = container(cls_txt);
         cls_box->paddingAll(4.0f);
         auto cls_btn = std::make_shared<GestureDetector>(cls_box);
@@ -248,12 +273,19 @@ public:
 
     WidgetPtr buildNotificationCenter(std::shared_ptr<NotificationManager> mgr) {
         // 1. Center Header
-        auto title_lbl = text("Notification Feed");
-        title_lbl->fontSize(16.0f).bold().color(0xFFFFFFFF);
+        auto title_lbl = text({
+            .text = "Notification Feed",
+            .color = 0xFFFFFFFF,
+            .font_size = 16.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         int unread = mgr ? mgr->getUnreadCount() : 0;
-        auto badge_txt = text(std::to_string(unread) + " unread");
-        badge_txt->fontSize(11.0f).color(0xFF38BDF8);
+        auto badge_txt = text({
+            .text = std::to_string(unread) + " unread",
+            .color = 0xFF38BDF8,
+            .font_size = 11.0f,
+        });
         auto badge_box = container(badge_txt);
         badge_box->color(0x2E38BDF8).borderRadius(4.0f).paddingSymmetric(2.0f, 6.0f);
 
@@ -262,8 +294,11 @@ public:
         t_left_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
 
         // Header Action: Mark all read
-        auto mark_txt = text("✓ Read All");
-        mark_txt->fontSize(11.5f).color(0xFF94A3B8);
+        auto mark_txt = text({
+            .text = "✓ Read All",
+            .color = 0xFF94A3B8,
+            .font_size = 11.5f,
+        });
         auto mark_box = container(mark_txt);
         mark_box->paddingAll(4.0f);
         auto mark_btn = std::make_shared<GestureDetector>(mark_box);
@@ -273,8 +308,11 @@ public:
         };
 
         // Header Action: Clear all
-        auto clr_txt = text("🗑️ Clear");
-        clr_txt->fontSize(11.5f).color(0xFFEF4444);
+        auto clr_txt = text({
+            .text = "🗑️ Clear",
+            .color = 0xFFEF4444,
+            .font_size = 11.5f,
+        });
         auto clr_box = container(clr_txt);
         clr_box->paddingAll(4.0f);
         auto clr_btn = std::make_shared<GestureDetector>(clr_box);
@@ -284,8 +322,12 @@ public:
         };
 
         // Close ✕
-        auto cls_txt = text("✕");
-        cls_txt->fontSize(13.0f).bold().color(0xFF94A3B8);
+        auto cls_txt = text({
+            .text = "✕",
+            .color = 0xFF94A3B8,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto cls_box = container(cls_txt);
         cls_box->paddingAll(4.0f);
         auto cls_btn = std::make_shared<GestureDetector>(cls_box);
@@ -305,9 +347,12 @@ public:
         // 2. Category Filter Tabs
         auto makeTab = [this](std::string label, NotificationCategory cat) -> WidgetPtr {
             bool is_act = (selected_category_ == cat);
-            auto t = text(label);
-            t->fontSize(11.5f).color(is_act ? 0xFFFFFFFF : 0xFF94A3B8);
-            if (is_act) t->bold();
+            auto t = text({
+                .text = label,
+                .color = is_act ? 0xFFFFFFFF : 0xFF94A3B8,
+                .font_size = 11.5f,
+                .font_weight = is_act ? FontWeight::Bold : FontWeight::Normal,
+            });
 
             auto b = container(t);
             b->color(is_act ? 0xFF0284C7 : 0xFF0F172A)
@@ -351,20 +396,31 @@ public:
                 }
 
                 // Severity icon
-                auto ic = text(item.icon);
-                ic->fontSize(14.0f);
+                auto ic = text({
+                    .text = item.icon,
+                    .font_size = 14.0f,
+                });
                 row_elements.push_back(ic);
 
                 // Title + Subtitle
-                auto tit = text(item.title);
-                tit->fontSize(12.5f).color(item.is_read ? 0xFF94A3B8 : 0xFFFFFFFF);
-                if (!item.is_read) tit->bold();
+                auto tit = text({
+                    .text = item.title,
+                    .color = item.is_read ? 0xFF94A3B8 : 0xFFFFFFFF,
+                    .font_size = 12.5f,
+                    .font_weight = !item.is_read ? FontWeight::Bold : FontWeight::Normal,
+                });
 
-                auto msg = text(item.message);
-                msg->fontSize(11.5f).color(0xFF64748B);
+                auto msg = text({
+                    .text = item.message,
+                    .color = 0xFF64748B,
+                    .font_size = 11.5f,
+                });
 
-                auto tm = text(item.timestamp_str);
-                tm->fontSize(10.5f).color(0xFF64748B);
+                auto tm = text({
+                    .text = item.timestamp_str,
+                    .color = 0xFF64748B,
+                    .font_size = 10.5f,
+                });
 
                 std::vector<WidgetPtr> col_txt_items = {tit, msg, tm};
                 auto col_txt = column(col_txt_items);
@@ -392,8 +448,11 @@ public:
         }
 
         if (list_rows.empty()) {
-            auto empty_txt = text("🎉 All caught up! No notifications.");
-            empty_txt->fontSize(13.0f).color(0xFF94A3B8);
+            auto empty_txt = text({
+                .text = "🎉 All caught up! No notifications.",
+                .color = 0xFF94A3B8,
+                .font_size = 13.0f,
+            });
             auto empty_box = container(empty_txt);
             empty_box->paddingAll(30.0f);
             list_rows.push_back(empty_box);

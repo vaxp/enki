@@ -851,25 +851,39 @@ public:
                 // Category Header if changed
                 if (!item.category.empty() && item.category != last_cat) {
                     last_cat = item.category;
-                    auto cat_txt = text(item.category);
-                    cat_txt->fontSize(11.0f).bold().color(0xFF64748B);
+                    auto cat_txt = text({
+                        .text = item.category,
+                        .color = 0xFF64748B,
+                        .font_size = 11.0f,
+                        .font_weight = FontWeight::Bold,
+                });
                     auto cat_box = container(cat_txt);
                     cat_box->paddingSymmetric(4.0f, 8.0f);
                     pop_items.push_back(cat_box);
                 }
 
                 // Suggestion Item Row
-                auto ic = text(item.icon_char.empty() ? "🔍" : item.icon_char);
-                ic->fontSize(13.5f);
+                auto ic = text({
+                    .text = item.icon_char.empty() ? "🔍" : item.icon_char,
+                    .font_size = 13.5f,
+                });
 
-                auto t = text(item.title);
-                t->fontSize(13.0f).bold().color(is_active ? sf->props.focus_border_color : 0xFFF1F5F9);
+                Color t_color = is_active ? sf->props.focus_border_color : 0xFFF1F5F9;
+                auto t = text({
+                    .text = item.title,
+                    .color = t_color,
+                    .font_size = 13.0f,
+                    .font_weight = FontWeight::Bold,
+                });
 
                 std::vector<WidgetPtr> row_content = {ic, t};
 
                 if (!item.subtitle.empty()) {
-                    auto sub = text(item.subtitle);
-                    sub->fontSize(11.5f).color(0xFF94A3B8);
+                    auto sub = text({
+                        .text = item.subtitle,
+                        .color = 0xFF94A3B8,
+                        .font_size = 11.5f,
+                    });
                     row_content.push_back(sub);
                 }
 
@@ -878,8 +892,11 @@ public:
                           .alignItems(Align::Center);
 
                 if (!item.badge.empty()) {
-                    auto bg_t = text(item.badge);
-                    bg_t->fontSize(10.5f).color(0xFF94A3B8);
+                    auto bg_t = text({
+                        .text = item.badge,
+                        .color = 0xFF94A3B8,
+                        .font_size = 10.5f,
+                    });
                     auto bg_box = container(bg_t);
                     bg_box->color(0xFF1E293B)
                           .borderRadius(4.0f)
@@ -917,8 +934,12 @@ public:
         }
         // 2. Recent Searches if Query is Empty
         else if (!recent.empty() && controller_->getQuery().empty()) {
-            auto rec_header = text("RECENT SEARCHES");
-            rec_header->fontSize(11.0f).bold().color(0xFF64748B);
+            auto rec_header = text({
+                .text = "RECENT SEARCHES",
+                .color = 0xFF64748B,
+                .font_size = 11.0f,
+                .font_weight = FontWeight::Bold,
+            });
             auto rec_header_box = container(rec_header);
             rec_header_box->paddingSymmetric(4.0f, 8.0f);
             pop_items.push_back(rec_header_box);
@@ -927,11 +948,16 @@ public:
             for (int i = 0; i < rec_limit; ++i) {
                 std::string r_query = recent[i];
 
-                auto ic = text("🕒");
-                ic->fontSize(12.5f);
+                auto ic = text({
+                    .text = "🕒",
+                    .font_size = 12.5f,
+                });
 
-                auto r_txt = text(r_query);
-                r_txt->fontSize(12.5f).color(0xFFE2E8F0);
+                auto r_txt = text({
+                    .text = r_query,
+                    .color = 0xFFE2E8F0,
+                    .font_size = 12.5f,
+                });
 
                 std::vector<WidgetPtr> r_items = {ic, r_txt};
                 auto r_row = row(r_items);

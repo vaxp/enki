@@ -416,8 +416,8 @@ endif
 # Examples
 # ============================================================
 if get_option('build_examples')
-  subdir('examples')
-  subdir('widgets_demo')
+ subdir('examples')
+ subdir('widgets_demo')
 endif
 
 

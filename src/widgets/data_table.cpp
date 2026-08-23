@@ -17,8 +17,11 @@ namespace enki {
 // Helper: sort arrow widget
 // ════════════════════════════════════════════════════════════════
 static WidgetPtr buildSortArrow(bool ascending, Color color, float size) {
-    auto arrow = std::make_shared<Text>(ascending ? " ▲" : " ▼");
-    arrow->fontSize(size).color(color);
+    auto arrow = text({
+        .text = ascending ? " ▲" : " ▼",
+        .color = color,
+        .font_size = size,
+    });
     return arrow;
 }
 

@@ -120,13 +120,19 @@ public:
         // Left: Icon + Title
         std::vector<WidgetPtr> left_items;
         if (!opts.icon.empty()) {
-            auto ic = text(opts.icon);
-            ic->fontSize(14.0f);
+            auto ic = text({
+                .text = opts.icon,
+                .font_size = 14.0f,
+            });
             left_items.push_back(ic);
         }
 
-        auto tit = text(opts.title);
-        tit->fontSize(13.0f).bold().color(opts.title_color);
+        auto tit = text({
+            .text = opts.title,
+            .color = opts.title_color,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
         left_items.push_back(tit);
 
         auto left_row = row(left_items);
@@ -134,8 +140,12 @@ public:
 
         // Right: Window Action Buttons (— ◻ ✕)
         auto makeActionBtn = [](std::string sym, Color fg, std::function<void()> cb) -> WidgetPtr {
-            auto t = text(sym);
-            t->fontSize(11.5f).bold().color(fg);
+            auto t = text({
+                .text = sym,
+                .color = fg,
+                .font_size = 11.5f,
+                .font_weight = FontWeight::Bold,
+            });
 
             auto b = container(t);
             b->paddingSymmetric(2.0f, 6.0f);
@@ -238,8 +248,11 @@ public:
                               .width(StyleValue::percent(100.0f));
 
                 // Bottom-right corner resize grip (◢)
-                auto grip_txt = text("◢");
-                grip_txt->fontSize(12.0f).color(opts.grip_color);
+                auto grip_txt = text({
+                    .text = "◢",
+                    .color = opts.grip_color,
+                    .font_size = 12.0f,
+                });
                 auto grip_box = container(grip_txt);
                 grip_box->paddingAll(4.0f);
 

@@ -23,11 +23,12 @@ WidgetPtr AvatarWidget::build(BuildContext& ctx) {
             .fit = BoxFit::Cover,
         });
     } else {
-        auto text_widget = text(options.initials);
-        // Calculate font size based on radius (rough heuristic: 40% of diameter)
-        text_widget->fontSize(diameter * 0.4f)
-                   .color(options.text_color)
-                   .bold();
+        auto text_widget = text({
+            .text = options.initials,
+            .color = options.text_color,
+            .font_size = diameter * 0.4f,
+            .font_weight = FontWeight::Bold,
+        });
         
         auto center_box = container(text_widget);
         center_box->align(Alignment::Center)
