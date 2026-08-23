@@ -106,11 +106,13 @@ public:
             auto del_box = container(del_txt);
             del_box->borderRadius(8.0f).paddingSymmetric(1.0f, 3.0f);
 
-            auto del_gd = std::make_shared<GestureDetector>(del_box);
-            del_gd->cursor_type = SystemCursor::Pointer;
-            del_gd->on_tap_up = [opts](const TapUpDetails&) {
-                if (opts.on_deleted) opts.on_deleted();
-            };
+            auto del_gd = gestureDetector({
+                .child = del_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [opts](const TapUpDetails&) {
+                    if (opts.on_deleted) opts.on_deleted();
+                },
+            });
             items.push_back(del_gd);
         } else if (opts.trailing) {
             items.push_back(opts.trailing);
@@ -141,24 +143,23 @@ public:
             return chip_box;
         }
 
-        auto gd = std::make_shared<GestureDetector>(chip_box);
-        gd->cursor_type = SystemCursor::Pointer;
-
-        gd->on_tap_up = [this, opts](const TapUpDetails&) {
-            if (opts.type == ChipType::Filter) {
-                is_selected_ = !is_selected_;
-                if (opts.on_selected) opts.on_selected(is_selected_);
-                setState([] {});
-            } else if (opts.type == ChipType::Choice) {
-                is_selected_ = !is_selected_;
-                if (opts.on_selected) opts.on_selected(is_selected_);
-                setState([] {});
-            } else if (opts.type == ChipType::Action) {
-                if (opts.on_tap) opts.on_tap();
-            }
-        };
-
-        return gd;
+        return gestureDetector({
+            .child = chip_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this, opts](const TapUpDetails&) {
+                if (opts.type == ChipType::Filter) {
+                    is_selected_ = !is_selected_;
+                    if (opts.on_selected) opts.on_selected(is_selected_);
+                    setState([] {});
+                } else if (opts.type == ChipType::Choice) {
+                    is_selected_ = !is_selected_;
+                    if (opts.on_selected) opts.on_selected(is_selected_);
+                    setState([] {});
+                } else if (opts.type == ChipType::Action) {
+                    if (opts.on_tap) opts.on_tap();
+                }
+            },
+        });
     }
 };
 

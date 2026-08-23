@@ -229,29 +229,26 @@ public:
             display_child = w->child;
         }
 
-        auto gd = std::make_shared<GestureDetector>(display_child);
-        gd->cursor_type = SystemCursor::Move;
-
-        gd->on_pan_start = [this, w](const DragStartDetails& d) {
-            is_dragging_ = true;
-            DragManager::instance().startDrag(w->tag, w->data, w->feedback ? w->feedback : w->child,
-                                            d.global_position, w->preview_label);
-            if (w->on_drag_started) w->on_drag_started();
-            setState([] {});
-        };
-
-        gd->on_pan_update = [](const DragUpdateDetails& d) {
-            DragManager::instance().updatePointer(d.global_position);
-        };
-
-        gd->on_pan_end = [this, w](const DragEndDetails&) {
-            is_dragging_ = false;
-            DragManager::instance().endDrag();
-            if (w->on_drag_end) w->on_drag_end();
-            setState([] {});
-        };
-
-        return gd;
+        return gestureDetector({
+            .child = display_child,
+            .cursor_type = SystemCursor::Move,
+            .on_pan_start = [this, w](const DragStartDetails& d) {
+                is_dragging_ = true;
+                DragManager::instance().startDrag(w->tag, w->data, w->feedback ? w->feedback : w->child,
+                                                d.global_position, w->preview_label);
+                if (w->on_drag_started) w->on_drag_started();
+                setState([] {});
+            },
+            .on_pan_update = [](const DragUpdateDetails& d) {
+                DragManager::instance().updatePointer(d.global_position);
+            },
+            .on_pan_end = [this, w](const DragEndDetails&) {
+                is_dragging_ = false;
+                DragManager::instance().endDrag();
+                if (w->on_drag_end) w->on_drag_end();
+                setState([] {});
+            },
+        });
     }
 };
 

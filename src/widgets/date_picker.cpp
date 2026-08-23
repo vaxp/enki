@@ -159,10 +159,11 @@ public:
             auto b = container(t);
             b->paddingSymmetric(4.0f, 8.0f).borderRadius(4.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) { if (cb) cb(); };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) { if (cb) cb(); },
+            });
         };
 
         auto btn_prev = makeNavArrow("◀", [this] {
@@ -197,14 +198,16 @@ public:
         auto title_box = container(title_txt);
         title_box->paddingSymmetric(4.0f, 10.0f).borderRadius(6.0f);
 
-        auto title_gd = std::make_shared<GestureDetector>(title_box);
-        title_gd->cursor_type = SystemCursor::Pointer;
-        title_gd->on_tap_up = [this](const TapUpDetails&) {
-            if (current_view_ == DatePickerView::Days) current_view_ = DatePickerView::Months;
-            else if (current_view_ == DatePickerView::Months) current_view_ = DatePickerView::Years;
-            else current_view_ = DatePickerView::Days;
-            setState([] {});
-        };
+        auto title_gd = gestureDetector({
+            .child = title_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                if (current_view_ == DatePickerView::Days) current_view_ = DatePickerView::Months;
+                else if (current_view_ == DatePickerView::Months) current_view_ = DatePickerView::Years;
+                else current_view_ = DatePickerView::Days;
+                setState([] {});
+            },
+        });
 
         std::vector<WidgetPtr> h_items = {btn_prev, title_gd, btn_next};
         auto h_row = row(h_items);
@@ -324,33 +327,34 @@ public:
                     d_box->color(opts.range_fill_color);
                 }
 
-                auto d_gd = std::make_shared<GestureDetector>(d_box);
-                d_gd->cursor_type = SystemCursor::Pointer;
-
-                d_gd->on_tap_up = [this, cur_date, opts](const TapUpDetails&) {
-                    if (opts.selection_mode == DatePickerSelectionMode::Single) {
-                        selected_date_ = cur_date;
-                        if (opts.on_date_selected) opts.on_date_selected(selected_date_);
-                        if (opts.mode == DatePickerMode::InputPopup) {
-                            is_popup_open_ = false;
-                        }
-                    } else {
-                        // Range selection logic
-                        if (!selected_range_.start || (selected_range_.start && selected_range_.end)) {
-                            selected_range_.start = cur_date;
-                            selected_range_.end = std::nullopt;
-                        } else {
-                            if (cur_date < *selected_range_.start) {
-                                selected_range_.end = selected_range_.start;
-                                selected_range_.start = cur_date;
-                            } else {
-                                selected_range_.end = cur_date;
+                auto d_gd = gestureDetector({
+                    .child = d_box,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [this, cur_date, opts](const TapUpDetails&) {
+                        if (opts.selection_mode == DatePickerSelectionMode::Single) {
+                            selected_date_ = cur_date;
+                            if (opts.on_date_selected) opts.on_date_selected(selected_date_);
+                            if (opts.mode == DatePickerMode::InputPopup) {
+                                is_popup_open_ = false;
                             }
-                            if (opts.on_range_selected) opts.on_range_selected(selected_range_);
+                        } else {
+                            // Range selection logic
+                            if (!selected_range_.start || (selected_range_.start && selected_range_.end)) {
+                                selected_range_.start = cur_date;
+                                selected_range_.end = std::nullopt;
+                            } else {
+                                if (cur_date < *selected_range_.start) {
+                                    selected_range_.end = selected_range_.start;
+                                    selected_range_.start = cur_date;
+                                } else {
+                                    selected_range_.end = cur_date;
+                                }
+                                if (opts.on_range_selected) opts.on_range_selected(selected_range_);
+                            }
                         }
-                    }
-                    setState([] {});
-                };
+                        setState([] {});
+                    },
+                });
 
                 row_cells.push_back(d_gd);
             }
@@ -393,13 +397,15 @@ public:
                      .paddingSymmetric(10.0f, 0.0f)
                      .width(76.0f);
 
-                auto m_gd = std::make_shared<GestureDetector>(m_box);
-                m_gd->cursor_type = SystemCursor::Pointer;
-                m_gd->on_tap_up = [this, m_num](const TapUpDetails&) {
-                    view_month_ = m_num;
-                    current_view_ = DatePickerView::Days;
-                    setState([] {});
-                };
+                auto m_gd = gestureDetector({
+                    .child = m_box,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [this, m_num](const TapUpDetails&) {
+                        view_month_ = m_num;
+                        current_view_ = DatePickerView::Days;
+                        setState([] {});
+                    },
+                });
 
                 row_items.push_back(m_gd);
             }
@@ -441,13 +447,15 @@ public:
                      .paddingSymmetric(10.0f, 0.0f)
                      .width(76.0f);
 
-                auto y_gd = std::make_shared<GestureDetector>(y_box);
-                y_gd->cursor_type = SystemCursor::Pointer;
-                y_gd->on_tap_up = [this, y_num](const TapUpDetails&) {
-                    view_year_ = y_num;
-                    current_view_ = DatePickerView::Months;
-                    setState([] {});
-                };
+                auto y_gd = gestureDetector({
+                    .child = y_box,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap_up = [this, y_num](const TapUpDetails&) {
+                        view_year_ = y_num;
+                        current_view_ = DatePickerView::Months;
+                        setState([] {});
+                    },
+                });
 
                 row_items.push_back(y_gd);
             }
@@ -472,10 +480,11 @@ public:
             auto b = container(t);
             b->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(4.0f, 8.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) { if (cb) cb(); };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) { if (cb) cb(); },
+            });
         };
 
         auto p_today = makePreset("Today", [this] {
@@ -599,12 +608,14 @@ public:
                  .paddingSymmetric(10.0f, 14.0f)
                  .width(320.0f);
 
-        auto input_gd = std::make_shared<GestureDetector>(input_box);
-        input_gd->cursor_type = SystemCursor::Pointer;
-        input_gd->on_tap_up = [this](const TapUpDetails&) {
-            is_popup_open_ = !is_popup_open_;
-            setState([] {});
-        };
+        auto input_gd = gestureDetector({
+            .child = input_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                is_popup_open_ = !is_popup_open_;
+                setState([] {});
+            },
+        });
 
         std::vector<WidgetPtr> col_items = {input_gd};
         if (is_popup_open_) {

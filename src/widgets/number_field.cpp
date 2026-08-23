@@ -949,99 +949,88 @@ public:
             show_cursor_, cursor_pos_, selection_start_, selection_end_, hovered_button_
         );
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = is_scrubbing_ ? SystemCursor::ResizeHorizontal : SystemCursor::Text;
+        return gestureDetector({
+            .child = render_box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = is_scrubbing_ ? SystemCursor::ResizeHorizontal : SystemCursor::Text,
+            .on_tap_down = [this](const TapDownDetails& e) {
+                auto* nf = static_cast<const NumberFieldWidget*>(widget());
+                if (!nf || nf->options.disabled) return;
 
-        detector->on_hover_enter = [this](const PointerEvent&) {
-            setState([this] { is_hovered_ = true; });
-        };
-        detector->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] { is_hovered_ = false; hovered_button_ = 0; });
-        };
-
-        detector->on_hover_move = [this](const PointerEvent& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findNumberFieldBox(ro)) {
-                    int hit = box->getHitComponent(e.localPosition.x, e.localPosition.y);
-                    if (hit != hovered_button_) {
-                        hovered_button_ = hit;
-                        setState([] {});
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findNumberFieldBox(ro)) {
+                        int hit = box->getHitComponent(e.local_position.x, e.local_position.y);
+                        if (hit == 1) { // Up / Plus
+                            applyStep(1.0);
+                        } else if (hit == 2) { // Down / Minus
+                            applyStep(-1.0);
+                        } else { // Text Area
+                            g_focused_numberfield = this;
+                            is_focused_ = true;
+                            resetBlink();
+                            cursor_pos_ = box->getIndexAtCoordinate(e.local_position.x);
+                            selection_start_ = cursor_pos_;
+                            selection_end_ = cursor_pos_;
+                            setState([] {});
+                        }
                     }
                 }
-            }
-        };
+            },
+            .on_pan_start = [this](const DragStartDetails& e) {
+                auto* nf = static_cast<const NumberFieldWidget*>(widget());
+                if (!nf || nf->options.read_only || nf->options.disabled || !nf->options.enable_scrubbing) return;
 
-        // 1. Single Tap Down (Handle Steppers vs Text vs Focus)
-        detector->on_tap_down = [this](const TapDownDetails& e) {
-            auto* nf = static_cast<const NumberFieldWidget*>(widget());
-            if (!nf || nf->options.disabled) return;
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findNumberFieldBox(ro)) {
-                    int hit = box->getHitComponent(e.local_position.x, e.local_position.y);
-                    if (hit == 1) { // Up / Plus
-                        applyStep(1.0);
-                    } else if (hit == 2) { // Down / Minus
-                        applyStep(-1.0);
-                    } else { // Text Area
-                        g_focused_numberfield = this;
-                        is_focused_ = true;
-                        resetBlink();
-                        cursor_pos_ = box->getIndexAtCoordinate(e.local_position.x);
-                        selection_start_ = cursor_pos_;
-                        selection_end_ = cursor_pos_;
-                        setState([] {});
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findNumberFieldBox(ro)) {
+                        int hit = box->getHitComponent(e.local_position.x, e.local_position.y);
+                        if (hit == 0) { // Text area drag scrub
+                            is_scrubbing_ = true;
+                            scrub_start_x_ = e.global_position.x;
+                            scrub_start_val_ = controller_->getValue();
+                            setState([] {});
+                        }
                     }
                 }
-            }
-        };
+            },
+            .on_pan_update = [this](const DragUpdateDetails& e) {
+                if (!is_scrubbing_) return;
+                auto* nf = static_cast<const NumberFieldWidget*>(widget());
+                if (!nf) return;
 
-        // 2. Drag Scrubbing (Horizontal Drag-to-Adjust)
-        detector->on_pan_start = [this](const DragStartDetails& e) {
-            auto* nf = static_cast<const NumberFieldWidget*>(widget());
-            if (!nf || nf->options.read_only || nf->options.disabled || !nf->options.enable_scrubbing) return;
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findNumberFieldBox(ro)) {
-                    int hit = box->getHitComponent(e.local_position.x, e.local_position.y);
-                    if (hit == 0) { // Text area drag scrub
-                        is_scrubbing_ = true;
-                        scrub_start_x_ = e.global_position.x;
-                        scrub_start_val_ = controller_->getValue();
-                        setState([] {});
+                float delta_x = e.global_position.x - scrub_start_x_;
+                double step_size = nf->options.step;
+                double scrub_delta = (delta_x / 5.0f) * step_size;
+                commitValue(scrub_start_val_ + scrub_delta);
+            },
+            .on_pan_end = [this](const DragEndDetails&) {
+                if (is_scrubbing_) {
+                    is_scrubbing_ = false;
+                    setState([] {});
+                }
+            },
+            .on_hover_enter = [this](const PointerEvent&) {
+                setState([this] { is_hovered_ = true; });
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] { is_hovered_ = false; hovered_button_ = 0; });
+            },
+            .on_hover_move = [this](const PointerEvent& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findNumberFieldBox(ro)) {
+                        int hit = box->getHitComponent(e.localPosition.x, e.localPosition.y);
+                        if (hit != hovered_button_) {
+                            hovered_button_ = hit;
+                            setState([] {});
+                        }
                     }
                 }
-            }
-        };
-
-        detector->on_pan_update = [this](const DragUpdateDetails& e) {
-            if (!is_scrubbing_) return;
-            auto* nf = static_cast<const NumberFieldWidget*>(widget());
-            if (!nf) return;
-
-            float delta_x = e.global_position.x - scrub_start_x_;
-            double step_size = nf->options.step;
-            double scrub_delta = (delta_x / 5.0f) * step_size;
-            commitValue(scrub_start_val_ + scrub_delta);
-        };
-
-        detector->on_pan_end = [this](const DragEndDetails&) {
-            if (is_scrubbing_) {
-                is_scrubbing_ = false;
-                setState([] {});
-            }
-        };
-
-        // 3. Mouse Wheel Scroll Stepping
-        detector->on_scroll = [this](float, float dy) {
-            auto* nf = static_cast<const NumberFieldWidget*>(widget());
-            if (!nf || nf->options.read_only || nf->options.disabled) return;
-            applyStep(dy > 0 ? 1.0 : -1.0);
-        };
-
-        detector->child = render_box;
-        return detector;
+            },
+            .on_scroll = [this](float, float dy) {
+                auto* nf = static_cast<const NumberFieldWidget*>(widget());
+                if (!nf || nf->options.read_only || nf->options.disabled) return;
+                applyStep(dy > 0 ? 1.0 : -1.0);
+            },
+        });
     }
 };
 

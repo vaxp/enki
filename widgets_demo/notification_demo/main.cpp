@@ -120,11 +120,13 @@ public:
                 .child = b_lbl
             });
 
-            auto gd = std::make_shared<GestureDetector>(b_box);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) {
-                if (cb) cb();
-            };
+            auto gd = gestureDetector({
+                .child = b_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) {
+                    if (cb) cb();
+                },
+            });
 
             auto col = column({
                 .gap = StyleValue::point(12.0f),

@@ -317,36 +317,33 @@ public:
         );
 
         // Wrap with GestureDetector
-        auto gesture = gestureDetector(background);
-        gesture->onHoverEnter([this, btn](const PointerEvent&) { if (!btn->disabled) hover_anim.forward(); });
-        gesture->onHoverExit([this, btn](const PointerEvent&) { if (!btn->disabled) hover_anim.reverse(); });
-        gesture->onHoverMove([this](const PointerEvent& e) { last_mouse_pos = e.localPosition; });
-        
-        gesture->onTapDown([this, btn](const TapDownDetails& e) {
-            if (btn->disabled) return;
-            press_anim.forward();
-            last_mouse_pos = e.local_position;
-            
-            if (btn->options.enable_ripple) {
-                RippleAnim r;
-                r.state.center = e.local_position;
-                r.target_radius = std::max(btn->options.min_width, btn->options.min_height) * 1.5f; // approximate max distance
-                ripples.push_back(r);
-                if (shader_ticker && !shader_ticker->isActive()) shader_ticker->start();
-            }
+        return gestureDetector({
+            .child = background,
+            .on_tap_down = [this, btn](const TapDownDetails& e) {
+                if (btn->disabled) return;
+                press_anim.forward();
+                last_mouse_pos = e.local_position;
+                
+                if (btn->options.enable_ripple) {
+                    RippleAnim r;
+                    r.state.center = e.local_position;
+                    r.target_radius = std::max(btn->options.min_width, btn->options.min_height) * 1.5f; // approximate max distance
+                    ripples.push_back(r);
+                    if (shader_ticker && !shader_ticker->isActive()) shader_ticker->start();
+                }
+            },
+            .on_tap_up = [this, btn](const TapUpDetails&) {
+                if (btn->disabled) return;
+                press_anim.reverse();
+                if (btn->on_pressed) btn->on_pressed();
+            },
+            .on_tap_cancel = [this, btn]() {
+                if (!btn->disabled) press_anim.reverse();
+            },
+            .on_hover_enter = [this, btn](const PointerEvent&) { if (!btn->disabled) hover_anim.forward(); },
+            .on_hover_exit = [this, btn](const PointerEvent&) { if (!btn->disabled) hover_anim.reverse(); },
+            .on_hover_move = [this](const PointerEvent& e) { last_mouse_pos = e.localPosition; },
         });
-        
-        gesture->onTapUp([this, btn](const TapUpDetails&) {
-            if (btn->disabled) return;
-            press_anim.reverse();
-            if (btn->on_pressed) btn->on_pressed();
-        });
-        
-        gesture->onTapCancel([this, btn]() {
-            if (!btn->disabled) press_anim.reverse();
-        });
-
-        return gesture;
     }
 };
 

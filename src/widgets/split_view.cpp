@@ -100,49 +100,43 @@ public:
                       .width(StyleValue::percent(100.0f));
         }
 
-        auto handle_gd = std::make_shared<GestureDetector>(handle_box);
-        handle_gd->cursor_type = is_horizontal ? SystemCursor::ResizeHorizontal
-                                               : SystemCursor::ResizeVertical;
+        return gestureDetector({
+            .child = handle_box,
+            .cursor_type = is_horizontal ? SystemCursor::ResizeHorizontal
+                                         : SystemCursor::ResizeVertical,
+            .on_double_tap = [this] {
+                auto* sw = static_cast<const SplitViewWidget*>(widget());
+                current_ratio_ = sw->options.initial_ratio;
+                if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
+                setState([] {});
+            },
+            .on_pan_start = [this](const DragStartDetails&) {
+                is_dragging_ = true;
+                setState([] {});
+            },
+            .on_pan_update = [this, is_horizontal](const DragUpdateDetails& d) {
+                float delta = is_horizontal ? d.delta.x : d.delta.y;
+                // Approximate fractional displacement (~800px standard container)
+                float fraction_delta = delta / 800.0f;
+                current_ratio_ = std::clamp(current_ratio_ + fraction_delta, 0.05f, 0.95f);
 
-        handle_gd->on_hover_enter = [this](const PointerEvent&) {
-            is_hovered_ = true;
-            setState([] {});
-        };
-
-        handle_gd->on_hover_exit = [this](const PointerEvent&) {
-            is_hovered_ = false;
-            setState([] {});
-        };
-
-        handle_gd->on_pan_start = [this](const DragStartDetails&) {
-            is_dragging_ = true;
-            setState([] {});
-        };
-
-        handle_gd->on_pan_update = [this, is_horizontal](const DragUpdateDetails& d) {
-            float delta = is_horizontal ? d.delta.x : d.delta.y;
-            // Approximate fractional displacement (~800px standard container)
-            float fraction_delta = delta / 800.0f;
-            current_ratio_ = std::clamp(current_ratio_ + fraction_delta, 0.05f, 0.95f);
-
-            auto* sw = static_cast<const SplitViewWidget*>(widget());
-            if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
-            setState([] {});
-        };
-
-        handle_gd->on_pan_end = [this](const DragEndDetails&) {
-            is_dragging_ = false;
-            setState([] {});
-        };
-
-        handle_gd->on_double_tap = [this] {
-            auto* sw = static_cast<const SplitViewWidget*>(widget());
-            current_ratio_ = sw->options.initial_ratio;
-            if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
-            setState([] {});
-        };
-
-        return handle_gd;
+                auto* sw = static_cast<const SplitViewWidget*>(widget());
+                if (sw->options.on_split_changed) sw->options.on_split_changed(current_ratio_);
+                setState([] {});
+            },
+            .on_pan_end = [this](const DragEndDetails&) {
+                is_dragging_ = false;
+                setState([] {});
+            },
+            .on_hover_enter = [this](const PointerEvent&) {
+                is_hovered_ = true;
+                setState([] {});
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                is_hovered_ = false;
+                setState([] {});
+            },
+        });
     }
 
     WidgetPtr build(BuildContext&) override {

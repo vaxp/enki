@@ -178,10 +178,12 @@ void testGestureDetectorWidgetAndHitTest() {
 
     bool clicked = false;
     auto childBox = container();
-    auto gd = gestureDetector(childBox);
-    gd->onTap([&] { clicked = true; })
-      .cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto gd = gestureDetector({
+        .child = childBox,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [&] { clicked = true; },
+    });
 
     auto element = gd->createElement();
     assert(element != nullptr);

@@ -71,19 +71,17 @@ public:
            .border(0xFF475569, 1.0f)
            .paddingSymmetric(10.0f, 16.0f);
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type       = SystemCursor::Pointer;
-
-        detector->on_hover_enter = [this](const PointerEvent&) {
-            setState([this] { hovered_ = true; });
-        };
-        detector->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] { hovered_ = false; });
-        };
-
-        detector->child = box;
-        return detector;
+        return gestureDetector({
+            .child = box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type       = SystemCursor::Pointer,
+            .on_hover_enter = [this](const PointerEvent&) {
+                setState([this] { hovered_ = true; });
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] { hovered_ = false; });
+            },
+        });
     }
 };
 

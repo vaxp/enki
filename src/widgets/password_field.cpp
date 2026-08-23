@@ -828,70 +828,66 @@ public:
             is_capslock_on_, cursor_pos_, selection_start_, selection_end_, hovered_btn_
         );
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = SystemCursor::Text;
-
-        detector->on_hover_enter = [this](const PointerEvent&) { setState([this] { is_hovered_ = true; }); };
-        detector->on_hover_exit  = [this](const PointerEvent&) { setState([this] { is_hovered_ = false; hovered_btn_ = 0; }); };
-
-        detector->on_hover_move = [this](const PointerEvent& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findPasswordFieldBox(ro)) {
-                    int hit = box->getHitComponent(e.localPosition.x, e.localPosition.y);
-                    if (hit != hovered_btn_) {
-                        hovered_btn_ = hit;
-                        setState([] {});
-                    }
-                }
-            }
-        };
-
-        detector->on_tap_down = [this, pf](const TapDownDetails& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findPasswordFieldBox(ro)) {
-                    int hit = box->getHitComponent(e.local_position.x, e.local_position.y);
-                    if (hit == 1) { // Eye toggle
-                        if (pf->options.hold_to_peek) {
-                            controller_->setObscured(false);
-                        } else {
-                            controller_->toggleObscured();
+        auto detector = gestureDetector({
+            .child = field_box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Text,
+            .on_tap_down = [this, pf](const TapDownDetails& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findPasswordFieldBox(ro)) {
+                        int hit = box->getHitComponent(e.local_position.x, e.local_position.y);
+                        if (hit == 1) { // Eye toggle
+                            if (pf->options.hold_to_peek) {
+                                controller_->setObscured(false);
+                            } else {
+                                controller_->toggleObscured();
+                            }
+                            setState([] {});
+                            return;
+                        } else if (hit == 2) { // Generate password
+                            controller_->generateStrongPassword(16, true);
+                            cursor_pos_ = controller_->getPassword().length();
+                            selection_start_ = cursor_pos_;
+                            selection_end_ = cursor_pos_;
+                            notifyPasswordChanged();
+                            return;
+                        } else if (hit == 3) { // Clear
+                            controller_->clear();
+                            cursor_pos_ = 0;
+                            selection_start_ = 0;
+                            selection_end_ = 0;
+                            notifyPasswordChanged();
+                            return;
                         }
-                        setState([] {});
-                        return;
-                    } else if (hit == 2) { // Generate password
-                        controller_->generateStrongPassword(16, true);
-                        cursor_pos_ = controller_->getPassword().length();
+
+                        focus();
+                        cursor_pos_ = box->getIndexAtCoordinate(e.local_position.x);
                         selection_start_ = cursor_pos_;
                         selection_end_ = cursor_pos_;
-                        notifyPasswordChanged();
-                        return;
-                    } else if (hit == 3) { // Clear
-                        controller_->clear();
-                        cursor_pos_ = 0;
-                        selection_start_ = 0;
-                        selection_end_ = 0;
-                        notifyPasswordChanged();
-                        return;
                     }
-
-                    focus();
-                    cursor_pos_ = box->getIndexAtCoordinate(e.local_position.x);
-                    selection_start_ = cursor_pos_;
-                    selection_end_ = cursor_pos_;
                 }
-            }
-            setState([] {});
-        };
-
-        detector->on_tap_up = [this, pf](const TapUpDetails&) {
-            if (pf->options.hold_to_peek && !controller_->isObscured()) {
-                controller_->setObscured(true);
                 setState([] {});
-            }
-        };
-
-        detector->child = field_box;
+            },
+            .on_tap_up = [this, pf](const TapUpDetails&) {
+                if (pf->options.hold_to_peek && !controller_->isObscured()) {
+                    controller_->setObscured(true);
+                    setState([] {});
+                }
+            },
+            .on_hover_enter = [this](const PointerEvent&) { setState([this] { is_hovered_ = true; }); },
+            .on_hover_exit  = [this](const PointerEvent&) { setState([this] { is_hovered_ = false; hovered_btn_ = 0; }); },
+            .on_hover_move = [this](const PointerEvent& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findPasswordFieldBox(ro)) {
+                        int hit = box->getHitComponent(e.localPosition.x, e.localPosition.y);
+                        if (hit != hovered_btn_) {
+                            hovered_btn_ = hit;
+                            setState([] {});
+                        }
+                    }
+                }
+            },
+        });
 
         std::vector<WidgetPtr> main_col_items = {detector};
 

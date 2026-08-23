@@ -672,58 +672,54 @@ public:
             controller_, tl->props, hovered_item_index_
         );
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = (hovered_item_index_ >= 0) ? SystemCursor::Pointer : SystemCursor::Default;
+        return gestureDetector({
+            .child = timeline_render,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = (hovered_item_index_ >= 0) ? SystemCursor::Pointer : SystemCursor::Default,
+            .on_tap_down = [this, tl](const TapDownDetails& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findTimelineBox(ro)) {
+                        int hit = box->getHitItemIndex(e.local_position.x, e.local_position.y);
+                        if (hit >= 0 && static_cast<size_t>(hit) < controller_->getItems().size()) {
+                            const auto& item = controller_->getItems()[hit];
 
-        detector->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] { hovered_item_index_ = -1; });
-        };
-
-        detector->on_hover_move = [this](const PointerEvent& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findTimelineBox(ro)) {
-                    int hit = box->getHitItemIndex(e.localPosition.x, e.localPosition.y);
-                    if (hit != hovered_item_index_) {
-                        hovered_item_index_ = hit;
-                        setState([] {});
-                    }
-                }
-            }
-        };
-
-        detector->on_tap_down = [this, tl](const TapDownDetails& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findTimelineBox(ro)) {
-                    int hit = box->getHitItemIndex(e.local_position.x, e.local_position.y);
-                    if (hit >= 0 && static_cast<size_t>(hit) < controller_->getItems().size()) {
-                        const auto& item = controller_->getItems()[hit];
-
-                        if (tl->props.is_stepper) {
-                            controller_->setActiveStep(hit);
-                            if (tl->props.on_step_changed) {
-                                tl->props.on_step_changed(hit);
-                            }
-                        } else {
-                            if (!item.details.empty()) {
-                                controller_->toggleExpand(item.id);
-                                if (tl->props.on_item_expanded) {
-                                    tl->props.on_item_expanded(item.id, !item.is_expanded);
+                            if (tl->props.is_stepper) {
+                                controller_->setActiveStep(hit);
+                                if (tl->props.on_step_changed) {
+                                    tl->props.on_step_changed(hit);
+                                }
+                            } else {
+                                if (!item.details.empty()) {
+                                    controller_->toggleExpand(item.id);
+                                    if (tl->props.on_item_expanded) {
+                                        tl->props.on_item_expanded(item.id, !item.is_expanded);
+                                    }
                                 }
                             }
-                        }
 
-                        if (tl->props.on_item_tap) {
-                            tl->props.on_item_tap(item);
+                            if (tl->props.on_item_tap) {
+                                tl->props.on_item_tap(item);
+                            }
+                            setState([] {});
                         }
-                        setState([] {});
                     }
                 }
-            }
-        };
-
-        detector->child = timeline_render;
-        return detector;
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] { hovered_item_index_ = -1; });
+            },
+            .on_hover_move = [this](const PointerEvent& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findTimelineBox(ro)) {
+                        int hit = box->getHitItemIndex(e.localPosition.x, e.localPosition.y);
+                        if (hit != hovered_item_index_) {
+                            hovered_item_index_ = hit;
+                            setState([] {});
+                        }
+                    }
+                }
+            },
+        });
     }
 };
 

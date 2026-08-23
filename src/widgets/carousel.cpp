@@ -146,13 +146,13 @@ public:
             .child = arr_txt
         });
 
-        auto arr_gd = std::make_shared<GestureDetector>(arr_box);
-        arr_gd->cursor_type = SystemCursor::Pointer;
-        arr_gd->on_tap_up = [cb](const TapUpDetails&) {
-            if (cb) cb();
-        };
-
-        return arr_gd;
+        return gestureDetector({
+            .child = arr_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [cb](const TapUpDetails&) {
+                if (cb) cb();
+            },
+        });
     }
 
     // ── Build Bottom Pagination Dots ──────────────────────────────
@@ -170,11 +170,13 @@ public:
                 .height = StyleValue::point(6.0f)
             });
 
-            auto dot_gd = std::make_shared<GestureDetector>(dot_box);
-            dot_gd->cursor_type = SystemCursor::Pointer;
-            dot_gd->on_tap_up = [this, i](const TapUpDetails&) {
-                jumpToPage(i);
-            };
+            auto dot_gd = gestureDetector({
+                .child = dot_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, i](const TapUpDetails&) {
+                    jumpToPage(i);
+                },
+            });
 
             dots.push_back(dot_gd);
         }
@@ -211,34 +213,31 @@ public:
         });
 
         // Slide wrapper with hover and swipe gesture tracking
-        auto gesture_wrapper = std::make_shared<GestureDetector>(slide_box);
-
-        gesture_wrapper->on_hover_enter = [this](const PointerEvent&) {
-            is_hovered_ = true;
-            setState([] {});
-        };
-
-        gesture_wrapper->on_hover_exit = [this](const PointerEvent&) {
-            is_hovered_ = false;
-            setState([] {});
-        };
-
-        gesture_wrapper->on_pan_start = [this](const DragStartDetails& d) {
-            pan_start_x_ = d.global_position.x;
-            pan_accum_x_ = 0.0f;
-        };
-
-        gesture_wrapper->on_pan_update = [this](const DragUpdateDetails& d) {
-            pan_accum_x_ += d.delta.x;
-        };
-
-        gesture_wrapper->on_pan_end = [this](const DragEndDetails&) {
-            if (pan_accum_x_ < -50.0f) {
-                nextPage(); // Swiped left -> advance
-            } else if (pan_accum_x_ > 50.0f) {
-                previousPage(); // Swiped right -> go back
-            }
-        };
+        auto gesture_wrapper = gestureDetector({
+            .child = slide_box,
+            .on_pan_start = [this](const DragStartDetails& d) {
+                pan_start_x_ = d.global_position.x;
+                pan_accum_x_ = 0.0f;
+            },
+            .on_pan_update = [this](const DragUpdateDetails& d) {
+                pan_accum_x_ += d.delta.x;
+            },
+            .on_pan_end = [this](const DragEndDetails&) {
+                if (pan_accum_x_ < -50.0f) {
+                    nextPage(); // Swiped left -> advance
+                } else if (pan_accum_x_ > 50.0f) {
+                    previousPage(); // Swiped right -> go back
+                }
+            },
+            .on_hover_enter = [this](const PointerEvent&) {
+                is_hovered_ = true;
+                setState([] {});
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                is_hovered_ = false;
+                setState([] {});
+            },
+        });
 
         auto pos_slide = Positioned::fill(gesture_wrapper);
         std::vector<WidgetPtr> stack_items = {pos_slide};

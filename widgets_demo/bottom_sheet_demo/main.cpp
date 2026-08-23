@@ -51,14 +51,15 @@ private:
                 .child = col,
             });
 
-            auto gd = std::make_shared<GestureDetector>(box);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [this, label](const TapUpDetails&) {
-                hud_msg_ = "Shared via " + label + "!";
-                sheet_ctrl_->hide();
-                setState([] {});
-            };
-            return gd;
+            return gestureDetector({
+                .child = box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, label](const TapUpDetails&) {
+                    hud_msg_ = "Shared via " + label + "!";
+                    sheet_ctrl_->hide();
+                    setState([] {});
+                },
+            });
         };
 
         auto r1 = row({

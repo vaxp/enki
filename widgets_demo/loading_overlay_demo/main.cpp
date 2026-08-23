@@ -135,11 +135,13 @@ public:
                  .borderRadius(6.0f)
                  .paddingSymmetric(8.0f, 16.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b_box);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) {
-                if (cb) cb();
-            };
+            auto gd = gestureDetector({
+                .child = b_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) {
+                    if (cb) cb();
+                },
+            });
 
             std::vector<WidgetPtr> c_items = {h_row, ds, gd};
             auto col = column(c_items);

@@ -248,18 +248,10 @@ public:
                       .paddingSymmetric(6.0f, 10.0f)
                       .minHeight(StyleValue::point(opt.item_height));
 
-        auto gesture = gestureDetector(item_container);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
-
-        if (!is_disabled) {
-            gesture->onHoverEnter([this](const PointerEvent&) {
-                setState([this]() { is_hovered_ = true; });
-            });
-            gesture->onHoverExit([this](const PointerEvent&) {
-                setState([this]() { is_hovered_ = false; });
-            });
-
-            gesture->onTapUp([this, row_widget, on_selected](const TapUpDetails&) {
+        return gestureDetector({
+            .child = item_container,
+            .hit_test_behavior = HitTestBehavior::Translucent,
+            .on_tap_up = !is_disabled ? GestureTapUpCallback([this, row_widget, on_selected](const TapUpDetails&) {
                 if (on_selected) {
                     on_selected();
                 }
@@ -267,10 +259,14 @@ public:
                 if (row_widget->parent_popup) {
                     row_widget->parent_popup->close();
                 }
-            });
-        }
-
-        return gesture;
+            }) : nullptr,
+            .on_hover_enter = !is_disabled ? GestureHoverCallback([this](const PointerEvent&) {
+                setState([this]() { is_hovered_ = true; });
+            }) : nullptr,
+            .on_hover_exit = !is_disabled ? GestureHoverCallback([this](const PointerEvent&) {
+                setState([this]() { is_hovered_ = false; });
+            }) : nullptr,
+        });
     }
 };
 
@@ -362,25 +358,21 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* menu_widget = static_cast<const ContextMenuWidget*>(widget());
 
-        auto gesture = gestureDetector(menu_widget->child);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
-
-        // Trigger on Secondary Tap (Right Click)
-        gesture->onSecondaryTapUp([this](const TapUpDetails& details) {
-            showMenuAt(details.global_position);
+        return gestureDetector({
+            .child = menu_widget->child,
+            .hit_test_behavior = HitTestBehavior::Translucent,
+            .on_secondary_tap_up = [this](const TapUpDetails& details) {
+                showMenuAt(details.global_position);
+            },
+            .on_long_press = [this]() {
+                Element* elem = element();
+                if (!elem) return;
+                RenderObject* ro = elem->findRenderObject();
+                if (!ro) return;
+                Rect bounds = ro->globalBounds();
+                showMenuAt({bounds.x + bounds.width / 2.0f, bounds.y + bounds.height / 2.0f});
+            },
         });
-
-        // Trigger on Touch Long Press
-        gesture->onLongPress([this]() {
-            Element* elem = element();
-            if (!elem) return;
-            RenderObject* ro = elem->findRenderObject();
-            if (!ro) return;
-            Rect bounds = ro->globalBounds();
-            showMenuAt({bounds.x + bounds.width / 2.0f, bounds.y + bounds.height / 2.0f});
-        });
-
-        return gesture;
     }
 };
 

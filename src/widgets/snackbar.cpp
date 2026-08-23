@@ -178,12 +178,14 @@ public:
                    .borderRadius(4.0f)
                    .paddingSymmetric(4.0f, 10.0f);
 
-            auto act_btn = std::make_shared<GestureDetector>(act_box);
-            act_btn->cursor_type = SystemCursor::Pointer;
-            act_btn->on_tap_up = [this, act](const TapUpDetails&) {
-                if (act.on_click) act.on_click();
-                hideSnackbar();
-            };
+            auto act_btn = gestureDetector({
+                .child = act_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this, act](const TapUpDetails&) {
+                    if (act.on_click) act.on_click();
+                    hideSnackbar();
+                },
+            });
             right_items.push_back(act_btn);
         }
 
@@ -198,11 +200,13 @@ public:
             auto cls_box = container(cls_txt);
             cls_box->paddingAll(4.0f);
 
-            auto cls_btn = std::make_shared<GestureDetector>(cls_box);
-            cls_btn->cursor_type = SystemCursor::Pointer;
-            cls_btn->on_tap_up = [this](const TapUpDetails&) {
-                hideSnackbar();
-            };
+            auto cls_btn = gestureDetector({
+                .child = cls_box,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [this](const TapUpDetails&) {
+                    hideSnackbar();
+                },
+            });
             right_items.push_back(cls_btn);
         }
 
@@ -251,15 +255,15 @@ public:
                 .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f));
 
         // Hover Detector for Pause-on-Hover
-        auto hover_detector = std::make_shared<GestureDetector>(card_box);
-        hover_detector->on_hover_enter = [this](const PointerEvent&) {
-            is_hovered_ = true;
-        };
-        hover_detector->on_hover_exit = [this](const PointerEvent&) {
-            is_hovered_ = false;
-        };
-
-        return hover_detector;
+        return gestureDetector({
+            .child = card_box,
+            .on_hover_enter = [this](const PointerEvent&) {
+                is_hovered_ = true;
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                is_hovered_ = false;
+            },
+        });
     }
 
     WidgetPtr build(BuildContext&) override {

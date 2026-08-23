@@ -53,36 +53,36 @@ public:
         auto child_box = container(w->child);
         child_box->width(StyleValue::percent(100.0f));
 
-        auto gd = std::make_shared<GestureDetector>(child_box);
-        gd->cursor_type = SystemCursor::Move;
+        auto gd = gestureDetector({
+            .child = child_box,
+            .cursor_type = SystemCursor::Move,
+            .on_pan_update = [this, opts](const DragUpdateDetails& d) {
+                drag_offset_x_ += d.delta.x;
 
-        gd->on_pan_update = [this, opts](const DragUpdateDetails& d) {
-            drag_offset_x_ += d.delta.x;
+                if (opts.direction == DismissDirection::EndToStart && drag_offset_x_ > 0.0f) {
+                    drag_offset_x_ = 0.0f;
+                } else if (opts.direction == DismissDirection::StartToEnd && drag_offset_x_ < 0.0f) {
+                    drag_offset_x_ = 0.0f;
+                }
 
-            if (opts.direction == DismissDirection::EndToStart && drag_offset_x_ > 0.0f) {
-                drag_offset_x_ = 0.0f;
-            } else if (opts.direction == DismissDirection::StartToEnd && drag_offset_x_ < 0.0f) {
-                drag_offset_x_ = 0.0f;
-            }
+                setState([] {});
+            },
+            .on_pan_end = [this, opts](const DragEndDetails&) {
+                // Dismiss threshold (e.g. 120px)
+                float threshold = 120.0f;
 
-            setState([] {});
-        };
+                if (std::abs(drag_offset_x_) >= threshold) {
+                    is_dismissed_ = true;
+                    DismissDirection dir = (drag_offset_x_ > 0.0f) ? DismissDirection::StartToEnd
+                                                                   : DismissDirection::EndToStart;
+                    if (opts.on_dismissed) opts.on_dismissed(dir);
+                } else {
+                    drag_offset_x_ = 0.0f; // Spring back
+                }
 
-        gd->on_pan_end = [this, opts](const DragEndDetails&) {
-            // Dismiss threshold (e.g. 120px)
-            float threshold = 120.0f;
-
-            if (std::abs(drag_offset_x_) >= threshold) {
-                is_dismissed_ = true;
-                DismissDirection dir = (drag_offset_x_ > 0.0f) ? DismissDirection::StartToEnd
-                                                               : DismissDirection::EndToStart;
-                if (opts.on_dismissed) opts.on_dismissed(dir);
-            } else {
-                drag_offset_x_ = 0.0f; // Spring back
-            }
-
-            setState([] {});
-        };
+                setState([] {});
+            },
+        });
 
         stack_items.push_back(Positioned {
             .child = gd,

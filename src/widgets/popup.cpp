@@ -344,29 +344,30 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* pop_widget = static_cast<const PopupWidget*>(widget());
 
-        auto gesture = gestureDetector(pop_widget->child);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
+        GestureDetectorProps props;
+        props.child = pop_widget->child;
+        props.hit_test_behavior = HitTestBehavior::Translucent;
 
         if (pop_widget->options.trigger == PopupTrigger::Click) {
-            gesture->onTapUp([this](const TapUpDetails&) {
+            props.on_tap_up = [this](const TapUpDetails&) {
                 togglePopup();
-            });
+            };
         } else if (pop_widget->options.trigger == PopupTrigger::Hover) {
-            gesture->onHoverEnter([this](const PointerEvent& e) {
+            props.on_hover_enter = [this](const PointerEvent& e) {
                 last_cursor_pos_ = {e.position.x, e.position.y};
                 showPopupNow();
-            });
-            gesture->onHoverExit([this](const PointerEvent& e) {
+            };
+            props.on_hover_exit = [this](const PointerEvent& e) {
                 hidePopupNow();
-            });
+            };
         } else if (pop_widget->options.trigger == PopupTrigger::SecondaryClick) {
-            gesture->onSecondaryTapUp([this](const TapUpDetails& details) {
+            props.on_secondary_tap_up = [this](const TapUpDetails& details) {
                 last_cursor_pos_ = {details.global_position.x, details.global_position.y};
                 togglePopup();
-            });
+            };
         }
 
-        return gesture;
+        return gestureDetector(std::move(props));
     }
 };
 

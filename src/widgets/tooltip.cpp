@@ -362,29 +362,30 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* tooltip_widget = static_cast<const Tooltip*>(widget());
 
-        auto gesture = gestureDetector(tooltip_widget->child);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
+        GestureDetectorProps props;
+        props.child = tooltip_widget->child;
+        props.hit_test_behavior = HitTestBehavior::Translucent;
 
         if (tooltip_widget->options.trigger == TooltipTrigger::Hover) {
-            gesture->onHoverEnter([this](const PointerEvent&) {
+            props.on_hover_enter = [this](const PointerEvent&) {
                 scheduleShowTooltip();
-            });
-            gesture->onHoverExit([this](const PointerEvent&) {
+            };
+            props.on_hover_exit = [this](const PointerEvent&) {
                 scheduleHideTooltip();
-            });
+            };
         } else if (tooltip_widget->options.trigger == TooltipTrigger::LongPress) {
-            gesture->onLongPress([this]() {
+            props.on_long_press = [this]() {
                 if (active_popup_) hideTooltipNow();
                 else showTooltipNow();
-            });
+            };
         } else if (tooltip_widget->options.trigger == TooltipTrigger::Tap) {
-            gesture->onTapUp([this](const TapUpDetails&) {
+            props.on_tap_up = [this](const TapUpDetails&) {
                 if (active_popup_) hideTooltipNow();
                 else showTooltipNow();
-            });
+            };
         }
 
-        return gesture;
+        return gestureDetector(std::move(props));
     }
 };
 

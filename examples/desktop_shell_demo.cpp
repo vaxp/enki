@@ -84,26 +84,23 @@ public:
            .borderRadius(6.0f)
            .paddingSymmetric(4.0f, 10.0f);
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type       = SystemCursor::Pointer;
-
-        detector->on_hover_enter = [this](const PointerEvent&) { setState([this] { hovered_ = true; }); };
-        detector->on_hover_exit  = [this](const PointerEvent&) { setState([this] { hovered_ = false; }); };
-
         auto on_click = w->on_press;
-        detector->on_tap = [this, on_click] {
-            if (on_click) {
-                Rect btn_rect{100.0f, 0.0f, 120.0f, 36.0f};
-                if (auto* ro = context().element()->findRenderObject()) {
-                    btn_rect = ro->globalBounds();
+        return gestureDetector({
+            .child = box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [this, on_click] {
+                if (on_click) {
+                    Rect btn_rect{100.0f, 0.0f, 120.0f, 36.0f};
+                    if (auto* ro = context().element()->findRenderObject()) {
+                        btn_rect = ro->globalBounds();
+                    }
+                    on_click(context(), btn_rect);
                 }
-                on_click(context(), btn_rect);
-            }
-        };
-
-        detector->child = box;
-        return detector;
+            },
+            .on_hover_enter = [this](const PointerEvent&) { setState([this] { hovered_ = true; }); },
+            .on_hover_exit  = [this](const PointerEvent&) { setState([this] { hovered_ = false; }); },
+        });
     }
 };
 
@@ -138,15 +135,15 @@ WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) 
         r->gap(StyleValue::point(12.0f))
          .padding(StyleInsets::symmetric(8.0f, 12.0f));
 
-        auto btn = std::make_shared<GestureDetector>();
-        btn->hit_test_behavior = HitTestBehavior::Opaque;
-        btn->cursor_type       = SystemCursor::Pointer;
-        btn->on_tap = [popup] {
-            std::cout << "[Desktop Shell] Launching application...\n";
-            if (popup) popup->close();
-        };
-        btn->child = r;
-        return btn;
+        return gestureDetector({
+            .child = r,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [popup] {
+                std::cout << "[Desktop Shell] Launching application...\n";
+                if (popup) popup->close();
+            },
+        });
     };
 
     auto app_list = column({
@@ -192,12 +189,12 @@ WidgetPtr buildWifiPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
         r->justifyContent(Justify::SpaceBetween)
          .padding(StyleInsets::symmetric(8.0f, 12.0f));
 
-        auto btn = std::make_shared<GestureDetector>();
-        btn->hit_test_behavior = HitTestBehavior::Opaque;
-        btn->cursor_type = SystemCursor::Pointer;
-        btn->on_tap = [popup] { if (popup) popup->close(); };
-        btn->child = r;
-        return btn;
+        return gestureDetector({
+            .child = r,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [popup] { if (popup) popup->close(); },
+        });
     };
 
     auto col = column({

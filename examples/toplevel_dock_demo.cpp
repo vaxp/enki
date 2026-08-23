@@ -237,12 +237,16 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
              .color(0x20F43F5E)
              .borderRadius(6.0f);
 
-    auto close_gd = gestureDetector(Key::string("close_btn_" + std::to_string(tl->id())), close_box);
-    close_gd->onTap([tl]() {
-        std::cout << "[DOCK ACTION] Close window: " << tl->appId() << "\n";
-        tl->close();
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
+    auto close_gd = gestureDetector({
+        .key = Key::string("close_btn_" + std::to_string(tl->id())),
+        .child = close_box,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [tl]() {
+            std::cout << "[DOCK ACTION] Close window: " << tl->appId() << "\n";
+            tl->close();
+        },
+    });
 
     auto card_top_row = row(Justify::SpaceBetween, Align::Center, {
         app_text,
@@ -310,23 +314,27 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
                   .shadow(is_active ? 0x4038BDF8 : 0x20000000, {0, 3}, 8.0f);
 
     // Wrap whole card in GestureDetector for Activate / Minimize / Maximize gestures
-    auto card_gd = gestureDetector(Key::string("card_gd_" + std::to_string(tl->id())), card_container);
-    card_gd->onTap([tl]() {
-        std::cout << "[DOCK GESTURE] Tap -> Activate: " << tl->appId() << "\n";
-        if (tl->isMinimized()) {
-            tl->setMinimized(false);
-        }
-        tl->activate();
-    }).onSecondaryTap([tl]() {
-        std::cout << "[DOCK GESTURE] Right-Click -> Toggle Minimize: " << tl->appId() << "\n";
-        tl->setMinimized(!tl->isMinimized());
-    }).onDoubleTap([tl]() {
-        std::cout << "[DOCK GESTURE] Double-Tap -> Toggle Maximize: " << tl->appId() << "\n";
-        tl->setMaximized(!tl->isMaximized());
-    }).cursor(SystemCursor::Pointer)
-      .hitTestBehavior(HitTestBehavior::Opaque);
-
-    return card_gd;
+    return gestureDetector({
+        .key = Key::string("card_gd_" + std::to_string(tl->id())),
+        .child = card_container,
+        .hit_test_behavior = HitTestBehavior::Opaque,
+        .cursor_type = SystemCursor::Pointer,
+        .on_tap = [tl]() {
+            std::cout << "[DOCK GESTURE] Tap -> Activate: " << tl->appId() << "\n";
+            if (tl->isMinimized()) {
+                tl->setMinimized(false);
+            }
+            tl->activate();
+        },
+        .on_secondary_tap = [tl]() {
+            std::cout << "[DOCK GESTURE] Right-Click -> Toggle Minimize: " << tl->appId() << "\n";
+            tl->setMinimized(!tl->isMinimized());
+        },
+        .on_double_tap = [tl]() {
+            std::cout << "[DOCK GESTURE] Double-Tap -> Toggle Maximize: " << tl->appId() << "\n";
+            tl->setMaximized(!tl->isMaximized());
+        },
+    });
 }
 
 WidgetPtr DockAppState::buildEmptyState() {

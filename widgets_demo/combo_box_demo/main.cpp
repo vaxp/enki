@@ -84,11 +84,13 @@ public:
             .child = input1_row,
         });
 
-        auto input1_gd = std::make_shared<GestureDetector>(input1_box);
-        input1_gd->cursor_type = SystemCursor::Pointer;
-        input1_gd->on_tap_up = [this](const TapUpDetails&) {
-            region_ctrl_->toggle();
-        };
+        auto input1_gd = gestureDetector({
+            .child = input1_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                region_ctrl_->toggle();
+            },
+        });
 
         auto card1 = container({
             .color = 0xFF1E293B,
@@ -133,11 +135,13 @@ public:
             .child = input2_row,
         });
 
-        auto input2_gd = std::make_shared<GestureDetector>(input2_box);
-        input2_gd->cursor_type = SystemCursor::Pointer;
-        input2_gd->on_tap_up = [this](const TapUpDetails&) {
-            tech_ctrl_->toggle();
-        };
+        auto input2_gd = gestureDetector({
+            .child = input2_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                tech_ctrl_->toggle();
+            },
+        });
 
         auto card2 = container({
             .color = 0xFF1E293B,

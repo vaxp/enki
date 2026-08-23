@@ -391,11 +391,14 @@ private:
                 .font_weight = FontWeight::Bold,
             })
         });
-        auto l0_gesture = std::make_shared<GestureDetector>(Key::string("layer_0"), l0_box);
-        l0_gesture->cursor_type = SystemCursor::Pointer;
-        l0_gesture->on_tap_up = [this](const TapUpDetails&) {
-            setState([this]() { active_layer_index = 0; });
-        };
+        auto l0_gesture = gestureDetector({
+            .key = Key::string("layer_0"),
+            .child = l0_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                setState([this]() { active_layer_index = 0; });
+            },
+        });
         auto pos_l0 = Positioned {
             .child = l0_gesture,
             .top = StyleValue::point(0.0f),
@@ -416,11 +419,14 @@ private:
                 .font_weight = FontWeight::Bold,
             })
         });
-        auto l1_gesture = std::make_shared<GestureDetector>(Key::string("layer_1"), l1_box);
-        l1_gesture->cursor_type = SystemCursor::Pointer;
-        l1_gesture->on_tap_up = [this](const TapUpDetails&) {
-            setState([this]() { active_layer_index = 1; });
-        };
+        auto l1_gesture = gestureDetector({
+            .key = Key::string("layer_1"),
+            .child = l1_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                setState([this]() { active_layer_index = 1; });
+            },
+        });
         auto pos_l1 = Positioned {
             .child = l1_gesture,
             .top = StyleValue::point(30.0f),
@@ -441,11 +447,14 @@ private:
                 .font_weight = FontWeight::Bold,
             })
         });
-        auto l2_gesture = std::make_shared<GestureDetector>(Key::string("layer_2"), l2_box);
-        l2_gesture->cursor_type = SystemCursor::Pointer;
-        l2_gesture->on_tap_up = [this](const TapUpDetails&) {
-            setState([this]() { active_layer_index = 2; });
-        };
+        auto l2_gesture = gestureDetector({
+            .key = Key::string("layer_2"),
+            .child = l2_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this](const TapUpDetails&) {
+                setState([this]() { active_layer_index = 2; });
+            },
+        });
         auto pos_l2 = Positioned {
             .child = l2_gesture,
             .top = StyleValue::point(60.0f),
@@ -551,10 +560,13 @@ private:
             .color = 0xB3000000, // 70% black backdrop
         });
 
-        auto backdrop_gesture = std::make_shared<GestureDetector>(Key::string("modal_backdrop"), backdrop);
-        backdrop_gesture->on_tap_up = [this](const TapUpDetails&) {
-            setState([this]() { show_modal = false; });
-        };
+        auto backdrop_gesture = gestureDetector({
+            .key = Key::string("modal_backdrop"),
+            .child = backdrop,
+            .on_tap_up = [this](const TapUpDetails&) {
+                setState([this]() { show_modal = false; });
+            },
+        });
 
         auto close_btn = Button {
             .child = text("Close Modal", {

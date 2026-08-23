@@ -286,33 +286,34 @@ public:
 
         if (item.is_disabled) return item_box;
 
-        auto gd = std::make_shared<GestureDetector>(item_box);
-        gd->cursor_type = SystemCursor::Pointer;
-        gd->on_tap_up = [this, item](const TapUpDetails&) {
-            auto* w = static_cast<const DropdownMenuWidget*>(widget());
-            auto toggle_cb = w->props.on_toggle_checked;
-            
-            selectItem(item.id);
+        return gestureDetector({
+            .child = item_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this, item](const TapUpDetails&) {
+                auto* w = static_cast<const DropdownMenuWidget*>(widget());
+                auto toggle_cb = w->props.on_toggle_checked;
+                
+                selectItem(item.id);
 
-            if ((item.type == DropdownMenuItemType::Checkbox ||
-                 item.type == DropdownMenuItemType::Radio) &&
-                toggle_cb) {
-                toggle_cb(item.id, !item.is_checked);
-            }
-        };
-        gd->on_hover_enter = [this, idx](const PointerEvent&) {
-            if (is_open_ && hovered_idx_ != idx) {
-                hovered_idx_ = idx; 
-                setState([] {});
-            }
-        };
-        gd->on_hover_exit = [this, idx](const PointerEvent&) {
-            if (is_open_ && hovered_idx_ == idx) {
-                hovered_idx_ = -1; 
-                setState([] {});
-            }
-        };
-        return gd;
+                if ((item.type == DropdownMenuItemType::Checkbox ||
+                     item.type == DropdownMenuItemType::Radio) &&
+                    toggle_cb) {
+                    toggle_cb(item.id, !item.is_checked);
+                }
+            },
+            .on_hover_enter = [this, idx](const PointerEvent&) {
+                if (is_open_ && hovered_idx_ != idx) {
+                    hovered_idx_ = idx; 
+                    setState([] {});
+                }
+            },
+            .on_hover_exit = [this, idx](const PointerEvent&) {
+                if (is_open_ && hovered_idx_ == idx) {
+                    hovered_idx_ = -1; 
+                    setState([] {});
+                }
+            },
+        });
     }
 
     // ── Floating Panel Builder ────────────────────────────────────

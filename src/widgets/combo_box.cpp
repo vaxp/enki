@@ -290,14 +290,14 @@ public:
                     .paddingSymmetric(8.0f, 10.0f)
                     .width(StyleValue::percent(100.0f));
 
-            auto item_gd = std::make_shared<GestureDetector>(item_box);
-            if (!item.is_disabled) {
-                item_gd->cursor_type = SystemCursor::Pointer;
-                auto it_copy = item;
-                item_gd->on_tap_up = [this, it_copy](const TapUpDetails&) {
+            auto it_copy = item;
+            auto item_gd = gestureDetector({
+                .child = item_box,
+                .cursor_type = !item.is_disabled ? SystemCursor::Pointer : SystemCursor::Default,
+                .on_tap_up = !item.is_disabled ? GestureTapUpCallback([this, it_copy](const TapUpDetails&) {
                     selectItem(it_copy);
-                };
-            }
+                }) : nullptr,
+            });
             menu_rows.push_back(item_gd);
         }
 

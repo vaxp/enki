@@ -28,10 +28,12 @@ public:
             // Selection: wrap with gesture detection if callback present
             if (w->props.on_item_selected) {
                 auto on_sel = w->props.on_item_selected;
-                auto det = std::make_shared<GestureDetector>(item);
-                det->hit_test_behavior = HitTestBehavior::Opaque;
-                det->cursor_type = SystemCursor::Pointer;
-                det->on_tap = [on_sel, idx]{ on_sel(idx); };
+                auto det = gestureDetector({
+                    .child = item,
+                    .hit_test_behavior = HitTestBehavior::Opaque,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap = [on_sel, idx]{ on_sel(idx); },
+                });
                 children.push_back(det);
             } else {
                 children.push_back(item);

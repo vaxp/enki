@@ -386,11 +386,11 @@ public:
             show_cursor_
         );
 
-        auto gesture = gestureDetector(text_field_widget);
-        gesture->cursor(SystemCursor::Text);
-        gesture->hitTestBehavior(HitTestBehavior::Opaque);
-        gesture->onTapDown(
-            [this, tf](const TapDownDetails& e) {
+        return gestureDetector({
+            .child = text_field_widget,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Text,
+            .on_tap_down = [this, tf](const TapDownDetails& e) {
                 if (g_focused_textfield && g_focused_textfield != this) {
                     g_focused_textfield->unfocus();
                 }
@@ -415,11 +415,8 @@ public:
                 
                 resetBlink();
                 setState([]{});
-            }
-        );
-        
-        gesture->onPanUpdate(
-            [this, tf](const DragUpdateDetails& e) {
+            },
+            .on_pan_update = [this, tf](const DragUpdateDetails& e) {
                 if (controller_->text.empty()) {
                     controller_->selection_start = 0;
                     controller_->selection_end = 0;
@@ -432,10 +429,8 @@ public:
                         setState([]{});
                     }
                 }
-            }
-        );
-        
-        return gesture;
+            },
+        });
     }
 };
 

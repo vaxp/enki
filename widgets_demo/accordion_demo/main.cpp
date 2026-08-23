@@ -147,12 +147,13 @@ public:
                 }),
             });
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) {
-                if (cb) cb();
-            };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) {
+                    if (cb) cb();
+                },
+            });
         };
 
         // Mode Toggles

@@ -162,25 +162,22 @@ public:
             return render_widget;
         }
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = SystemCursor::Pointer;
-
-        detector->on_hover_enter = [this](const PointerEvent&) { setState([this] { hovered_ = true; }); };
-        detector->on_hover_exit  = [this](const PointerEvent&) { setState([this] { hovered_ = false; }); };
-
         auto on_changed = w->on_changed;
         int value_to_send = w->value;
-        
-        detector->on_tap = [on_changed, value_to_send, is_selected] {
-            // Radio buttons usually only trigger if they are not already selected
-            if (on_changed && !is_selected) {
-                on_changed(value_to_send);
-            }
-        };
 
-        detector->child = render_widget;
-        return detector;
+        return gestureDetector({
+            .child = render_widget,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap = [on_changed, value_to_send, is_selected] {
+                // Radio buttons usually only trigger if they are not already selected
+                if (on_changed && !is_selected) {
+                    on_changed(value_to_send);
+                }
+            },
+            .on_hover_enter = [this](const PointerEvent&) { setState([this] { hovered_ = true; }); },
+            .on_hover_exit  = [this](const PointerEvent&) { setState([this] { hovered_ = false; }); },
+        });
     }
 };
 

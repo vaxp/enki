@@ -110,20 +110,21 @@ class DataTableState : public State {
             // Make sortable headers clickable
             WidgetPtr header_cell_content;
             if (col.sortable) {
-                auto det = std::make_shared<GestureDetector>(header_content);
-                det->hit_test_behavior = HitTestBehavior::Opaque;
-                det->cursor_type = SystemCursor::Pointer;
                 int idx = ci;
                 bool asc = w->props.sort_ascending;
                 std::optional<int> sort_idx = w->props.sort_column_index;
                 auto on_sort = col.on_sort;
-                det->on_tap = [on_sort, idx, sort_idx, asc]() {
-                    if (on_sort) {
-                        bool new_asc = (sort_idx.has_value() && *sort_idx == idx) ? !asc : true;
-                        on_sort(idx, new_asc);
-                    }
-                };
-                header_cell_content = det;
+                header_cell_content = gestureDetector({
+                    .child = header_content,
+                    .hit_test_behavior = HitTestBehavior::Opaque,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap = [on_sort, idx, sort_idx, asc]() {
+                        if (on_sort) {
+                            bool new_asc = (sort_idx.has_value() && *sort_idx == idx) ? !asc : true;
+                            on_sort(idx, new_asc);
+                        }
+                    },
+                });
             } else {
                 header_cell_content = header_content;
             }
@@ -196,12 +197,13 @@ class DataTableState : public State {
 
             WidgetPtr cell_content = dc.child;
             if (dc.on_tap || dc.on_double_tap) {
-                auto det = std::make_shared<GestureDetector>(cell_content);
-                det->hit_test_behavior = HitTestBehavior::Opaque;
-                det->cursor_type = SystemCursor::Pointer;
-                if (dc.on_tap)       det->on_tap       = dc.on_tap;
-                if (dc.on_double_tap) det->on_double_tap = dc.on_double_tap;
-                cell_content = det;
+                cell_content = gestureDetector({
+                    .child = cell_content,
+                    .hit_test_behavior = HitTestBehavior::Opaque,
+                    .cursor_type = SystemCursor::Pointer,
+                    .on_tap = dc.on_tap,
+                    .on_double_tap = dc.on_double_tap,
+                });
             }
 
             auto cell_wrap = container(cell_content);
@@ -240,17 +242,18 @@ class DataTableState : public State {
 
         // Make row tappable
         if (dr.on_tap || dr.on_select_changed || w->props.on_row_tap) {
-            auto det = std::make_shared<GestureDetector>(row_wrap);
-            det->hit_test_behavior = HitTestBehavior::Opaque;
-            det->cursor_type = SystemCursor::Pointer;
             int row_idx = ri;
             auto row_tap = dr.on_tap;
             auto global_tap = w->props.on_row_tap;
-            det->on_tap = [row_tap, global_tap, row_idx]() {
-                if (row_tap)    row_tap();
-                if (global_tap) global_tap(row_idx);
-            };
-            return det;
+            return gestureDetector({
+                .child = row_wrap,
+                .hit_test_behavior = HitTestBehavior::Opaque,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap = [row_tap, global_tap, row_idx]() {
+                    if (row_tap)    row_tap();
+                    if (global_tap) global_tap(row_idx);
+                },
+            });
         }
 
         return row_wrap;

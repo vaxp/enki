@@ -212,13 +212,13 @@ public:
              .color(0x00000000)
              .borderRadius(6.0f);
 
-        auto gesture = gestureDetector(btn_w);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
-        gesture->onTapUp([this, target_path](const TapUpDetails&) {
-            navigateTo(target_path);
+        return gestureDetector({
+            .child = btn_w,
+            .hit_test_behavior = HitTestBehavior::Translucent,
+            .on_tap_up = [this, target_path](const TapUpDetails&) {
+                navigateTo(target_path);
+            },
         });
-
-        return gesture;
     }
 
     WidgetPtr build(BuildContext& ctx) override {
@@ -294,17 +294,18 @@ public:
                      .color(bg_col)
                      .borderRadius(4.0f);
 
-            auto gesture = gestureDetector(entry_box);
-            gesture->hit_test_behavior = HitTestBehavior::Translucent;
-
-            gesture->onTapUp([this, entry](const TapUpDetails&) {
-                if (entry.is_directory) {
-                    navigateTo(entry.path);
-                } else {
-                    setState([this, entry]() {
-                        selected_path_ = entry.path;
-                    });
-                }
+            auto gesture = gestureDetector({
+                .child = entry_box,
+                .hit_test_behavior = HitTestBehavior::Translucent,
+                .on_tap_up = [this, entry](const TapUpDetails&) {
+                    if (entry.is_directory) {
+                        navigateTo(entry.path);
+                    } else {
+                        setState([this, entry]() {
+                            selected_path_ = entry.path;
+                        });
+                    }
+                },
             });
 
             entry_widgets.push_back(gesture);
@@ -449,18 +450,17 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         auto* picker_widget = static_cast<const FilePickerWidget*>(widget());
 
-        auto gesture = gestureDetector(picker_widget->props.child);
-        gesture->hit_test_behavior = HitTestBehavior::Translucent;
+        return gestureDetector({
+            .child = picker_widget->props.child,
+            .hit_test_behavior = HitTestBehavior::Translucent,
+            .on_tap_up = [this, picker_widget](const TapUpDetails&) {
+                Element* elem = element();
+                if (!elem) return;
+                BuildContext context(elem);
 
-        gesture->onTapUp([this, picker_widget](const TapUpDetails&) {
-            Element* elem = element();
-            if (!elem) return;
-            BuildContext context(elem);
-
-            active_popup_ = FilePickerWidget::show(context, picker_widget->props);
+                active_popup_ = FilePickerWidget::show(context, picker_widget->props);
+            },
         });
-
-        return gesture;
     }
 };
 

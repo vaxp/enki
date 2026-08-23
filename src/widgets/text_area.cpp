@@ -736,95 +736,89 @@ public:
             controller_, ta->options, is_focused_, show_cursor_, scroll_y_
         );
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type       = SystemCursor::Text;
+        auto detector = gestureDetector({
+            .child = render_box,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = SystemCursor::Text,
+            // 1. Single Tap -> Move cursor to exact clicked coordinate
+            .on_tap_down = [this](const TapDownDetails& e) {
+                g_focused_textarea = this;
+                is_focused_ = true;
+                resetBlink();
 
-        // 1. Single Tap -> Move cursor to exact clicked coordinate
-        detector->on_tap_down = [this](const TapDownDetails& e) {
-            g_focused_textarea = this;
-            is_focused_ = true;
-            resetBlink();
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* rta = findTextAreaBox(ro)) {
-                    size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
-                    controller_->selection_start = idx;
-                    controller_->clearSelection();
-                    notifyCursorMoved();
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* rta = findTextAreaBox(ro)) {
+                        size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        controller_->selection_start = idx;
+                        controller_->clearSelection();
+                        notifyCursorMoved();
+                    }
                 }
-            }
-            setState([]{});
-        };
+                setState([]{});
+            },
+            // 2. Double Tap -> Select Word
+            .on_double_tap_down = [this](const TapDownDetails& e) {
+                g_focused_textarea = this;
+                is_focused_ = true;
+                resetBlink();
 
-        // 2. Double Tap -> Select Word
-        detector->on_double_tap_down = [this](const TapDownDetails& e) {
-            g_focused_textarea = this;
-            is_focused_ = true;
-            resetBlink();
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* rta = findTextAreaBox(ro)) {
-                    size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
-                    selectWordAt(idx);
-                    notifyCursorMoved();
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* rta = findTextAreaBox(ro)) {
+                        size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        selectWordAt(idx);
+                        notifyCursorMoved();
+                    }
                 }
-            }
-            setState([]{});
-        };
+                setState([]{});
+            },
+            // 3. Long Press -> Select Whole Line
+            .on_long_press_start = [this](const LongPressStartDetails& e) {
+                g_focused_textarea = this;
+                is_focused_ = true;
+                resetBlink();
 
-        // 3. Long Press -> Select Whole Line
-        detector->on_long_press_start = [this](const LongPressStartDetails& e) {
-            g_focused_textarea = this;
-            is_focused_ = true;
-            resetBlink();
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* rta = findTextAreaBox(ro)) {
-                    size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
-                    selectLineAt(idx);
-                    notifyCursorMoved();
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* rta = findTextAreaBox(ro)) {
+                        size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        selectLineAt(idx);
+                        notifyCursorMoved();
+                    }
                 }
-            }
-            setState([]{});
-        };
+                setState([]{});
+            },
+            // 4. Click & Drag -> Select Text Range
+            .on_pan_start = [this](const DragStartDetails& e) {
+                g_focused_textarea = this;
+                is_focused_ = true;
+                resetBlink();
 
-        // 4. Click & Drag -> Select Text Range
-        detector->on_pan_start = [this](const DragStartDetails& e) {
-            g_focused_textarea = this;
-            is_focused_ = true;
-            resetBlink();
-
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* rta = findTextAreaBox(ro)) {
-                    size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
-                    controller_->selection_start = idx;
-                    controller_->selection_end   = idx;
-                    notifyCursorMoved();
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* rta = findTextAreaBox(ro)) {
+                        size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        controller_->selection_start = idx;
+                        controller_->selection_end   = idx;
+                        notifyCursorMoved();
+                    }
                 }
-            }
-            setState([]{});
-        };
-
-        detector->on_pan_update = [this](const DragUpdateDetails& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* rta = findTextAreaBox(ro)) {
-                    size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
-                    controller_->selection_end = idx;
-                    notifyCursorMoved();
+                setState([]{});
+            },
+            .on_pan_update = [this](const DragUpdateDetails& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* rta = findTextAreaBox(ro)) {
+                        size_t idx = rta->getIndexAtCoordinate(e.local_position.x, e.local_position.y);
+                        controller_->selection_end = idx;
+                        notifyCursorMoved();
+                    }
                 }
-            }
-            setState([]{});
-        };
-
-        // 5. Mouse Wheel Scroll
-        detector->on_scroll = [this](float, float dy) {
-            scroll_y_ -= dy * 24.0f;
-            if (scroll_y_ < 0.0f) scroll_y_ = 0.0f;
-            setState([]{});
-        };
-
-        detector->child = render_box;
+                setState([]{});
+            },
+            // 5. Mouse Wheel Scroll
+            .on_scroll = [this](float, float dy) {
+                scroll_y_ -= dy * 24.0f;
+                if (scroll_y_ < 0.0f) scroll_y_ = 0.0f;
+                setState([]{});
+            },
+        });
 
         // Optional Footer Bar with Word/Char Counter
         if (ta->options.show_counter) {

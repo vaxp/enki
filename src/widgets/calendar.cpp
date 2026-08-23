@@ -238,13 +238,13 @@ public:
             cell_box->border(opts.today_ring_color, 1.0f).borderRadius(8.0f);
         }
 
-        auto cell_gd = std::make_shared<GestureDetector>(cell_box);
-        cell_gd->cursor_type = SystemCursor::Pointer;
-        cell_gd->on_tap_up = [this, date](const TapUpDetails&) {
-            handleDayClick(date);
-        };
-
-        return cell_gd;
+        return gestureDetector({
+            .child = cell_box,
+            .cursor_type = SystemCursor::Pointer,
+            .on_tap_up = [this, date](const TapUpDetails&) {
+                handleDayClick(date);
+            },
+        });
     }
 
     WidgetPtr build(BuildContext&) override {
@@ -275,12 +275,13 @@ public:
              .borderRadius(6.0f)
              .paddingSymmetric(4.0f, 10.0f);
 
-            auto gd = std::make_shared<GestureDetector>(b);
-            gd->cursor_type = SystemCursor::Pointer;
-            gd->on_tap_up = [cb](const TapUpDetails&) {
-                if (cb) cb();
-            };
-            return gd;
+            return gestureDetector({
+                .child = b,
+                .cursor_type = SystemCursor::Pointer,
+                .on_tap_up = [cb](const TapUpDetails&) {
+                    if (cb) cb();
+                },
+            });
         };
 
         auto btn_prev = makeNavBtn("◀", [this] { prevMonth(); });

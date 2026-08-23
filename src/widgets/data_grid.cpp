@@ -819,119 +819,111 @@ public:
             hovered_col_header_, hovered_col_divider_
         );
 
-        auto detector = std::make_shared<GestureDetector>();
-        detector->hit_test_behavior = HitTestBehavior::Opaque;
-        detector->cursor_type = (hovered_col_divider_ >= 0 || is_resizing_column_) ?
-                                SystemCursor::ResizeHorizontal : SystemCursor::Default;
+        auto detector = gestureDetector({
+            .child = grid_render,
+            .hit_test_behavior = HitTestBehavior::Opaque,
+            .cursor_type = (hovered_col_divider_ >= 0 || is_resizing_column_) ?
+                            SystemCursor::ResizeHorizontal : SystemCursor::Default,
+            .on_tap_down = [this, dg](const TapDownDetails& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findDataGridBox(ro)) {
+                        int div = box->getHitDivider(e.local_position.x, e.local_position.y);
+                        if (div >= 0) return; // Ignore tap if starting divider resize
 
-        detector->on_hover_exit = [this](const PointerEvent&) {
-            setState([this] {
-                hovered_row_index_ = -1;
-                hovered_col_header_ = -1;
-                hovered_col_divider_ = -1;
-            });
-        };
-
-        detector->on_hover_move = [this](const PointerEvent& e) {
-            if (is_resizing_column_) return;
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findDataGridBox(ro)) {
-                    int div = box->getHitDivider(e.localPosition.x, e.localPosition.y);
-                    int col = box->getHitColumnHeader(e.localPosition.x, e.localPosition.y);
-                    int row = box->getHitRowIndex(e.localPosition.y);
-
-                    if (div != hovered_col_divider_ || col != hovered_col_header_ || row != hovered_row_index_) {
-                        hovered_col_divider_ = div;
-                        hovered_col_header_ = col;
-                        hovered_row_index_ = row;
-                        setState([] {});
-                    }
-                }
-            }
-        };
-
-        // Tap Handlers (Sort / Checkbox / Row Click)
-        detector->on_tap_down = [this, dg](const TapDownDetails& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findDataGridBox(ro)) {
-                    int div = box->getHitDivider(e.local_position.x, e.local_position.y);
-                    if (div >= 0) return; // Ignore tap if starting divider resize
-
-                    int col_hdr = box->getHitColumnHeader(e.local_position.x, e.local_position.y);
-                    if (col_hdr == -99) { // Header select-all checkbox
-                        controller_->selectAll(!controller_->isAllSelected());
-                        if (dg->props.on_selection_changed) {
-                            dg->props.on_selection_changed(controller_->getSelectedRowIds());
-                        }
-                        setState([] {});
-                        return;
-                    } else if (col_hdr >= 0) { // Header sort tap
-                        const auto& cols = controller_->getColumns();
-                        if (static_cast<size_t>(col_hdr) < cols.size() && cols[col_hdr].sortable) {
-                            controller_->toggleSort(cols[col_hdr].key);
-                            if (dg->props.on_sort_changed) {
-                                dg->props.on_sort_changed(cols[col_hdr].key, controller_->getSortDirection(cols[col_hdr].key));
-                            }
-                            setState([] {});
-                            return;
-                        }
-                    }
-
-                    int hit_r = box->getHitRowIndex(e.local_position.y);
-                    if (hit_r >= 0) {
-                        const auto& filtered = controller_->getFilteredIndices();
-                        if (static_cast<size_t>(hit_r) < filtered.size()) {
-                            const auto& row = controller_->getRawRows()[filtered[hit_r]];
-                            if (dg->props.selection_mode == DataGridSelectionMode::RowMultiple) {
-                                controller_->toggleRowSelection(row.id);
-                            } else if (dg->props.selection_mode == DataGridSelectionMode::RowSingle) {
-                                controller_->selectRow(row.id, true, true);
-                            }
+                        int col_hdr = box->getHitColumnHeader(e.local_position.x, e.local_position.y);
+                        if (col_hdr == -99) { // Header select-all checkbox
+                            controller_->selectAll(!controller_->isAllSelected());
                             if (dg->props.on_selection_changed) {
                                 dg->props.on_selection_changed(controller_->getSelectedRowIds());
                             }
-                            if (dg->props.on_row_tap) {
-                                dg->props.on_row_tap(row.id);
+                            setState([] {});
+                            return;
+                        } else if (col_hdr >= 0) { // Header sort tap
+                            const auto& cols = controller_->getColumns();
+                            if (static_cast<size_t>(col_hdr) < cols.size() && cols[col_hdr].sortable) {
+                                controller_->toggleSort(cols[col_hdr].key);
+                                if (dg->props.on_sort_changed) {
+                                    dg->props.on_sort_changed(cols[col_hdr].key, controller_->getSortDirection(cols[col_hdr].key));
+                                }
+                                setState([] {});
+                                return;
                             }
+                        }
+
+                        int hit_r = box->getHitRowIndex(e.local_position.y);
+                        if (hit_r >= 0) {
+                            const auto& filtered = controller_->getFilteredIndices();
+                            if (static_cast<size_t>(hit_r) < filtered.size()) {
+                                const auto& row = controller_->getRawRows()[filtered[hit_r]];
+                                if (dg->props.selection_mode == DataGridSelectionMode::RowMultiple) {
+                                    controller_->toggleRowSelection(row.id);
+                                } else if (dg->props.selection_mode == DataGridSelectionMode::RowSingle) {
+                                    controller_->selectRow(row.id, true, true);
+                                }
+                                if (dg->props.on_selection_changed) {
+                                    dg->props.on_selection_changed(controller_->getSelectedRowIds());
+                                }
+                                if (dg->props.on_row_tap) {
+                                    dg->props.on_row_tap(row.id);
+                                }
+                                setState([] {});
+                            }
+                        }
+                    }
+                }
+            },
+            .on_pan_start = [this](const DragStartDetails& e) {
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findDataGridBox(ro)) {
+                        int div = box->getHitDivider(e.local_position.x, e.local_position.y);
+                        if (div >= 0) {
+                            is_resizing_column_ = true;
+                            resize_col_idx_ = div;
+                            resize_start_x_ = e.global_position.x;
+                            resize_start_w_ = controller_->getColumns()[div].width;
                             setState([] {});
                         }
                     }
                 }
-            }
-        };
+            },
+            .on_pan_update = [this](const DragUpdateDetails& e) {
+                if (!is_resizing_column_ || resize_col_idx_ < 0) return;
+                float delta = e.global_position.x - resize_start_x_;
+                controller_->setColumnWidth(resize_col_idx_, resize_start_w_ + delta);
+                setState([] {});
+            },
+            .on_pan_end = [this](const DragEndDetails&) {
+                if (is_resizing_column_) {
+                    is_resizing_column_ = false;
+                    resize_col_idx_ = -1;
+                    setState([] {});
+                }
+            },
+            .on_hover_exit = [this](const PointerEvent&) {
+                setState([this] {
+                    hovered_row_index_ = -1;
+                    hovered_col_header_ = -1;
+                    hovered_col_divider_ = -1;
+                });
+            },
+            .on_hover_move = [this](const PointerEvent& e) {
+                if (is_resizing_column_) return;
+                if (auto* ro = context().element()->findRenderObject()) {
+                    if (auto* box = findDataGridBox(ro)) {
+                        int div = box->getHitDivider(e.localPosition.x, e.localPosition.y);
+                        int col = box->getHitColumnHeader(e.localPosition.x, e.localPosition.y);
+                        int row = box->getHitRowIndex(e.localPosition.y);
 
-        // Column Resizing Gestures
-        detector->on_pan_start = [this](const DragStartDetails& e) {
-            if (auto* ro = context().element()->findRenderObject()) {
-                if (auto* box = findDataGridBox(ro)) {
-                    int div = box->getHitDivider(e.local_position.x, e.local_position.y);
-                    if (div >= 0) {
-                        is_resizing_column_ = true;
-                        resize_col_idx_ = div;
-                        resize_start_x_ = e.global_position.x;
-                        resize_start_w_ = controller_->getColumns()[div].width;
-                        setState([] {});
+                        if (div != hovered_col_divider_ || col != hovered_col_header_ || row != hovered_row_index_) {
+                            hovered_col_divider_ = div;
+                            hovered_col_header_ = col;
+                            hovered_row_index_ = row;
+                            setState([] {});
+                        }
                     }
                 }
-            }
-        };
-
-        detector->on_pan_update = [this](const DragUpdateDetails& e) {
-            if (!is_resizing_column_ || resize_col_idx_ < 0) return;
-            float delta = e.global_position.x - resize_start_x_;
-            controller_->setColumnWidth(resize_col_idx_, resize_start_w_ + delta);
-            setState([] {});
-        };
-
-        detector->on_pan_end = [this](const DragEndDetails&) {
-            if (is_resizing_column_) {
-                is_resizing_column_ = false;
-                resize_col_idx_ = -1;
-                setState([] {});
-            }
-        };
-
-        detector->child = grid_render;
+            },
+        });
 
         std::vector<WidgetPtr> main_items = {detector};
 
