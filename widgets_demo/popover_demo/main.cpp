@@ -29,19 +29,30 @@ public:
 
     WidgetPtr build(BuildContext& ctx) override {
         // Title & Description Header
-        auto title = text("Advanced Native Popover (NativePopup)");
-        title->fontSize(24.0f).bold().color(0xFFFFFFFF);
+        auto title = text({
+            .text = "Advanced Native Popover (NativePopup)",
+            .color = 0xFFFFFFFF,
+            .font_size = 24.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto sub = text("Click buttons to spawn rich interactive floating popover surfaces with pointer arrows");
-        sub->fontSize(14.0f).color(0xFF94A3B8);
+        auto sub = text({
+            .text = "Click buttons to spawn rich interactive floating popover surfaces with pointer arrows",
+            .color = 0xFF94A3B8,
+            .font_size = 14.0f,
+        });
 
         std::vector<WidgetPtr> t_children = {title, sub};
         auto titleCol = column(t_children);
         titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
 
         // 1. User Profile Popover
-        auto profile_btn_text = text("👤 User Profile");
-        profile_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
+        auto profile_btn_text = text({
+            .text = "👤 User Profile",
+            .color = 0xFFFFFFFF,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto profile_btn = button(profile_btn_text, nullptr);
 
         PopoverProps opt1;
@@ -51,17 +62,30 @@ public:
         opt1.border_color     = 0xFF38BDF8;
 
         auto profile_popover = popover(profile_btn, [](BuildContext& sub_ctx) {
-            auto name = text("Alexander Wright");
-            name->fontSize(15.0f).bold().color(0xFFF8FAFC);
+            auto name = text({
+                .text = "Alexander Wright",
+                .color = 0xFFF8FAFC,
+                .font_size = 15.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
-            auto role = text("Lead Systems Architect");
-            role->fontSize(12.0f).color(0xFF38BDF8);
+            auto role = text({
+                .text = "Lead Systems Architect",
+                .color = 0xFF38BDF8,
+                .font_size = 12.0f,
+            });
 
-            auto status = text("Status: 🟢 Active");
-            status->fontSize(11.0f).color(0xFF94A3B8);
+            auto status = text({
+                .text = "Status: 🟢 Active",
+                .color = 0xFF94A3B8,
+                .font_size = 11.0f,
+            });
 
-            auto edit_btn_text = text("Edit Profile");
-            edit_btn_text->fontSize(12.0f).color(0xFFFFFFFF);
+            auto edit_btn_text = text({
+                .text = "Edit Profile",
+                .color = 0xFFFFFFFF,
+                .font_size = 12.0f,
+            });
             auto edit_btn = button(edit_btn_text, []() {
                 std::cout << "[Popover] Edit Profile Clicked!\n";
             });
@@ -74,8 +98,12 @@ public:
         }, opt1);
 
         // 2. Quick Settings Popover
-        auto settings_btn_text = text("⚙️ Quick Settings");
-        settings_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
+        auto settings_btn_text = text({
+            .text = "⚙️ Quick Settings",
+            .color = 0xFFFFFFFF,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto settings_btn = button(settings_btn_text, nullptr);
 
         PopoverProps opt2;
@@ -85,17 +113,30 @@ public:
         opt2.border_color     = 0xFF334155;
 
         auto settings_popover = popover(settings_btn, [](BuildContext& sub_ctx) {
-            auto st_title = text("Display Configuration");
-            st_title->fontSize(14.0f).bold().color(0xFFF1F5F9);
+            auto st_title = text({
+                .text = "Display Configuration",
+                .color = 0xFFF1F5F9,
+                .font_size = 14.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
-            auto dark_mode = text("• Theme: Dark Mode (Active)");
-            dark_mode->fontSize(12.0f).color(0xFFCBD5E1);
+            auto dark_mode = text({
+                .text = "• Theme: Dark Mode (Active)",
+                .color = 0xFFCBD5E1,
+                .font_size = 12.0f,
+            });
 
-            auto vsync = text("• V-Sync: Enabled (60 FPS)");
-            vsync->fontSize(12.0f).color(0xFFCBD5E1);
+            auto vsync = text({
+                .text = "• V-Sync: Enabled (60 FPS)",
+                .color = 0xFFCBD5E1,
+                .font_size = 12.0f,
+            });
 
-            auto save_btn_text = text("Apply Settings");
-            save_btn_text->fontSize(12.0f).color(0xFFFFFFFF);
+            auto save_btn_text = text({
+                .text = "Apply Settings",
+                .color = 0xFFFFFFFF,
+                .font_size = 12.0f,
+            });
             auto save_btn = button(save_btn_text, []() {
                 std::cout << "[Popover] Settings Applied!\n";
             });
@@ -108,8 +149,12 @@ public:
         }, opt2);
 
         // 3. Programmatically Controlled Popover
-        auto ctrl_btn_text = text("⚡ Programmatic Toggle");
-        ctrl_btn_text->fontSize(14.0f).color(0xFFFFFFFF).bold();
+        auto ctrl_btn_text = text({
+            .text = "⚡ Programmatic Toggle",
+            .color = 0xFFFFFFFF,
+            .font_size = 14.0f,
+            .font_weight = FontWeight::Bold,
+        });
         auto ctrl_btn = button(ctrl_btn_text, [this]() {
             pop_controller_->toggle();
         });
@@ -120,11 +165,18 @@ public:
         opt3.content_size = Size{220.0f, 100.0f};
 
         auto ctrl_popover = popover(ctrl_btn, [](BuildContext& sub_ctx) {
-            auto msg = text("Triggered via PopoverController!");
-            msg->fontSize(13.0f).color(0xFF38BDF8).bold();
+            auto msg = text({
+                .text = "Triggered via PopoverController!",
+                .color = 0xFF38BDF8,
+                .font_size = 13.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
-            auto desc = text("Can be called from anywhere in code.");
-            desc->fontSize(11.0f).color(0xFF94A3B8);
+            auto desc = text({
+                .text = "Can be called from anywhere in code.",
+                .color = 0xFF94A3B8,
+                .font_size = 11.0f,
+            });
 
             return column({msg, desc});
         }, opt3, pop_controller_);

@@ -43,13 +43,21 @@ public:
 
         std::vector<WidgetPtr> items;
         if (!btn->icon.empty()) {
-            auto icon_t = text(btn->icon);
-            icon_t->fontSize(13.0f).bold().color(0xFFFFFFFF);
+            auto icon_t = text({
+                .text = btn->icon,
+                .color = 0xFFFFFFFF,
+                .font_size = 13.0f,
+                .font_weight = FontWeight::Bold,
+            });
             items.push_back(icon_t);
         }
         if (!btn->label.empty()) {
-            auto label_t = text(btn->label);
-            label_t->fontSize(13.0f).bold().color(0xFFFFFFFF);
+            auto label_t = text({
+                .text = btn->label,
+                .color = 0xFFFFFFFF,
+                .font_size = 13.0f,
+                .font_weight = FontWeight::Bold,
+            });
             items.push_back(label_t);
         }
 

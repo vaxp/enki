@@ -131,9 +131,23 @@ WidgetPtr GestureDemoState::buildSidebar() {
     std::vector<WidgetPtr> tab_widgets;
 
     // Header Logo
-    auto t1 = text("ENKI ENGINE"); t1->fontSize(11.0f).bold().color(Style::primary_light);
-    auto t2 = text("Gesture Detector"); t2->fontSize(18.0f).bold().color(Style::text_primary);
-    auto t3 = text("Full Pointer & Touch Suite"); t3->fontSize(11.0f).color(Style::text_secondary);
+    auto t1 = text({
+        .text = "ENKI ENGINE",
+        .color = Style::primary_light,
+        .font_size = 11.0f,
+        .font_weight = FontWeight::Bold,
+    });
+    auto t2 = text({
+        .text = "Gesture Detector",
+        .color = Style::text_primary,
+        .font_size = 18.0f,
+        .font_weight = FontWeight::Bold,
+    });
+    auto t3 = text({
+        .text = "Full Pointer & Touch Suite",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto logo_col = column({
         t1,
@@ -161,14 +175,23 @@ WidgetPtr GestureDemoState::buildSidebar() {
         uint32_t subtext_col= is_active ? 0xDCFFFFFF : Style::text_secondary;
         uint32_t border_col = is_active ? Style::primary_light : Style::border_subtle;
 
-        auto tab_title = text(tabs[i].title);
-        tab_title->fontSize(13.5f).bold().color(text_col);
+        auto tab_title = text({
+            .text = tabs[i].title,
+            .color = text_col,
+            .font_size = 13.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto tab_sub = text(tabs[i].subtitle);
-        tab_sub->fontSize(10.5f).color(subtext_col);
+        auto tab_sub = text({
+            .text = tabs[i].subtitle,
+            .color = subtext_col,
+            .font_size = 10.5f,
+        });
 
-        auto tab_icon = text(tabs[i].icon);
-        tab_icon->fontSize(18.0f);
+        auto tab_icon = text({
+            .text = tabs[i].icon,
+            .font_size = 18.0f,
+        });
 
         auto tab_text_col = column({
             tab_title,
@@ -201,11 +224,18 @@ WidgetPtr GestureDemoState::buildSidebar() {
     }
 
     // Engine Info Footer
-    auto status_title = text("Engine Status");
-    status_title->fontSize(11.0f).bold().color(Style::accent_green);
+    auto status_title = text({
+        .text = "Engine Status",
+        .color = Style::accent_green,
+        .font_size = 11.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto status_desc = text("• Zero-allocation recognizers\n• Desktop & Touch Ready\n• Sub-pixel Delta Tracking");
-    status_desc->fontSize(10.0f).color(Style::text_secondary);
+    auto status_desc = text({
+        .text = "• Zero-allocation recognizers\n• Desktop & Touch Ready\n• Sub-pixel Delta Tracking",
+        .color = Style::text_secondary,
+        .font_size = 10.0f,
+    });
 
     auto status_col = column({
         status_title,
@@ -236,11 +266,19 @@ WidgetPtr GestureDemoState::buildSidebar() {
 // ════════════════════════════════════════════════════════════════
 
 WidgetPtr GestureDemoState::buildHeader() {
-    auto header_title = text("Active Feedback Stream");
-    header_title->fontSize(11.5f).bold().color(Style::secondary);
+    auto header_title = text({
+        .text = "Active Feedback Stream",
+        .color = Style::secondary,
+        .font_size = 11.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto header_msg = text(last_action_message);
-    header_msg->fontSize(14.0f).bold().color(Style::text_primary);
+    auto header_msg = text({
+        .text = last_action_message,
+        .color = Style::text_primary,
+        .font_size = 14.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto title_col = column({
         header_title,
@@ -248,8 +286,12 @@ WidgetPtr GestureDemoState::buildHeader() {
         header_msg,
     });
 
-    auto badge_text = text("● LIVE POINTER");
-    badge_text->fontSize(10.5f).bold().color(Style::accent_green);
+    auto badge_text = text({
+        .text = "● LIVE POINTER",
+        .color = Style::accent_green,
+        .font_size = 10.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto badge = container(badge_text);
     badge->padding(EdgeInsets::symmetric(6.0f, 14.0f))
@@ -278,8 +320,12 @@ WidgetPtr GestureDemoState::buildHeader() {
 
 WidgetPtr GestureDemoState::buildTapsTab() {
     // 1. Single Tap Card
-    auto single_btn_text = text("Tap Me (" + std::to_string(single_tap_count) + ")");
-    single_btn_text->fontSize(13.5f).bold().color(0xFFFFFFFF);
+    auto single_btn_text = text({
+        .text = "Tap Me (" + std::to_string(single_tap_count) + ")",
+        .color = 0xFFFFFFFF,
+        .font_size = 13.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto single_btn = container(single_btn_text);
     single_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
@@ -287,11 +333,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
               .borderRadius(8.0f)
               .shadow(0x507C4DFF, {0, 4}, 10.0f);
 
-    auto single_title = text("Single Tap / Click");
-    single_title->fontSize(15.0f).bold().color(Style::text_primary);
+    auto single_title = text({
+        .text = "Single Tap / Click",
+        .color = Style::text_primary,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto single_desc = text("Left pointer press & release within slop threshold.");
-    single_desc->fontSize(11.0f).color(Style::text_secondary);
+    auto single_desc = text({
+        .text = "Left pointer press & release within slop threshold.",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto single_col = column(Justify::Start, Align::Center, {
         single_title,
@@ -318,8 +371,12 @@ WidgetPtr GestureDemoState::buildTapsTab() {
       .hitTestBehavior(HitTestBehavior::Opaque);
 
     // 2. Double Tap Card
-    auto double_btn_text = text("Double Click Fast! (" + std::to_string(double_tap_count) + ")");
-    double_btn_text->fontSize(13.5f).bold().color(0xFF0A0F1E);
+    auto double_btn_text = text({
+        .text = "Double Click Fast! (" + std::to_string(double_tap_count) + ")",
+        .color = 0xFF0A0F1E,
+        .font_size = 13.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto double_btn = container(double_btn_text);
     double_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
@@ -327,11 +384,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
               .borderRadius(8.0f)
               .shadow(0x5000E5FF, {0, 4}, 10.0f);
 
-    auto double_title = text("Double Tap (300ms)");
-    double_title->fontSize(15.0f).bold().color(Style::text_primary);
+    auto double_title = text({
+        .text = "Double Tap (300ms)",
+        .color = Style::text_primary,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto double_desc = text("Requires two taps within 300ms window.");
-    double_desc->fontSize(11.0f).color(Style::text_secondary);
+    auto double_desc = text({
+        .text = "Requires two taps within 300ms window.",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto double_col = column(Justify::Start, Align::Center, {
         double_title,
@@ -362,8 +426,12 @@ WidgetPtr GestureDemoState::buildTapsTab() {
       .hitTestBehavior(HitTestBehavior::Opaque);
 
     // 3. Right Click (Secondary Tap) Card
-    auto sec_btn_text = text("Right Click Here (" + std::to_string(secondary_tap_count) + ")");
-    sec_btn_text->fontSize(13.5f).bold().color(0xFFFFFFFF);
+    auto sec_btn_text = text({
+        .text = "Right Click Here (" + std::to_string(secondary_tap_count) + ")",
+        .color = 0xFFFFFFFF,
+        .font_size = 13.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto sec_btn = container(sec_btn_text);
     sec_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
@@ -371,11 +439,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
            .borderRadius(8.0f)
            .shadow(0x50FF4081, {0, 4}, 10.0f);
 
-    auto sec_title = text("Right Click (Secondary)");
-    sec_title->fontSize(15.0f).bold().color(Style::text_primary);
+    auto sec_title = text({
+        .text = "Right Click (Secondary)",
+        .color = Style::text_primary,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto sec_desc = text("Dedicated secondary button gesture handler.");
-    sec_desc->fontSize(11.0f).color(Style::text_secondary);
+    auto sec_desc = text({
+        .text = "Dedicated secondary button gesture handler.",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto sec_col = column(Justify::Start, Align::Center, {
         sec_title,
@@ -402,8 +477,12 @@ WidgetPtr GestureDemoState::buildTapsTab() {
       .hitTestBehavior(HitTestBehavior::Opaque);
 
     // 4. Long Press Card
-    auto lp_btn_text = text("Hold Down 400ms (" + std::to_string(long_press_count) + ")");
-    lp_btn_text->fontSize(13.5f).bold().color(0xFF141414);
+    auto lp_btn_text = text({
+        .text = "Hold Down 400ms (" + std::to_string(long_press_count) + ")",
+        .color = 0xFF141414,
+        .font_size = 13.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto lp_btn = container(lp_btn_text);
     lp_btn->padding(EdgeInsets::symmetric(12.0f, 24.0f))
@@ -411,11 +490,18 @@ WidgetPtr GestureDemoState::buildTapsTab() {
           .borderRadius(8.0f)
           .shadow(0x50FFAB00, {0, 4}, 10.0f);
 
-    auto lp_title = text("Long Press (400ms)");
-    lp_title->fontSize(15.0f).bold().color(Style::text_primary);
+    auto lp_title = text({
+        .text = "Long Press (400ms)",
+        .color = Style::text_primary,
+        .font_size = 15.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto lp_desc = text("Hold pointer down for >400ms without moving.");
-    lp_desc->fontSize(11.0f).color(Style::text_secondary);
+    auto lp_desc = text({
+        .text = "Hold pointer down for >400ms without moving.",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto lp_col = column(Justify::Start, Align::Center, {
         lp_title,
@@ -443,19 +529,29 @@ WidgetPtr GestureDemoState::buildTapsTab() {
 
     // Event History Panel
     std::vector<WidgetPtr> log_widgets;
-    auto log_header = text("Recent Gesture Event Stream:");
-    log_header->fontSize(12.5f).bold().color(Style::text_secondary);
+    auto log_header = text({
+        .text = "Recent Gesture Event Stream:",
+        .color = Style::text_secondary,
+        .font_size = 12.5f,
+        .font_weight = FontWeight::Bold,
+    });
     log_widgets.push_back(log_header);
     log_widgets.push_back(sizedBox(0, 6.0f));
 
     if (event_logs.empty()) {
-        auto empty_text = text("No events captured yet. Click or interact with targets above.");
-        empty_text->fontSize(11.5f).color(Style::text_muted);
+        auto empty_text = text({
+            .text = "No events captured yet. Click or interact with targets above.",
+            .color = Style::text_muted,
+            .font_size = 11.5f,
+        });
         log_widgets.push_back(empty_text);
     } else {
         for (const auto& entry : event_logs) {
-            auto log_item_text = text(entry);
-            log_item_text->fontSize(11.0f).color(Style::text_primary);
+            auto log_item_text = text({
+                .text = entry,
+                .color = Style::text_primary,
+                .font_size = 11.0f,
+            });
 
             auto log_item = container(log_item_text);
             log_item->padding(EdgeInsets::symmetric(5.0f, 10.0f))
@@ -496,25 +592,42 @@ WidgetPtr GestureDemoState::buildTapsTab() {
 
 WidgetPtr GestureDemoState::buildPanTab() {
     // 1. Draggable Physics Floating Card
-    auto drag_title = text("🖐️ 2D Draggable Card");
-    drag_title->fontSize(14.5f).bold().color(0xFFFFFFFF);
+    auto drag_title = text({
+        .text = "🖐️ 2D Draggable Card",
+        .color = 0xFFFFFFFF,
+        .font_size = 14.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto drag_state_text = text(is_dragging_card ? "DRAGGING" : "IDLE");
-    drag_state_text->fontSize(10.5f).bold().color(is_dragging_card ? Style::secondary : Style::text_secondary);
+    auto drag_state_text = text({
+        .text = is_dragging_card ? "DRAGGING" : "IDLE",
+        .color = is_dragging_card ? Style::secondary : Style::text_secondary,
+        .font_size = 10.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto drag_header = row(Justify::SpaceBetween, Align::Center, {
         drag_title,
         drag_state_text,
     });
 
-    auto x_text = text("X: " + std::to_string(static_cast<int>(card_offset_x)) + "px");
-    x_text->fontSize(12.0f).color(Style::secondary);
+    auto x_text = text({
+        .text = "X: " + std::to_string(static_cast<int>(card_offset_x)) + "px",
+        .color = Style::secondary,
+        .font_size = 12.0f,
+    });
 
-    auto y_text = text("Y: " + std::to_string(static_cast<int>(card_offset_y)) + "px");
-    y_text->fontSize(12.0f).color(Style::secondary);
+    auto y_text = text({
+        .text = "Y: " + std::to_string(static_cast<int>(card_offset_y)) + "px",
+        .color = Style::secondary,
+        .font_size = 12.0f,
+    });
 
-    auto vel_text = text("Vel: " + std::to_string(static_cast<int>(card_velocity_x)) + " px/s");
-    vel_text->fontSize(11.0f).color(Style::text_secondary);
+    auto vel_text = text({
+        .text = "Vel: " + std::to_string(static_cast<int>(card_velocity_x)) + " px/s",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto drag_metrics = row({
         x_text,
@@ -524,8 +637,11 @@ WidgetPtr GestureDemoState::buildPanTab() {
         vel_text,
     });
 
-    auto drag_desc = text("Hold and drag anywhere to move freely across the canvas.");
-    drag_desc->fontSize(11.0f).color(0xD0F0F0FF);
+    auto drag_desc = text({
+        .text = "Hold and drag anywhere to move freely across the canvas.",
+        .color = 0xD0F0F0FF,
+        .font_size = 11.0f,
+    });
 
     auto drag_content = column({
         drag_header,
@@ -623,19 +739,30 @@ WidgetPtr GestureDemoState::buildPanTab() {
     }).cursor(SystemCursor::Pointer)
       .hitTestBehavior(HitTestBehavior::Opaque);
 
-    auto slider_title = text("1D Horizontal Pan Slider");
-    slider_title->fontSize(14.5f).bold().color(Style::text_primary);
+    auto slider_title = text({
+        .text = "1D Horizontal Pan Slider",
+        .color = Style::text_primary,
+        .font_size = 14.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto slider_pct = text(std::to_string(static_cast<int>(slider_value * 100)) + "%");
-    slider_pct->fontSize(16.0f).bold().color(Style::primary_light);
+    auto slider_pct = text({
+        .text = std::to_string(static_cast<int>(slider_value * 100)) + "%",
+        .color = Style::primary_light,
+        .font_size = 16.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto slider_header = row(Justify::SpaceBetween, Align::Center, {
         slider_title,
         slider_pct,
     });
 
-    auto slider_desc = text("Pan or click across the track to adjust value in real-time.");
-    slider_desc->fontSize(11.0f).color(Style::text_secondary);
+    auto slider_desc = text({
+        .text = "Pan or click across the track to adjust value in real-time.",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto slider_card = container(column({
         slider_header,
@@ -650,8 +777,12 @@ WidgetPtr GestureDemoState::buildPanTab() {
                .border(Style::border_subtle, 1.0f);
 
     // Reset Button
-    auto reset_text = text("↺ Reset Card Position");
-    reset_text->fontSize(11.5f).bold().color(Style::text_primary);
+    auto reset_text = text({
+        .text = "↺ Reset Card Position",
+        .color = Style::text_primary,
+        .font_size = 11.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto reset_btn = container(reset_text);
     reset_btn->padding(EdgeInsets::symmetric(9.0f, 18.0f))
@@ -708,8 +839,10 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
         const auto& item = cursors[i];
         std::string c_name = item.name;
 
-        auto icon_text = text(item.icon);
-        icon_text->fontSize(18.0f);
+        auto icon_text = text({
+            .text = item.icon,
+            .font_size = 18.0f,
+        });
 
         auto icon_box = container(icon_text);
         icon_box->width(42.0f)
@@ -717,11 +850,18 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
                 .color(0x287C4DFF)
                 .borderRadius(21.0f);
 
-        auto item_title = text(item.name);
-        item_title->fontSize(13.5f).bold().color(Style::text_primary);
+        auto item_title = text({
+            .text = item.name,
+            .color = Style::text_primary,
+            .font_size = 13.5f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto item_desc = text(item.desc);
-        item_desc->fontSize(10.5f).color(Style::text_secondary);
+        auto item_desc = text({
+            .text = item.desc,
+            .color = Style::text_secondary,
+            .font_size = 10.5f,
+        });
 
         auto text_col = column({
             item_title,
@@ -756,11 +896,18 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
         else col2.push_back(gd);
     }
 
-    auto banner_label = text("Active Hover Cursor: ");
-    banner_label->fontSize(12.5f).color(Style::text_secondary);
+    auto banner_label = text({
+        .text = "Active Hover Cursor: ",
+        .color = Style::text_secondary,
+        .font_size = 12.5f,
+    });
 
-    auto banner_val = text(hovered_cursor_name);
-    banner_val->fontSize(13.5f).bold().color(Style::secondary);
+    auto banner_val = text({
+        .text = hovered_cursor_name,
+        .color = Style::secondary,
+        .font_size = 13.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto banner_row = row(Justify::Start, Align::Center, {
         banner_label,
@@ -796,8 +943,12 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
     std::string behavior_name = (current_behavior == HitTestBehavior::Opaque) ? "Opaque" : "DeferToChild";
 
     // Inner Child Target
-    auto inner_text = text("Inner Child (Hits: " + std::to_string(child_hits) + ")");
-    inner_text->fontSize(12.5f).bold().color(0xFFFFFFFF);
+    auto inner_text = text({
+        .text = "Inner Child (Hits: " + std::to_string(child_hits) + ")",
+        .color = 0xFFFFFFFF,
+        .font_size = 12.5f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto inner_box = container(inner_text);
     inner_box->padding(EdgeInsets::symmetric(12.0f, 20.0f))
@@ -813,19 +964,30 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
     }).cursor(SystemCursor::Pointer);
 
     // Outer Parent Target
-    auto outer_title = text("Outer Container (" + behavior_name + ")");
-    outer_title->fontSize(14.0f).bold().color(Style::text_primary);
+    auto outer_title = text({
+        .text = "Outer Container (" + behavior_name + ")",
+        .color = Style::text_primary,
+        .font_size = 14.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
-    auto outer_hits = text("Parent Hits: " + std::to_string(parent_hits));
-    outer_hits->fontSize(13.0f).bold().color(Style::secondary);
+    auto outer_hits = text({
+        .text = "Parent Hits: " + std::to_string(parent_hits),
+        .color = Style::secondary,
+        .font_size = 13.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto outer_header = row(Justify::SpaceBetween, Align::Center, {
         outer_title,
         outer_hits,
     });
 
-    auto outer_desc = text("Clicking in empty space of outer box behaves according to HitTestBehavior.");
-    outer_desc->fontSize(11.0f).color(Style::text_secondary);
+    auto outer_desc = text({
+        .text = "Clicking in empty space of outer box behaves according to HitTestBehavior.",
+        .color = Style::text_secondary,
+        .font_size = 11.0f,
+    });
 
     auto outer_col = column({
         outer_header,
@@ -852,8 +1014,12 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
       .hitTestBehavior(current_behavior);
 
     // Behavior Toggle Button
-    auto toggle_text = text("Switch Behavior (Current: " + behavior_name + ")");
-    toggle_text->fontSize(12.0f).bold().color(0xFFFFFFFF);
+    auto toggle_text = text({
+        .text = "Switch Behavior (Current: " + behavior_name + ")",
+        .color = 0xFFFFFFFF,
+        .font_size = 12.0f,
+        .font_weight = FontWeight::Bold,
+    });
 
     auto toggle_btn = container(toggle_text);
     toggle_btn->padding(EdgeInsets::symmetric(10.0f, 18.0f))

@@ -68,11 +68,18 @@ public:
 
 private:
     WidgetPtr buildHeader() {
-        auto title = text("ENKI — Extreme Performance Showcase");
-        title->fontSize(22.0f).bold().color(Style::text_white);
+        auto title = text({
+            .text = "ENKI — Extreme Performance Showcase",
+            .color = Style::text_white,
+            .font_size = 22.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto subtitle = text("Zero-Blur Fast Path: Pure GPU Rasterization, Zero Offscreen FBO Passes");
-        subtitle->fontSize(12.5f).color(Style::cyan_neon);
+        auto subtitle = text({
+            .text = "Zero-Blur Fast Path: Pure GPU Rasterization, Zero Offscreen FBO Passes",
+            .color = Style::cyan_neon,
+            .font_size = 12.5f,
+        });
 
         return column({
             title,
@@ -96,14 +103,24 @@ private:
     }
 
     WidgetPtr buildMetricCard(const std::string& label, const std::string& val, const std::string& unit, Color accent) {
-        auto lbl = text(label);
-        lbl->fontSize(11.0f).color(Style::text_muted);
+        auto lbl = text({
+            .text = label,
+            .color = Style::text_muted,
+            .font_size = 11.0f,
+        });
 
-        auto v = text(val);
-        v->fontSize(20.0f).bold().color(accent);
+        auto v = text({
+            .text = val,
+            .color = accent,
+            .font_size = 20.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
-        auto u = text(unit);
-        u->fontSize(10.0f).color(Style::text_muted);
+        auto u = text({
+            .text = unit,
+            .color = Style::text_muted,
+            .font_size = 10.0f,
+        });
 
         auto content = column({
             lbl,
@@ -125,8 +142,12 @@ private:
     }
 
     WidgetPtr buildControls() {
-        auto btn_inc_text = text("⚡ Click to Mutate Tree (+" + std::to_string(click_counter) + ")");
-        btn_inc_text->fontSize(13.0f).bold().color(Style::text_white);
+        auto btn_inc_text = text({
+            .text = "⚡ Click to Mutate Tree (+" + std::to_string(click_counter) + ")",
+            .color = Style::text_white,
+            .font_size = 13.0f,
+            .font_weight = FontWeight::Bold,
+        });
 
         auto btn_inc_box = container(btn_inc_text);
         btn_inc_box->paddingSymmetric(18.0f, 10.0f)
@@ -145,8 +166,11 @@ private:
             setState([this]() { is_hovered = false; });
         }).cursor(SystemCursor::Pointer);
 
-        auto btn_add_text = text("+ Add 12 Items");
-        btn_add_text->fontSize(12.0f).color(Style::text_white);
+        auto btn_add_text = text({
+            .text = "+ Add 12 Items",
+            .color = Style::text_white,
+            .font_size = 12.0f,
+        });
         auto btn_add_box = container(btn_add_text);
         btn_add_box->paddingSymmetric(14.0f, 10.0f)
                    .color(Style::bg_card)
@@ -159,8 +183,11 @@ private:
             });
         }).cursor(SystemCursor::Pointer);
 
-        auto btn_reset_text = text("Reset Grid");
-        btn_reset_text->fontSize(12.0f).color(Style::text_muted);
+        auto btn_reset_text = text({
+            .text = "Reset Grid",
+            .color = Style::text_muted,
+            .font_size = 12.0f,
+        });
         auto btn_reset_box = container(btn_reset_text);
         btn_reset_box->paddingSymmetric(14.0f, 10.0f)
                      .color(Style::bg_card)
@@ -188,11 +215,18 @@ private:
         items.reserve(stress_item_count);
 
         for (int i = 0; i < stress_item_count; ++i) {
-            auto item_title = text("Node #" + std::to_string(i + 1));
-            item_title->fontSize(12.0f).bold().color(Style::text_white);
+            auto item_title = text({
+                .text = "Node #" + std::to_string(i + 1),
+                .color = Style::text_white,
+                .font_size = 12.0f,
+                .font_weight = FontWeight::Bold,
+            });
 
-            auto item_sub = text("Val: " + std::to_string((click_counter * 7 + i * 13) % 997));
-            item_sub->fontSize(11.0f).color(Style::cyan_neon);
+            auto item_sub = text({
+                .text = "Val: " + std::to_string((click_counter * 7 + i * 13) % 997),
+                .color = Style::cyan_neon,
+                .font_size = 11.0f,
+            });
 
             auto col = column({
                 item_title,
