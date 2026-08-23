@@ -48,12 +48,36 @@ class BuildOwner;
 
 /// @brief Real-time performance and frame statistics.
 struct FrameStats {
+    // ── Throughput ──────────────────────────────────────────────
     double   fps            = 0.0;   ///< Instantaneous smoothed frames per second.
     double   frame_time_ms  = 0.0;   ///< Total frame duration in milliseconds.
-    double   cpu_time_ms    = 0.0;   ///< CPU build, layout, and paint time in ms.
+
+    // ── CPU Phase Breakdown ─────────────────────────────────────
+    double   build_time_ms  = 0.0;   ///< Time spent in BuildOwner::buildScope() (widget rebuild).
+    double   layout_time_ms = 0.0;   ///< Time spent in RenderObject::layout() (Anu Flexbox).
+    double   paint_time_ms  = 0.0;   ///< Time spent in RenderObject::paint() (Skia draw calls).
+    double   cpu_time_ms    = 0.0;   ///< Total CPU time: build + layout + paint.
+
+    // ── GPU Phase Breakdown ─────────────────────────────────────
     double   gpu_render_ms  = 0.0;   ///< Pure Skia GPU raster command submission in ms.
     double   swap_time_ms   = 0.0;   ///< Wayland / EGL buffer presentation & compositor IPC in ms.
     double   gpu_time_ms    = 0.0;   ///< Combined GPU + swap time in ms (for backward compatibility).
+
+    // ── Widget / Element Tree ───────────────────────────────────
+    uint32_t element_count   = 0;    ///< Total active elements in the Element tree.
+    uint32_t dirty_elements  = 0;    ///< Elements that were dirty (rebuilt) this frame.
+
+    // ── Animation System ────────────────────────────────────────
+    uint32_t active_tickers  = 0;    ///< Number of live Tickers / AnimationControllers.
+
+    // ── Frame Budget & Jank ─────────────────────────────────────
+    double   frame_budget_ms     = 16.67; ///< Target frame budget (1000 / target_fps).
+    double   budget_used_percent = 0.0;   ///< frame_time_ms as % of frame_budget_ms.
+    double   p95_frame_time_ms   = 0.0;   ///< 95th-percentile frame time (last 120 frames).
+    double   max_frame_time_ms   = 0.0;   ///< Worst-case frame time seen since start.
+    uint64_t jank_frames         = 0;     ///< Frames that exceeded the budget (cumulative).
+
+    // ── Counters ────────────────────────────────────────────────
     uint64_t total_frames   = 0;     ///< Monotonic frame counter.
 };
 

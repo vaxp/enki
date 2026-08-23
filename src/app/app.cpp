@@ -24,6 +24,8 @@
 #include <chrono>
 #include <thread>
 #include <unordered_set>
+#include <deque>
+#include <algorithm>
 
 namespace enki {
 
@@ -86,6 +88,14 @@ struct App::Impl {
     Clock::time_point last_fps_sample_time;
     uint32_t          frames_in_sample = 0;
     FrameStats        stats;
+
+    // Sliding window for p95 frame time (last 120 frames ~ 2s at 60fps)
+    static constexpr size_t kFrameWindow = 120;
+    std::deque<double>      frame_times_window;
+
+    // Cached canvas wrapper — recreated only when SkCanvas pointer changes
+    std::unique_ptr<Canvas> cached_canvas;
+    SkCanvas*               cached_sk_canvas_ptr = nullptr;
 
     // ── Initialization ──────────────────────────────────────────
 
@@ -446,7 +456,8 @@ struct App::Impl {
         int w = static_cast<int>(s.width);
         int h = static_cast<int>(s.height);
 
-        // Recreate surface on resize
+        // ── Recreate surface on resize ──────────────────────────
+        bool surface_resized = false;
         if (!cached_surface || cached_w != w || cached_h != h) {
             GrGLFramebufferInfo fbInfo;
             fbInfo.fFBOID  = 0;
@@ -462,11 +473,17 @@ struct App::Impl {
 
             cached_w = w;
             cached_h = h;
+            surface_resized = true;
 
-            // Force layout recalculation when window dimensions change
+            // Invalidate canvas cache when surface changes
+            cached_sk_canvas_ptr = nullptr;
+            cached_canvas.reset();
+
+            // Force full relayout + repaint on resize
             if (root_element) {
                 if (auto* root_ro = root_element->findRenderObject()) {
                     root_ro->markNeedsLayout();
+                    root_ro->markNeedsPaint();
                 }
             }
         }
@@ -475,97 +492,261 @@ struct App::Impl {
 
         SkCanvas* sk_canvas = cached_surface->getCanvas();
 
-        // Clear background
-        const Color cc = config.clear_color;
-        sk_canvas->clear(SkColorSetARGB(
-            (cc >> 24) & 0xFF,
-            (cc >> 16) & 0xFF,
-            (cc >>  8) & 0xFF,
-            (cc >>  0) & 0xFF));
-
-        // Advance all animations (Tickers / AnimationControllers / Springs)
-        SchedulerBinding::instance().tick();
-
-        // Rebuild any dirty elements before painting
-        build_owner->buildScope(root_element.get());
-
-        // Layout + Paint
-        auto* root_ro = root_element->findRenderObject();
-        if (root_ro) {
-            if (root_ro->needsLayout()) {
-                root_ro->layout(s.width, s.height);
-            }
-
-            auto canvas = createCanvasWrapper(sk_canvas);
-            PaintContext pctx{*canvas, Point{0, 0},
-                              Rect{0, 0, s.width, s.height}, 1.0f};
-            root_ro->paint(pctx);
-
-            if (config.show_performance_overlay) {
-                drawPerformanceOverlay(*canvas, s);
-            }
+        // ── Rebuild canvas wrapper only when pointer changes ────
+        if (sk_canvas != cached_sk_canvas_ptr) {
+            cached_canvas         = createCanvasWrapper(sk_canvas);
+            cached_sk_canvas_ptr  = sk_canvas;
         }
 
+        // ── Phase 0: Capture pre-build tree state ───────────────
+        stats.dirty_elements = static_cast<uint32_t>(build_owner->dirtyElementCount());
+        stats.active_tickers = static_cast<uint32_t>(SchedulerBinding::instance().tickerCount());
+
+        // ── Phase 1: Advance animations ─────────────────────────
+        SchedulerBinding::instance().tick();
+
+        // ── Phase 2: Rebuild dirty elements ─────────────────────
+        auto build_start = Clock::now();
+        build_owner->buildScope(root_element.get());
+        auto build_end = Clock::now();
+        stats.build_time_ms = std::chrono::duration<double, std::milli>(build_end - build_start).count();
+
+        auto* root_ro = root_element->findRenderObject();
+
+        // ── Phase 3: Layout ──────────────────────────────────────
+        auto layout_start = Clock::now();
+        if (root_ro && root_ro->needsLayout()) {
+            root_ro->layout(s.width, s.height);
+        }
+        auto layout_end = Clock::now();
+        stats.layout_time_ms = std::chrono::duration<double, std::milli>(layout_end - layout_start).count();
+
+        // ── Idle-skip decision ───────────────────────────────────
+        // Only repaint if something in the scene actually changed:
+        //   • dirty elements were rebuilt (setState fired)
+        //   • active tickers are running (animations in flight)
+        //   • layout was recalculated (size/position changed)
+        //   • any render object flagged itself as needing repaint
+        //   • the performance overlay is shown (it reads live stats)
+        bool scene_dirty = (stats.dirty_elements > 0)
+                        || (stats.active_tickers > 0)
+                        || (stats.layout_time_ms > 0.0)
+                        || (root_ro && root_ro->subtreeNeedsPaint())
+                        || config.show_performance_overlay
+                        || surface_resized;
+
+        double paint_ms = 0.0;
+        double gpu_flush_ms = 0.0;
+        double swap_ms = 0.0;
+
+        if (scene_dirty && root_ro) {
+            // ── Phase 4: Clear background + Paint ───────────────
+            const Color cc = config.clear_color;
+            sk_canvas->clear(SkColorSetARGB(
+                (cc >> 24) & 0xFF, (cc >> 16) & 0xFF,
+                (cc >>  8) & 0xFF, (cc >>  0) & 0xFF));
+
+            PaintContext pctx{*cached_canvas, Point{0, 0},
+                              Rect{0, 0, s.width, s.height}, 1.0f};
+            auto paint_start = Clock::now();
+            root_ro->paint(pctx);
+            auto paint_end = Clock::now();
+            paint_ms = std::chrono::duration<double, std::milli>(paint_end - paint_start).count();
+
+            // Clear dirty flag — scene is now fully rendered
+            root_ro->clearPaintFlag();
+
+            if (config.show_performance_overlay) {
+                drawPerformanceOverlay(*cached_canvas, s);
+            }
+
+            // ── Phase 5: GPU flush ───────────────────────────────
+            auto gpu_start = Clock::now();
+            gr_context->flush();
+            auto gpu_end = Clock::now();
+            gpu_flush_ms = std::chrono::duration<double, std::milli>(gpu_end - gpu_start).count();
+
+            // ── Phase 6: Wayland/EGL buffer swap ────────────────
+            window->swapBuffers();
+            auto swap_end = Clock::now();
+            swap_ms = std::chrono::duration<double, std::milli>(swap_end - gpu_end).count();
+        }
+        // idle path: no paint, no flush, no swap — near-zero CPU
+
         auto cpu_end = Clock::now();
-        stats.cpu_time_ms = std::chrono::duration<double, std::milli>(cpu_end - frame_start).count();
+        stats.paint_time_ms = paint_ms;
+        stats.cpu_time_ms   = std::chrono::duration<double, std::milli>(cpu_end - frame_start).count();
+        stats.gpu_render_ms = gpu_flush_ms;
+        stats.swap_time_ms  = swap_ms;
+        stats.gpu_time_ms   = gpu_flush_ms + swap_ms;
 
-        gr_context->flush();
-        auto gpu_end = Clock::now();
-        stats.gpu_render_ms = std::chrono::duration<double, std::milli>(gpu_end - cpu_end).count();
-
-        window->swapBuffers();
-        auto frame_end = Clock::now();
-        stats.swap_time_ms  = std::chrono::duration<double, std::milli>(frame_end - gpu_end).count();
-        stats.gpu_time_ms   = stats.gpu_render_ms + stats.swap_time_ms;
-        stats.frame_time_ms = std::chrono::duration<double, std::milli>(frame_end - frame_start).count();
+        auto frame_end = cpu_end; // frame ends when CPU work is done (swap included above)
+        stats.frame_time_ms = std::chrono::duration<double, std::milli>(cpu_end - frame_start).count();
         stats.total_frames++;
         frames_in_sample++;
 
-        auto sample_elapsed = std::chrono::duration<double>(frame_end - last_fps_sample_time).count();
-        if (sample_elapsed >= 0.20) { // Update 5 times per second for smooth real-time reading
+        // ── Tree stats ───────────────────────────────────────────
+        if (root_element && stats.total_frames % 30 == 0) {
+            stats.element_count = static_cast<uint32_t>(root_element->subtreeSize());
+        }
+
+        // ── Frame budget & jank ──────────────────────────────────
+        stats.frame_budget_ms = (config.target_fps > 0)
+            ? (1000.0 / config.target_fps) : 16.667;
+        stats.budget_used_percent = (stats.frame_time_ms / stats.frame_budget_ms) * 100.0;
+        if (stats.frame_time_ms > stats.frame_budget_ms) {
+            stats.jank_frames++;
+        }
+        if (stats.frame_time_ms > stats.max_frame_time_ms) {
+            stats.max_frame_time_ms = stats.frame_time_ms;
+        }
+
+        // ── p95 sliding window ───────────────────────────────────
+        frame_times_window.push_back(stats.frame_time_ms);
+        if (frame_times_window.size() > kFrameWindow) {
+            frame_times_window.pop_front();
+        }
+        if (!frame_times_window.empty()) {
+            std::vector<double> sorted(frame_times_window.begin(), frame_times_window.end());
+            std::sort(sorted.begin(), sorted.end());
+            size_t p95_idx = static_cast<size_t>(sorted.size() * 0.95);
+            if (p95_idx >= sorted.size()) p95_idx = sorted.size() - 1;
+            stats.p95_frame_time_ms = sorted[p95_idx];
+        }
+
+        // ── FPS sample ───────────────────────────────────────────
+        auto sample_elapsed = std::chrono::duration<double>(cpu_end - last_fps_sample_time).count();
+        if (sample_elapsed >= 0.20) {
             stats.fps = frames_in_sample / sample_elapsed;
             frames_in_sample = 0;
-            last_fps_sample_time = frame_end;
+            last_fps_sample_time = cpu_end;
         }
     }
 
     void drawPerformanceOverlay(Canvas& canvas, Size s) {
-        float hud_w = 270.0f;
-        float hud_h = 48.0f;
-        float hud_x = s.width - hud_w - 14.0f;
-        float hud_y = 14.0f;
+        // ── Layout constants ────────────────────────────────────
+        constexpr float HUD_W    = 310.0f;
+        constexpr float HUD_H    = 168.0f;
+        constexpr float HUD_PAD  = 14.0f;
+        constexpr float FONT_SM  = 9.0f;
+        constexpr float FONT_MD  = 10.5f;
+        constexpr float FONT_LG  = 13.0f;
 
-        Paint bg_paint;
-        bg_paint.setColor(0xEE0B0F19);
-        bg_paint.setStyle(PaintStyle::Fill);
-        canvas.drawRRect(Rect{hud_x, hud_y, hud_w, hud_h}, BorderRadius::circular(8.0f), bg_paint);
+        float hud_x = s.width  - HUD_W - HUD_PAD;
+        float hud_y = HUD_PAD;
 
-        Paint border_paint;
-        border_paint.setColor(0x5000E5FF);
-        border_paint.setStyle(PaintStyle::Stroke);
-        border_paint.setStrokeWidth(1.0f);
-        canvas.drawRRect(Rect{hud_x, hud_y, hud_w, hud_h}, BorderRadius::circular(8.0f), border_paint);
+        // ── Background ─────────────────────────────────────────
+        Paint bg;
+        bg.setColor(0xF00A0E1A);
+        bg.setStyle(PaintStyle::Fill);
+        canvas.drawRRect(Rect{hud_x, hud_y, HUD_W, HUD_H}, BorderRadius::circular(10.0f), bg);
 
-        // Status indicator dot
-        Paint dot_paint;
-        dot_paint.setColor((stats.fps >= 55.0) ? 0xFF10B981 : ((stats.fps >= 30.0) ? 0xFFF59E0B : 0xFFEF4444));
-        dot_paint.setStyle(PaintStyle::Fill);
-        canvas.drawCircle(Point{hud_x + 14.0f, hud_y + 16.0f}, 4.0f, dot_paint);
+        Paint border;
+        border.setColor(0x6000E5FF);
+        border.setStyle(PaintStyle::Stroke);
+        border.setStrokeWidth(1.0f);
+        canvas.drawRRect(Rect{hud_x, hud_y, HUD_W, HUD_H}, BorderRadius::circular(10.0f), border);
 
-        // FPS Text
-        char fps_buf[64];
-        std::snprintf(fps_buf, sizeof(fps_buf), "%.1f FPS  (%.2f ms)", stats.fps, stats.frame_time_ms);
-        Paint fps_paint;
-        fps_paint.setColor(0xFFFFFFFF);
-        canvas.drawText(fps_buf, Point{hud_x + 25.0f, hud_y + 20.0f}, fps_paint, 12.0f, nullptr, true);
+        // Helper lambdas
+        float cy = hud_y + 16.0f;
+        auto txt = [&](const char* str, float x, float color, float sz, bool bold = false) {
+            Paint p; p.setColor(color);
+            canvas.drawText(str, Point{x, cy}, p, sz, nullptr, bold);
+        };
+        // nextLine: default step = 13.5f (one text line height)
+        auto nextLine = [&](float gap = 13.5f) { cy += gap; };
 
-        // Detailed Breakdown: CPU vs Pure GPU vs Wayland Swap
-        char sub_buf[96];
-        std::snprintf(sub_buf, sizeof(sub_buf), "CPU: %.2fms | GPU: %.2fms | Swap: %.2fms",
-                      stats.cpu_time_ms, stats.gpu_render_ms, stats.swap_time_ms);
-        Paint sub_paint;
-        sub_paint.setColor(0xFF94A3B8);
-        canvas.drawText(sub_buf, Point{hud_x + 12.0f, hud_y + 37.0f}, sub_paint, 9.0f, nullptr, false);
+        // ── Section: FPS & Frame Time ───────────────────────────
+        // Status dot
+        uint32_t dot_col = (stats.fps >= 55.0) ? 0xFF10B981
+                         : (stats.fps >= 30.0) ? 0xFFF59E0B
+                                               : 0xFFEF4444;
+        Paint dot; dot.setColor(dot_col); dot.setStyle(PaintStyle::Fill);
+        canvas.drawCircle(Point{hud_x + 13.0f, cy - 3.0f}, 4.5f, dot);
+
+        char buf[128];
+        std::snprintf(buf, sizeof(buf), "%.1f FPS", stats.fps);
+        txt(buf, hud_x + 24.0f, 0xFFFFFFFF, FONT_LG, true);
+
+        std::snprintf(buf, sizeof(buf), "frame: %.2fms / budget: %.1fms  (%.0f%%)",
+                      stats.frame_time_ms, stats.frame_budget_ms, stats.budget_used_percent);
+        txt(buf, hud_x + 100.0f, 0xFF94A3B8, FONT_SM);
+        nextLine(15.0f);
+
+        // Jank / p95 / worst
+        std::snprintf(buf, sizeof(buf), "p95: %.2fms   worst: %.2fms   jank: %llu",
+                      stats.p95_frame_time_ms, stats.max_frame_time_ms,
+                      static_cast<unsigned long long>(stats.jank_frames));
+        uint32_t jank_col = (stats.jank_frames == 0) ? 0xFF64748B : 0xFFFB923C;
+        txt(buf, hud_x + 10.0f, jank_col, FONT_SM);
+        nextLine(14.0f);
+
+        // ── Divider ─────────────────────────────────────────────
+        Paint div; div.setColor(0x3000E5FF); div.setStyle(PaintStyle::Fill);
+        canvas.drawRect(Rect{hud_x + 8.0f, cy - 2.0f, HUD_W - 16.0f, 1.0f}, div);
+        nextLine(7.0f);
+
+        // ── Section: CPU Phase Breakdown ────────────────────────
+        txt("CPU", hud_x + 10.0f, 0xFF7DD3FC, FONT_MD, true);
+        nextLine(13.0f);
+
+        // Build
+        std::snprintf(buf, sizeof(buf), "Build   (setState/rebuild):  %.3f ms  [%u dirty]",
+                      stats.build_time_ms, stats.dirty_elements);
+        uint32_t build_col = (stats.build_time_ms > 4.0) ? 0xFFFB923C : 0xFFCBD5E1;
+        txt(buf, hud_x + 14.0f, build_col, FONT_SM);
+        nextLine();
+
+        // Layout
+        std::snprintf(buf, sizeof(buf), "Layout  (Anu Flexbox):       %.3f ms",
+                      stats.layout_time_ms);
+        uint32_t layout_col = (stats.layout_time_ms > 4.0) ? 0xFFFB923C : 0xFFCBD5E1;
+        txt(buf, hud_x + 14.0f, layout_col, FONT_SM);
+        nextLine();
+
+        // Paint
+        std::snprintf(buf, sizeof(buf), "Paint   (Skia draw calls):   %.3f ms",
+                      stats.paint_time_ms);
+        uint32_t paint_col = (stats.paint_time_ms > 6.0) ? 0xFFFB923C : 0xFFCBD5E1;
+        txt(buf, hud_x + 14.0f, paint_col, FONT_SM);
+        nextLine();
+
+        // CPU total
+        std::snprintf(buf, sizeof(buf), "Total CPU:                   %.3f ms",
+                      stats.cpu_time_ms);
+        txt(buf, hud_x + 14.0f, 0xFF7DD3FC, FONT_SM);
+        nextLine(14.0f);
+
+        // ── Divider ─────────────────────────────────────────────
+        canvas.drawRect(Rect{hud_x + 8.0f, cy - 2.0f, HUD_W - 16.0f, 1.0f}, div);
+        nextLine(7.0f);
+
+        // ── Section: GPU Phase Breakdown ────────────────────────
+        txt("GPU", hud_x + 10.0f, 0xFFA78BFA, FONT_MD, true);
+        nextLine(13.0f);
+
+        std::snprintf(buf, sizeof(buf), "Raster  (Skia flush):        %.3f ms",
+                      stats.gpu_render_ms);
+        uint32_t gpu_col = (stats.gpu_render_ms > 6.0) ? 0xFFFB923C : 0xFFCBD5E1;
+        txt(buf, hud_x + 14.0f, gpu_col, FONT_SM);
+        nextLine();
+
+        std::snprintf(buf, sizeof(buf), "Swap    (Wayland/EGL):       %.3f ms",
+                      stats.swap_time_ms);
+        uint32_t swap_col = (stats.swap_time_ms > 4.0) ? 0xFFFB923C : 0xFFCBD5E1;
+        txt(buf, hud_x + 14.0f, swap_col, FONT_SM);
+        nextLine(14.0f);
+
+        // ── Divider ─────────────────────────────────────────────
+        canvas.drawRect(Rect{hud_x + 8.0f, cy - 2.0f, HUD_W - 16.0f, 1.0f}, div);
+        nextLine(7.0f);
+
+        // ── Section: Tree & Animation ───────────────────────────
+        std::snprintf(buf, sizeof(buf),
+                      "Elements: %u   Tickers: %u   Frames: %llu",
+                      stats.element_count, stats.active_tickers,
+                      static_cast<unsigned long long>(stats.total_frames));
+        txt(buf, hud_x + 10.0f, 0xFF94A3B8, FONT_SM);
     }
 
     // ── Frame timing ────────────────────────────────────────────

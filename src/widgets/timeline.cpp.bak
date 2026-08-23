@@ -59,28 +59,8 @@ public:
     struct ItemLayoutInfo {
         Rect card_rect;
         Point node_center;
-        
-        float card_w = -1.0f;
-        std::string title;
-        std::string desc;
-        std::string time;
-        std::string details;
-        std::string badge;
-        std::string icon;
-        bool is_expanded = false;
-        Color title_color = 0;
-        Color desc_color = 0;
-        Color time_color = 0;
-
-        std::unique_ptr<skia::textlayout::Paragraph> p_title;
-        std::unique_ptr<skia::textlayout::Paragraph> p_time;
-        std::unique_ptr<skia::textlayout::Paragraph> p_desc;
-        std::unique_ptr<skia::textlayout::Paragraph> p_det;
-        std::unique_ptr<skia::textlayout::Paragraph> p_badge;
-        std::unique_ptr<skia::textlayout::Paragraph> p_icon;
-        std::unique_ptr<skia::textlayout::Paragraph> p_num;
     };
-    mutable std::vector<ItemLayoutInfo> layout_cache_;
+    std::vector<ItemLayoutInfo> layout_cache_;
 
     RenderTimelineBox(std::shared_ptr<TimelineController> ctrl, TimelineProps opt)
         : controller(std::move(ctrl)), options(std::move(opt)) {
@@ -99,147 +79,64 @@ public:
         return options.pending_color;
     }
 
-    float computeItemHeight(const TimelineItem& item, float card_w, size_t index) const {
-        if (layout_cache_.size() <= index) {
-            layout_cache_.resize(index + 1);
-        }
-        auto& cache = layout_cache_[index];
+    float computeItemHeight(const TimelineItem& item, float card_w) const {
         auto fc = getTimelineFontCollection();
         if (!fc) return 80.0f;
 
-        bool dirty = cache.card_w != card_w || cache.title != item.title ||
-                     cache.desc != item.description || cache.time != item.timestamp ||
-                     cache.details != item.details || cache.badge != item.badge_text ||
-                     cache.icon != item.icon || cache.is_expanded != item.is_expanded ||
-                     cache.title_color != options.title_color ||
-                     cache.desc_color != options.desc_color ||
-                     cache.time_color != options.timestamp_color;
+        float h = 12.0f;
 
-        if (dirty) {
-            cache.card_w = card_w;
-            cache.title = item.title;
-            cache.desc = item.description;
-            cache.time = item.timestamp;
-            cache.details = item.details;
-            cache.badge = item.badge_text;
-            cache.icon = item.icon;
-            cache.is_expanded = item.is_expanded;
-            cache.title_color = options.title_color;
-            cache.desc_color = options.desc_color;
-            cache.time_color = options.timestamp_color;
+        // Title
+        skia::textlayout::ParagraphStyle p_style;
+        auto b_title = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+        skia::textlayout::TextStyle t_title;
+        t_title.setFontSize(13.0f);
+        b_title->pushStyle(t_title);
+        b_title->addText(item.title.c_str(), item.title.length());
+        auto p_title = b_title->Build();
+        float badge_w = item.badge_text.empty() ? 0.0f : 55.0f;
+        p_title->layout(std::max(60.0f, card_w - 24.0f - badge_w));
+        h += p_title->getHeight() + 4.0f;
 
-            skia::textlayout::ParagraphStyle p_style;
-            
-            // Badge
-            if (!item.badge_text.empty()) {
-                auto b = skia::textlayout::ParagraphBuilder::make(p_style, fc);
-                skia::textlayout::TextStyle t;
-                t.setFontSize(10.5f);
-                t.setColor(static_cast<SkColor>(item.badge_fg != 0 ? item.badge_fg : 0xFFFFFFFF));
-                b->pushStyle(t);
-                b->addText(item.badge_text.c_str(), item.badge_text.length());
-                cache.p_badge = b->Build();
-                cache.p_badge->layout(100.0f);
-            } else {
-                cache.p_badge = nullptr;
-            }
-            float badge_w = cache.p_badge ? cache.p_badge->getMaxIntrinsicWidth() + 14.0f : 0.0f;
-
-            // Title
-            if (!item.title.empty()) {
-                auto b_title = skia::textlayout::ParagraphBuilder::make(p_style, fc);
-                skia::textlayout::TextStyle t_title;
-                t_title.setFontSize(13.0f);
-                t_title.setColor(static_cast<SkColor>(options.title_color));
-                b_title->pushStyle(t_title);
-                b_title->addText(item.title.c_str(), item.title.length());
-                cache.p_title = b_title->Build();
-                cache.p_title->layout(std::max(40.0f, card_w - 24.0f - badge_w));
-            } else {
-                cache.p_title = nullptr;
-            }
-
-            // Time
-            if (!item.timestamp.empty()) {
-                auto b_time = skia::textlayout::ParagraphBuilder::make(p_style, fc);
-                skia::textlayout::TextStyle t;
-                t.setFontSize(11.0f);
-                t.setColor(static_cast<SkColor>(options.timestamp_color));
-                b_time->pushStyle(t);
-                b_time->addText(item.timestamp.c_str(), item.timestamp.length());
-                cache.p_time = b_time->Build();
-                cache.p_time->layout(card_w - 24.0f);
-            } else {
-                cache.p_time = nullptr;
-            }
-
-            // Desc
-            if (!item.description.empty()) {
-                auto b = skia::textlayout::ParagraphBuilder::make(p_style, fc);
-                skia::textlayout::TextStyle t;
-                t.setFontSize(12.0f);
-                t.setColor(static_cast<SkColor>(options.desc_color));
-                b->pushStyle(t);
-                b->addText(item.description.c_str(), item.description.length());
-                cache.p_desc = b->Build();
-                cache.p_desc->layout(card_w - 24.0f);
-            } else {
-                cache.p_desc = nullptr;
-            }
-
-            // Details
-            if (item.is_expanded && !item.details.empty()) {
-                auto b = skia::textlayout::ParagraphBuilder::make(p_style, fc);
-                skia::textlayout::TextStyle t;
-                t.setFontSize(11.5f);
-                t.setColor(0xFF94A3B8); // hardcoded in original
-                b->pushStyle(t);
-                b->addText(item.details.c_str(), item.details.length());
-                cache.p_det = b->Build();
-                cache.p_det->layout(std::max(40.0f, card_w - 40.0f));
-            } else {
-                cache.p_det = nullptr;
-            }
-            
-            // Icon
-            if (!item.icon.empty()) {
-                skia::textlayout::ParagraphStyle ic_style;
-                ic_style.setTextAlign(skia::textlayout::TextAlign::kCenter);
-                auto b = skia::textlayout::ParagraphBuilder::make(ic_style, fc);
-                skia::textlayout::TextStyle t;
-                t.setFontSize(options.node_size * 0.55f);
-                b->pushStyle(t);
-                b->addText(item.icon.c_str(), item.icon.length());
-                cache.p_icon = b->Build();
-                cache.p_icon->layout(options.node_size);
-            } else {
-                cache.p_icon = nullptr;
-            }
-
-            // Number
-            cache.p_num = nullptr;
-            if (item.icon.empty() && (options.is_stepper || item.node_shape == TimelineNodeShape::Number)) {
-                std::string num_str = std::to_string(index + 1);
-                skia::textlayout::ParagraphStyle n_style;
-                n_style.setTextAlign(skia::textlayout::TextAlign::kCenter);
-                auto b = skia::textlayout::ParagraphBuilder::make(n_style, fc);
-                skia::textlayout::TextStyle t;
-                t.setFontSize(11.0f);
-                t.setColor(item.status == TimelineItemStatus::Pending ? static_cast<SkColor>(options.pending_color) : 0xFF0F172A);
-                b->pushStyle(t);
-                b->addText(num_str.c_str(), num_str.length());
-                cache.p_num = b->Build();
-                cache.p_num->layout(options.node_size);
-            }
+        // Timestamp
+        if (!item.timestamp.empty()) {
+            skia::textlayout::ParagraphStyle ts_style;
+            auto b_time = skia::textlayout::ParagraphBuilder::make(ts_style, fc);
+            skia::textlayout::TextStyle t_time;
+            t_time.setFontSize(11.0f);
+            b_time->pushStyle(t_time);
+            b_time->addText(item.timestamp.c_str(), item.timestamp.length());
+            auto p_time = b_time->Build();
+            p_time->layout(card_w - 24.0f);
+            h += p_time->getHeight() + 4.0f;
         }
 
-        float h = 12.0f; // top padding
-        if (cache.p_title) h += cache.p_title->getHeight() + 4.0f;
-        if (cache.p_time) h += cache.p_time->getHeight() + 4.0f;
-        if (cache.p_desc) h += cache.p_desc->getHeight() + 6.0f;
-        if (cache.p_det) h += cache.p_det->getHeight() + 20.0f;
-        h += 12.0f; // bottom padding
-        
+        // Description
+        if (!item.description.empty()) {
+            skia::textlayout::ParagraphStyle ds_style;
+            auto b_desc = skia::textlayout::ParagraphBuilder::make(ds_style, fc);
+            skia::textlayout::TextStyle t_desc;
+            t_desc.setFontSize(12.0f);
+            b_desc->pushStyle(t_desc);
+            b_desc->addText(item.description.c_str(), item.description.length());
+            auto p_desc = b_desc->Build();
+            p_desc->layout(card_w - 24.0f);
+            h += p_desc->getHeight() + 6.0f;
+        }
+
+        // Expanded Details
+        if (item.is_expanded && !item.details.empty()) {
+            skia::textlayout::ParagraphStyle dt_style;
+            auto b_det = skia::textlayout::ParagraphBuilder::make(dt_style, fc);
+            skia::textlayout::TextStyle t_det;
+            t_det.setFontSize(11.5f);
+            b_det->pushStyle(t_det);
+            b_det->addText(item.details.c_str(), item.details.length());
+            auto p_det = b_det->Build();
+            p_det->layout(card_w - 36.0f);
+            h += p_det->getHeight() + 20.0f;
+        }
+
+        h += 12.0f; // Bottom padding
         return std::max(h, options.node_size + 16.0f);
     }
 
@@ -247,14 +144,10 @@ public:
         const auto& items = controller->getItems();
         if (items.empty()) return 60.0f;
 
-        if (layout_cache_.size() != items.size()) {
-            layout_cache_.resize(items.size());
-        }
-
         if (options.orientation == TimelineOrientation::Horizontal) {
             float max_card_h = 100.0f;
-            for (size_t i = 0; i < items.size(); ++i) {
-                max_card_h = std::max(max_card_h, computeItemHeight(items[i], options.card_width, i));
+            for (const auto& item : items) {
+                max_card_h = std::max(max_card_h, computeItemHeight(item, options.card_width));
             }
             return options.node_size + 20.0f + max_card_h + 20.0f;
         }
@@ -263,7 +156,7 @@ public:
         float card_w = (options.alignment == TimelineAlignment::Alternate) ? options.card_width : 480.0f;
 
         for (size_t i = 0; i < items.size(); ++i) {
-            float item_h = computeItemHeight(items[i], card_w, i);
+            float item_h = computeItemHeight(items[i], card_w);
             total_h += item_h;
             if (i + 1 < items.size()) total_h += options.item_spacing;
         }
@@ -288,9 +181,8 @@ public:
         const auto& items = controller->getItems();
         if (items.empty()) return;
 
-        if (layout_cache_.size() != items.size()) {
-            layout_cache_.resize(items.size());
-        }
+        layout_cache_.clear();
+        layout_cache_.resize(items.size());
 
         if (options.orientation == TimelineOrientation::Horizontal) {
             paintHorizontal(sk_canvas, ctx.offset, fc);
@@ -301,33 +193,26 @@ public:
         }
     }
 
-    sk_sp<SkPathEffect> getDashEffect() const {
-        static auto effect = [](){
-            const SkScalar intervals[] = {6.0f, 4.0f};
-            return SkDashPathEffect::Make(intervals, 2, 0.0f);
-        }();
-        return effect;
-    }
-
     void paintHorizontal(SkCanvas* sk_canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
         const auto& items = controller->getItems();
         size_t n = items.size();
         float step_x = size_.width / static_cast<float>(n);
         float line_y = offset.y + options.node_size * 0.8f + 10.0f;
 
-        SkPaint line_paint;
-        line_paint.setAntiAlias(true);
-        line_paint.setStrokeWidth(options.line_thickness);
-        if (options.line_style == TimelineLineStyle::Dashed) {
-            line_paint.setPathEffect(getDashEffect());
-        }
-
         // 1. Connecting Track Lines
         for (size_t i = 0; i + 1 < n; ++i) {
             float x1 = offset.x + (static_cast<float>(i) + 0.5f) * step_x + options.node_size * 0.5f;
             float x2 = offset.x + (static_cast<float>(i + 1) + 0.5f) * step_x - options.node_size * 0.5f;
 
+            SkPaint line_paint;
+            line_paint.setAntiAlias(true);
+            line_paint.setStrokeWidth(options.line_thickness);
             line_paint.setColor(items[i].status == TimelineItemStatus::Completed ? options.completed_color : options.line_color);
+
+            if (options.line_style == TimelineLineStyle::Dashed) {
+                const SkScalar intervals[] = {6.0f, 4.0f};
+                line_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, 0.0f));
+            }
             sk_canvas->drawLine(x1, line_y, x2, line_y, line_paint);
         }
 
@@ -345,10 +230,10 @@ public:
             float card_w = std::min(step_x - 12.0f, options.card_width);
             float card_x = cx - card_w * 0.5f;
             float card_y = cy + options.node_size * 0.5f + 12.0f;
-            float card_h = computeItemHeight(item, card_w, i);
+            float card_h = computeItemHeight(item, card_w);
 
             layout_cache_[i].card_rect = Rect{card_x, card_y, card_w, card_h};
-            paintCard(sk_canvas, card_x, card_y, card_w, card_h, item, (hovered_item_index == static_cast<int>(i)), fc, i);
+            paintCard(sk_canvas, card_x, card_y, card_w, card_h, item, (hovered_item_index == static_cast<int>(i)), fc);
         }
     }
 
@@ -363,7 +248,7 @@ public:
 
         // Precompute centers
         for (size_t i = 0; i < n; ++i) {
-            float card_h = computeItemHeight(items[i], card_w, i);
+            float card_h = computeItemHeight(items[i], card_w);
             float node_y = cur_y + options.node_size * 0.5f + 6.0f;
 
             layout_cache_[i].node_center = Point{node_x, node_y};
@@ -372,19 +257,20 @@ public:
             cur_y += card_h + options.item_spacing;
         }
 
-        SkPaint line_paint;
-        line_paint.setAntiAlias(true);
-        line_paint.setStrokeWidth(options.line_thickness);
-        if (options.line_style == TimelineLineStyle::Dashed) {
-            line_paint.setPathEffect(getDashEffect());
-        }
-
         // 1. Draw Connecting Track Lines
         for (size_t i = 0; i + 1 < n; ++i) {
             float y1 = layout_cache_[i].node_center.y + options.node_size * 0.5f;
             float y2 = layout_cache_[i + 1].node_center.y - options.node_size * 0.5f;
 
+            SkPaint line_paint;
+            line_paint.setAntiAlias(true);
+            line_paint.setStrokeWidth(options.line_thickness);
             line_paint.setColor(items[i].status == TimelineItemStatus::Completed ? options.completed_color : options.line_color);
+
+            if (options.line_style == TimelineLineStyle::Dashed) {
+                const SkScalar intervals[] = {6.0f, 4.0f};
+                line_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, 0.0f));
+            }
             sk_canvas->drawLine(node_x, y1, node_x, y2, line_paint);
         }
 
@@ -395,7 +281,7 @@ public:
 
             paintNode(sk_canvas, cache.node_center.x, cache.node_center.y, item, i, fc);
             paintCard(sk_canvas, cache.card_rect.x, cache.card_rect.y, cache.card_rect.width, cache.card_rect.height,
-                      item, (hovered_item_index == static_cast<int>(i)), fc, i);
+                      item, (hovered_item_index == static_cast<int>(i)), fc);
         }
     }
 
@@ -408,7 +294,7 @@ public:
         float card_w = std::min(options.card_width, size_.width * 0.45f);
 
         for (size_t i = 0; i < n; ++i) {
-            float card_h = computeItemHeight(items[i], card_w, i);
+            float card_h = computeItemHeight(items[i], card_w);
             float node_y = cur_y + options.node_size * 0.5f + 6.0f;
 
             bool is_left = (i % 2 == 0);
@@ -421,19 +307,20 @@ public:
             cur_y += card_h + options.item_spacing;
         }
 
-        SkPaint line_paint;
-        line_paint.setAntiAlias(true);
-        line_paint.setStrokeWidth(options.line_thickness);
-        if (options.line_style == TimelineLineStyle::Dashed) {
-            line_paint.setPathEffect(getDashEffect());
-        }
-
         // 1. Track line
         for (size_t i = 0; i + 1 < n; ++i) {
             float y1 = layout_cache_[i].node_center.y + options.node_size * 0.5f;
             float y2 = layout_cache_[i + 1].node_center.y - options.node_size * 0.5f;
 
+            SkPaint line_paint;
+            line_paint.setAntiAlias(true);
+            line_paint.setStrokeWidth(options.line_thickness);
             line_paint.setColor(items[i].status == TimelineItemStatus::Completed ? options.completed_color : options.line_color);
+
+            if (options.line_style == TimelineLineStyle::Dashed) {
+                const SkScalar intervals[] = {6.0f, 4.0f};
+                line_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, 0.0f));
+            }
             sk_canvas->drawLine(center_x, y1, center_x, y2, line_paint);
         }
 
@@ -444,7 +331,7 @@ public:
 
             paintNode(sk_canvas, cache.node_center.x, cache.node_center.y, item, i, fc);
             paintCard(sk_canvas, cache.card_rect.x, cache.card_rect.y, cache.card_rect.width, cache.card_rect.height,
-                      item, (hovered_item_index == static_cast<int>(i)), fc, i);
+                      item, (hovered_item_index == static_cast<int>(i)), fc);
         }
     }
 
@@ -502,18 +389,35 @@ public:
             float sz = 3.5f;
             sk_canvas->drawLine(cx - sz, cy - sz, cx + sz, cy + sz, x_paint);
             sk_canvas->drawLine(cx + sz, cy - sz, cx - sz, cy + sz, x_paint);
-        } else {
-            const auto& cache = layout_cache_[index];
-            if (!item.icon.empty() && cache.p_icon) {
-                cache.p_icon->paint(sk_canvas, cx - options.node_size * 0.5f, cy - cache.p_icon->getHeight() * 0.5f);
-            } else if (cache.p_num) {
-                cache.p_num->paint(sk_canvas, cx - options.node_size * 0.5f, cy - cache.p_num->getHeight() * 0.5f);
-            }
+        } else if (!item.icon.empty()) {
+            skia::textlayout::ParagraphStyle p_style;
+            p_style.setTextAlign(skia::textlayout::TextAlign::kCenter);
+            auto b_ic = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+            skia::textlayout::TextStyle t_ic;
+            t_ic.setFontSize(options.node_size * 0.55f);
+            b_ic->pushStyle(t_ic);
+            b_ic->addText(item.icon.c_str(), item.icon.length());
+            auto p_ic = b_ic->Build();
+            p_ic->layout(options.node_size);
+            p_ic->paint(sk_canvas, cx - options.node_size * 0.5f, cy - p_ic->getHeight() * 0.5f);
+        } else if (options.is_stepper || item.node_shape == TimelineNodeShape::Number) {
+            std::string num_str = std::to_string(index + 1);
+            skia::textlayout::ParagraphStyle p_style;
+            p_style.setTextAlign(skia::textlayout::TextAlign::kCenter);
+            auto b_num = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+            skia::textlayout::TextStyle t_num;
+            t_num.setFontSize(11.0f);
+            t_num.setColor(item.status == TimelineItemStatus::Pending ? static_cast<SkColor>(options.pending_color) : 0xFF0F172A);
+            b_num->pushStyle(t_num);
+            b_num->addText(num_str.c_str(), num_str.length());
+            auto p_num = b_num->Build();
+            p_num->layout(options.node_size);
+            p_num->paint(sk_canvas, cx - options.node_size * 0.5f, cy - p_num->getHeight() * 0.5f);
         }
     }
 
     void paintCard(SkCanvas* sk_canvas, float x, float y, float w, float h, const TimelineItem& item,
-                   bool is_hov, sk_sp<skia::textlayout::FontCollection> fc, size_t index) {
+                   bool is_hov, sk_sp<skia::textlayout::FontCollection> fc) {
         SkRRect rrect;
         rrect.setRectXY(SkRect::MakeXYWH(x, y, w, h), options.card_border_radius, options.card_border_radius);
 
@@ -533,53 +437,102 @@ public:
 
         float cur_y = y + 12.0f;
         float pad_x = x + 12.0f;
-        const auto& cache = layout_cache_[index];
+        float avail_w = w - 24.0f;
 
-        // 1. Title Row
-        if (cache.p_title) {
-            cache.p_title->paint(sk_canvas, pad_x, cur_y);
-            
-            // Paint Badge on the right
-            if (cache.p_badge) {
-                float bw = cache.p_badge->getMaxIntrinsicWidth() + 10.0f;
-                float bh = cache.p_badge->getHeight() + 2.0f;
-                float bx = x + w - 12.0f - bw;
-                float by = cur_y;
+        skia::textlayout::ParagraphStyle p_style;
 
-                SkRRect bd_rect;
-                bd_rect.setRectXY(SkRect::MakeXYWH(bx, by, bw, bh), 3.0f, 3.0f);
-                SkPaint bd_paint;
-                bd_paint.setColor(item.badge_bg != 0 ? item.badge_bg : 0x2E38BDF8);
-                sk_canvas->drawRRect(bd_rect, bd_paint);
-                cache.p_badge->paint(sk_canvas, bx + 5.0f, by + 1.0f);
-            }
-
-            cur_y += cache.p_title->getHeight() + 4.0f;
+        // Compute Badge first if present
+        std::unique_ptr<skia::textlayout::Paragraph> p_bg;
+        float badge_w = 0.0f;
+        if (!item.badge_text.empty()) {
+            auto b_bg = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+            skia::textlayout::TextStyle t_bg;
+            t_bg.setFontSize(10.5f);
+            t_bg.setColor(static_cast<SkColor>(item.badge_fg != 0 ? item.badge_fg : 0xFFFFFFFF));
+            b_bg->pushStyle(t_bg);
+            b_bg->addText(item.badge_text.c_str(), item.badge_text.length());
+            p_bg = b_bg->Build();
+            p_bg->layout(100.0f);
+            badge_w = p_bg->getMaxIntrinsicWidth() + 14.0f;
         }
 
+        // 1. Title Row
+        auto b_title = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+        skia::textlayout::TextStyle t_title;
+        t_title.setFontSize(13.0f);
+        t_title.setColor(static_cast<SkColor>(options.title_color));
+        b_title->pushStyle(t_title);
+        b_title->addText(item.title.c_str(), item.title.length());
+        auto p_title = b_title->Build();
+        p_title->layout(std::max(40.0f, avail_w - badge_w));
+        p_title->paint(sk_canvas, pad_x, cur_y);
+
+        float title_h = p_title->getHeight();
+
+        // Paint Badge on the right
+        if (p_bg) {
+            float bw = p_bg->getMaxIntrinsicWidth() + 10.0f;
+            float bh = p_bg->getHeight() + 2.0f;
+            float bx = x + w - 12.0f - bw;
+            float by = cur_y;
+
+            SkRRect bd_rect;
+            bd_rect.setRectXY(SkRect::MakeXYWH(bx, by, bw, bh), 3.0f, 3.0f);
+            SkPaint bd_paint;
+            bd_paint.setColor(item.badge_bg != 0 ? item.badge_bg : 0x2E38BDF8);
+            sk_canvas->drawRRect(bd_rect, bd_paint);
+            p_bg->paint(sk_canvas, bx + 5.0f, by + 1.0f);
+        }
+
+        cur_y += title_h + 4.0f;
+
         // 2. Timestamp
-        if (cache.p_time) {
-            cache.p_time->paint(sk_canvas, pad_x, cur_y);
-            cur_y += cache.p_time->getHeight() + 4.0f;
+        if (!item.timestamp.empty()) {
+            auto b_time = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+            skia::textlayout::TextStyle t_time;
+            t_time.setFontSize(11.0f);
+            t_time.setColor(static_cast<SkColor>(options.timestamp_color));
+            b_time->pushStyle(t_time);
+            b_time->addText(item.timestamp.c_str(), item.timestamp.length());
+            auto p_time = b_time->Build();
+            p_time->layout(avail_w);
+            p_time->paint(sk_canvas, pad_x, cur_y);
+            cur_y += p_time->getHeight() + 4.0f;
         }
 
         // 3. Description
-        if (cache.p_desc) {
-            cache.p_desc->paint(sk_canvas, pad_x, cur_y);
-            cur_y += cache.p_desc->getHeight() + 6.0f;
+        if (!item.description.empty()) {
+            auto b_desc = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+            skia::textlayout::TextStyle t_desc;
+            t_desc.setFontSize(12.0f);
+            t_desc.setColor(static_cast<SkColor>(options.desc_color));
+            b_desc->pushStyle(t_desc);
+            b_desc->addText(item.description.c_str(), item.description.length());
+            auto p_desc = b_desc->Build();
+            p_desc->layout(avail_w);
+            p_desc->paint(sk_canvas, pad_x, cur_y);
+            cur_y += p_desc->getHeight() + 6.0f;
         }
 
         // 4. Expandable Details Box
-        if (cache.p_det) {
-            float det_h = cache.p_det->getHeight() + 12.0f;
-            float avail_w = w - 24.0f;
+        if (item.is_expanded && !item.details.empty()) {
+            auto b_det = skia::textlayout::ParagraphBuilder::make(p_style, fc);
+            skia::textlayout::TextStyle t_det;
+            t_det.setFontSize(11.5f);
+            t_det.setColor(0xFF94A3B8);
+            b_det->pushStyle(t_det);
+            b_det->addText(item.details.c_str(), item.details.length());
+            auto p_det = b_det->Build();
+            p_det->layout(avail_w - 16.0f);
+
+            float det_h = p_det->getHeight() + 12.0f;
             SkRRect det_box;
             det_box.setRectXY(SkRect::MakeXYWH(pad_x, cur_y, avail_w, det_h), 4.0f, 4.0f);
             SkPaint det_bg;
             det_bg.setColor(options.details_bg_color);
             sk_canvas->drawRRect(det_box, det_bg);
 
-            cache.p_det->paint(sk_canvas, pad_x + 8.0f, cur_y + 6.0f);
+            p_det->paint(sk_canvas, pad_x + 8.0f, cur_y + 6.0f);
         }
     }
 

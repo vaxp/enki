@@ -78,7 +78,8 @@ int main() {
     config.title = "ENKI Radio Demo";
     config.width = 600;
     config.height = 400;
-    config.target_fps = 60;
+    config.target_fps = 0;
+    config.show_performance_overlay = true;
     
     return runApp(std::make_shared<RadioDemoWidget>(), config);
 }

@@ -6,6 +6,8 @@
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/color.hpp"
 #include "include/core/SkPath.h"
+#include "include/core/SkTextBlob.h"
+#include "include/core/SkTypeface.h"
 #include <string>
 #include <memory>
 #include <cstdint>
@@ -69,12 +71,21 @@ public:
 
 private:
     void rebuildSvgPath();
+    void rebuildFontCache();
 
     IconData data_;
-    float size_;
-    Color color_;
-    
+    float    size_;
+    Color    color_;
+
+    // SVG cache
     SkPath cached_svg_path_;
+
+    // Font-icon cache — rebuilt only when data_ or size_ changes
+    sk_sp<SkTypeface>  cached_typeface_;
+    sk_sp<SkTextBlob>  cached_blob_;
+    float              cached_dx_     = 0.0f;
+    float              cached_dy_     = 0.0f;
+    bool               font_cache_dirty_ = true;
 };
 
 struct IconProps {

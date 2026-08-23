@@ -128,7 +128,8 @@ int main() {
     config.height      = 400;
     config.resizable   = true;
     config.vsync       = false;
-    config.target_fps  = 60;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0F172A;
 
     return runApp(std::make_shared<TooltipDemoApp>(), config);

@@ -68,6 +68,9 @@ public:
     /// @return true if there are any active callbacks.
     [[nodiscard]] bool hasCallbacks() const { return !callbacks_.empty(); }
 
+    /// @return The number of currently active frame callbacks (Tickers / AnimationControllers).
+    [[nodiscard]] size_t tickerCount() const { return callbacks_.size(); }
+
     /// @return Global singleton instance (set by App on startup).
     static SchedulerBinding& instance() {
         static SchedulerBinding singleton;

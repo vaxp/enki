@@ -317,7 +317,8 @@ int main() {
     config.height      = 630;
     config.resizable   = true;
     config.vsync       = false;
-    config.target_fps  = 60;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0B1120;
 
     return runApp(std::make_shared<TextAreaDemoApp>(), config);

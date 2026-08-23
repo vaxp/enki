@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cmath>
+#include <optional>
 
 namespace enki {
 
@@ -140,14 +141,24 @@ public:
     void selectItem(const std::string& id) {
         selected_id_ = id;
         auto* w = static_cast<const DropdownMenuWidget*>(widget());
+        
+        std::optional<DropdownMenuItem> target_item;
         for (const auto& item : w->props.items) {
-            if (item.id == id && w->props.on_selected) {
-                w->props.on_selected(item);
+            if (item.id == id) {
+                target_item = item;
                 break;
             }
         }
-        if (w->props.close_on_select) closeMenu();
+
+        bool should_close = w->props.close_on_select;
+        auto on_selected_cb = w->props.on_selected;
+
+        if (should_close) closeMenu();
         else setState([] {});
+
+        if (target_item && on_selected_cb) {
+            on_selected_cb(*target_item);
+        }
     }
 
     const DropdownMenuItem* getSelected() const {
@@ -181,11 +192,11 @@ public:
         // Left: check/radio + icon + label+subtitle
         std::vector<WidgetPtr> left;
         if (item.type == DropdownMenuItemType::Checkbox) {
-            auto c = text(item.is_checked ? "☑" : "☐");
+            auto c = text(item.is_checked ? "[x]" : "[ ]");
             c->fontSize(14.0f).color(item.is_checked ? 0xFF38BDF8 : 0xFF64748B);
             left.push_back(c);
         } else if (item.type == DropdownMenuItemType::Radio) {
-            auto r = text(item.is_checked ? "◉" : "○");
+            auto r = text(item.is_checked ? "(x)" : "( )");
             r->fontSize(13.0f).color(item.is_checked ? 0xFF38BDF8 : 0xFF64748B);
             left.push_back(r);
         }
@@ -253,18 +264,27 @@ public:
         gd->cursor_type = SystemCursor::Pointer;
         gd->on_tap_up = [this, item](const TapUpDetails&) {
             auto* w = static_cast<const DropdownMenuWidget*>(widget());
+            auto toggle_cb = w->props.on_toggle_checked;
+            
+            selectItem(item.id);
+
             if ((item.type == DropdownMenuItemType::Checkbox ||
                  item.type == DropdownMenuItemType::Radio) &&
-                w->props.on_toggle_checked) {
-                w->props.on_toggle_checked(item.id, !item.is_checked);
+                toggle_cb) {
+                toggle_cb(item.id, !item.is_checked);
             }
-            selectItem(item.id);
         };
         gd->on_hover_enter = [this, idx](const PointerEvent&) {
-            hovered_idx_ = idx; setState([] {});
+            if (is_open_ && hovered_idx_ != idx) {
+                hovered_idx_ = idx; 
+                setState([] {});
+            }
         };
-        gd->on_hover_exit = [this](const PointerEvent&) {
-            hovered_idx_ = -1; setState([] {});
+        gd->on_hover_exit = [this, idx](const PointerEvent&) {
+            if (is_open_ && hovered_idx_ == idx) {
+                hovered_idx_ = -1; 
+                setState([] {});
+            }
         };
         return gd;
     }

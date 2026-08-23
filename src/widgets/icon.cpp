@@ -82,60 +82,58 @@ void RenderIcon::rebuildSvgPath() {
     }
 }
 
+void RenderIcon::rebuildFontCache() {
+    sk_sp<SkFontMgr> mgr = SkFontMgr::RefDefault();
+    cached_typeface_ = sk_sp<SkTypeface>(
+        mgr->matchFamilyStyle(data_.font_family.c_str(), SkFontStyle::Normal()));
+
+    if (!cached_typeface_ && data_.font_family == "Material Icons") {
+        cached_typeface_ = SkTypeface::MakeFromFile("assets/fonts/MaterialIcons-Regular.ttf");
+    }
+    if (!cached_typeface_) {
+        cached_typeface_ = sk_sp<SkTypeface>(mgr->legacyMakeTypeface(nullptr, SkFontStyle::Normal()));
+    }
+
+    // Build and cache the text blob + layout offsets
+    SkFont font(cached_typeface_, size_);
+    font.setEdging(SkFont::Edging::kAntiAlias);
+
+    SkString text;
+    text.appendUnichar(data_.codepoint);
+
+    cached_blob_ = SkTextBlob::MakeFromString(text.c_str(), font, SkTextEncoding::kUTF8);
+
+    SkRect bounds;
+    font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8, &bounds);
+    cached_dx_ = (size_ - bounds.width()) / 2.0f - bounds.left();
+    cached_dy_ = (size_ - bounds.height()) / 2.0f - bounds.top();
+
+    font_cache_dirty_ = false;
+}
+
 void RenderIcon::paint(PaintContext& context) {
     SkCanvas* canvas = static_cast<SkCanvas*>(context.canvas.getNativeHandle());
     if (!canvas) return;
-    
+
     SkPaint paint;
     paint.setColor(color_);
     paint.setAntiAlias(true);
 
     if (data_.isSvg()) {
-        // Draw the cached, pre-scaled SVG path
         paint.setStyle(SkPaint::kFill_Style);
-        
         SkPath translated_path = cached_svg_path_;
         translated_path.offset(context.offset.x, context.offset.y);
-        
         canvas->drawPath(translated_path, paint);
     } else {
-        // Draw font icon
-        // For custom loaded fonts we should just try MakeFromFile if it's "Material Icons" 
-        // to bypass skparagraph limitations, or fallback to default manager.
-        sk_sp<SkTypeface> typeface;
-        
-        // As a fallback for the demo, try matching via default manager.
-        sk_sp<SkFontMgr> mgr = SkFontMgr::RefDefault();
-        typeface = sk_sp<SkTypeface>(mgr->matchFamilyStyle(data_.font_family.c_str(), SkFontStyle::Normal()));
-        
-        // Hardcoded bypass for demo if it fails to resolve
-        if (!typeface && data_.font_family == "Material Icons") {
-            typeface = SkTypeface::MakeFromFile("assets/fonts/MaterialIcons-Regular.ttf");
+        // Rebuild font/blob cache only when data or size changed — not every frame
+        if (font_cache_dirty_) {
+            rebuildFontCache();
         }
-        
-        if (!typeface) {
-            // Fallback to default if not found
-            typeface = sk_sp<SkTypeface>(mgr->legacyMakeTypeface(nullptr, SkFontStyle::Normal()));
-        }
-
-        SkFont font(typeface, size_);
-        font.setEdging(SkFont::Edging::kAntiAlias);
-
-        // Convert the codepoint to a UTF-8 string to draw it
-        SkString text;
-        text.appendUnichar(data_.codepoint);
-        
-        sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromString(text.c_str(), font, SkTextEncoding::kUTF8);
-        if (blob) {
-            // Font rendering baseline adjustment
-            // To perfectly center the icon, we can calculate the font bounds.
-            SkRect bounds;
-            font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8, &bounds);
-            
-            float dx = (size_ - bounds.width()) / 2.0f - bounds.left();
-            float dy = (size_ - bounds.height()) / 2.0f - bounds.top();
-            
-            canvas->drawTextBlob(blob, context.offset.x + dx, context.offset.y + dy, paint);
+        if (cached_blob_) {
+            canvas->drawTextBlob(cached_blob_,
+                context.offset.x + cached_dx_,
+                context.offset.y + cached_dy_,
+                paint);
         }
     }
 }

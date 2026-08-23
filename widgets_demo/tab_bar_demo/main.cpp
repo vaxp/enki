@@ -60,6 +60,8 @@ int main() {
     config.title       = "Enki Engine — TabBar Demo";
     config.width       = 800;
     config.height      = 600;
+    config.target_fps  = 0;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0F172A;
     return runApp(std::make_shared<TabBarDemoApp>(), config);
 }
