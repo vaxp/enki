@@ -36,9 +36,11 @@ public:
             .font_size = 14.0f,
         });
 
-        std::vector<WidgetPtr> header_items = {title, subtitle};
-        auto header = column(header_items);
-        header->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 30.0f, 0));
+        auto header = column({
+            .align_items = Align::Center,
+            .margin = StyleInsets::only(0, 0, 30.0f, 0),
+            .children = { title, subtitle }
+        });
 
         // 1. Spokes Spinner (macOS / iOS Style)
         auto spin_spokes = Spinner {
@@ -92,25 +94,35 @@ public:
         };
 
         // Row of Spinners
-        std::vector<WidgetPtr> s1 = {spin_spokes, text({ .text = "Spokes (iOS)", .color = 0xFF94A3B8, .font_size = 12.0f })};
-        auto col_s1 = column(s1);
-        col_s1->alignItems(Align::Center).gap(StyleValue::point(8.0f));
+        auto col_s1 = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = { spin_spokes, text({ .text = "Spokes (iOS)", .color = 0xFF94A3B8, .font_size = 12.0f }) }
+        });
 
-        std::vector<WidgetPtr> s2 = {spin_dots, text({ .text = "OrbitDots (Material)", .color = 0xFF94A3B8, .font_size = 12.0f })};
-        auto col_s2 = column(s2);
-        col_s2->alignItems(Align::Center).gap(StyleValue::point(8.0f));
+        auto col_s2 = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = { spin_dots, text({ .text = "OrbitDots (Material)", .color = 0xFF94A3B8, .font_size = 12.0f }) }
+        });
 
-        std::vector<WidgetPtr> s3 = {spin_dual, text({ .text = "DualArc Glow", .color = 0xFF94A3B8, .font_size = 12.0f })};
-        auto col_s3 = column(s3);
-        col_s3->alignItems(Align::Center).gap(StyleValue::point(8.0f));
+        auto col_s3 = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = { spin_dual, text({ .text = "DualArc Glow", .color = 0xFF94A3B8, .font_size = 12.0f }) }
+        });
 
-        std::vector<WidgetPtr> s4 = {spin_shader, text({ .text = "SkSL Vortex Shader", .color = 0xFF94A3B8, .font_size = 12.0f })};
-        auto col_s4 = column(s4);
-        col_s4->alignItems(Align::Center).gap(StyleValue::point(8.0f));
+        auto col_s4 = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = { spin_shader, text({ .text = "SkSL Vortex Shader", .color = 0xFF94A3B8, .font_size = 12.0f }) }
+        });
 
-        std::vector<WidgetPtr> spinner_row_items = {col_s1, col_s2, col_s3, col_s4};
-        auto row_spinners = row(spinner_row_items);
-        row_spinners->justifyContent(Justify::SpaceAround).width(StyleValue::percent(100.0f));
+        auto row_spinners = row({
+            .justify_content = Justify::SpaceAround,
+            .width = StyleValue::percent(100.0f),
+            .children = { col_s1, col_s2, col_s3, col_s4 }
+        });
 
         auto card_spinners = container(row_spinners);
         card_spinners->color(0xFF1E293B).borderRadius(12.0f).paddingAll(24.0f).width(StyleValue::percent(100.0f));
@@ -148,24 +160,20 @@ public:
             .max_value = 3.0f
         };
 
-        std::vector<WidgetPtr> c2_items;
-        c2_items.push_back(size_txt);
-        c2_items.push_back(sz_slider);
-        c2_items.push_back(speed_txt);
-        c2_items.push_back(sp_slider);
-        auto col_controls = column(c2_items);
-        col_controls->gap(StyleValue::point(10.0f)).width(StyleValue::percent(100.0f));
+        auto col_controls = column({
+            .gap = StyleValue::point(10.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = { size_txt, sz_slider, speed_txt, sp_slider }
+        });
 
         auto card_ctrl = container(col_controls);
         card_ctrl->color(0xFF1E293B).borderRadius(12.0f).paddingAll(20.0f).width(StyleValue::percent(100.0f));
 
-        std::vector<WidgetPtr> main_items = {
-            header,
-            card_spinners,
-            card_ctrl
-        };
-        auto mainCol = column(main_items);
-        mainCol->gap(StyleValue::point(20.0f)).alignItems(Align::Start);
+        auto mainCol = column({
+            .align_items = Align::Start,
+            .gap = StyleValue::point(20.0f),
+            .children = { header, card_spinners, card_ctrl }
+        });
 
         auto root = container(mainCol);
         root->color(0xFF0F172A)

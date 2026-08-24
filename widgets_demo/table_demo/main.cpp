@@ -81,7 +81,7 @@ public:
             ScrollOptions{.direction=Axis::Vertical,.show_scrollbar=true},
             t_widget
         );
-        auto scroll_flex = flexItem({.flex_grow = 1.0f, .flex_shrink = 1.0f}, scroll);
+        auto scroll_flex = flexItem({.flex_grow = 1.0f, .flex_shrink = 1.0f, .child = scroll});
 
         auto title = text({
             .text = "Table Demo — Programming Languages",

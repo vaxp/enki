@@ -42,13 +42,15 @@ public:
     WidgetPtr build(BuildContext& ctx) override {
         // ── Tab bar ───────────────────────────────────────────
         auto tab_row = row({
-            tabButton("Static", 0),
-            tabButton("Builder ×200", 1),
-            tabButton("Separated", 2),
-            tabButton("Selection", 3),
+            .gap = StyleValue::point(6.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .children = {
+                tabButton("Static", 0),
+                tabButton("Builder ×200", 1),
+                tabButton("Separated", 2),
+                tabButton("Selection", 3),
+            }
         });
-        tab_row->gap(StyleValue::point(6.0f));
-        tab_row->padding(StyleInsets::symmetric(8.0f, 12.0f));
 
         // ── Content ───────────────────────────────────────────
         WidgetPtr list_content;
@@ -73,9 +75,11 @@ public:
                     .font_size = 15.0f
                 });
 
-                auto r = row({dot, lbl});
-                r->gap(StyleValue::point(12.0f));
-                r->alignItems(Align::Center);
+                auto r = row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(12.0f),
+                    .children = { dot, lbl }
+                });
 
                 auto wrap = container({
                     .color = (i % 2 == 0) ? 0xFF0D1117 : 0xFF161B22,
@@ -98,11 +102,13 @@ public:
                     auto idx_badge = text("#" + std::to_string(i + 1), { .color = 0xFF8B9BB4, .font_size = 11.0f });
 
                     auto r = row({
-                        flexItem({ .flex_grow = 1.0f }, lbl),
-                        idx_badge
+                        .align_items = Align::Center,
+                        .width = StyleValue::percent(100.0f),
+                        .children = {
+                            flexItem({ .flex_grow = 1.0f, .child = lbl }),
+                            idx_badge
+                        }
                     });
-                    r->alignItems(Align::Center);
-                    r->width(StyleValue::percent(100.0f));
 
                     return container({
                         .color = (i % 2 == 0) ? 0xFF0D1117 : 0xFF161B22,
@@ -152,11 +158,13 @@ public:
                     });
 
                     auto r = row({
-                        flexItem({ .flex_grow = 1.0f }, lbl),
-                        check
+                        .align_items = Align::Center,
+                        .width = StyleValue::percent(100.0f),
+                        .children = {
+                            flexItem({ .flex_grow = 1.0f, .child = lbl }),
+                            check
+                        }
                     });
-                    r->alignItems(Align::Center);
-                    r->width(StyleValue::percent(100.0f));
 
                     return container({
                         .color = sel ? 0x1A2563EB : Colors::Transparent,
@@ -182,8 +190,10 @@ public:
 
         auto header_sub = text(desc, { .color = 0xFF8B9BB4, .font_size = 12.0f });
 
-        auto header_col = column({header_title, header_sub});
-        header_col->gap(StyleValue::point(4.0f));
+        auto header_col = column({
+            .gap = StyleValue::point(4.0f),
+            .children = { header_title, header_sub }
+        });
 
         auto header = container({
             .color = 0xFF0D1117,
@@ -198,11 +208,13 @@ public:
             .child = tab_row
         });
 
-        auto list_flex = flexItem({ .flex_grow = 1.0f, .flex_shrink = 1.0f }, list_content);
+        auto list_flex = flexItem({ .flex_grow = 1.0f, .flex_shrink = 1.0f, .child = list_content });
 
-        auto root_col = column({header, tab_container, list_flex});
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->height(StyleValue::percent(100.0f));
+        auto root_col = column({
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = { header, tab_container, list_flex }
+        });
 
         return container({
             .color = 0xFF0D1117,

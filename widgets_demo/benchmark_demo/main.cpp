@@ -54,13 +54,15 @@ public:
 
     WidgetPtr build(BuildContext& context) override {
         auto root = container(column({
-            buildHeader(),
-            sizedBox(0, 16.0f),
-            buildStatsRow(),
-            sizedBox(0, 16.0f),
-            buildControls(),
-            sizedBox(0, 16.0f),
-            buildGrid(),
+            .children = {
+                buildHeader(),
+                sizedBox(0, 16.0f),
+                buildStatsRow(),
+                sizedBox(0, 16.0f),
+                buildControls(),
+                sizedBox(0, 16.0f),
+                buildGrid(),
+            }
         }));
         root->paddingAll(24.0f).color(Style::bg_dark);
         return root;
@@ -82,9 +84,11 @@ private:
         });
 
         return column({
-            title,
-            sizedBox(0, 4.0f),
-            subtitle,
+            .children = {
+                title,
+                sizedBox(0, 4.0f),
+                subtitle,
+            }
         });
     }
 
@@ -94,11 +98,15 @@ private:
         auto card3 = buildMetricCard("Active Nodes", std::to_string(stress_item_count + 18), "Elements", Style::amber);
         auto card4 = buildMetricCard("Engine Target", "Uncapped", "0ms Throttle", Style::cyan_neon);
 
-        return row(Justify::SpaceBetween, Align::Center, {
-            card1,
-            card2,
-            card3,
-            card4,
+        return row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .children = {
+                card1,
+                card2,
+                card3,
+                card4,
+            }
         });
     }
 
@@ -123,13 +131,19 @@ private:
         });
 
         auto content = column({
-            lbl,
-            sizedBox(0, 4.0f),
-            row(Justify::Start, Align::Baseline, {
-                v,
-                sizedBox(6.0f, 0),
-                u,
-            }),
+            .children = {
+                lbl,
+                sizedBox(0, 4.0f),
+                row({
+                    .justify_content = Justify::Start,
+                    .align_items = Align::Baseline,
+                    .children = {
+                        v,
+                        sizedBox(6.0f, 0),
+                        u,
+                    }
+                }),
+            }
         });
 
         auto c = container(content);
@@ -215,12 +229,16 @@ private:
             },
         });
 
-        return row(Justify::Start, Align::Center, {
-            btn_inc,
-            sizedBox(12.0f, 0),
-            btn_add,
-            sizedBox(12.0f, 0),
-            btn_reset,
+        return row({
+            .justify_content = Justify::Start,
+            .align_items = Align::Center,
+            .children = {
+                btn_inc,
+                sizedBox(12.0f, 0),
+                btn_add,
+                sizedBox(12.0f, 0),
+                btn_reset,
+            }
         });
     }
 
@@ -243,9 +261,11 @@ private:
             });
 
             auto col = column({
-                item_title,
-                sizedBox(0, 4.0f),
-                item_sub,
+                .children = {
+                    item_title,
+                    sizedBox(0, 4.0f),
+                    item_sub,
+                }
             });
 
             auto card = container(col);
@@ -269,11 +289,15 @@ private:
                     row_items.push_back(sizedBox(12.0f, 0));
                 }
             }
-            rows.push_back(row(row_items));
+            rows.push_back(row({
+                .children = std::move(row_items)
+            }));
             rows.push_back(sizedBox(0, 10.0f));
         }
 
-        return column(rows);
+        return column({
+            .children = std::move(rows)
+        });
     }
 };
 

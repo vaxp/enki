@@ -78,9 +78,10 @@ public:
                         .padding = StyleInsets::symmetric(7.0f, 18.0f),
                         .child = text(last_action_, { .color = 0xFF8B9BB4, .font_size = 12.0f })
                     }),
-                    flexItem(
-                        { .flex_grow = 1.0f, .flex_shrink = 1.0f },
-                        container({
+                    flexItem({
+                        .flex_grow = 1.0f,
+                        .flex_shrink = 1.0f,
+                        .child = container({
                             .padding = StyleInsets::all(8.0f),
                             .child = TreeView {
                                 .nodes = std::move(nodes),
@@ -101,7 +102,7 @@ public:
                                 }
                             }
                         })
-                    )
+                    })
                 }
             })
         });

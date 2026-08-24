@@ -127,13 +127,11 @@ inline std::shared_ptr<Container> typographyCard(std::string titleStr, std::stri
     });
 
     auto headerCol = column({
-        titleWidget,
-        descWidget
+        .children = { titleWidget, descWidget }
     });
 
     auto cardCol = column({
-        headerCol,
-        content
+        .children = { headerCol, content }
     });
 
     auto c = container(Key::string("card_" + titleStr), cardCol);
@@ -202,13 +200,7 @@ WidgetPtr buildHierarchyView() {
     });
 
     auto scaleCol = column({
-        dispL,
-        dispM,
-        titleL,
-        bodyL,
-        bodyM,
-        caption,
-        mono
+        .children = { dispL, dispM, titleL, bodyL, bodyM, caption, mono }
     });
 
     auto scaleCard = typographyCard(
@@ -227,7 +219,7 @@ WidgetPtr buildHierarchyView() {
     auto w900 = text({ .text = "Black (900) — Maximum emphasis impactful headlines", .color = 0xFFE2E8F0, .font_size = 14.0f, .font_weight = FontWeight::Black });
 
     auto weightsCol = column({
-        w100, w300, w400, w500, w600, w700, w900
+        .children = { w100, w300, w400, w500, w600, w700, w900 }
     });
 
     auto weightsCard = typographyCard(
@@ -285,7 +277,7 @@ WidgetPtr buildHierarchyView() {
     });
 
     auto decCol = column({
-        dec1, dec2, dec3, dec4
+        .children = { dec1, dec2, dec3, dec4 }
     });
 
     auto decCard = typographyCard(
@@ -295,9 +287,7 @@ WidgetPtr buildHierarchyView() {
     );
 
     return column(Key::string("tab_hierarchy_view"), {
-        scaleCard,
-        weightsCard,
-        decCard
+        .children = { scaleCard, weightsCard, decCard }
     });
 }
 
@@ -398,9 +388,7 @@ WidgetPtr buildRichTextView() {
     );
 
     return column(Key::string("tab_richtext_view"), {
-        codeCard,
-        articleCard,
-        multiCard
+        .children = { codeCard, articleCard, multiCard }
     });
 }
 
@@ -414,21 +402,21 @@ WidgetPtr buildWrappingView() {
     // 1. Constrained Cards Comparison
     auto t1 = text({ .text = sampleLong, .color = 0xFF94A3B8, .font_size = 12.0f });
     auto h1 = text({ .text = "Width: 200px", .color = 0xFF38BDF8, .font_size = 11.0f, .font_weight = FontWeight::Bold });
-    auto card1 = container(column({h1, t1}));
+    auto card1 = container(column({ .children = { h1, t1 } }));
     card1->width(200.0f).color(0x200F172A).borderRadius(8.0f).paddingAll(10.0f).border(0x4038BDF8, 1.0f);
 
     auto t2 = text({ .text = sampleLong, .color = 0xFF94A3B8, .font_size = 12.0f });
     auto h2 = text({ .text = "Width: 280px", .color = 0xFF34D399, .font_size = 11.0f, .font_weight = FontWeight::Bold });
-    auto card2 = container(column({h2, t2}));
+    auto card2 = container(column({ .children = { h2, t2 } }));
     card2->width(280.0f).color(0x200F172A).borderRadius(8.0f).paddingAll(10.0f).border(0x4034D399, 1.0f).margin(EdgeInsets::only(0, 0, 0, 12.0f));
 
     auto t3 = text({ .text = sampleLong, .color = 0xFF94A3B8, .font_size = 12.0f });
     auto h3 = text({ .text = "Width: 420px", .color = 0xFFFBBF24, .font_size = 11.0f, .font_weight = FontWeight::Bold });
-    auto card3 = container(column({h3, t3}));
+    auto card3 = container(column({ .children = { h3, t3 } }));
     card3->width(420.0f).color(0x200F172A).borderRadius(8.0f).paddingAll(10.0f).border(0x40FBBF24, 1.0f).margin(EdgeInsets::only(0, 0, 0, 12.0f));
 
     auto rowWrapping = row({
-        card1, card2, card3
+        .children = { card1, card2, card3 }
     });
 
     auto wrapCard = typographyCard(
@@ -446,7 +434,7 @@ WidgetPtr buildWrappingView() {
         .max_lines = 1,
     });
     auto eh1 = text({ .text = "maxLines(1) + ellipsis()", .color = 0xFF818CF8, .font_size = 11.0f, .font_weight = FontWeight::Bold });
-    auto e1Box = container(column({eh1, e1}));
+    auto e1Box = container(column({ .children = { eh1, e1 } }));
     e1Box->width(400.0f).color(0x251E293B).borderRadius(8.0f).paddingAll(10.0f).margin(EdgeInsets::only(0, 0, 8.0f, 0));
 
     auto e2 = text({
@@ -457,12 +445,11 @@ WidgetPtr buildWrappingView() {
         .max_lines = 2,
     });
     auto eh2 = text({ .text = "maxLines(2) + ellipsis()", .color = 0xFF34D399, .font_size = 11.0f, .font_weight = FontWeight::Bold });
-    auto e2Box = container(column({eh2, e2}));
+    auto e2Box = container(column({ .children = { eh2, e2 } }));
     e2Box->width(400.0f).color(0x251E293B).borderRadius(8.0f).paddingAll(10.0f);
 
     auto ellipsisCol = column({
-        e1Box,
-        e2Box
+        .children = { e1Box, e2Box }
     });
 
     auto ellipsisCard = typographyCard(
@@ -494,7 +481,7 @@ WidgetPtr buildWrappingView() {
     });
 
     auto alignCol = column({
-        aLeft, aCenter, aRight
+        .children = { aLeft, aCenter, aRight }
     });
 
     auto alignCard = typographyCard(
@@ -504,9 +491,7 @@ WidgetPtr buildWrappingView() {
     );
 
     return column(Key::string("tab_wrapping_view"), {
-        wrapCard,
-        ellipsisCard,
-        alignCard
+        .children = { wrapCard, ellipsisCard, alignCard }
     });
 }
 
@@ -534,9 +519,7 @@ WidgetPtr buildShellShowcaseView() {
     auto notifTime = text({ .text = "Just now", .color = 0xFF64748B, .font_size = 10.0f });
 
     auto notifHeaderRow = row({
-        notifAppName,
-        spacer(),
-        notifTime
+        .children = { notifAppName, spacer(), notifTime }
     });
 
     auto notifTitle = text({
@@ -555,20 +538,17 @@ WidgetPtr buildShellShowcaseView() {
     });
 
     auto notifCol = column({
-        notifHeaderRow,
-        notifTitle,
-        notifBody
+        .flex_grow = 1.0f,
+        .children = { notifHeaderRow, notifTitle, notifBody }
     });
-    notifCol->flexGrow(1.0f);
 
     auto notifBodyContainer = container(notifCol);
     notifBodyContainer->margin(EdgeInsets::only(0, 0, 0, 12.0f)).flexGrow(1.0f);
 
     auto notifContent = row({
-        notifIcon,
-        notifBodyContainer
+        .align_items = Align::Center,
+        .children = { notifIcon, notifBodyContainer }
     });
-    notifContent->alignItems(Align::Center);
 
     auto notifCard = container(notifContent);
     notifCard->color(0xE61E293B)
@@ -600,20 +580,17 @@ WidgetPtr buildShellShowcaseView() {
     auto trackTime = text({ .text = "02:45 / 03:32", .color = 0xFF94A3B8, .font_size = 11.0f });
 
     auto mediaInfoCol = column({
-        trackTitle,
-        trackArtist,
-        trackTime
+        .flex_grow = 1.0f,
+        .children = { trackTitle, trackArtist, trackTime }
     });
-    mediaInfoCol->flexGrow(1.0f);
 
     auto mediaInfoContainer = container(mediaInfoCol);
     mediaInfoContainer->margin(EdgeInsets::only(0, 0, 0, 14.0f)).flexGrow(1.0f);
 
     auto mediaRow = row({
-        albumArt,
-        mediaInfoContainer
+        .align_items = Align::Center,
+        .children = { albumArt, mediaInfoContainer }
     });
-    mediaRow->alignItems(Align::Center);
 
     auto mediaCard = container(mediaRow);
     mediaCard->color(0xE61E1B4B)
@@ -626,21 +603,21 @@ WidgetPtr buildShellShowcaseView() {
     // 3. Quick System Monitor Card
     auto cpuLabel = text({ .text = "CPU LOAD", .color = 0xFF64748B, .font_size = 10.0f, .font_weight = FontWeight::Bold, .letter_spacing = 1.0f });
     auto cpuVal = text({ .text = "18.4%", .color = 0xFF34D399, .font_size = 20.0f, .font_weight = FontWeight::Bold });
-    auto cpuStat = container(column({cpuLabel, cpuVal}));
+    auto cpuStat = container(column({ .children = { cpuLabel, cpuVal } }));
     cpuStat->color(0x250F172A).borderRadius(10.0f).paddingAll(12.0f).flexGrow(1.0f);
 
     auto ramLabel = text({ .text = "MEMORY USED", .color = 0xFF64748B, .font_size = 10.0f, .font_weight = FontWeight::Bold, .letter_spacing = 1.0f });
     auto ramVal = text({ .text = "4.2 / 32 GB", .color = 0xFF38BDF8, .font_size = 20.0f, .font_weight = FontWeight::Bold });
-    auto ramStat = container(column({ramLabel, ramVal}));
+    auto ramStat = container(column({ .children = { ramLabel, ramVal } }));
     ramStat->color(0x250F172A).borderRadius(10.0f).paddingAll(12.0f).margin(EdgeInsets::only(0, 0, 0, 10.0f)).flexGrow(1.0f);
 
     auto gpuLabel = text({ .text = "GPU ENGINE", .color = 0xFF64748B, .font_size = 10.0f, .font_weight = FontWeight::Bold, .letter_spacing = 1.0f });
     auto gpuVal = text({ .text = "Vulkan 120 FPS", .color = 0xFFFBBF24, .font_size = 18.0f, .font_weight = FontWeight::Bold });
-    auto gpuStat = container(column({gpuLabel, gpuVal}));
+    auto gpuStat = container(column({ .children = { gpuLabel, gpuVal } }));
     gpuStat->color(0x250F172A).borderRadius(10.0f).paddingAll(12.0f).margin(EdgeInsets::only(0, 0, 0, 10.0f)).flexGrow(1.0f);
 
     auto statsRow = row({
-        cpuStat, ramStat, gpuStat
+        .children = { cpuStat, ramStat, gpuStat }
     });
 
     auto sysCard = typographyCard(
@@ -649,10 +626,8 @@ WidgetPtr buildShellShowcaseView() {
         statsRow
     );
 
-    return column(Key::string("tab_shell_view"), {
-        notifCard,
-        mediaCard,
-        sysCard
+    return column({
+        .children = { notifCard, mediaCard, sysCard }
     });
 }
 
@@ -694,31 +669,30 @@ public:
              .paddingSymmetric(4.0f, 12.0f);
 
         auto titleCol = column({
-            title,
-            sub
+            .children = { title, sub }
         });
 
         auto titleRow = row({
-            titleCol,
-            spacer(),
-            badge
+            .align_items = Align::Center,
+            .children = { titleCol, spacer(), badge }
         });
-        titleRow->alignItems(Align::Center);
 
-        // 2. Tab Navigation Buttons
-        auto tabs = row(Key::string("tabs_navigation_row"), {
-            tabButton("🔤 1. Hierarchy & Styles", current_tab_ == 0, [this] {
-                setState([this] { current_tab_ = 0; });
-            }),
-            tabButton("🌈 2. RichText & Spans", current_tab_ == 1, [this] {
-                setState([this] { current_tab_ = 1; });
-            }),
-            tabButton("📐 3. Wrapping & Overflow", current_tab_ == 2, [this] {
-                setState([this] { current_tab_ = 2; });
-            }),
-            tabButton("🖥️ 4. Shell UI Showcase", current_tab_ == 3, [this] {
-                setState([this] { current_tab_ = 3; });
-            })
+        auto tabs = row({
+            .children = {
+                tabButton("🔤 1. Hierarchy & Styles", current_tab_ == 0, [this] {
+                    setState([this] { current_tab_ = 0; });
+                }),
+                tabButton("🌈 2. RichText & Spans", current_tab_ == 1, [this] {
+                    setState([this] { current_tab_ = 1; });
+                }),
+                tabButton("📐 3. Wrapping & Overflow", current_tab_ == 2, [this] {
+                    setState([this] { current_tab_ = 2; });
+                }),
+                tabButton("🖥️ 4. Shell UI Showcase", current_tab_ == 3, [this] {
+                    setState([this] { current_tab_ = 3; });
+                })
+            },
+            .key = Key::string("tabs_navigation_row")
         });
 
         // 3. Tab Body Content
@@ -738,9 +712,7 @@ public:
         tabsBox->margin(EdgeInsets::symmetric(14.0f, 0));
 
         auto mainCol = column({
-            titleRow,
-            tabsBox,
-            bodyContent
+            .children = { titleRow, tabsBox, bodyContent }
         });
 
         auto appRoot = container(mainCol);

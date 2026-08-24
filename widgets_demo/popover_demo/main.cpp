@@ -42,9 +42,11 @@ public:
             .font_size = 14.0f,
         });
 
-        std::vector<WidgetPtr> t_children = {title, sub};
-        auto titleCol = column(t_children);
-        titleCol->alignItems(Align::Center).margin(StyleInsets::only(0, 0, 40.0f, 0));
+        auto titleCol = column({
+            .align_items = Align::Center,
+            .margin = StyleInsets::only(0, 0, 40.0f, 0),
+            .children = { title, sub }
+        });
 
         // 1. User Profile Popover
         auto profile_btn_text = text({
@@ -53,7 +55,7 @@ public:
             .font_size = 14.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto profile_btn = button(profile_btn_text, nullptr);
+        WidgetPtr profile_btn = button(profile_btn_text, nullptr);
 
         PopoverProps opt1;
         opt1.direction    = PopoverDirection::Top;
@@ -61,7 +63,7 @@ public:
         opt1.background_color = 0xFA1F242C;
         opt1.border_color     = 0xFF38BDF8;
 
-        auto profile_popover = popover(profile_btn, [](BuildContext& sub_ctx) {
+        WidgetPtr profile_popover = popover(profile_btn, [](BuildContext& sub_ctx) -> WidgetPtr {
             auto name = text({
                 .text = "Alexander Wright",
                 .color = 0xFFF8FAFC,
@@ -90,11 +92,11 @@ public:
                 std::cout << "[Popover] Edit Profile Clicked!\n";
             });
 
-            std::vector<WidgetPtr> pop_items = {name, role, status, edit_btn};
-            auto pop_col = column(pop_items);
-            pop_col->alignItems(Align::Start).gap(StyleValue::point(8.0f));
-
-            return pop_col;
+            return column({
+                .align_items = Align::Start,
+                .gap = StyleValue::point(8.0f),
+                .children = { name, role, status, edit_btn }
+            });
         }, opt1);
 
         // 2. Quick Settings Popover
@@ -104,7 +106,7 @@ public:
             .font_size = 14.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto settings_btn = button(settings_btn_text, nullptr);
+        WidgetPtr settings_btn = button(settings_btn_text, nullptr);
 
         PopoverProps opt2;
         opt2.direction    = PopoverDirection::Bottom;
@@ -112,7 +114,7 @@ public:
         opt2.background_color = 0xFA0F172A;
         opt2.border_color     = 0xFF334155;
 
-        auto settings_popover = popover(settings_btn, [](BuildContext& sub_ctx) {
+        WidgetPtr settings_popover = popover(settings_btn, [](BuildContext& sub_ctx) -> WidgetPtr {
             auto st_title = text({
                 .text = "Display Configuration",
                 .color = 0xFFF1F5F9,
@@ -141,11 +143,11 @@ public:
                 std::cout << "[Popover] Settings Applied!\n";
             });
 
-            std::vector<WidgetPtr> pop_items = {st_title, dark_mode, vsync, save_btn};
-            auto pop_col = column(pop_items);
-            pop_col->alignItems(Align::Start).gap(StyleValue::point(8.0f));
-
-            return pop_col;
+            return column({
+                .align_items = Align::Start,
+                .gap = StyleValue::point(8.0f),
+                .children = { st_title, dark_mode, vsync, save_btn }
+            });
         }, opt2);
 
         // 3. Programmatically Controlled Popover
@@ -155,7 +157,7 @@ public:
             .font_size = 14.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto ctrl_btn = button(ctrl_btn_text, [this]() {
+        WidgetPtr ctrl_btn = button(ctrl_btn_text, [this]() {
             pop_controller_->toggle();
         });
 
@@ -164,7 +166,7 @@ public:
         opt3.trigger      = PopoverTrigger::Manual;
         opt3.content_size = Size{220.0f, 100.0f};
 
-        auto ctrl_popover = popover(ctrl_btn, [](BuildContext& sub_ctx) {
+        WidgetPtr ctrl_popover = popover(ctrl_btn, [](BuildContext& sub_ctx) -> WidgetPtr {
             auto msg = text({
                 .text = "Triggered via PopoverController!",
                 .color = 0xFF38BDF8,
@@ -178,17 +180,24 @@ public:
                 .font_size = 11.0f,
             });
 
-            return column({msg, desc});
+            return column({
+                .children = { msg, desc }
+            });
         }, opt3, pop_controller_);
 
         // Layout rows
-        std::vector<WidgetPtr> r_children = {profile_popover, settings_popover, ctrl_popover};
-        auto buttonsRow = row(r_children);
-        buttonsRow->justifyContent(Justify::Center).alignItems(Align::Center).gap(30_px);
+        auto buttonsRow = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .gap = 30_px,
+            .children = { profile_popover, settings_popover, ctrl_popover }
+        });
 
-        std::vector<WidgetPtr> m_children = {titleCol, buttonsRow};
-        auto mainCol = column(m_children);
-        mainCol->alignItems(Align::Center).justifyContent(Justify::Center);
+        auto mainCol = column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .children = { titleCol, buttonsRow }
+        });
 
         auto appRoot = container(mainCol);
         appRoot->color(0xFF0F172A)

@@ -81,19 +81,23 @@ public:
         WidgetPtr hero = buildHeroPreviewCard();
         WidgetPtr gall = buildGalleryAndAvatarsPanel();
 
-        auto body_row = row(std::vector<WidgetPtr>{
-            ctrl,
-            sizedBox(14.0f, 0),
-            hero,
-            sizedBox(14.0f, 0),
-            gall
+        auto body_row = row({
+            .align_items = Align::Start,
+            .children = {
+                ctrl,
+                sizedBox(14.0f, 0),
+                hero,
+                sizedBox(14.0f, 0),
+                gall,
+            }
         });
-        body_row->alignItems(Align::Start);
 
-        auto content = container(column(std::vector<WidgetPtr>{
-            header,
-            sizedBox(0, 14.0f),
-            body_row
+        auto content = container(column({
+            .children = {
+                header,
+                sizedBox(0, 14.0f),
+                body_row,
+            }
         }));
         content->padding(EdgeInsets::all(18.0f))
                .color(Style::bg_dark)
@@ -123,26 +127,32 @@ private:
         WidgetPtr badge2 = buildBadge("Thread-safe LRU Cache", Style::primary_light);
         WidgetPtr badge3 = buildBadge("Instant BoxFit Math", Style::emerald);
 
-        auto badges_row = row(std::vector<WidgetPtr>{
-            badge1,
-            sizedBox(8.0f, 0),
-            badge2,
-            sizedBox(8.0f, 0),
-            badge3
+        auto badges_row = row({
+            .children = {
+                badge1,
+                sizedBox(8.0f, 0),
+                badge2,
+                sizedBox(8.0f, 0),
+                badge3,
+            }
         });
 
-        WidgetPtr title_col = column(std::vector<WidgetPtr>{
-            title_t,
-            sizedBox(0, 4.0f),
-            subtitle_t
+        WidgetPtr title_col = column({
+            .children = {
+                title_t,
+                sizedBox(0, 4.0f),
+                subtitle_t,
+            }
         });
 
-        auto header_row = row(std::vector<WidgetPtr>{
-            title_col,
-            badges_row
+        auto header_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .children = {
+                title_col,
+                badges_row,
+            }
         });
-        header_row->justifyContent(Justify::SpaceBetween)
-                  .alignItems(Align::Center);
 
         auto header_box = container(header_row);
         header_box->padding(EdgeInsets::symmetric(14.0f, 18.0f))
@@ -245,12 +255,16 @@ private:
             asset_btns.push_back(gd);
         }
 
-        auto asset_wrap = wrap(asset_btns);
-        asset_wrap->rowGap(StyleValue::point(6.0f))
-                  .columnGap(StyleValue::point(6.0f));
+        auto asset_wrap = wrap({
+            .row_gap = StyleValue::point(6.0f),
+            .column_gap = StyleValue::point(6.0f),
+            .children = std::move(asset_btns),
+        });
         fit_buttons.push_back(asset_wrap);
 
-        auto panel = container(column(fit_buttons));
+        auto panel = container(column({
+            .children = std::move(fit_buttons)
+        }));
         panel->padding(EdgeInsets::all(14.0f))
              .borderRadius(14.0f)
              .color(Style::bg_card)
@@ -310,7 +324,9 @@ private:
         WidgetPtr fit_chip = buildBadge("Mode: " + fit_str, Style::cyan_neon);
         WidgetPtr asset_chip = buildBadge(current_image, Style::primary_light);
 
-        auto chips_row = row(std::vector<WidgetPtr>{fit_chip, sizedBox(8.0f, 0), asset_chip});
+        auto chips_row = row({
+            .children = { fit_chip, sizedBox(8.0f, 0), asset_chip }
+        });
 
         WidgetPtr shape_rect_btn = buildInteractiveButton("Rectangle", current_shape == BoxShape::Rectangle, [this]() {
             setState([this]() {
@@ -337,22 +353,26 @@ private:
             });
         });
 
-        auto toggles_row = row(std::vector<WidgetPtr>{
-            shape_rect_btn,
-            sizedBox(6.0f, 0),
-            shape_circle_btn,
-            sizedBox(6.0f, 0),
-            tint_toggle_btn,
-            sizedBox(6.0f, 0),
-            opacity_toggle_btn
+        auto toggles_row = row({
+            .children = {
+                shape_rect_btn,
+                sizedBox(6.0f, 0),
+                shape_circle_btn,
+                sizedBox(6.0f, 0),
+                tint_toggle_btn,
+                sizedBox(6.0f, 0),
+                opacity_toggle_btn,
+            }
         });
 
-        auto card = container(column(std::vector<WidgetPtr>{
-            chips_row,
-            sizedBox(0, 10.0f),
-            img_holder,
-            sizedBox(0, 14.0f),
-            toggles_row
+        auto card = container(column({
+            .children = {
+                chips_row,
+                sizedBox(0, 10.0f),
+                img_holder,
+                sizedBox(0, 14.0f),
+                toggles_row,
+            }
         }));
 
         card->padding(EdgeInsets::all(14.0f))
@@ -429,12 +449,14 @@ private:
         WidgetPtr w_av2 = avatar2_box;
         WidgetPtr w_av3 = avatar3_box;
 
-        auto avatars_row = row(std::vector<WidgetPtr>{
-            w_av1,
-            sizedBox(12.0f, 0),
-            w_av2,
-            sizedBox(12.0f, 0),
-            w_av3
+        auto avatars_row = row({
+            .children = {
+                w_av1,
+                sizedBox(12.0f, 0),
+                w_av2,
+                sizedBox(12.0f, 0),
+                w_av3,
+            }
         });
 
         auto title2 = text({
@@ -449,8 +471,12 @@ private:
         WidgetPtr card3 = buildGalleryCard("assets/3.png", "Digital Void", Style::amber);
         WidgetPtr card4 = buildGalleryCard("assets/12.png", "Aura Engine", Style::emerald);
 
-        auto grid_row1 = row(std::vector<WidgetPtr>{card1, sizedBox(10.0f, 0), card2});
-        auto grid_row2 = row(std::vector<WidgetPtr>{card3, sizedBox(10.0f, 0), card4});
+        auto grid_row1 = row({
+            .children = { card1, sizedBox(10.0f, 0), card2 }
+        });
+        auto grid_row2 = row({
+            .children = { card3, sizedBox(10.0f, 0), card4 }
+        });
 
         WidgetPtr w_title1 = title1;
         WidgetPtr w_title2 = title2;
@@ -458,16 +484,18 @@ private:
         WidgetPtr w_grid1 = grid_row1;
         WidgetPtr w_grid2 = grid_row2;
 
-        auto panel = container(column(std::vector<WidgetPtr>{
-            w_title1,
-            sizedBox(0, 10.0f),
-            w_avatars_row,
-            sizedBox(0, 18.0f),
-            w_title2,
-            sizedBox(0, 10.0f),
-            w_grid1,
-            sizedBox(0, 8.0f),
-            w_grid2
+        auto panel = container(column({
+            .children = {
+                w_title1,
+                sizedBox(0, 10.0f),
+                w_avatars_row,
+                sizedBox(0, 18.0f),
+                w_title2,
+                sizedBox(0, 10.0f),
+                w_grid1,
+                sizedBox(0, 8.0f),
+                w_grid2,
+            }
         }));
 
         panel->padding(EdgeInsets::all(14.0f))
@@ -498,10 +526,12 @@ private:
         WidgetPtr w_img = img;
         WidgetPtr w_t = t;
 
-        auto card = container(column(std::vector<WidgetPtr>{
-            w_img,
-            sizedBox(0, 4.0f),
-            w_t
+        auto card = container(column({
+            .children = {
+                w_img,
+                sizedBox(0, 4.0f),
+                w_t,
+            }
         }));
 
         card->padding(EdgeInsets::all(6.0f))

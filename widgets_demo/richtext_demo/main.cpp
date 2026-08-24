@@ -74,8 +74,11 @@ public:
             .max_lines = 4,
         });
 
-        auto root = column({title, rt});
-        root->padding(StyleInsets{40.0f, 40.0f, 40.0f, 40.0f}).gap(20.0f);
+        auto root = column({
+            .gap = 20_px,
+            .padding = StyleInsets{40.0f, 40.0f, 40.0f, 40.0f},
+            .children = { title, rt }
+        });
         
         auto root_container = container(root);
         root_container->color(0xFF0F172A); // Slate 900

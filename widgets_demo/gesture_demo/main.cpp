@@ -150,11 +150,7 @@ WidgetPtr GestureDemoState::buildSidebar() {
     });
 
     auto logo_col = column({
-        t1,
-        sizedBox(0, 4.0f),
-        t2,
-        sizedBox(0, 2.0f),
-        t3,
+        .children = { t1, sizedBox(0, 4.0f), t2, sizedBox(0, 2.0f), t3 }
     });
 
     auto logo_card = container(logo_col);
@@ -194,15 +190,13 @@ WidgetPtr GestureDemoState::buildSidebar() {
         });
 
         auto tab_text_col = column({
-            tab_title,
-            sizedBox(0, 2.0f),
-            tab_sub,
+            .children = { tab_title, sizedBox(0, 2.0f), tab_sub }
         });
 
-        auto tab_row = row(Justify::Start, Align::Center, {
-            tab_icon,
-            sizedBox(12.0f, 0),
-            tab_text_col,
+        auto tab_row = row({
+            .justify_content = Justify::Start,
+            .align_items = Align::Center,
+            .children = { tab_icon, sizedBox(12.0f, 0), tab_text_col }
         });
 
         auto btn_content = container(tab_row);
@@ -242,9 +236,7 @@ WidgetPtr GestureDemoState::buildSidebar() {
     });
 
     auto status_col = column({
-        status_title,
-        sizedBox(0, 4.0f),
-        status_desc,
+        .children = { status_title, sizedBox(0, 4.0f), status_desc }
     });
 
     auto status_card = container(status_col);
@@ -255,7 +247,9 @@ WidgetPtr GestureDemoState::buildSidebar() {
 
     tab_widgets.push_back(status_card);
 
-    auto sidebar_col = column(std::move(tab_widgets));
+    auto sidebar_col = column({
+        .children = std::move(tab_widgets)
+    });
     auto sidebar_box = container(sidebar_col);
     sidebar_box->width(270.0f)
                .paddingAll(16.0f)
@@ -285,9 +279,7 @@ WidgetPtr GestureDemoState::buildHeader() {
     });
 
     auto title_col = column({
-        header_title,
-        sizedBox(0, 3.0f),
-        header_msg,
+        .children = { header_title, sizedBox(0, 3.0f), header_msg }
     });
 
     auto badge_text = text({
@@ -303,9 +295,10 @@ WidgetPtr GestureDemoState::buildHeader() {
          .borderRadius(20.0f)
          .border(Style::accent_green, 1.0f);
 
-    auto header_row = row(Justify::SpaceBetween, Align::Center, {
-        title_col,
-        badge,
+    auto header_row = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = { title_col, badge }
     });
 
     auto header_card = container(header_row);
@@ -350,12 +343,10 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_size = 11.0f,
     });
 
-    auto single_col = column(Justify::Start, Align::Center, {
-        single_title,
-        sizedBox(0, 4.0f),
-        single_desc,
-        sizedBox(0, 14.0f),
-        single_btn,
+    auto single_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = { single_title, sizedBox(0, 4.0f), single_desc, sizedBox(0, 14.0f), single_btn }
     });
 
     auto single_tap_card = container(single_col);
@@ -405,12 +396,10 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_size = 11.0f,
     });
 
-    auto double_col = column(Justify::Start, Align::Center, {
-        double_title,
-        sizedBox(0, 4.0f),
-        double_desc,
-        sizedBox(0, 14.0f),
-        double_btn,
+    auto double_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = { double_title, sizedBox(0, 4.0f), double_desc, sizedBox(0, 14.0f), double_btn }
     });
 
     auto double_tap_card = container(double_col);
@@ -465,12 +454,10 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_size = 11.0f,
     });
 
-    auto sec_col = column(Justify::Start, Align::Center, {
-        sec_title,
-        sizedBox(0, 4.0f),
-        sec_desc,
-        sizedBox(0, 14.0f),
-        sec_btn,
+    auto sec_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = { sec_title, sizedBox(0, 4.0f), sec_desc, sizedBox(0, 14.0f), sec_btn }
     });
 
     auto sec_tap_card = container(sec_col);
@@ -520,12 +507,10 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         .font_size = 11.0f,
     });
 
-    auto lp_col = column(Justify::Start, Align::Center, {
-        lp_title,
-        sizedBox(0, 4.0f),
-        lp_desc,
-        sizedBox(0, 14.0f),
-        lp_btn,
+    auto lp_col = column({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = { lp_title, sizedBox(0, 4.0f), lp_desc, sizedBox(0, 14.0f), lp_btn }
     });
 
     auto long_press_card = container(lp_col);
@@ -584,7 +569,9 @@ WidgetPtr GestureDemoState::buildTapsTab() {
         }
     }
 
-    auto log_card = container(column(std::move(log_widgets)));
+    auto log_card = container(column({
+        .children = std::move(log_widgets)
+    }));
     log_card->paddingAll(14.0f)
             .margin(EdgeInsets::only(0, 14.0f, 0, 0))
             .color(Style::bg_card)
@@ -592,18 +579,16 @@ WidgetPtr GestureDemoState::buildTapsTab() {
             .border(Style::border_subtle, 1.0f);
 
     return column({
-        row({
-            single_tap_gd,
-            sizedBox(14.0f, 0),
-            double_tap_gd,
-        }),
-        sizedBox(0, 14.0f),
-        row({
-            sec_tap_gd,
-            sizedBox(14.0f, 0),
-            long_press_gd,
-        }),
-        log_card,
+        .children = {
+            row({
+                .children = { single_tap_gd, sizedBox(14.0f, 0), double_tap_gd }
+            }),
+            sizedBox(0, 14.0f),
+            row({
+                .children = { sec_tap_gd, sizedBox(14.0f, 0), long_press_gd }
+            }),
+            log_card,
+        }
     });
 }
 
@@ -627,9 +612,10 @@ WidgetPtr GestureDemoState::buildPanTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto drag_header = row(Justify::SpaceBetween, Align::Center, {
-        drag_title,
-        drag_state_text,
+    auto drag_header = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = { drag_title, drag_state_text }
     });
 
     auto x_text = text({
@@ -651,11 +637,7 @@ WidgetPtr GestureDemoState::buildPanTab() {
     });
 
     auto drag_metrics = row({
-        x_text,
-        sizedBox(14.0f, 0),
-        y_text,
-        sizedBox(14.0f, 0),
-        vel_text,
+        .children = { x_text, sizedBox(14.0f, 0), y_text, sizedBox(14.0f, 0), vel_text }
     });
 
     auto drag_desc = text({
@@ -665,11 +647,7 @@ WidgetPtr GestureDemoState::buildPanTab() {
     });
 
     auto drag_content = column({
-        drag_header,
-        sizedBox(0, 6.0f),
-        drag_desc,
-        sizedBox(0, 10.0f),
-        drag_metrics,
+        .children = { drag_header, sizedBox(0, 6.0f), drag_desc, sizedBox(0, 10.0f), drag_metrics }
     });
 
     auto drag_box = container(drag_content);
@@ -742,10 +720,10 @@ WidgetPtr GestureDemoState::buildPanTab() {
                  .color(Style::bg_input)
                  .borderRadius(4.0f);
 
-    auto slider_row = row(Justify::Start, Align::Center, {
-        fill_bar,
-        thumb_elem,
-        remaining_bar,
+    auto slider_row = row({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = { fill_bar, thumb_elem, remaining_bar }
     });
 
     auto slider_hit_area = container(slider_row);
@@ -785,9 +763,10 @@ WidgetPtr GestureDemoState::buildPanTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto slider_header = row(Justify::SpaceBetween, Align::Center, {
-        slider_title,
-        slider_pct,
+    auto slider_header = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = { slider_title, slider_pct }
     });
 
     auto slider_desc = text({
@@ -797,11 +776,7 @@ WidgetPtr GestureDemoState::buildPanTab() {
     });
 
     auto slider_card = container(column({
-        slider_header,
-        sizedBox(0, 6.0f),
-        slider_desc,
-        sizedBox(0, 14.0f),
-        slider_gd,
+        .children = { slider_header, sizedBox(0, 6.0f), slider_desc, sizedBox(0, 14.0f), slider_gd }
     }));
     slider_card->paddingAll(18.0f)
                .color(Style::bg_card)
@@ -837,11 +812,17 @@ WidgetPtr GestureDemoState::buildPanTab() {
     });
 
     return column({
-        canvas_container,
-        sizedBox(0, 14.0f),
-        slider_card,
-        sizedBox(0, 10.0f),
-        row(Justify::End, Align::Center, {reset_gd}),
+        .children = {
+            canvas_container,
+            sizedBox(0, 14.0f),
+            slider_card,
+            sizedBox(0, 10.0f),
+            row({
+                .justify_content = Justify::End,
+                .align_items = Align::Center,
+                .children = { reset_gd }
+            }),
+        }
     });
 }
 
@@ -900,15 +881,13 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
         });
 
         auto text_col = column({
-            item_title,
-            sizedBox(0, 2.0f),
-            item_desc,
+            .children = { item_title, sizedBox(0, 2.0f), item_desc }
         });
 
-        auto card_row = row(Justify::Start, Align::Center, {
-            icon_box,
-            sizedBox(12.0f, 0),
-            text_col,
+        auto card_row = row({
+            .justify_content = Justify::Start,
+            .align_items = Align::Center,
+            .children = { icon_box, sizedBox(12.0f, 0), text_col }
         });
 
         auto card_content = container(card_row);
@@ -948,9 +927,10 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto banner_row = row(Justify::Start, Align::Center, {
-        banner_label,
-        banner_val,
+    auto banner_row = row({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = { banner_label, banner_val }
     });
 
     auto preview_banner = container(banner_row);
@@ -960,17 +940,19 @@ WidgetPtr GestureDemoState::buildCursorsTab() {
                   .borderRadius(10.0f)
                   .border(Style::border_active, 1.0f);
 
-    auto c1_col = column(std::move(col1));
-    auto c2_col = column(std::move(col2));
+    auto c1_col = column({
+        .children = std::move(col1)
+    });
+    auto c2_col = column({
+        .children = std::move(col2)
+    });
 
     auto cards_row = row({
-        c1_col,
-        c2_col,
+        .children = { c1_col, c2_col }
     });
 
     return column({
-        preview_banner,
-        cards_row,
+        .children = { preview_banner, cards_row }
     });
 }
 
@@ -1021,9 +1003,10 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto outer_header = row(Justify::SpaceBetween, Align::Center, {
-        outer_title,
-        outer_hits,
+    auto outer_header = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = { outer_title, outer_hits }
     });
 
     auto outer_desc = text({
@@ -1033,11 +1016,7 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
     });
 
     auto outer_col = column({
-        outer_header,
-        sizedBox(0, 6.0f),
-        outer_desc,
-        sizedBox(0, 16.0f),
-        inner_gd,
+        .children = { outer_header, sizedBox(0, 6.0f), outer_desc, sizedBox(0, 16.0f), inner_gd }
     });
 
     auto outer_box = container(outer_col);
@@ -1090,9 +1069,11 @@ WidgetPtr GestureDemoState::buildHitTestTab() {
     });
 
     return column({
-        outer_gd,
-        sizedBox(0, 14.0f),
-        row({toggle_gd}),
+        .children = {
+            outer_gd,
+            sizedBox(0, 14.0f),
+            row({ .children = { toggle_gd } }),
+        }
     });
 }
 
@@ -1111,8 +1092,7 @@ WidgetPtr GestureDemoState::build(BuildContext&) {
     }
 
     auto main_content = container(column({
-        buildHeader(),
-        content_tab,
+        .children = { buildHeader(), content_tab }
     }));
     main_content->paddingAll(20.0f)
                 .color(Style::bg_main);
@@ -1122,9 +1102,7 @@ WidgetPtr GestureDemoState::build(BuildContext&) {
            .color(Style::border_subtle);
 
     return row({
-        buildSidebar(),
-        divider,
-        main_content,
+        .children = { buildSidebar(), divider, main_content }
     });
 }
 

@@ -176,9 +176,11 @@ inline std::shared_ptr<Container> sectionCard(std::string title, std::string sub
     auto subLabel = label(std::move(subtitle), 11.0f, 0xFF64748B, false);
 
     auto cardCol = column({
-        titleLabel,
-        paddingBox(EdgeInsets::only(2.0f, 0, 12.0f, 0), subLabel),
-        content
+        .children = {
+            titleLabel,
+            paddingBox(EdgeInsets::only(2.0f, 0, 12.0f, 0), subLabel),
+            content
+        }
     });
 
     auto card = container(std::move(key), cardCol);
@@ -210,52 +212,64 @@ inline std::shared_ptr<Container> colorBox(std::string text, float w, float h, C
 inline WidgetPtr buildFlexboxTestView() {
     // 1. Basic Row & Column
     auto rowDemo = row({
-        colorBox("100x44", 100.0f, 44.0f, 0xFF3B82F6),
-        paddingBox(EdgeInsets::only(0, 0, 0, 8.0f), colorBox("150x44", 150.0f, 44.0f, 0xFF8B5CF6)),
-        paddingBox(EdgeInsets::only(0, 0, 0, 8.0f), colorBox("70x44", 70.0f, 44.0f, 0xFFEC4899))
+        .children = {
+            colorBox("100x44", 100.0f, 44.0f, 0xFF3B82F6),
+            paddingBox(EdgeInsets::only(0, 0, 0, 8.0f), colorBox("150x44", 150.0f, 44.0f, 0xFF8B5CF6)),
+            paddingBox(EdgeInsets::only(0, 0, 0, 8.0f), colorBox("70x44", 70.0f, 44.0f, 0xFFEC4899))
+        }
     });
 
     auto colDemo = column({
-        colorBox("140x26", 140.0f, 26.0f, 0xFF10B981),
-        paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), colorBox("140x36", 140.0f, 36.0f, 0xFFF59E0B)),
-        paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), colorBox("140x22", 140.0f, 22.0f, 0xFF06B6D4))
+        .children = {
+            colorBox("140x26", 140.0f, 26.0f, 0xFF10B981),
+            paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), colorBox("140x36", 140.0f, 36.0f, 0xFFF59E0B)),
+            paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), colorBox("140x22", 140.0f, 22.0f, 0xFF06B6D4))
+        }
     });
 
     auto card1 = sectionCard("1. Basic Row & Column", "test_row_basic & test_column_basic",
         row({
-            rowDemo,
-            paddingBox(EdgeInsets::only(0, 0, 0, 30.0f), colDemo)
+            .children = {
+                rowDemo,
+                paddingBox(EdgeInsets::only(0, 0, 0, 30.0f), colDemo)
+            }
         })
     );
 
     // 2. Justify Content
     auto makeJustifyStrip = [](Justify j, std::string name) {
         auto r = row({
-            colorBox("1", 40.0f, 30.0f, 0xFF6366F1),
-            colorBox("2", 40.0f, 30.0f, 0xFF8B5CF6),
-            colorBox("3", 40.0f, 30.0f, 0xFFA855F7)
+            .justify_content = j,
+            .align_items = Align::Center,
+            .width = 280_px,
+            .height = 40_px,
+            .children = {
+                colorBox("1", 40.0f, 30.0f, 0xFF6366F1),
+                colorBox("2", 40.0f, 30.0f, 0xFF8B5CF6),
+                colorBox("3", 40.0f, 30.0f, 0xFFA855F7)
+            }
         });
-        r->justifyContent(j);
-        r->width(280_px);
-        r->height(40_px);
-        r->alignItems(Align::Center);
 
         auto c = container(r);
         c->color(0x200F172A).borderRadius(6.0f).paddingSymmetric(0, 6.0f);
 
         return row({
-            sizedBox(95.0f, 30.0f, label(name, 11.0f, 0xFF94A3B8)),
-            c
+            .children = {
+                sizedBox(95.0f, 30.0f, label(name, 11.0f, 0xFF94A3B8)),
+                c
+            }
         });
     };
 
     auto card2 = sectionCard("2. Justify Content Alignments", "Start, Center, End, SpaceBetween, SpaceAround, SpaceEvenly",
         column({
-            makeJustifyStrip(Justify::Start, "Start"),
-            paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::Center, "Center")),
-            paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::End, "End")),
-            paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::SpaceBetween, "SpaceBetween")),
-            paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::SpaceEvenly, "SpaceEvenly"))
+            .children = {
+                makeJustifyStrip(Justify::Start, "Start"),
+                paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::Center, "Center")),
+                paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::End, "End")),
+                paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::SpaceBetween, "SpaceBetween")),
+                paddingBox(EdgeInsets::only(6.0f, 0, 0, 0), makeJustifyStrip(Justify::SpaceEvenly, "SpaceEvenly"))
+            }
         })
     );
 
@@ -270,8 +284,10 @@ inline WidgetPtr buildFlexboxTestView() {
     auto growBox3 = colorBox("Grow: 1", 0, 36.0f, 0xFF10B981);
     growBox3->flexGrow(1.0f);
 
-    auto growRow = row({growBox1, growBox2, growBox3});
-    growRow->width(400_px);
+    auto growRow = row({
+        .width = 400_px,
+        .children = {growBox1, growBox2, growBox3}
+    });
 
     auto card3 = sectionCard("3. Proportional Flex Factors & Gaps", "test_flex_factor (1 : 2 : 1 Proportional Expansion)",
         growRow
@@ -292,17 +308,25 @@ inline WidgetPtr buildFlexboxTestView() {
         tagChips.push_back(chip);
     }
 
-    auto wrapRow = row(tagChips);
-    wrapRow->flexWrap(FlexWrap::Wrap);
-    wrapRow->width(420_px);
+    auto wrapRow = row({
+        .flex_wrap = FlexWrap::Wrap,
+        .width = 420_px,
+        .children = std::move(tagChips)
+    });
 
     auto card4 = sectionCard("4. Multi-Line Flex Wrap", "test_flex_wrap with dynamic chips",
         wrapRow
     );
 
     return column(Key::string("tab_flexbox_root"), {
-        row({card1, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card2)}),
-        row({card3, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card4)})
+        .children = {
+            row({
+                .children = {card1, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card2)}
+            }),
+            row({
+                .children = {card3, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card4)}
+            })
+        }
     });
 }
 
@@ -344,7 +368,9 @@ inline WidgetPtr buildContainerTestView() {
              .margin(EdgeInsets::only(0, 0, 0, 12.0f));
 
     auto card1 = sectionCard("1. Linear & Radial Gradients", "test_box_decoration (Custom Color Stops & Angles)",
-        row({gradCard1, gradCard2, gradCard3, gradCard4})
+        row({
+            .children = {gradCard1, gradCard2, gradCard3, gradCard4}
+        })
     );
 
     // 2. Multi-Box Shadows
@@ -375,7 +401,9 @@ inline WidgetPtr buildContainerTestView() {
            .margin(EdgeInsets::only(0, 0, 0, 16.0f));
 
     auto card2 = sectionCard("2. Multi-Layer Box Shadows", "test_box_decoration (Ambient, Deep & Neon Glow)",
-        row({shadow1, shadow2, shadow3})
+        row({
+            .children = {shadow1, shadow2, shadow3}
+        })
     );
 
     // 3. Corner Radii & Shapes
@@ -400,7 +428,9 @@ inline WidgetPtr buildContainerTestView() {
           .margin(EdgeInsets::only(0, 0, 0, 10.0f));
 
     auto card3 = sectionCard("3. Shapes & Border Radii", "test_hit_testing (Rectangles, Pills & Circles)",
-        row({shape1, shape2, shape3, shape4})
+        row({
+            .children = {shape1, shape2, shape3, shape4}
+        })
     );
 
     // 4. Aspect Ratio & Padding
@@ -423,12 +453,20 @@ inline WidgetPtr buildContainerTestView() {
                 .margin(EdgeInsets::only(0, 0, 0, 20.0f));
 
     auto card4 = sectionCard("4. Aspect Ratio (16:9) & Inset Padding", "test_container_constraints & test_container_padding",
-        row({aspectChild, paddingOuter})
+        row({
+            .children = {aspectChild, paddingOuter}
+        })
     );
 
     return column(Key::string("tab_container_root"), {
-        row({card1, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card2)}),
-        row({card3, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card4)})
+        .children = {
+            row({
+                .children = {card1, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card2)}
+            }),
+            row({
+                .children = {card3, paddingBox(EdgeInsets::only(0, 0, 0, 16.0f), card4)}
+            })
+        }
     });
 }
 
@@ -453,8 +491,10 @@ inline WidgetPtr buildShellShowcaseView() {
         dockIcons.push_back(iconInner);
     }
 
-    auto dockRow = row(dockIcons);
-    dockRow->alignItems(Align::Center);
+    auto dockRow = row({
+        .align_items = Align::Center,
+        .children = std::move(dockIcons)
+    });
 
     auto dockContainer = container(dockRow);
     dockContainer->color(0x351E293B)
@@ -463,8 +503,10 @@ inline WidgetPtr buildShellShowcaseView() {
                  .shadow(0x80000000, {0, 12}, 30, 2)
                  .paddingSymmetric(10.0f, 16.0f);
 
-    auto dockCenterRow = row({dockContainer});
-    dockCenterRow->justifyContent(Justify::Center);
+    auto dockCenterRow = row({
+        .justify_content = Justify::Center,
+        .children = {dockContainer}
+    });
 
     auto dockCard = sectionCard("1. Glassmorphism Desktop Dock", "Assembled via Flexbox Row + Container Glassmorphism",
         dockCenterRow
@@ -478,10 +520,12 @@ inline WidgetPtr buildShellShowcaseView() {
            .color(on ? 0xFFFFFFFF : 0xFF64748B);
 
         auto tRow = row({
-            dot,
-            paddingBox(EdgeInsets::only(0, 0, 0, 8.0f), label(name, 11.0f, on ? 0xFFFFFFFF : 0xFF94A3B8, true))
+            .align_items = Align::Center,
+            .children = {
+                dot,
+                paddingBox(EdgeInsets::only(0, 0, 0, 8.0f), label(name, 11.0f, on ? 0xFFFFFFFF : 0xFF94A3B8, true))
+            }
         });
-        tRow->alignItems(Align::Center);
 
         auto t = container(tRow);
         t->color(on ? activeColor : 0x25334155)
@@ -492,10 +536,12 @@ inline WidgetPtr buildShellShowcaseView() {
     };
 
     auto toggleRow = row({
-        makeToggle("Wi-Fi (5G)", true, 0xFF2563EB),
-        makeToggle("Bluetooth", true, 0xFF7C3AED),
-        makeToggle("Dark Mode", true, 0xFF059669),
-        makeToggle("DND", false, 0xFF475569)
+        .children = {
+            makeToggle("Wi-Fi (5G)", true, 0xFF2563EB),
+            makeToggle("Bluetooth", true, 0xFF7C3AED),
+            makeToggle("Dark Mode", true, 0xFF059669),
+            makeToggle("DND", false, 0xFF475569)
+        }
     });
 
     // Slider bar
@@ -506,14 +552,18 @@ inline WidgetPtr buildShellShowcaseView() {
     sliderTrack->size(240.0f, 10.0f).color(0x40475569).borderRadius(999.0f);
 
     auto sliderSection = row({
-        label("Brightness", 11.0f, 0xFF94A3B8),
-        paddingBox(EdgeInsets::only(0, 0, 0, 12.0f), sliderTrack)
+        .align_items = Align::Center,
+        .children = {
+            label("Brightness", 11.0f, 0xFF94A3B8),
+            paddingBox(EdgeInsets::only(0, 0, 0, 12.0f), sliderTrack)
+        }
     });
-    sliderSection->alignItems(Align::Center);
 
     auto controlCol = column({
-        toggleRow,
-        paddingBox(EdgeInsets::only(12.0f, 0, 0, 0), sliderSection)
+        .children = {
+            toggleRow,
+            paddingBox(EdgeInsets::only(12.0f, 0, 0, 0), sliderSection)
+        }
     });
 
     auto controlCard = sectionCard("2. Shell Quick Settings & Sliders", "Control Center toggles and status sliders",
@@ -521,8 +571,10 @@ inline WidgetPtr buildShellShowcaseView() {
     );
 
     return column(Key::string("tab_shell_root"), {
-        dockCard,
-        controlCard
+        .children = {
+            dockCard,
+            controlCard
+        }
     });
 }
 
@@ -553,26 +605,32 @@ public:
              .paddingSymmetric(4.0f, 12.0f);
 
         auto titleRow = row({
-            column({title, paddingBox(EdgeInsets::only(3.0f, 0, 0, 0), sub)}),
-            spacer(),
-            badge
+            .align_items = Align::Center,
+            .children = {
+                column({
+                    .children = {title, paddingBox(EdgeInsets::only(3.0f, 0, 0, 0), sub)}
+                }),
+                spacer(),
+                badge
+            }
         });
-        titleRow->alignItems(Align::Center);
 
         // 2. Tab Navigation Buttons
         auto tabs = row({
-            button("📐 1. Flexbox Layout Suite", current_tab_ == 0, [this] {
-                setState([this] { current_tab_ = 0; });
-            }),
-            button("🎨 2. Container & BoxDecoration Suite", current_tab_ == 1, [this] {
-                setState([this] { current_tab_ = 1; });
-            }),
-            button("🖥️ 3. Real-World Desktop Shell", current_tab_ == 2, [this] {
-                setState([this] { current_tab_ = 2; });
-            }),
-            button("📝 4. Interactive TextField", current_tab_ == 3, [this] {
-                setState([this] { current_tab_ = 3; });
-            })
+            .children = {
+                button("📐 1. Flexbox Layout Suite", current_tab_ == 0, [this] {
+                    setState([this] { current_tab_ = 0; });
+                }),
+                button("🎨 2. Container & BoxDecoration Suite", current_tab_ == 1, [this] {
+                    setState([this] { current_tab_ = 1; });
+                }),
+                button("🖥️ 3. Real-World Desktop Shell", current_tab_ == 2, [this] {
+                    setState([this] { current_tab_ = 2; });
+                }),
+                button("📝 4. Interactive TextField", current_tab_ == 3, [this] {
+                    setState([this] { current_tab_ = 3; });
+                })
+            }
         });
 
         // 3. Tab Body
@@ -606,9 +664,11 @@ public:
 
         // Main App Layout
         auto mainCol = column({
-            titleRow,
-            paddingBox(EdgeInsets::only(14.0f, 0, 16.0f, 0), tabs),
-            bodyContent
+            .children = {
+                titleRow,
+                paddingBox(EdgeInsets::only(14.0f, 0, 16.0f, 0), tabs),
+                bodyContent
+            }
         });
 
         auto appRoot = container(mainCol);

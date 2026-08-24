@@ -94,9 +94,11 @@ public:
             .font_size = 13.0f,
         });
 
-        std::vector<WidgetPtr> title_items = {title, sub};
-        auto title_col = column(title_items);
-        title_col->alignItems(Align::Center).gap(StyleValue::point(6.0f));
+        auto title_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = { title, sub }
+        });
 
         // ── Helper to build trigger cards ─────────────────────────────
         auto makeLoaderCard = [this](std::string icon, std::string title, std::string desc,
@@ -113,9 +115,11 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            std::vector<WidgetPtr> h_items = {ic, tit};
-            auto h_row = row(h_items);
-            h_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+            auto h_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(8.0f),
+                .children = { ic, tit }
+            });
 
             auto ds = text({
                 .text = desc,
@@ -143,9 +147,10 @@ public:
                 },
             });
 
-            std::vector<WidgetPtr> c_items = {h_row, ds, gd};
-            auto col = column(c_items);
-            col->gap(StyleValue::point(12.0f));
+            auto col = column({
+                .gap = StyleValue::point(12.0f),
+                .children = { h_row, ds, gd }
+            });
 
             auto card = container(col);
             card->color(0xFF1E293B)
@@ -210,9 +215,11 @@ public:
             setState([] {});
         });
 
-        std::vector<WidgetPtr> cards_list = {card1, card2, card3, card4};
-        auto cards_row = row(cards_list);
-        cards_row->gap(StyleValue::point(14.0f)).justifyContent(Justify::Center);
+        auto cards_row = row({
+            .justify_content = Justify::Center,
+            .gap = StyleValue::point(14.0f),
+            .children = { card1, card2, card3, card4 }
+        });
 
         // ── Manual Dismiss Bar ────────────────────────────────────────
         auto btn_dismiss = button(text("✕ Dismiss Active Loading Overlay"), [this] {
@@ -222,9 +229,10 @@ public:
             setState([] {});
         });
 
-        std::vector<WidgetPtr> act_items = {btn_dismiss};
-        auto act_row = row(act_items);
-        act_row->justifyContent(Justify::Center);
+        auto act_row = row({
+            .justify_content = Justify::Center,
+            .children = { btn_dismiss }
+        });
 
         // ── HUD / Status Box ──────────────────────────────────────────
         auto hud_txt = text({
@@ -233,7 +241,9 @@ public:
             .font_size = 12.5f,
         });
 
-        auto hud_row = row(std::vector<WidgetPtr>{hud_txt});
+        auto hud_row = row({
+            .children = { hud_txt }
+        });
         auto hud_box = container(hud_row);
         hud_box->color(0xFF1E293B)
                .borderRadius(6.0f)
@@ -242,9 +252,11 @@ public:
                .width(1080.0f);
 
         // ── Assemble Page Body ────────────────────────────────────────
-        std::vector<WidgetPtr> page_items = {title_col, cards_row, act_row, hud_box};
-        auto page_col = column(page_items);
-        page_col->gap(StyleValue::point(26.0f)).alignItems(Align::Center);
+        auto page_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(26.0f),
+            .children = { title_col, cards_row, act_row, hud_box }
+        });
 
         auto background_page = container(page_col);
         background_page->color(0xFF0B1120)
