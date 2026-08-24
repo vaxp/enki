@@ -49,15 +49,20 @@ public:
         }
 
         // ── Build flex column/row ──────────────────────────────
-        auto flex = std::make_shared<Flexbox>(std::move(children));
-        flex->flexDirection(w->props.direction == Axis::Vertical
-                            ? FlexDirection::Column : FlexDirection::Row);
-        flex->flexShrink(0.0f);
-
-        if (w->props.direction == Axis::Vertical)
-            flex->width(StyleValue::percent(100.0f));
-        else
-            flex->height(StyleValue::percent(100.0f));
+        WidgetPtr flex;
+        if (w->props.direction == Axis::Vertical) {
+            flex = column({
+                .flex_shrink = 0.0f,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(children),
+            });
+        } else {
+            flex = row({
+                .flex_shrink = 0.0f,
+                .height = StyleValue::percent(100.0f),
+                .children = std::move(children),
+            });
+        }
 
         // Apply padding via a wrapper
         WidgetPtr content;

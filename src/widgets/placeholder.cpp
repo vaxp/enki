@@ -204,20 +204,24 @@ WidgetPtr placeholderCardSkeleton(float w) {
     auto title_line = makeSkeleton(w * 0.45f, 14.0f, 4.0f);
     auto sub_line   = makeSkeleton(w * 0.30f, 10.0f, 4.0f);
 
-    std::vector<WidgetPtr> h_lines = {title_line, sub_line};
-    auto h_col = column(h_lines);
-    h_col->gap(StyleValue::point(6.0f));
+    auto h_col = column({
+        .gap = StyleValue::point(6.0f),
+        .children = {title_line, sub_line},
+    });
 
-    std::vector<WidgetPtr> head_items = {avatar, h_col};
-    auto head_row = row(head_items);
-    head_row->gap(StyleValue::point(12.0f)).alignItems(Align::Center);
+    auto head_row = row({
+        .align_items = Align::Center,
+        .gap = StyleValue::point(12.0f),
+        .children = {avatar, h_col},
+    });
 
     auto body_line1 = makeSkeleton(w - 40.0f, 12.0f, 4.0f);
     auto body_line2 = makeSkeleton(w - 70.0f, 12.0f, 4.0f);
 
-    std::vector<WidgetPtr> card_items = {head_row, body_line1, body_line2};
-    auto card_col = column(card_items);
-    card_col->gap(StyleValue::point(14.0f));
+    auto card_col = column({
+        .gap = StyleValue::point(14.0f),
+        .children = {head_row, body_line1, body_line2},
+    });
 
     auto card_box = container(card_col);
     card_box->color(0xFF0F172A)
@@ -237,17 +241,19 @@ WidgetPtr placeholderListSkeleton(int rows, float w) {
         auto t_line   = makeSkeleton(w * 0.5f, 12.0f, 4.0f);
         auto s_line   = makeSkeleton(w * 0.28f, 9.0f, 4.0f);
 
-        std::vector<WidgetPtr> t_lines = {t_line, s_line};
-        auto t_col = column(t_lines);
-        t_col->gap(StyleValue::point(4.0f));
+        auto t_col = column({
+            .gap = StyleValue::point(4.0f),
+            .children = {t_line, s_line},
+        });
 
         auto badge_box = makeSkeleton(50.0f, 20.0f, 10.0f);
 
-        std::vector<WidgetPtr> r_items = {icon_box, t_col, badge_box};
-        auto r_row = row(r_items);
-        r_row->justifyContent(Justify::SpaceBetween)
-             .alignItems(Align::Center)
-             .width(StyleValue::percent(100.0f));
+        auto r_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {icon_box, t_col, badge_box},
+        });
 
         row_widgets.push_back(r_row);
 
@@ -258,8 +264,10 @@ WidgetPtr placeholderListSkeleton(int rows, float w) {
         }
     }
 
-    auto list_col = column(row_widgets);
-    list_col->gap(StyleValue::point(12.0f));
+    auto list_col = column({
+        .gap = StyleValue::point(12.0f),
+        .children = std::move(row_widgets),
+    });
 
     auto list_box = container(list_col);
     list_box->color(0xFF0F172A)

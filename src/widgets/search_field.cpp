@@ -884,9 +884,11 @@ public:
                     row_content.push_back(sub);
                 }
 
-                auto row_widget = row(row_content);
-                row_widget->gap(StyleValue::point(8.0f))
-                          .alignItems(Align::Center);
+                auto row_widget = row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(8.0f),
+                    .children = std::move(row_content),
+                });
 
                 if (!item.badge.empty()) {
                     auto bg_t = text({
@@ -899,11 +901,11 @@ public:
                           .borderRadius(4.0f)
                           .paddingSymmetric(2.0f, 6.0f);
 
-                    std::vector<WidgetPtr> full_row_items = {row_widget, bg_box};
-                    auto full_row = row(full_row_items);
-                    full_row->justifyContent(Justify::SpaceBetween)
-                            .alignItems(Align::Center);
-                    row_widget = full_row;
+                    row_widget = row({
+                        .justify_content = Justify::SpaceBetween,
+                        .align_items = Align::Center,
+                        .children = {row_widget, bg_box},
+                    });
                 }
 
                 auto item_box = container(row_widget);
@@ -956,10 +958,11 @@ public:
                     .font_size = 12.5f,
                 });
 
-                std::vector<WidgetPtr> r_items = {ic, r_txt};
-                auto r_row = row(r_items);
-                r_row->gap(StyleValue::point(8.0f))
-                     .alignItems(Align::Center);
+                auto r_row = row({
+                    .align_items = Align::Center,
+                    .gap = StyleValue::point(8.0f),
+                    .children = {ic, r_txt},
+                });
 
                 auto r_box = container(r_row);
                 r_box->borderRadius(6.0f)
@@ -982,8 +985,10 @@ public:
             }
         }
 
-        auto pop_col = column(pop_items);
-        pop_col->gap(StyleValue::point(2.0f));
+        auto pop_col = column({
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(pop_items),
+        });
 
         auto popup_container = container(pop_col);
         popup_container->color(sf->props.popup_bg_color)
@@ -991,11 +996,10 @@ public:
                        .border(sf->props.border_color, 1.0f)
                        .paddingAll(6.0f);
 
-        std::vector<WidgetPtr> combined_items = {detector, popup_container};
-        auto combined_col = column(combined_items);
-        combined_col->gap(StyleValue::point(6.0f));
-
-        return combined_col;
+        return column({
+            .gap = StyleValue::point(6.0f),
+            .children = {detector, popup_container},
+        });
     }
 };
 

@@ -239,8 +239,10 @@ public:
             buildQuickLocationButton("💽 Root (/)", "/")
         };
 
-        auto sidebar_col = column(sidebar_items);
-        sidebar_col->gap(StyleValue::point(4.0f));
+        auto sidebar_col = column({
+            .gap = StyleValue::point(4.0f),
+            .children = std::move(sidebar_items),
+        });
 
         auto sidebar = container(sidebar_col);
         sidebar->color(opt.sidebar_color)
@@ -266,8 +268,10 @@ public:
             .font_size = 12.0f,
         });
 
-        auto header_col = column({header_title, current_path_txt});
-        header_col->gap(StyleValue::point(2.0f));
+        auto header_col = column({
+            .gap = StyleValue::point(2.0f),
+            .children = { header_title, current_path_txt },
+        });
 
         auto header_box = container(header_col);
         header_box->paddingSymmetric(8.0f, 12.0f)
@@ -311,8 +315,10 @@ public:
             entry_widgets.push_back(gesture);
         }
 
-        auto files_col = column(std::vector<WidgetPtr>(entry_widgets.begin(), entry_widgets.end()));
-        files_col->gap(StyleValue::point(2.0f));
+        auto files_col = column({
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(entry_widgets),
+        });
 
         ScrollOptions s_opt;
         s_opt.show_scrollbar = true;
@@ -371,8 +377,11 @@ public:
         std::vector<WidgetPtr> actions_children;
         actions_children.push_back(cancel_btn);
         actions_children.push_back(confirm_btn);
-        auto actions_row = row(actions_children);
-        actions_row->justifyContent(Justify::End).gap(StyleValue::point(10.0f));
+        auto actions_row = row({
+            .justify_content = Justify::End,
+            .gap = StyleValue::point(10.0f),
+            .children = std::move(actions_children),
+        });
 
         auto actions_box = container(actions_row);
         actions_box->paddingAll(8.0f);
@@ -382,14 +391,15 @@ public:
         right_col_children.push_back(header_box);
         right_col_children.push_back(files_scroll);
         right_col_children.push_back(actions_box);
-        auto right_col = column(right_col_children);
-        right_col->flexGrow(1.0f);
+        auto right_col = column({
+            .flex_grow = 1.0f,
+            .children = std::move(right_col_children),
+        });
 
-        std::vector<WidgetPtr> main_row_children;
-        main_row_children.push_back(sidebar);
-        main_row_children.push_back(right_col);
-        auto main_row = row(main_row_children);
-        main_row->flexGrow(1.0f);
+        auto main_row = row({
+            .flex_grow = 1.0f,
+            .children = { sidebar, right_col },
+        });
 
         return main_row;
     }

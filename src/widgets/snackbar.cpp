@@ -153,12 +153,19 @@ public:
             text_col_items.push_back(m_txt);
         }
 
-        auto text_col = column(text_col_items);
-        text_col->gap(StyleValue::point(2.0f)).flex(1.0f);
+        auto text_col = column({
+            .flex = 1.0f,
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(text_col_items),
+        });
         left_items.push_back(text_col);
 
-        auto left_row = row(left_items);
-        left_row->gap(StyleValue::point(10.0f)).alignItems(Align::Center).flex(1.0f);
+        auto left_row = row({
+            .align_items = Align::Center,
+            .flex = 1.0f,
+            .gap = StyleValue::point(10.0f),
+            .children = std::move(left_items),
+        });
 
         // Right Section: Action Button + Close ✕
         std::vector<WidgetPtr> right_items;
@@ -210,14 +217,18 @@ public:
             right_items.push_back(cls_btn);
         }
 
-        auto right_row = row(right_items);
-        right_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+        auto right_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(right_items),
+        });
 
-        std::vector<WidgetPtr> content_items = {left_row, right_row};
-        auto content_row = row(content_items);
-        content_row->justifyContent(Justify::SpaceBetween)
-                   .alignItems(Align::Center)
-                   .width(StyleValue::percent(100.0f));
+        auto content_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {left_row, right_row},
+        });
 
         std::vector<WidgetPtr> card_elements = {content_row};
 
@@ -243,8 +254,10 @@ public:
             card_elements.push_back(bar_track);
         }
 
-        auto card_col = column(card_elements);
-        card_col->width(StyleValue::percent(100.0f));
+        auto card_col = column({
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(card_elements),
+        });
 
         auto card_box = container(card_col);
         card_box->color(opts.background_color)
@@ -305,10 +318,11 @@ public:
 
         switch (opts.placement) {
             case SnackbarPlacement::BottomCenter: {
-                std::vector<WidgetPtr> center_items = {card};
-                auto row_wrap = row(center_items);
-                row_wrap->justifyContent(Justify::Center)
-                        .width(StyleValue::percent(100.0f));
+                auto row_wrap = row({
+                    .justify_content = Justify::Center,
+                    .width = StyleValue::percent(100.0f),
+                    .children = {card},
+                });
 
                 pos_card = Positioned {
                     .child = row_wrap,
@@ -335,10 +349,11 @@ public:
                 break;
             }
             case SnackbarPlacement::TopCenter: {
-                std::vector<WidgetPtr> center_items = {card};
-                auto row_wrap = row(center_items);
-                row_wrap->justifyContent(Justify::Center)
-                        .width(StyleValue::percent(100.0f));
+                auto row_wrap = row({
+                    .justify_content = Justify::Center,
+                    .width = StyleValue::percent(100.0f),
+                    .children = {card},
+                });
 
                 pos_card = Positioned {
                     .child = row_wrap,

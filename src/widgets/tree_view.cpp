@@ -140,8 +140,11 @@ class TreeViewState : public State {
         }
 
         // Label (flex grow)
-        auto label_item = std::make_shared<FlexItem>(data.label);
-        label_item->flexGrow(1.0f).flexShrink(1.0f);
+        auto label_item = flexItem({
+            .flex_grow = 1.0f,
+            .flex_shrink = 1.0f,
+            .child = data.label,
+        });
         row_children.push_back(label_item);
 
         // Trailing
@@ -152,10 +155,12 @@ class TreeViewState : public State {
         }
 
         // ── Build the row ──────────────────────────────────────
-        auto row_content = std::make_shared<Row>(std::move(row_children));
-        row_content->alignItems(Align::Center);
-        row_content->height(theme.node_height);
-        row_content->width(StyleValue::percent(100.0f));
+        auto row_content = row({
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::point(theme.node_height),
+            .children = std::move(row_children),
+        });
 
         // ── Wrap in selection/hover decoration ─────────────────
         auto row_bg = container(row_content);
@@ -216,9 +221,10 @@ class TreeViewState : public State {
             }
         }
 
-        auto node_col = std::make_shared<Column>(std::move(node_col_children));
-        node_col->width(StyleValue::percent(100.0f));
-        return node_col;
+        return column({
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(node_col_children),
+        });
     }
 
 public:
@@ -229,9 +235,11 @@ public:
         for (auto& n : w->props.nodes)
             all_nodes.push_back(buildNode(n, 0, w->props.tree_theme, w));
 
-        auto root_col = std::make_shared<Column>(std::move(all_nodes));
-        root_col->width(StyleValue::percent(100.0f));
-        root_col->flexShrink(0.0f);
+        auto root_col = column({
+            .flex_shrink = 0.0f,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(all_nodes),
+        });
 
         WidgetPtr content;
         if (w->props.list_padding != EdgeInsets{}) {

@@ -100,8 +100,10 @@ public:
                 panel_children.push_back(content_box);
             }
 
-            auto panel_col = std::make_shared<Column>(std::move(panel_children));
-            panel_col->style.height    = StyleValue::percent(100.0f);
+            auto panel_col = column({
+                .height = StyleValue::percent(100.0f),
+                .children = std::move(panel_children),
+            });
 
             auto panel_box = container(panel_col);
             panel_box->color(opts.background_color)
@@ -136,12 +138,12 @@ public:
             row_children = {body_content, panel_content};
         }
 
-        auto layout_row = std::make_shared<Row>(std::move(row_children));
-        layout_row->style.width  = StyleValue::percent(100.0f);
-        layout_row->style.height = StyleValue::percent(100.0f);
-        layout_row->style.align_items = Align::Stretch;
-
-        return layout_row;
+        return row({
+            .align_items = Align::Stretch,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(row_children),
+        });
     }
 };
 

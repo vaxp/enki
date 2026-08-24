@@ -153,9 +153,11 @@ WidgetPtr DockAppState::buildHeader() {
     });
 
     auto header_left = column({
-        title_text,
-        sizedBox(0, 2.0f),
-        sub_text,
+        .children = {
+            title_text,
+            sizedBox(0, 2.0f),
+            sub_text,
+        }
     });
 
     // Active Window indicator
@@ -189,15 +191,23 @@ WidgetPtr DockAppState::buildHeader() {
                .borderRadius(14.0f)
                .border(Theme::border_subtle, 1.0f);
 
-    auto header_right = row(Justify::End, Align::Center, {
-        active_badge,
-        sizedBox(10.0f, 0),
-        count_badge,
+    auto header_right = row({
+        .justify_content = Justify::End,
+        .align_items = Align::Center,
+        .children = {
+            active_badge,
+            sizedBox(10.0f, 0),
+            count_badge,
+        }
     });
 
-    auto header_row = row(Justify::SpaceBetween, Align::Center, {
-        header_left,
-        header_right,
+    auto header_row = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = {
+            header_left,
+            header_right,
+        }
     });
 
     auto header_box = container(header_row);
@@ -248,9 +258,13 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
         },
     });
 
-    auto card_top_row = row(Justify::SpaceBetween, Align::Center, {
-        app_text,
-        close_gd,
+    auto card_top_row = row({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Center,
+        .children = {
+            app_text,
+            close_gd,
+        }
     });
 
     // Window Title
@@ -296,12 +310,20 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
         badges.push_back(bc);
     }
 
-    auto badges_row = row(Justify::Start, Align::Center, std::move(badges));
+    auto badges_row = row({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = std::move(badges),
+    });
 
-    auto card_col = column(Justify::SpaceBetween, Align::Start, {
-        card_top_row,
-        title_widget,
-        badges_row,
+    auto card_col = column({
+        .justify_content = Justify::SpaceBetween,
+        .align_items = Align::Start,
+        .children = {
+            card_top_row,
+            title_widget,
+            badges_row,
+        }
     });
 
     auto card_container = container(card_col);
@@ -356,12 +378,16 @@ WidgetPtr DockAppState::buildEmptyState() {
         .font_size = 10.5f,
     });
 
-    auto empty_col = column(Justify::Center, Align::Center, {
-        empty_icon,
-        sizedBox(0, 4.0f),
-        empty_title,
-        sizedBox(0, 2.0f),
-        empty_desc,
+    auto empty_col = column({
+        .justify_content = Justify::Center,
+        .align_items = Align::Center,
+        .children = {
+            empty_icon,
+            sizedBox(0, 4.0f),
+            empty_title,
+            sizedBox(0, 2.0f),
+            empty_desc,
+        }
     });
 
     auto empty_box = container(empty_col);
@@ -388,7 +414,11 @@ WidgetPtr DockAppState::build(BuildContext&) {
         }
     }
 
-    auto cards_row = row(Justify::Start, Align::Center, std::move(card_widgets));
+    auto cards_row = row({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .children = std::move(card_widgets),
+    });
 
     // Footer Hint
     auto hint_text = text({
@@ -398,10 +428,12 @@ WidgetPtr DockAppState::build(BuildContext&) {
     });
 
     auto main_col = column({
-        buildHeader(),
-        cards_row,
-        sizedBox(0, 10.0f),
-        hint_text,
+        .children = {
+            buildHeader(),
+            cards_row,
+            sizedBox(0, 10.0f),
+            hint_text,
+        }
     });
 
     auto root_container = container(main_col);

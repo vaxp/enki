@@ -243,12 +243,19 @@ public:
                 txt_col_items.push_back(sub);
             }
 
-            auto txt_col = column(txt_col_items);
-            txt_col->gap(StyleValue::point(2.0f)).flex(1.0f);
+            auto txt_col = column({
+                .flex = 1.0f,
+                .gap = StyleValue::point(2.0f),
+                .children = std::move(txt_col_items),
+            });
             left_items.push_back(txt_col);
 
-            auto left_row = row(left_items);
-            left_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center).flex(1.0f);
+            auto left_row = row({
+                .align_items = Align::Center,
+                .flex = 1.0f,
+                .gap = StyleValue::point(8.0f),
+                .children = std::move(left_items),
+            });
 
             // Item Row Right: Badge or Checkmark ✓
             std::vector<WidgetPtr> right_items;
@@ -275,14 +282,18 @@ public:
                 right_items.push_back(chk);
             }
 
-            auto right_row = row(right_items);
-            right_row->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
+            auto right_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(6.0f),
+                .children = std::move(right_items),
+            });
 
-            std::vector<WidgetPtr> row_items = {left_row, right_row};
-            auto row_wrap = row(row_items);
-            row_wrap->justifyContent(Justify::SpaceBetween)
-                    .alignItems(Align::Center)
-                    .width(StyleValue::percent(100.0f));
+            auto row_wrap = row({
+                .justify_content = Justify::SpaceBetween,
+                .align_items = Align::Center,
+                .width = StyleValue::percent(100.0f),
+                .children = {left_row, right_row},
+            });
 
             auto item_box = container(row_wrap);
             item_box->color(is_selected ? opts.item_selected_col : 0x00000000)
@@ -301,8 +312,11 @@ public:
             menu_rows.push_back(item_gd);
         }
 
-        auto menu_col = column(menu_rows);
-        menu_col->gap(StyleValue::point(4.0f)).width(StyleValue::percent(100.0f));
+        auto menu_col = column({
+            .gap = StyleValue::point(4.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(menu_rows),
+        });
 
         auto menu_panel = container(menu_col);
         menu_panel->color(opts.menu_bg_color)

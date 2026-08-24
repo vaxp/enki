@@ -194,8 +194,10 @@ public:
             dc->flex(1.0f);
             drawer_kids.push_back(dc);
         }
-        auto drawer_col = std::make_shared<Column>(std::move(drawer_kids));
-        drawer_col->style.height = StyleValue::percent(100.0f);
+        auto drawer_col = column({
+            .height = StyleValue::percent(100.0f),
+            .children = std::move(drawer_kids),
+        });
 
         auto drawer_box = container(drawer_col);
         drawer_box->color(opts.background_color)

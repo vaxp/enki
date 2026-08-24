@@ -41,51 +41,65 @@ public:
             auto padded_item = container(item);
             padded_item->padding(EdgeInsets::symmetric(row_gap / 2.0f, col_gap / 2.0f));
 
-            auto cell = std::make_shared<FlexItem>(padded_item);
-
             if (w->props.use_max_extent_delegate) {
                 // Max-extent: set basis to max extent, let Anu distribute
-                cell->flexBasis(StyleValue::point(w->props.max_delegate.max_cross_axis_extent));
-                cell->flexGrow(1.0f);
-                cell->flexShrink(0.0f);
-                if (w->props.max_delegate.main_axis_extent.has_value()) {
+                float h_val = w->props.max_delegate.main_axis_extent.has_value()
+                              ? *w->props.max_delegate.main_axis_extent : 0.0f;
+                bool has_h = w->props.max_delegate.main_axis_extent.has_value();
+
+                FlexItemProps cell_props;
+                cell_props.flex_basis = StyleValue::point(w->props.max_delegate.max_cross_axis_extent);
+                cell_props.flex_grow = 1.0f;
+                cell_props.flex_shrink = 0.0f;
+                if (has_h) {
                     if (w->props.direction == Axis::Vertical)
-                        cell->height(StyleValue::point(*w->props.max_delegate.main_axis_extent));
+                        cell_props.height = StyleValue::point(h_val);
                     else
-                        cell->width(StyleValue::point(*w->props.max_delegate.main_axis_extent));
+                        cell_props.width = StyleValue::point(h_val);
                 } else {
-                    // Use aspect ratio
-                    cell->aspectRatio(w->props.max_delegate.child_aspect_ratio);
+                    cell_props.aspect_ratio = w->props.max_delegate.child_aspect_ratio;
                 }
+                cell_props.child = padded_item;
+                cells.push_back(flexItem(cell_props));
             } else {
                 // Fixed count: basis = 100% / count (as percent), Anu does the rest
                 float basis_pct = 100.0f / static_cast<float>(w->props.fixed_delegate.cross_axis_count);
-                cell->flexBasis(StyleValue::percent(basis_pct));
-                cell->flexGrow(0.0f);
-                cell->flexShrink(0.0f);
-                if (w->props.fixed_delegate.main_axis_extent.has_value()) {
+                bool has_h = w->props.fixed_delegate.main_axis_extent.has_value();
+                float h_val = has_h ? *w->props.fixed_delegate.main_axis_extent : 0.0f;
+
+                FlexItemProps cell_props;
+                cell_props.flex_basis = StyleValue::percent(basis_pct);
+                cell_props.flex_grow = 0.0f;
+                cell_props.flex_shrink = 0.0f;
+                if (has_h) {
                     if (w->props.direction == Axis::Vertical)
-                        cell->height(StyleValue::point(*w->props.fixed_delegate.main_axis_extent));
+                        cell_props.height = StyleValue::point(h_val);
                     else
-                        cell->width(StyleValue::point(*w->props.fixed_delegate.main_axis_extent));
+                        cell_props.width = StyleValue::point(h_val);
                 } else {
-                    cell->aspectRatio(w->props.fixed_delegate.child_aspect_ratio);
+                    cell_props.aspect_ratio = w->props.fixed_delegate.child_aspect_ratio;
                 }
+                cell_props.child = padded_item;
+                cells.push_back(flexItem(cell_props));
             }
-            cells.push_back(cell);
         }
 
         // ── Build wrap flexbox ─────────────────────────────────
-        auto grid = std::make_shared<Wrap>(std::move(cells));
-
+        WidgetPtr grid;
         if (w->props.direction == Axis::Vertical) {
-            grid->width(StyleValue::percent(100.0f));
-            grid->flexShrink(0.0f);
+            grid = wrap({
+                .flex_shrink = 0.0f,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(cells),
+            });
         } else {
-            grid->flexDirection(FlexDirection::Column);
-            grid->flexWrap(FlexWrap::Wrap);
-            grid->height(StyleValue::percent(100.0f));
-            grid->flexShrink(0.0f);
+            grid = wrap({
+                .flex_direction = FlexDirection::Column,
+                .flex_wrap = FlexWrap::Wrap,
+                .flex_shrink = 0.0f,
+                .height = StyleValue::percent(100.0f),
+                .children = std::move(cells),
+            });
         }
 
         // Apply padding

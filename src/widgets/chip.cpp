@@ -118,8 +118,11 @@ public:
             items.push_back(opts.trailing);
         }
 
-        auto chip_row = row(items);
-        chip_row->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
+        auto chip_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = std::move(items),
+        });
 
         auto chip_box = container(chip_row);
         chip_box->paddingSymmetric(v_pad, h_pad).borderRadius(border_radius);
@@ -145,7 +148,9 @@ public:
 
         return gestureDetector({
             .child = chip_box,
-            .cursor_type = SystemCursor::Pointer,
+            .cursor_type = (opts.type == ChipType::Action || opts.type == ChipType::Filter || opts.type == ChipType::Choice)
+                               ? SystemCursor::Pointer
+                               : SystemCursor::Default,
             .on_tap_up = [this, opts](const TapUpDetails&) {
                 if (opts.type == ChipType::Filter) {
                     is_selected_ = !is_selected_;
@@ -181,9 +186,11 @@ public:
             if (c) chip_items.push_back(c);
         }
 
-        auto wr = wrap(chip_items);
-        wr->gap(StyleValue::point(w->options.gap)).alignItems(Align::Center);
-        return wr;
+        return wrap({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(w->options.gap),
+            .children = std::move(chip_items),
+        });
     }
 };
 

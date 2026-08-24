@@ -135,8 +135,12 @@ public:
         });
         left_items.push_back(tit);
 
-        auto left_row = row(left_items);
-        left_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center).flex(1.0f);
+        auto left_row = row({
+            .align_items = Align::Center,
+            .flex = 1.0f,
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(left_items),
+        });
 
         // Right: Window Action Buttons (— ◻ ✕)
         auto makeActionBtn = [](std::string sym, Color fg, std::function<void()> cb) -> WidgetPtr {
@@ -180,14 +184,18 @@ public:
             }));
         }
 
-        auto right_row = row(right_items);
-        right_row->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
+        auto right_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = std::move(right_items),
+        });
 
-        std::vector<WidgetPtr> h_elements = {left_row, right_row};
-        auto h_row = row(h_elements);
-        h_row->justifyContent(Justify::SpaceBetween)
-             .alignItems(Align::Center)
-             .width(StyleValue::percent(100.0f));
+        auto h_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = { left_row, right_row },
+        });
 
         auto header_box = container(h_row);
         header_box->color(opts.header_bg_color)
@@ -270,16 +278,21 @@ public:
                     },
                 });
 
-                auto grip_row = row(std::vector<WidgetPtr>{grip_gd});
-                grip_row->justifyContent(Justify::End).width(StyleValue::percent(100.0f));
+                auto grip_row = row({
+                    .justify_content = Justify::End,
+                    .width = StyleValue::percent(100.0f),
+                    .children = { grip_gd },
+                });
 
                 window_col_items.push_back(body_container);
                 window_col_items.push_back(grip_row);
             }
 
-            auto window_col = column(window_col_items);
-            window_col->width(StyleValue::percent(100.0f))
-                      .height(StyleValue::percent(100.0f));
+            auto window_col = column({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = std::move(window_col_items),
+            });
 
             auto window_card = container(window_col);
             window_card->color(opts.background_color)

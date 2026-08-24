@@ -841,16 +841,17 @@ public:
                 .font_size = 11.0f,
             });
 
-            std::vector<WidgetPtr> footer_items = {pos_txt, count_txt};
-            auto footer_row = row(footer_items);
-            footer_row->justifyContent(Justify::SpaceBetween);
+            auto footer_row = row({
+                .justify_content = Justify::SpaceBetween,
+                .children = {pos_txt, count_txt},
+            });
 
             auto footer_box = container(footer_row);
             footer_box->paddingSymmetric(4.0f, 6.0f);
 
-            std::vector<WidgetPtr> all_items = {detector, footer_box};
-            auto res_col = column(all_items);
-            return res_col;
+            return column({
+                .children = {detector, footer_box},
+            });
         }
 
         return detector;

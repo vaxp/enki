@@ -148,7 +148,9 @@ void test_container_constraints() {
         c->width(320_px);
         c->aspectRatio(16.0f / 9.0f);
 
-        auto root = column({c});
+        auto root = column({
+            .children = { c }
+        });
 
         auto el = root->createElement();
         el->mount(nullptr, 0);
@@ -167,8 +169,10 @@ void test_container_constraints() {
         c->minWidth(120_px);
         c->minHeight(100_px);
 
-        auto root = row({c});
-        root->alignItems(Align::Start);
+        auto root = row({
+            .align_items = Align::Start,
+            .children = { c }
+        });
         auto el = root->createElement();
         el->mount(nullptr, 0);
         auto* root_ro = el->findRenderObject();
@@ -301,8 +305,11 @@ void test_property_leakage_and_reconciliation() {
       .padding(StyleInsets::all(15_px))
       .color(0xFFFF0000);
 
-    auto parent = column({ c1 });
-    parent->width(500_px).height(500_px);
+    auto parent = column({
+        .width = 500_px,
+        .height = 500_px,
+        .children = { c1 }
+    });
 
     auto el = parent->createElement();
     el->mount(nullptr, 0);
@@ -323,8 +330,11 @@ void test_property_leakage_and_reconciliation() {
     });
     c2->color(0xFF00FF00); // Clean container, defaults should apply
 
-    auto parent2 = column({ c2 });
-    parent2->width(500_px).height(500_px);
+    auto parent2 = column({
+        .width = 500_px,
+        .height = 500_px,
+        .children = { c2 }
+    });
 
     el->update(parent2);
     rf->layout(500.0f, 500.0f);

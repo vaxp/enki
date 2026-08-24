@@ -217,15 +217,20 @@ public:
                    .height(4.0f);
                 dots.push_back(dot);
             }
-            auto dot_row = row(dots);
-            dot_row->gap(StyleValue::point(2.0f)).justifyContent(Justify::Center);
+            auto dot_row = row({
+                .justify_content = Justify::Center,
+                .gap = StyleValue::point(2.0f),
+                .children = std::move(dots),
+            });
             cell_col_items.push_back(dot_row);
         }
 
-        auto cell_col = column(cell_col_items);
-        cell_col->justifyContent(Justify::Center)
-                .alignItems(Align::Center)
-                .gap(StyleValue::point(2.0f));
+        auto cell_col = column({
+            .justify_content = Justify::Center,
+            .align_items = Align::Center,
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(cell_col_items),
+        });
 
         auto cell_box = container(cell_col);
         cell_box->width(42.0f).height(40.0f);
@@ -293,15 +298,18 @@ public:
         });
         auto btn_next = makeNavBtn("▶", [this] { nextMonth(); });
 
-        std::vector<WidgetPtr> nav_items = {btn_prev, btn_today, btn_next};
-        auto nav_row = row(nav_items);
-        nav_row->gap(StyleValue::point(6.0f)).alignItems(Align::Center);
+        auto nav_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(6.0f),
+            .children = {btn_prev, btn_today, btn_next},
+        });
 
-        std::vector<WidgetPtr> header_items = {month_txt, nav_row};
-        auto header_row = row(header_items);
-        header_row->justifyContent(Justify::SpaceBetween)
-                  .alignItems(Align::Center)
-                  .width(StyleValue::percent(100.0f));
+        auto header_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Center,
+            .width = StyleValue::percent(100.0f),
+            .children = {month_txt, nav_row},
+        });
 
         // ── 2. Weekday Header Row ─────────────────────────────────────
         static const std::array<const char*, 7> weekdays = {"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
@@ -315,17 +323,22 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            std::vector<WidgetPtr> t_items = {t};
-            auto tc = column(t_items);
-            tc->justifyContent(Justify::Center).alignItems(Align::Center);
+            auto tc = column({
+                .justify_content = Justify::Center,
+                .align_items = Align::Center,
+                .children = {t},
+            });
 
             auto tb = container(tc);
             tb->width(42.0f).height(24.0f);
             weekday_items.push_back(tb);
         }
 
-        auto weekday_row = row(weekday_items);
-        weekday_row->justifyContent(Justify::SpaceBetween).width(StyleValue::percent(100.0f));
+        auto weekday_row = row({
+            .justify_content = Justify::SpaceBetween,
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(weekday_items),
+        });
 
         // ── 3. 7x6 Monthly Day Matrix ─────────────────────────────────
         int days_in_cur_month = getDaysInMonth(view_year_, view_month_);
@@ -367,18 +380,26 @@ public:
                 }
             }
 
-            auto w_row = row(week_cells);
-            w_row->justifyContent(Justify::SpaceBetween).width(StyleValue::percent(100.0f));
+            auto w_row = row({
+                .justify_content = Justify::SpaceBetween,
+                .width = StyleValue::percent(100.0f),
+                .children = std::move(week_cells),
+            });
             grid_rows.push_back(w_row);
         }
 
-        auto grid_col = column(grid_rows);
-        grid_col->gap(StyleValue::point(4.0f)).width(StyleValue::percent(100.0f));
+        auto grid_col = column({
+            .gap = StyleValue::point(4.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(grid_rows),
+        });
 
         // ── 4. Assemble Calendar Container ────────────────────────────
-        std::vector<WidgetPtr> all_cal_items = {header_row, weekday_row, grid_col};
-        auto cal_col = column(all_cal_items);
-        cal_col->gap(StyleValue::point(14.0f)).width(StyleValue::percent(100.0f));
+        auto cal_col = column({
+            .gap = StyleValue::point(14.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = {header_row, weekday_row, grid_col},
+        });
 
         auto cal_card = container(cal_col);
         cal_card->color(opts.background_color)

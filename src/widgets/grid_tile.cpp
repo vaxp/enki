@@ -30,15 +30,19 @@ WidgetPtr GridTileBarWidget::build(BuildContext& ctx) {
     if (text_children.size() == 1) {
         text_col = text_children[0];
     } else if (!text_children.empty()) {
-        auto col = std::make_shared<Column>(std::move(text_children));
-        col->gap(StyleValue::point(2.0f));
-        text_col = col;
+        text_col = column({
+            .gap = StyleValue::point(2.0f),
+            .children = std::move(text_children),
+        });
     }
 
     if (text_col) {
-        auto expanded = std::make_shared<FlexItem>(text_col);
-        expanded->flexGrow(1.0f).flexShrink(1.0f);
-        row_children.push_back(expanded);
+        auto expanded_item = flexItem({
+            .flex_grow = 1.0f,
+            .flex_shrink = 1.0f,
+            .child = text_col,
+        });
+        row_children.push_back(expanded_item);
     }
 
     if (props.trailing_widget) {
@@ -49,9 +53,11 @@ WidgetPtr GridTileBarWidget::build(BuildContext& ctx) {
         row_children.push_back(props.trailing_widget);
     }
 
-    auto content_row = std::make_shared<Row>(std::move(row_children));
-    content_row->alignItems(Align::Center);
-    content_row->width(StyleValue::percent(100.0f));
+    auto content_row = row({
+        .align_items = Align::Center,
+        .width = StyleValue::percent(100.0f),
+        .children = std::move(row_children),
+    });
 
     auto bar = container(content_row);
     bar->color(props.background_color);

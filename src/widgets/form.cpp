@@ -132,8 +132,11 @@ public:
                 lbl_items.push_back(ast);
             }
 
-            auto lbl_row = row(lbl_items);
-            lbl_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+            auto lbl_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(4.0f),
+                .children = std::move(lbl_items),
+            });
             col_items.push_back(lbl_row);
         }
 
@@ -181,9 +184,11 @@ public:
                 .font_size = 11.5f,
             });
 
-            std::vector<WidgetPtr> err_items = {err_icon, err_msg};
-            auto err_row = row(err_items);
-            err_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+            auto err_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(4.0f),
+                .children = {err_icon, err_msg},
+            });
             col_items.push_back(err_row);
         } else if (!opts.helper_text.empty()) {
             auto hlp = text({
@@ -194,9 +199,10 @@ public:
             col_items.push_back(hlp);
         }
 
-        auto field_col = column(col_items);
-        field_col->gap(StyleValue::point(5.0f));
-        return field_col;
+        return column({
+            .gap = StyleValue::point(5.0f),
+            .children = std::move(col_items),
+        });
     }
 };
 
@@ -303,8 +309,11 @@ public:
             row_items.push_back(ast);
         }
 
-        auto cb_row = row(row_items);
-        cb_row->gap(StyleValue::point(8.0f)).alignItems(Align::Center);
+        auto cb_row = row({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(8.0f),
+            .children = std::move(row_items),
+        });
 
         std::vector<WidgetPtr> col_items = {cb_row};
 
@@ -320,15 +329,18 @@ public:
                 .font_size = 11.5f,
             });
 
-            std::vector<WidgetPtr> err_items = {err_icon, err_msg};
-            auto err_row = row(err_items);
-            err_row->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+            auto err_row = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(4.0f),
+                .children = {err_icon, err_msg},
+            });
             col_items.push_back(err_row);
         }
 
-        auto main_col = column(col_items);
-        main_col->gap(StyleValue::point(4.0f));
-        return main_col;
+        return column({
+            .gap = StyleValue::point(4.0f),
+            .children = std::move(col_items),
+        });
     }
 };
 

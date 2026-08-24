@@ -250,8 +250,11 @@ public:
             text_items.push_back(m_txt);
         }
 
-        auto text_col = column(text_items);
-        text_col->gap(StyleValue::point(4.0f)).alignItems(Align::Center);
+        auto text_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(4.0f),
+            .children = std::move(text_items),
+        });
         card_elements.push_back(text_col);
 
         // 3. Optional Cancel Button
@@ -281,10 +284,12 @@ public:
             card_elements.push_back(c_btn);
         }
 
-        auto card_col = column(card_elements);
-        card_col->gap(StyleValue::point(14.0f))
-                .alignItems(Align::Center)
-                .width(StyleValue::percent(100.0f));
+        auto card_col = column({
+            .align_items = Align::Center,
+            .gap = StyleValue::point(14.0f),
+            .width = StyleValue::percent(100.0f),
+            .children = std::move(card_elements),
+        });
 
         auto card_box = container(card_col);
         card_box->color(opts.background_color)

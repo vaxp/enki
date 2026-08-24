@@ -54,11 +54,14 @@ void test_row_basic() {
     std::cout << "Testing Basic Row Layout..." << std::endl;
 
     auto rowWidget = row({
-        fixedBox(100.0f, 50.0f),
-        fixedBox(150.0f, 50.0f),
-        fixedBox(50.0f, 50.0f)
+        .width = 400_px,
+        .height = 100_px,
+        .children = {
+            fixedBox(100.0f, 50.0f),
+            fixedBox(150.0f, 50.0f),
+            fixedBox(50.0f, 50.0f)
+        }
     });
-    rowWidget->width(400_px).height(100_px);
 
     auto element = rowWidget->createElement();
     element->mount(nullptr, 0);
@@ -97,11 +100,14 @@ void test_column_basic() {
     std::cout << "Testing Basic Column Layout..." << std::endl;
 
     auto colWidget = column({
-        fixedBox(100.0f, 40.0f),
-        fixedBox(100.0f, 60.0f),
-        fixedBox(100.0f, 100.0f)
+        .width = 200_px,
+        .height = 300_px,
+        .children = {
+            fixedBox(100.0f, 40.0f),
+            fixedBox(100.0f, 60.0f),
+            fixedBox(100.0f, 100.0f)
+        }
     });
-    colWidget->width(200_px).height(300_px);
 
     auto element = colWidget->createElement();
     element->mount(nullptr, 0);
@@ -141,11 +147,14 @@ void test_flex_grow() {
     // Child 0 gets 1/3 * 240 = 80px.
     // Child 1 gets 2/3 * 240 = 160px.
     auto rowWidget = row({
-        expanded(fixedBox(0.0f, 50.0f), 1.0f),
-        expanded(fixedBox(0.0f, 50.0f), 2.0f),
-        fixedBox(60.0f, 50.0f)
+        .width = 300_px,
+        .height = 50_px,
+        .children = {
+            expanded(fixedBox(0.0f, 50.0f), 1.0f),
+            expanded(fixedBox(0.0f, 50.0f), 2.0f),
+            fixedBox(60.0f, 50.0f)
+        }
     });
-    rowWidget->width(300_px).height(50_px);
 
     auto element = rowWidget->createElement();
     element->mount(nullptr, 0);
@@ -179,11 +188,16 @@ void test_justify_content() {
     // Row width 400px, 2 children of 100px each. Remaining = 200px.
     // SpaceBetween -> child0 at x=0, child1 at x=300
     {
-        auto r = row(Justify::SpaceBetween, Align::Start, {
-            fixedBox(100.0f, 50.0f),
-            fixedBox(100.0f, 50.0f)
+        auto r = row({
+            .justify_content = Justify::SpaceBetween,
+            .align_items = Align::Start,
+            .width = 400_px,
+            .height = 50_px,
+            .children = {
+                fixedBox(100.0f, 50.0f),
+                fixedBox(100.0f, 50.0f)
+            }
         });
-        r->width(400_px).height(50_px);
 
         auto el = r->createElement();
         el->mount(nullptr, 0);
@@ -196,11 +210,16 @@ void test_justify_content() {
 
     // Center -> (400 - 200)/2 = 100px offset. child0 at x=100, child1 at x=200
     {
-        auto r = row(Justify::Center, Align::Start, {
-            fixedBox(100.0f, 50.0f),
-            fixedBox(100.0f, 50.0f)
+        auto r = row({
+            .justify_content = Justify::Center,
+            .align_items = Align::Start,
+            .width = 400_px,
+            .height = 50_px,
+            .children = {
+                fixedBox(100.0f, 50.0f),
+                fixedBox(100.0f, 50.0f)
+            }
         });
-        r->width(400_px).height(50_px);
 
         auto el = r->createElement();
         el->mount(nullptr, 0);
@@ -213,11 +232,16 @@ void test_justify_content() {
 
     // SpaceEvenly -> 3 gaps of 200/3 = 66.67px. child0 at 66.67, child1 at 66.67+100+66.67 = 233.33
     {
-        auto r = row(Justify::SpaceEvenly, Align::Start, {
-            fixedBox(100.0f, 50.0f),
-            fixedBox(100.0f, 50.0f)
+        auto r = row({
+            .justify_content = Justify::SpaceEvenly,
+            .align_items = Align::Start,
+            .width = 400_px,
+            .height = 50_px,
+            .children = {
+                fixedBox(100.0f, 50.0f),
+                fixedBox(100.0f, 50.0f)
+            }
         });
-        r->width(400_px).height(50_px);
 
         auto el = r->createElement();
         el->mount(nullptr, 0);
@@ -240,14 +264,19 @@ void test_align_items_and_self() {
 
     // Container height 200px. AlignItems: Center (y = (200-50)/2 = 75px).
     // Child 1 overrides with alignSelf: FlexEnd (y = 200-50 = 150px).
-    FlexboxStyle itemStyle;
-    itemStyle.align_self = Align::End;
-
-    auto r = row(Justify::Start, Align::Center, {
-        fixedBox(100.0f, 50.0f),
-        flexItem(itemStyle, fixedBox(100.0f, 50.0f))
+    auto r = row({
+        .justify_content = Justify::Start,
+        .align_items = Align::Center,
+        .width = 300_px,
+        .height = 200_px,
+        .children = {
+            fixedBox(100.0f, 50.0f),
+            flexItem({
+                .align_self = Align::End,
+                .child = fixedBox(100.0f, 50.0f),
+            })
+        }
     });
-    r->width(300_px).height(200_px);
 
     auto el = r->createElement();
     el->mount(nullptr, 0);
@@ -269,11 +298,15 @@ void test_gaps() {
 
     // Row with 20px gap
     auto r = row({
-        fixedBox(50.0f, 50.0f),
-        fixedBox(50.0f, 50.0f),
-        fixedBox(50.0f, 50.0f)
+        .gap = 20_px,
+        .width = 300_px,
+        .height = 100_px,
+        .children = {
+            fixedBox(50.0f, 50.0f),
+            fixedBox(50.0f, 50.0f),
+            fixedBox(50.0f, 50.0f)
+        }
     });
-    r->width(300_px).height(100_px).gap(20_px);
 
     auto el = r->createElement();
     el->mount(nullptr, 0);
@@ -295,9 +328,11 @@ void test_insets() {
     std::cout << "Testing Padding and Margin..." << std::endl;
 
     auto r = row({
-        fixedBox(50.0f, 50.0f)
+        .width = 200_px,
+        .height = 200_px,
+        .padding = StyleInsets::all(15_px),
+        .children = { fixedBox(50.0f, 50.0f) }
     });
-    r->width(200_px).height(200_px).padding(StyleInsets::all(15_px));
 
     auto el = r->createElement();
     el->mount(nullptr, 0);
@@ -319,14 +354,17 @@ void test_percentage_and_aspect_ratio() {
 
     // Child width = 50% of 400 = 200px
     // AspectRatio = 2.0 (width/height = 2) -> height = 100px
-    FlexboxStyle childStyle;
-    childStyle.width = 50_pct;
-    childStyle.aspect_ratio = 2.0f;
-
     auto r = row({
-        flexItem(childStyle, fixedBox(0, 0))
+        .width = 400_px,
+        .height = 300_px,
+        .children = {
+            flexItem({
+                .width = 50_pct,
+                .aspect_ratio = 2.0f,
+                .child = fixedBox(0, 0),
+            })
+        }
     });
-    r->width(400_px).height(300_px);
 
     auto el = r->createElement();
     el->mount(nullptr, 0);
@@ -350,11 +388,15 @@ void test_flex_wrap() {
     // Child 0 & 1 take 200px on row 0.
     // Child 2 wraps to row 1 (y=50px).
     auto r = row({
-        fixedBox(100.0f, 50.0f),
-        fixedBox(100.0f, 50.0f),
-        fixedBox(100.0f, 50.0f)
+        .flex_wrap = FlexWrap::Wrap,
+        .width = 250_px,
+        .height = 200_px,
+        .children = {
+            fixedBox(100.0f, 50.0f),
+            fixedBox(100.0f, 50.0f),
+            fixedBox(100.0f, 50.0f)
+        }
     });
-    r->width(250_px).height(200_px).flexWrap(FlexWrap::Wrap);
 
     auto el = r->createElement();
     el->mount(nullptr, 0);
@@ -383,10 +425,14 @@ void test_rtl_direction() {
     // In RTL, items start from the right edge.
     // Container width 300px. Child 0 (100px) starts at x = 200px. Child 1 (50px) at x = 150px.
     auto r = row({
-        fixedBox(100.0f, 50.0f),
-        fixedBox(50.0f, 50.0f)
+        .direction = Direction::RTL,
+        .width = 300_px,
+        .height = 100_px,
+        .children = {
+            fixedBox(100.0f, 50.0f),
+            fixedBox(50.0f, 50.0f)
+        }
     });
-    r->width(300_px).height(100_px).direction(Direction::RTL);
 
     auto el = r->createElement();
     el->mount(nullptr, 0);
@@ -410,19 +456,26 @@ void test_nested_flexbox() {
     // Row 1: height 100, containing 2 equal expanded items (200px each)
     // Row 2: height 300, containing 1 fixed item (100px) + 1 expanded (300px)
     auto r1 = row({
-        expanded(fixedBox(0.0f, 100.0f), 1.0f),
-        expanded(fixedBox(0.0f, 100.0f), 1.0f)
+        .height = 100_px,
+        .children = {
+            expanded(fixedBox(0.0f, 100.0f), 1.0f),
+            expanded(fixedBox(0.0f, 100.0f), 1.0f)
+        }
     });
-    r1->height(100_px);
 
     auto r2 = row({
-        fixedBox(100.0f, 300.0f),
-        expanded(fixedBox(0.0f, 300.0f), 1.0f)
+        .height = 300_px,
+        .children = {
+            fixedBox(100.0f, 300.0f),
+            expanded(fixedBox(0.0f, 300.0f), 1.0f)
+        }
     });
-    r2->height(300_px);
 
-    auto outer = column({ r1, r2 });
-    outer->width(400_px).height(400_px);
+    auto outer = column({
+        .width = 400_px,
+        .height = 400_px,
+        .children = { r1, r2 }
+    });
 
     auto el = outer->createElement();
     el->mount(nullptr, 0);
