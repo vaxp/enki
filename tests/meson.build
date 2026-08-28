@@ -248,3 +248,11 @@ test('test_paint_effects',
     dependencies : test_deps,
   ),
 )
+
+test('test_motion',
+  executable('test_motion',
+    'widgets/test_motion.cpp',
+    dependencies : test_deps,
+  ),
+)
+

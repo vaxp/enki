@@ -32,13 +32,13 @@
 
 ## 13. Animation & Motion (7 widgets)
 
-- [ ] **AnimatedOpacity** — Smoothly interpolates opacity via a Tween<double> animation
-- [ ] **AnimatedContainer** — Animates changes to size, color, padding, margin automatically
-- [ ] **AnimatedScale** — Smooth scale transform animation driven by a target scale value
-- [ ] **AnimatedRotation** — Smooth rotation transform animation driven by a target angle
-- [ ] **AnimatedSlide** — Smooth offset translation animation driven by a target Offset
-- [ ] **AnimatedSwitcher** — Cross-fades / transitions between two child widget trees
-- [ ] **SlideTransition** — Low-level positional slide driven by an explicit Animation<Offset>
+- [x] **AnimatedOpacity** — Smoothly interpolates opacity via a Tween<double> animation
+- [x] **AnimatedContainer** — Animates changes to size, color, padding, margin automatically
+- [x] **AnimatedScale** — Smooth scale transform animation driven by a target scale value
+- [x] **AnimatedRotation** — Smooth rotation transform animation driven by a target angle
+- [x] **AnimatedSlide** — Smooth offset translation animation driven by a target Offset
+- [x] **AnimatedSwitcher** — Cross-fades / transitions between two child widget trees
+- [x] **SlideTransition** — Low-level positional slide driven by an explicit Animation<Offset>
 
 ---
 
