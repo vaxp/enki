@@ -263,4 +263,12 @@ test('test_feedback_status',
   ),
 )
 
+test('test_utility',
+  executable('test_utility',
+    'widgets/test_utility.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+
 

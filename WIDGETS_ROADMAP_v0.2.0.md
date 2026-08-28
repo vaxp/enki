@@ -101,8 +101,8 @@
 
 ## 20. Utility / Behavioral (2 widgets)
 
-- [ ] **Visibility** — Toggles child visibility (show/hide) without removing from the widget tree
-- [ ] **IgnorePointer** — Passes all pointer events through to widgets underneath it
+- [x] **Visibility** — Toggles child visibility (show/hide) without removing from the widget tree
+- [x] **IgnorePointer** — Passes all pointer events through to widgets underneath it
 
 ---
 
