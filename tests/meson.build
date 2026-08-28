@@ -256,3 +256,11 @@ test('test_motion',
   ),
 )
 
+test('test_feedback_status',
+  executable('test_feedback_status',
+    'widgets/test_feedback_status.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+

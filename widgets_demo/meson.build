@@ -83,4 +83,6 @@ subdir('progress_demo')
 subdir('spinner_demo')
 subdir('paint_effects_demo')
 subdir('motion_demo')
+subdir('feedback_status_demo')
+
 

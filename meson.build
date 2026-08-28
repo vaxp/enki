@@ -326,6 +326,7 @@ enki_sources = files(
   'src/widgets/clip.cpp',
   'src/widgets/paint_effects.cpp',
   'src/widgets/motion.cpp',
+  'src/widgets/feedback_status.cpp',
 
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',
