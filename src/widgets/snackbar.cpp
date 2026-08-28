@@ -128,8 +128,10 @@ public:
                 .font_size = 16.0f,
             });
 
-            auto ic_box = container(ic_txt);
-            ic_box->paddingAll(4.0f);
+            auto ic_box = container({
+                .padding = StyleInsets::all(4.0f),
+                .child = ic_txt,
+            });
             left_items.push_back(ic_box);
         }
 
@@ -180,10 +182,12 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto act_box = container(act_txt);
-            act_box->color(0x2238BDF8)
-                   .borderRadius(4.0f)
-                   .paddingSymmetric(4.0f, 10.0f);
+            auto act_box = container({
+                .color = 0x2238BDF8,
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(4.0f, 10.0f),
+                .child = act_txt,
+            });
 
             auto act_btn = gestureDetector({
                 .child = act_box,
@@ -204,8 +208,10 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto cls_box = container(cls_txt);
-            cls_box->paddingAll(4.0f);
+            auto cls_box = container({
+                .padding = StyleInsets::all(4.0f),
+                .child = cls_txt,
+            });
 
             auto cls_btn = gestureDetector({
                 .child = cls_box,
@@ -239,17 +245,20 @@ public:
                 progress_ratio = static_cast<float>(std::clamp(1.0 - (elapsed_sec_ / display_duration_sec_), 0.0, 1.0));
             }
 
-            auto bar_fill = container();
-            bar_fill->color(opts.progress_bar_col)
-                    .height(2.5f)
-                    .width(StyleValue::percent(progress_ratio * 100.0f))
-                    .borderRadius(1.0f);
+            auto bar_fill = container({
+                .color = opts.progress_bar_col,
+                .border_radius = BorderRadius::circular(1.0f),
+                .width = StyleValue::percent(progress_ratio * 100.0f),
+                .height = StyleValue::point(2.5f),
+            });
 
-            auto bar_track = container(bar_fill);
-            bar_track->color(0x33334155)
-                     .height(2.5f)
-                     .width(StyleValue::percent(100.0f))
-                     .margin(EdgeInsets(6.0f, 0.0f, 0.0f, 0.0f));
+            auto bar_track = container({
+                .color = 0x33334155,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(2.5f),
+                .margin = StyleInsets::only(6.0f, 0.0f, 0.0f, 0.0f),
+                .child = bar_fill,
+            });
 
             card_elements.push_back(bar_track);
         }
@@ -259,13 +268,15 @@ public:
             .children = std::move(card_elements),
         });
 
-        auto card_box = container(card_col);
-        card_box->color(opts.background_color)
-                .border(opts.border_color, 1.0f)
-                .borderRadius(opts.border_radius)
-                .paddingAll(14.0f)
-                .width(opts.width)
-                .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f));
+        auto card_box = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f)},
+            .width = StyleValue::point(opts.width),
+            .padding = StyleInsets::all(14.0f),
+            .child = card_col,
+        });
 
         // Hover Detector for Pause-on-Hover
         return gestureDetector({
@@ -287,14 +298,17 @@ public:
         // ── 1. Invariant Page Body (100% dimensions) ──────────────────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->width(StyleValue::percent(100.0f))
-              .height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->body,
+            });
             body_widget = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+            });
             body_widget = Positioned::fill(empty);
         }
 

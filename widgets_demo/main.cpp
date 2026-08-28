@@ -171,7 +171,7 @@ inline WidgetPtr button(std::string text, bool active, std::function<void()> onC
 // Reusable UI Card Container Helper
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Container> sectionCard(std::string title, std::string subtitle, WidgetPtr content, Key key = Key::none()) {
+inline WidgetPtr sectionCard(std::string title, std::string subtitle, WidgetPtr content, Key key = Key::none()) {
     auto titleLabel = label(std::move(title), 14.0f, 0xFFF1F5F9, true);
     auto subLabel = label(std::move(subtitle), 11.0f, 0xFF64748B, false);
 
@@ -183,25 +183,32 @@ inline std::shared_ptr<Container> sectionCard(std::string title, std::string sub
         }
     });
 
-    auto card = container(std::move(key), cardCol);
-    card->color(0x301E293B)
-        .borderRadius(14.0f)
-        .border(0x25FFFFFF, 1.0f)
-        .paddingAll(16.0f)
-        .margin(EdgeInsets::only(0, 0, 16.0f, 0))
-        .flexGrow(1.0f);
+    auto card = container({
+        .color = 0x301E293B,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(0x25FFFFFF, 1.0f),
+        .box_shadow = {BoxShadow(0x30000000, {0, 4}, 10.0f)},
+        .padding = StyleInsets::all(16.0f),
+        .margin = StyleInsets::only(0, 0, 16.0f, 0),
+        .flex_grow = 1.0f,
+        .child = cardCol,
+        .key = std::move(key),
+    });
 
     return card;
 }
 
-inline std::shared_ptr<Container> colorBox(std::string text, float w, float h, Color c, float radius = 8.0f) {
+inline WidgetPtr colorBox(std::string text, float w, float h, Color c, float radius = 8.0f) {
     auto textLabel = label(std::move(text), 11.0f, 0xFFFFFFFF, true);
-    auto box = container(textLabel);
-    box->size(w, h)
-       .align(Alignment::Center)
-       .color(c)
-       .borderRadius(radius)
-       .shadow(0x30000000, {0, 2}, 6, 0);
+    auto box = container({
+        .color = c,
+        .border_radius = BorderRadius::circular(radius),
+        .box_shadow = {BoxShadow(0x30000000, {0, 2}, 6.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(w),
+        .height = StyleValue::point(h),
+        .child = textLabel,
+    });
     return box;
 }
 
@@ -250,8 +257,12 @@ inline WidgetPtr buildFlexboxTestView() {
             }
         });
 
-        auto c = container(r);
-        c->color(0x200F172A).borderRadius(6.0f).paddingSymmetric(0, 6.0f);
+        auto c = container({
+            .color = 0x200F172A,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(0, 6.0f),
+            .child = r,
+        });
 
         return row({
             .children = {
@@ -274,15 +285,36 @@ inline WidgetPtr buildFlexboxTestView() {
     );
 
     // 3. Flex Grow & Proportions (1:2:1)
-    auto growBox1 = colorBox("Grow: 1", 0, 36.0f, 0xFF0EA5E9);
-    growBox1->flexGrow(1.0f);
+    auto growBox1 = container({
+        .color = 0xFF0EA5E9,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x30000000, {0, 2}, 6.0f)},
+        .align = Alignment::Center,
+        .height = StyleValue::point(36.0f),
+        .flex_grow = 1.0f,
+        .child = label("Grow: 1", 11.0f, 0xFFFFFFFF, true),
+    });
 
-    auto growBox2 = colorBox("Grow: 2 (Double Width)", 0, 36.0f, 0xFF6366F1);
-    growBox2->flexGrow(2.0f);
-    growBox2->marginSymmetric(0, 8.0f);
+    auto growBox2 = container({
+        .color = 0xFF6366F1,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x30000000, {0, 2}, 6.0f)},
+        .align = Alignment::Center,
+        .height = StyleValue::point(36.0f),
+        .margin = StyleInsets::symmetric(0, 8.0f),
+        .flex_grow = 2.0f,
+        .child = label("Grow: 2 (Double Width)", 11.0f, 0xFFFFFFFF, true),
+    });
 
-    auto growBox3 = colorBox("Grow: 1", 0, 36.0f, 0xFF10B981);
-    growBox3->flexGrow(1.0f);
+    auto growBox3 = container({
+        .color = 0xFF10B981,
+        .border_radius = BorderRadius::circular(8.0f),
+        .box_shadow = {BoxShadow(0x30000000, {0, 2}, 6.0f)},
+        .align = Alignment::Center,
+        .height = StyleValue::point(36.0f),
+        .flex_grow = 1.0f,
+        .child = label("Grow: 1", 11.0f, 0xFFFFFFFF, true),
+    });
 
     auto growRow = row({
         .width = 400_px,
@@ -299,12 +331,14 @@ inline WidgetPtr buildFlexboxTestView() {
     std::vector<Color> tagColors = {0xFF2563EB, 0xFF7C3AED, 0xFFDB2777, 0xFFD97706, 0xFF059669, 0xFF0891B2, 0xFF4F46E5, 0xFFE11D48};
 
     for (size_t i = 0; i < tags.size(); ++i) {
-        auto chip = container(label(tags[i], 11.0f, 0xFFFFFFFF, true));
-        chip->paddingSymmetric(6.0f, 14.0f)
-            .align(Alignment::Center)
-            .color(tagColors[i % tagColors.size()])
-            .borderRadius(20.0f)
-            .margin(EdgeInsets::only(0, 8.0f, 8.0f, 0));
+        auto chip = container({
+            .color = tagColors[i % tagColors.size()],
+            .border_radius = BorderRadius::circular(20.0f),
+            .align = Alignment::Center,
+            .padding = StyleInsets::symmetric(6.0f, 14.0f),
+            .margin = StyleInsets::only(0, 8.0f, 8.0f, 0),
+            .child = label(tags[i], 11.0f, 0xFFFFFFFF, true),
+        });
         tagChips.push_back(chip);
     }
 
@@ -336,36 +370,48 @@ inline WidgetPtr buildFlexboxTestView() {
 
 inline WidgetPtr buildContainerTestView() {
     // 1. Modern Gradients
-    auto gradCard1 = container(label("Linear Neon", 12.0f, 0xFFFFFFFF, true));
-    gradCard1->size(110.0f, 75.0f)
-             .align(Alignment::Center)
-             .gradient(GradientConfig::linear({0xFFFF007A, 0xFF7928CA}))
-             .borderRadius(12.0f)
-             .shadow(0x50FF007A, {0, 6}, 14, 0);
+    auto gradCard1 = container({
+        .color = 0xFF7928CA,
+        .border_radius = BorderRadius::circular(12.0f),
+        .box_shadow = {BoxShadow(0x50FF007A, {0, 6}, 14.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(110.0f),
+        .height = StyleValue::point(75.0f),
+        .child = label("Linear Neon", 12.0f, 0xFFFFFFFF, true),
+    });
 
-    auto gradCard2 = container(label("Sunset Glow", 12.0f, 0xFFFFFFFF, true));
-    gradCard2->size(110.0f, 75.0f)
-             .align(Alignment::Center)
-             .gradient(GradientConfig::linear({0xFFFF4D4D, 0xFFF9CB28}))
-             .borderRadius(12.0f)
-             .shadow(0x50FF4D4D, {0, 6}, 14, 0)
-             .margin(EdgeInsets::only(0, 0, 0, 12.0f));
+    auto gradCard2 = container({
+        .color = 0xFFFF4D4D,
+        .border_radius = BorderRadius::circular(12.0f),
+        .box_shadow = {BoxShadow(0x50FF4D4D, {0, 6}, 14.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(110.0f),
+        .height = StyleValue::point(75.0f),
+        .margin = StyleInsets::only(0, 0, 0, 12.0f),
+        .child = label("Sunset Glow", 12.0f, 0xFFFFFFFF, true),
+    });
 
-    auto gradCard3 = container(label("Ocean Cyan", 12.0f, 0xFFFFFFFF, true));
-    gradCard3->size(110.0f, 75.0f)
-             .align(Alignment::Center)
-             .gradient(GradientConfig::linear({0xFF00C6FF, 0xFF0072FF}))
-             .borderRadius(12.0f)
-             .shadow(0x500072FF, {0, 6}, 14, 0)
-             .margin(EdgeInsets::only(0, 0, 0, 12.0f));
+    auto gradCard3 = container({
+        .color = 0xFF0072FF,
+        .border_radius = BorderRadius::circular(12.0f),
+        .box_shadow = {BoxShadow(0x500072FF, {0, 6}, 14.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(110.0f),
+        .height = StyleValue::point(75.0f),
+        .margin = StyleInsets::only(0, 0, 0, 12.0f),
+        .child = label("Ocean Cyan", 12.0f, 0xFFFFFFFF, true),
+    });
 
-    auto gradCard4 = container(label("Radial Glow", 12.0f, 0xFFFFFFFF, true));
-    gradCard4->size(110.0f, 75.0f)
-             .align(Alignment::Center)
-             .gradient(GradientConfig::radial({0xFF00FFCC, 0xFF0D47A1}))
-             .borderRadius(12.0f)
-             .shadow(0x5000FFCC, {0, 6}, 14, 0)
-             .margin(EdgeInsets::only(0, 0, 0, 12.0f));
+    auto gradCard4 = container({
+        .color = 0xFF0D47A1,
+        .border_radius = BorderRadius::circular(12.0f),
+        .box_shadow = {BoxShadow(0x5000FFCC, {0, 6}, 14.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(110.0f),
+        .height = StyleValue::point(75.0f),
+        .margin = StyleInsets::only(0, 0, 0, 12.0f),
+        .child = label("Radial Glow", 12.0f, 0xFFFFFFFF, true),
+    });
 
     auto card1 = sectionCard("1. Linear & Radial Gradients", "test_box_decoration (Custom Color Stops & Angles)",
         row({
@@ -374,31 +420,40 @@ inline WidgetPtr buildContainerTestView() {
     );
 
     // 2. Multi-Box Shadows
-    auto shadow1 = container(label("Soft Ambient", 11.0f, 0xFFE2E8F0));
-    shadow1->size(130.0f, 65.0f)
-           .align(Alignment::Center)
-           .color(0xFF1E293B)
-           .borderRadius(10.0f)
-           .border(0x30FFFFFF, 1.0f)
-           .shadow(0x40000000, {0, 4}, 12, 0);
+    auto shadow1 = container({
+        .color = 0xFF1E293B,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(0x30FFFFFF, 1.0f),
+        .box_shadow = {BoxShadow(0x40000000, {0, 4}, 12.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(130.0f),
+        .height = StyleValue::point(65.0f),
+        .child = label("Soft Ambient", 11.0f, 0xFFE2E8F0),
+    });
 
-    auto shadow2 = container(label("Deep Elevation", 11.0f, 0xFFE2E8F0));
-    shadow2->size(130.0f, 65.0f)
-           .align(Alignment::Center)
-           .color(0xFF1E293B)
-           .borderRadius(10.0f)
-           .border(0x30FFFFFF, 1.0f)
-           .shadow(0x70000000, {0, 10}, 24, 4)
-           .margin(EdgeInsets::only(0, 0, 0, 16.0f));
+    auto shadow2 = container({
+        .color = 0xFF1E293B,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(0x30FFFFFF, 1.0f),
+        .box_shadow = {BoxShadow(0x70000000, {0, 10}, 24.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(130.0f),
+        .height = StyleValue::point(65.0f),
+        .margin = StyleInsets::only(0, 0, 0, 16.0f),
+        .child = label("Deep Elevation", 11.0f, 0xFFE2E8F0),
+    });
 
-    auto shadow3 = container(label("Neon Indigo", 11.0f, 0xFFFFFFFF, true));
-    shadow3->size(130.0f, 65.0f)
-           .align(Alignment::Center)
-           .color(0xFF4338CA)
-           .borderRadius(10.0f)
-           .border(0xFF818CF8, 1.5f)
-           .shadow(0x806366F1, {0, 0}, 20, 2)
-           .margin(EdgeInsets::only(0, 0, 0, 16.0f));
+    auto shadow3 = container({
+        .color = 0xFF4338CA,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(0xFF818CF8, 1.5f),
+        .box_shadow = {BoxShadow(0x806366F1, {0, 0}, 20.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(130.0f),
+        .height = StyleValue::point(65.0f),
+        .margin = StyleInsets::only(0, 0, 0, 16.0f),
+        .child = label("Neon Indigo", 11.0f, 0xFFFFFFFF, true),
+    });
 
     auto card2 = sectionCard("2. Multi-Layer Box Shadows", "test_box_decoration (Ambient, Deep & Neon Glow)",
         row({
@@ -408,24 +463,38 @@ inline WidgetPtr buildContainerTestView() {
 
     // 3. Corner Radii & Shapes
     auto shape1 = colorBox("Radius 6", 80.0f, 60.0f, 0xFF334155, 6.0f);
-    auto shape2 = colorBox("Radius 18", 80.0f, 60.0f, 0xFF334155, 18.0f);
-    shape2->margin(EdgeInsets::only(0, 0, 0, 10.0f));
+    auto shape2 = container({
+        .color = 0xFF334155,
+        .border_radius = BorderRadius::circular(18.0f),
+        .box_shadow = {BoxShadow(0x30000000, {0, 2}, 6.0f)},
+        .align = Alignment::Center,
+        .width = StyleValue::point(80.0f),
+        .height = StyleValue::point(60.0f),
+        .margin = StyleInsets::only(0, 0, 0, 10.0f),
+        .child = label("Radius 18", 11.0f, 0xFFFFFFFF, true),
+    });
 
-    auto shape3 = container(label("Pill", 11.0f, 0xFFFFFFFF, true));
-    shape3->size(90.0f, 40.0f)
-          .align(Alignment::Center)
-          .color(0xFF8B5CF6)
-          .borderRadius(999.0f)
-          .margin(EdgeInsets::only(0, 0, 0, 10.0f));
+    auto shape3 = container({
+        .color = 0xFF8B5CF6,
+        .border_radius = BorderRadius::circular(999.0f),
+        .align = Alignment::Center,
+        .width = StyleValue::point(90.0f),
+        .height = StyleValue::point(40.0f),
+        .margin = StyleInsets::only(0, 0, 0, 10.0f),
+        .child = label("Pill", 11.0f, 0xFFFFFFFF, true),
+    });
 
-    auto shape4 = container(label("Circle", 11.0f, 0xFFFFFFFF, true));
-    shape4->size(60.0f, 60.0f)
-          .align(Alignment::Center)
-          .shape(BoxShape::Circle)
-          .color(0xFFEC4899)
-          .border(0xFFFFFFFF, 2.0f)
-          .shadow(0x50EC4899, {0, 4}, 12, 0)
-          .margin(EdgeInsets::only(0, 0, 0, 10.0f));
+    auto shape4 = container({
+        .color = 0xFFEC4899,
+        .border = Border(0xFFFFFFFF, 2.0f),
+        .box_shadow = {BoxShadow(0x50EC4899, {0, 4}, 12.0f)},
+        .shape = BoxShape::Circle,
+        .align = Alignment::Center,
+        .width = StyleValue::point(60.0f),
+        .height = StyleValue::point(60.0f),
+        .margin = StyleInsets::only(0, 0, 0, 10.0f),
+        .child = label("Circle", 11.0f, 0xFFFFFFFF, true),
+    });
 
     auto card3 = sectionCard("3. Shapes & Border Radii", "test_hit_testing (Rectangles, Pills & Circles)",
         row({
@@ -434,23 +503,33 @@ inline WidgetPtr buildContainerTestView() {
     );
 
     // 4. Aspect Ratio & Padding
-    auto aspectChild = container(label("16 : 9 Widescreen", 12.0f, 0xFFFFFFFF, true));
-    aspectChild->width(192_px)
-               .aspectRatio(16.0f / 9.0f)
-               .align(Alignment::Center)
-               .gradient(GradientConfig::linear({0xFF2563EB, 0xFF1D4ED8}))
-               .borderRadius(10.0f)
-               .shadow(0x40000000, {0, 4}, 8, 0);
+    auto aspectChild = container({
+        .color = 0xFF2563EB,
+        .border_radius = BorderRadius::circular(10.0f),
+        .box_shadow = {BoxShadow(0x40000000, {0, 4}, 8.0f)},
+        .align = Alignment::Center,
+        .width = 192_px,
+        .aspect_ratio = 16.0f / 9.0f,
+        .child = label("16 : 9 Widescreen", 12.0f, 0xFFFFFFFF, true),
+    });
 
-    auto paddingDemoChild = container(label("Child (Padded)", 10.0f, 0xFF0F172A, true));
-    paddingDemoChild->color(0xFF38BDF8).borderRadius(6.0f).size(90.0f, 35.0f).align(Alignment::Center);
+    auto paddingDemoChild = container({
+        .color = 0xFF38BDF8,
+        .border_radius = BorderRadius::circular(6.0f),
+        .align = Alignment::Center,
+        .width = StyleValue::point(90.0f),
+        .height = StyleValue::point(35.0f),
+        .child = label("Child (Padded)", 10.0f, 0xFF0F172A, true),
+    });
 
-    auto paddingOuter = container(paddingDemoChild);
-    paddingOuter->paddingAll(14.0f)
-                .color(0xFF0369A1)
-                .borderRadius(10.0f)
-                .border(0xFF38BDF8, 1.5f)
-                .margin(EdgeInsets::only(0, 0, 0, 20.0f));
+    auto paddingOuter = container({
+        .color = 0xFF0369A1,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(0xFF38BDF8, 1.5f),
+        .padding = StyleInsets::all(14.0f),
+        .margin = StyleInsets::only(0, 0, 0, 20.0f),
+        .child = paddingDemoChild,
+    });
 
     auto card4 = sectionCard("4. Aspect Ratio (16:9) & Inset Padding", "test_container_constraints & test_container_padding",
         row({
@@ -481,13 +560,16 @@ inline WidgetPtr buildShellShowcaseView() {
     std::vector<std::string> iconLabels = {">_", "Files", "Music", "Code", "Web", "Settings"};
 
     for (size_t i = 0; i < iconColors.size(); ++i) {
-        auto iconInner = container(label(iconLabels[i], 11.0f, 0xFFFFFFFF, true));
-        iconInner->size(48.0f, 48.0f)
-                 .align(Alignment::Center)
-                 .color(iconColors[i])
-                 .borderRadius(14.0f)
-                 .shadow(0x50000000, {0, 4}, 8, 0)
-                 .marginSymmetric(0, 6.0f);
+        auto iconInner = container({
+            .color = iconColors[i],
+            .border_radius = BorderRadius::circular(14.0f),
+            .box_shadow = {BoxShadow(0x50000000, {0, 4}, 8.0f)},
+            .align = Alignment::Center,
+            .width = StyleValue::point(48.0f),
+            .height = StyleValue::point(48.0f),
+            .margin = StyleInsets::symmetric(0, 6.0f),
+            .child = label(iconLabels[i], 11.0f, 0xFFFFFFFF, true),
+        });
         dockIcons.push_back(iconInner);
     }
 
@@ -496,12 +578,14 @@ inline WidgetPtr buildShellShowcaseView() {
         .children = std::move(dockIcons)
     });
 
-    auto dockContainer = container(dockRow);
-    dockContainer->color(0x351E293B)
-                 .borderRadius(22.0f)
-                 .border(0x40FFFFFF, 1.0f)
-                 .shadow(0x80000000, {0, 12}, 30, 2)
-                 .paddingSymmetric(10.0f, 16.0f);
+    auto dockContainer = container({
+        .color = 0x351E293B,
+        .border_radius = BorderRadius::circular(22.0f),
+        .border = Border(0x40FFFFFF, 1.0f),
+        .box_shadow = {BoxShadow(0x80000000, {0, 12}, 30.0f)},
+        .padding = StyleInsets::symmetric(10.0f, 16.0f),
+        .child = dockRow,
+    });
 
     auto dockCenterRow = row({
         .justify_content = Justify::Center,
@@ -514,10 +598,12 @@ inline WidgetPtr buildShellShowcaseView() {
 
     // 2. Control Center Card
     auto makeToggle = [](std::string name, bool on, Color activeColor) {
-        auto dot = container();
-        dot->size(12.0f, 12.0f)
-           .shape(BoxShape::Circle)
-           .color(on ? 0xFFFFFFFF : 0xFF64748B);
+        auto dot = container({
+            .color = on ? 0xFFFFFFFF : 0xFF64748B,
+            .shape = BoxShape::Circle,
+            .width = StyleValue::point(12.0f),
+            .height = StyleValue::point(12.0f),
+        });
 
         auto tRow = row({
             .align_items = Align::Center,
@@ -527,11 +613,13 @@ inline WidgetPtr buildShellShowcaseView() {
             }
         });
 
-        auto t = container(tRow);
-        t->color(on ? activeColor : 0x25334155)
-         .borderRadius(10.0f)
-         .paddingSymmetric(8.0f, 14.0f)
-         .margin(EdgeInsets::only(0, 8.0f, 8.0f, 0));
+        auto t = container({
+            .color = on ? activeColor : 0x25334155,
+            .border_radius = BorderRadius::circular(10.0f),
+            .padding = StyleInsets::symmetric(8.0f, 14.0f),
+            .margin = StyleInsets::only(0, 8.0f, 8.0f, 0),
+            .child = tRow,
+        });
         return t;
     };
 
@@ -545,11 +633,20 @@ inline WidgetPtr buildShellShowcaseView() {
     });
 
     // Slider bar
-    auto sliderFill = container();
-    sliderFill->size(160.0f, 10.0f).color(0xFF6366F1).borderRadius(999.0f);
+    auto sliderFill = container({
+        .color = 0xFF6366F1,
+        .border_radius = BorderRadius::circular(999.0f),
+        .width = StyleValue::point(160.0f),
+        .height = StyleValue::point(10.0f),
+    });
 
-    auto sliderTrack = container(sliderFill);
-    sliderTrack->size(240.0f, 10.0f).color(0x40475569).borderRadius(999.0f);
+    auto sliderTrack = container({
+        .color = 0x40475569,
+        .border_radius = BorderRadius::circular(999.0f),
+        .width = StyleValue::point(240.0f),
+        .height = StyleValue::point(10.0f),
+        .child = sliderFill,
+    });
 
     auto sliderSection = row({
         .align_items = Align::Center,
@@ -598,11 +695,13 @@ public:
         auto sub = label("Real-time GPU Skia Rendering & Anu Flexbox Validation", 12.0f, 0xFF818CF8, false);
 
         auto badgeText = label("● 10/10 TESTS PASSING", 10.0f, 0xFF34D399, true);
-        auto badge = container(badgeText);
-        badge->color(0x2010B981)
-             .borderRadius(20.0f)
-             .border(0x5010B981, 1.0f)
-             .paddingSymmetric(4.0f, 12.0f);
+        auto badge = container({
+            .color = 0x2010B981,
+            .border_radius = BorderRadius::circular(20.0f),
+            .border = Border(0x5010B981, 1.0f),
+            .padding = StyleInsets::symmetric(4.0f, 12.0f),
+            .child = badgeText,
+        });
 
         auto titleRow = row({
             .align_items = Align::Center,
@@ -652,12 +751,14 @@ public:
                 .selection_color = 0x503B82F6,
             };
             
-            auto tf_box = container(tf);
-            tf_box->color(0xFF1E293B)
-                  .border(0xFF334155, 1.0f)
-                  .borderRadius(8.0f)
-                  .paddingAll(12.0f)
-                  .width(600_px);
+            auto tf_box = container({
+                .color = 0xFF1E293B,
+                .border_radius = BorderRadius::circular(8.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .width = 600_px,
+                .padding = StyleInsets::all(12.0f),
+                .child = tf,
+            });
                   
             bodyContent = sectionCard("Interactive TextField", "Test typing, backspace, and arrow keys with repeat support.", tf_box);
         }
@@ -671,10 +772,12 @@ public:
             }
         });
 
-        auto appRoot = container(mainCol);
-        appRoot->color(0xFF0B0F19)
-               .paddingAll(20.0f)
-               .flexGrow(1.0f);
+        auto appRoot = container({
+            .color = 0xFF0B0F19,
+            .padding = StyleInsets::all(20.0f),
+            .flex_grow = 1.0f,
+            .child = mainCol,
+        });
 
         return appRoot;
     }

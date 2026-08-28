@@ -70,8 +70,12 @@ public:
             });
             items.push_back(check);
         } else if (opts.type == ChipType::Status && opts.pulsing_dot) {
-            auto dot = container();
-            dot->color(opts.status_color).width(8.0f).height(8.0f).borderRadius(4.0f);
+            auto dot = container({
+                .color = opts.status_color,
+                .border_radius = BorderRadius::circular(4.0f),
+                .width = StyleValue::point(8.0f),
+                .height = StyleValue::point(8.0f),
+            });
             items.push_back(dot);
         } else if (!opts.avatar_icon.empty()) {
             auto av = text({
@@ -103,8 +107,11 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto del_box = container(del_txt);
-            del_box->borderRadius(8.0f).paddingSymmetric(1.0f, 3.0f);
+            auto del_box = container({
+                .border_radius = BorderRadius::circular(8.0f),
+                .padding = StyleInsets::symmetric(1.0f, 3.0f),
+                .child = del_txt,
+            });
 
             auto del_gd = gestureDetector({
                 .child = del_box,
@@ -124,25 +131,38 @@ public:
             .children = std::move(items),
         });
 
-        auto chip_box = container(chip_row);
-        chip_box->paddingSymmetric(v_pad, h_pad).borderRadius(border_radius);
-
         // Styling based on state and variant
-        if (is_selected_) {
-            chip_box->color(opts.selected_color);
-        } else if (opts.variant == ChipVariant::Filled) {
-            chip_box->color(opts.background_color).border(opts.border_color, 1.0f);
-        } else if (opts.variant == ChipVariant::Outlined) {
-            chip_box->color(0x00000000).border(opts.border_color, 1.2f);
-        } else {
-            // Elevated
-            chip_box->color(opts.background_color)
-                    .border(opts.border_color, 1.0f)
-                    .shadow(BoxShadow(0x55000000, {0.0f, 2.0f}, 6.0f));
-        }
+        Color chip_bg;
+        std::optional<Border> chip_border;
+        std::vector<BoxShadow> chip_shadows;
 
         if (!opts.enabled) {
-            chip_box->color(0x33334155);
+            chip_bg = 0x33334155;
+        } else if (is_selected_) {
+            chip_bg = opts.selected_color;
+        } else if (opts.variant == ChipVariant::Filled) {
+            chip_bg = opts.background_color;
+            chip_border = Border(opts.border_color, 1.0f);
+        } else if (opts.variant == ChipVariant::Outlined) {
+            chip_bg = 0x00000000;
+            chip_border = Border(opts.border_color, 1.2f);
+        } else {
+            // Elevated
+            chip_bg = opts.background_color;
+            chip_border = Border(opts.border_color, 1.0f);
+            chip_shadows.push_back(BoxShadow(0x55000000, {0.0f, 2.0f}, 6.0f));
+        }
+
+        auto chip_box = container({
+            .color = chip_bg,
+            .border_radius = BorderRadius::circular(border_radius),
+            .border = chip_border,
+            .box_shadow = std::move(chip_shadows),
+            .padding = StyleInsets::symmetric(v_pad, h_pad),
+            .child = chip_row,
+        });
+
+        if (!opts.enabled) {
             return chip_box;
         }
 

@@ -151,8 +151,10 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto b = container(t);
-            b->paddingSymmetric(2.0f, 6.0f);
+            auto b = container({
+                .padding = StyleInsets::symmetric(2.0f, 6.0f),
+                .child = t,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -197,10 +199,12 @@ public:
             .children = { left_row, right_row },
         });
 
-        auto header_box = container(h_row);
-        header_box->color(opts.header_bg_color)
-                  .paddingSymmetric(8.0f, 12.0f)
-                  .width(StyleValue::percent(100.0f));
+        auto header_box = container({
+            .color = opts.header_bg_color,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .child = h_row,
+        });
 
         // Drag to move header gesture
         if (opts.allow_drag_move && !is_maximized_) {
@@ -226,12 +230,17 @@ public:
         // ── 1. Page Body Invariant Layer ──────────────────────────────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->body,
+            });
             body_widget = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+            });
             body_widget = Positioned::fill(empty);
         }
 
@@ -248,14 +257,19 @@ public:
 
             // Body Content & Resize Handles
             if (!is_minimized_ && w->child) {
-                auto div = container();
-                div->color(opts.border_color).height(1.0f).width(StyleValue::percent(100.0f));
+                auto div = container({
+                    .color = opts.border_color,
+                    .width = StyleValue::percent(100.0f),
+                    .height = StyleValue::point(1.0f),
+                });
                 window_col_items.push_back(div);
 
-                auto body_container = container(w->child);
-                body_container->paddingAll(14.0f)
-                              .flex(1.0f)
-                              .width(StyleValue::percent(100.0f));
+                auto body_container = container({
+                    .width = StyleValue::percent(100.0f),
+                    .padding = StyleInsets::all(14.0f),
+                    .flex = 1.0f,
+                    .child = w->child,
+                });
 
                 // Bottom-right corner resize grip (◢)
                 auto grip_txt = text({
@@ -263,8 +277,10 @@ public:
                     .color = opts.grip_color,
                     .font_size = 12.0f,
                 });
-                auto grip_box = container(grip_txt);
-                grip_box->paddingAll(4.0f);
+                auto grip_box = container({
+                    .padding = StyleInsets::all(4.0f),
+                    .child = grip_txt,
+                });
 
                 auto grip_gd = gestureDetector({
                     .child = grip_box,
@@ -294,13 +310,15 @@ public:
                 .children = std::move(window_col_items),
             });
 
-            auto window_card = container(window_col);
-            window_card->color(opts.background_color)
-                       .border(opts.active_border_col, 1.0f)
-                       .borderRadius(opts.border_radius)
-                       .width(current_width_)
-                       .height(is_minimized_ ? 42.0f : current_height_)
-                       .shadow(BoxShadow(0xCC000000, {0.0f, 10.0f}, 30.0f));
+            auto window_card = container({
+                .color = opts.background_color,
+                .border_radius = BorderRadius::circular(opts.border_radius),
+                .border = Border(opts.active_border_col, 1.0f),
+                .box_shadow = {BoxShadow(0xCC000000, {0.0f, 10.0f}, 30.0f)},
+                .width = StyleValue::point(current_width_),
+                .height = StyleValue::point(is_minimized_ ? 42.0f : current_height_),
+                .child = window_col,
+            });
 
             stack_items.push_back(Positioned {
                 .child = window_card,

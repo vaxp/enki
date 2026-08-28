@@ -81,10 +81,12 @@ public:
             .children = std::move(items),
         });
 
-        auto box = container(content_row);
-        box->color(hovered_ ? theme::surface_hover : 0x00000000)
-           .borderRadius(6.0f)
-           .paddingSymmetric(4.0f, 10.0f);
+        auto box = container({
+            .color = hovered_ ? theme::surface_hover : 0x00000000,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(4.0f, 10.0f),
+            .child = content_row,
+        });
 
         auto on_click = w->on_press;
         return gestureDetector({
@@ -113,17 +115,17 @@ std::unique_ptr<State> BarButton::createState() {
 // ── Popup Builders ───────────────────────────────────────────────
 
 WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
-    auto search_box = container(
-        text({
+    auto search_box = container({
+        .color = theme::surface,
+        .border_radius = BorderRadius::circular(8.0f),
+        .border = Border(theme::border, 1.0f),
+        .padding = StyleInsets::symmetric(8.0f, 12.0f),
+        .child = text({
             .text = "🔍  Search applications, files, commands...",
             .color = theme::text_sec,
             .font_size = 12.0f,
-        })
-    );
-    search_box->color(theme::surface)
-              .borderRadius(8.0f)
-              .border(theme::border, 1.0f)
-              .paddingSymmetric(8.0f, 12.0f);
+        }),
+    });
 
     auto makeAppItem = [popup](const std::string& icon, const std::string& name, const std::string& category) {
         auto icon_t = text({.text = icon, .color = theme::accent, .font_size = 16.0f});
@@ -164,11 +166,13 @@ WidgetPtr buildLauncherPopup(BuildContext&, std::shared_ptr<NativePopup> popup) 
         }
     });
 
-    auto card = container(app_list);
-    card->color(theme::popup_bg)
-        .borderRadius(12.0f)
-        .border(theme::border, 1.0f)
-        .width(300.0f);
+    auto card = container({
+        .color = theme::popup_bg,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(theme::border, 1.0f),
+        .width = StyleValue::point(300.0f),
+        .child = app_list,
+    });
 
     return card;
 }
@@ -218,11 +222,13 @@ WidgetPtr buildWifiPopup(BuildContext&, std::shared_ptr<NativePopup> popup) {
         }
     });
 
-    auto card = container(col);
-    card->color(theme::popup_bg)
-        .borderRadius(12.0f)
-        .border(theme::border, 1.0f)
-        .width(260.0f);
+    auto card = container({
+        .color = theme::popup_bg,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(theme::border, 1.0f),
+        .width = StyleValue::point(260.0f),
+        .child = col,
+    });
 
     return card;
 }
@@ -284,8 +290,10 @@ public:
             .font_size = 13.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto center_box = container(time_t);
-        center_box->paddingSymmetric(4.0f, 12.0f);
+        auto center_box = container({
+            .padding = StyleInsets::symmetric(4.0f, 12.0f),
+            .child = time_t,
+        });
 
         // Right Side: Tray Icons & Power
         auto wifi_btn = std::make_shared<BarButton>(
@@ -311,11 +319,13 @@ public:
             .children = { left_row, center_box, right_row },
         });
 
-        auto bar_container = container(bar_row);
-        bar_container->color(theme::bar_bg)
-                     .border(theme::border, 1.0f)
-                     .width(StyleValue::percent(100.0f))
-                     .height(36.0f);
+        auto bar_container = container({
+            .color = theme::bar_bg,
+            .border = Border(theme::border, 1.0f),
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::point(36.0f),
+            .child = bar_row,
+        });
 
         return bar_container;
     }

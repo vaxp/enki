@@ -304,11 +304,13 @@ public:
         for (const auto& r : ripples) rip_states.push_back(r.state);
 
         // Build the layout inner component using Container for padding & alignment
-        auto inner_container = container(btn->child);
-        inner_container->padding(btn->options.padding)
-                       .align(Alignment::Center)
-                       .minWidth(StyleValue::point(btn->options.min_width))
-                       .minHeight(StyleValue::point(btn->options.min_height));
+        auto inner_container = container({
+            .align = Alignment::Center,
+            .min_width = StyleValue::point(btn->options.min_width),
+            .min_height = StyleValue::point(btn->options.min_height),
+            .padding = StyleInsets::only(btn->options.padding.top, btn->options.padding.right, btn->options.padding.bottom, btn->options.padding.left),
+            .child = btn->child,
+        });
 
         // Wrap with our custom Background renderer
         auto background = std::make_shared<ButtonBackgroundWidget>(

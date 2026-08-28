@@ -156,8 +156,11 @@ public:
                 .color = 0xFF94A3B8,
                 .font_size = 13.0f,
             });
-            auto b = container(t);
-            b->paddingSymmetric(4.0f, 8.0f).borderRadius(4.0f);
+            auto b = container({
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                .child = t,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -195,8 +198,11 @@ public:
             .font_weight = FontWeight::Bold,
         });
 
-        auto title_box = container(title_txt);
-        title_box->paddingSymmetric(4.0f, 10.0f).borderRadius(6.0f);
+        auto title_box = container({
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::symmetric(4.0f, 10.0f),
+            .child = title_txt,
+        });
 
         auto title_gd = gestureDetector({
             .child = title_box,
@@ -238,7 +244,9 @@ public:
                 .children = {wd_txt},
             });
 
-            auto wd_box = container(wd_row);
+            auto wd_box = container({
+                .child = wd_row,
+            });
             wd_items.push_back(wd_box);
         }
         auto wd_row = row({
@@ -326,14 +334,20 @@ public:
                     .children = {d_txt},
                 });
 
-                auto d_box = container(d_row);
-                d_box->width(36.0f).height(32.0f).borderRadius(is_selected ? 16.0f : 4.0f);
-
+                std::optional<Color> d_box_color;
                 if (is_selected) {
-                    d_box->color(opts.active_color);
+                    d_box_color = opts.active_color;
                 } else if (is_in_range) {
-                    d_box->color(opts.range_fill_color);
+                    d_box_color = opts.range_fill_color;
                 }
+
+                auto d_box = container({
+                    .color = d_box_color,
+                    .border_radius = BorderRadius::circular(is_selected ? 16.0f : 4.0f),
+                    .width = StyleValue::point(36.0f),
+                    .height = StyleValue::point(32.0f),
+                    .child = d_row,
+                });
 
                 auto d_gd = gestureDetector({
                     .child = d_box,
@@ -407,12 +421,14 @@ public:
                     .children = {m_txt},
                 });
 
-                auto m_box = container(m_row_center);
-                m_box->color(is_active ? 0xFF0284C7 : 0xFF0F172A)
-                     .border(is_active ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-                     .borderRadius(6.0f)
-                     .paddingSymmetric(10.0f, 0.0f)
-                     .width(76.0f);
+                auto m_box = container({
+                    .color = is_active ? 0xFF0284C7 : 0xFF0F172A,
+                    .border_radius = BorderRadius::circular(6.0f),
+                    .border = Border(is_active ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+                    .width = StyleValue::point(76.0f),
+                    .padding = StyleInsets::symmetric(10.0f, 0.0f),
+                    .child = m_row_center,
+                });
 
                 auto m_gd = gestureDetector({
                     .child = m_box,
@@ -466,12 +482,14 @@ public:
                     .children = {y_txt},
                 });
 
-                auto y_box = container(y_row_center);
-                y_box->color(is_active ? 0xFF0284C7 : 0xFF0F172A)
-                     .border(is_active ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-                     .borderRadius(6.0f)
-                     .paddingSymmetric(10.0f, 0.0f)
-                     .width(76.0f);
+                auto y_box = container({
+                    .color = is_active ? 0xFF0284C7 : 0xFF0F172A,
+                    .border_radius = BorderRadius::circular(6.0f),
+                    .border = Border(is_active ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+                    .width = StyleValue::point(76.0f),
+                    .padding = StyleInsets::symmetric(10.0f, 0.0f),
+                    .child = y_row_center,
+                });
 
                 auto y_gd = gestureDetector({
                     .child = y_box,
@@ -508,8 +526,12 @@ public:
                 .color = 0xFF38BDF8,
                 .font_size = 11.0f,
             });
-            auto b = container(t);
-            b->color(0xFF0F172A).borderRadius(4.0f).paddingSymmetric(4.0f, 8.0f);
+            auto b = container({
+                .color = 0xFF0F172A,
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                .child = t,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -558,8 +580,11 @@ public:
         std::vector<WidgetPtr> card_items;
         card_items.push_back(buildHeader(w));
 
-        auto div1 = container();
-        div1->color(opts.border_color).height(1.0f).width(StyleValue::percent(100.0f));
+        auto div1 = container({
+            .color = opts.border_color,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::point(1.0f),
+        });
         card_items.push_back(div1);
 
         if (current_view_ == DatePickerView::Days) {
@@ -571,8 +596,11 @@ public:
         }
 
         if (opts.show_quick_presets) {
-            auto div2 = container();
-            div2->color(opts.border_color).height(1.0f).width(StyleValue::percent(100.0f));
+            auto div2 = container({
+                .color = opts.border_color,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+            });
             card_items.push_back(div2);
             card_items.push_back(buildQuickPresets(w));
         }
@@ -583,13 +611,15 @@ public:
             .children = std::move(card_items),
         });
 
-        auto card_box = container(card_col);
-        card_box->color(opts.background_color)
-                .border(opts.border_color, 1.0f)
-                .borderRadius(10.0f)
-                .paddingAll(14.0f)
-                .width(308.0f)
-                .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f));
+        auto card_box = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)},
+            .width = StyleValue::point(308.0f),
+            .padding = StyleInsets::all(14.0f),
+            .child = card_col,
+        });
 
         return card_box;
     }
@@ -637,12 +667,14 @@ public:
             .children = {input_txt, chev_txt},
         });
 
-        auto input_box = container(in_row);
-        input_box->color(0xFF1E293B)
-                 .border(is_popup_open_ ? opts.active_color : opts.border_color, 1.0f)
-                 .borderRadius(8.0f)
-                 .paddingSymmetric(10.0f, 14.0f)
-                 .width(320.0f);
+        auto input_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(is_popup_open_ ? opts.active_color : opts.border_color, 1.0f),
+            .width = StyleValue::point(320.0f),
+            .padding = StyleInsets::symmetric(10.0f, 14.0f),
+            .child = in_row,
+        });
 
         auto input_gd = gestureDetector({
             .child = input_box,

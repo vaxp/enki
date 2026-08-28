@@ -27,8 +27,11 @@ WidgetPtr ReorderableDragHandleWidget::build(BuildContext&) {
         .font_size = 16.0f,
         .font_weight = FontWeight::Bold,
     });
-    auto grip_box = container(grip);
-    grip_box->paddingSymmetric(4.0f, 6.0f).borderRadius(4.0f);
+    auto grip_box = container({
+        .border_radius = BorderRadius::circular(4.0f),
+        .padding = StyleInsets::symmetric(4.0f, 6.0f),
+        .child = grip,
+    });
     return grip_box;
 }
 

@@ -113,11 +113,13 @@ public:
         std::vector<WidgetPtr> left_items;
 
         if (!item.icon.empty()) {
-            auto ic_box = container(text({
-                .text = item.icon,
-                .font_size = 14.0f,
-            }));
-            ic_box->paddingAll(2.0f);
+            auto ic_box = container({
+                .padding = StyleInsets::all(2.0f),
+                .child = text({
+                    .text = item.icon,
+                    .font_size = 14.0f,
+                }),
+            });
             left_items.push_back(ic_box);
         }
 
@@ -165,10 +167,12 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto b_box = container(b_txt);
-            b_box->color(item.badge_bg)
-                 .borderRadius(4.0f)
-                 .paddingSymmetric(2.0f, 6.0f);
+            auto b_box = container({
+                .color = item.badge_bg,
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(2.0f, 6.0f),
+                .child = b_txt,
+            });
             right_items.push_back(b_box);
         }
 
@@ -181,8 +185,10 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto chv_box = container(chv_txt);
-            chv_box->paddingAll(2.0f);
+            auto chv_box = container({
+                .padding = StyleInsets::all(2.0f),
+                .child = chv_txt,
+            });
             right_items.push_back(chv_box);
         }
 
@@ -200,13 +206,17 @@ public:
             .children = {left_row, right_row},
         });
 
-        auto header_box = container(h_row);
-        header_box->paddingSymmetric(12.0f, 16.0f)
-                  .width(StyleValue::percent(100.0f));
-
+        std::optional<Color> header_color;
         if (is_expanded && opts.variant == AccordionVariant::Bordered) {
-            header_box->color(0x1A38BDF8); // Subtle active blue tint
+            header_color = 0x1A38BDF8; // Subtle active blue tint
         }
+
+        auto header_box = container({
+            .color = header_color,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(12.0f, 16.0f),
+            .child = h_row,
+        });
 
         // GestureDetector for Header
         auto item_id = item.id;
@@ -223,12 +233,18 @@ public:
         // ── 3. Expanded Content Body ──────────────────────────────────
         if (is_expanded && item.content) {
             // Divider between header and body
-            auto div = container();
-            div->color(opts.divider_color).height(1.0f).width(StyleValue::percent(100.0f));
+            auto div = container({
+                .color = opts.divider_color,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+            });
             section_col_items.push_back(div);
 
-            auto body_box = container(item.content);
-            body_box->paddingAll(16.0f).width(StyleValue::percent(100.0f));
+            auto body_box = container({
+                .width = StyleValue::percent(100.0f),
+                .padding = StyleInsets::all(16.0f),
+                .child = item.content,
+            });
             section_col_items.push_back(body_box);
         }
 
@@ -239,12 +255,14 @@ public:
 
         // ── 4. Apply Variant Styling ──────────────────────────────────
         if (opts.variant == AccordionVariant::Separated) {
-            auto card = container(section_col);
-            card->color(opts.background_color)
-                .border(is_expanded ? 0xFF0284C7 : opts.border_color, 1.0f)
-                .borderRadius(opts.border_radius)
-                .width(StyleValue::percent(100.0f))
-                .shadow(BoxShadow(0x66000000, {0.0f, 4.0f}, 12.0f));
+            auto card = container({
+                .color = opts.background_color,
+                .border_radius = BorderRadius::circular(opts.border_radius),
+                .border = Border(is_expanded ? 0xFF0284C7 : opts.border_color, 1.0f),
+                .box_shadow = {BoxShadow(0x66000000, {0.0f, 4.0f}, 12.0f)},
+                .width = StyleValue::percent(100.0f),
+                .child = section_col,
+            });
             return card;
         }
 
@@ -267,8 +285,11 @@ public:
 
             // Divider between sections (for Bordered & Flush variants)
             if (!is_last && opts.variant != AccordionVariant::Separated) {
-                auto div = container();
-                div->color(opts.divider_color).height(1.0f).width(StyleValue::percent(100.0f));
+                auto div = container({
+                    .color = opts.divider_color,
+                    .width = StyleValue::percent(100.0f),
+                    .height = StyleValue::point(1.0f),
+                });
                 items_list.push_back(div);
             }
         }
@@ -287,12 +308,14 @@ public:
         });
 
         if (opts.variant == AccordionVariant::Bordered) {
-            auto outer_box = container(main_col);
-            outer_box->color(opts.background_color)
-                     .border(opts.border_color, 1.0f)
-                     .borderRadius(opts.border_radius)
-                     .width(StyleValue::percent(100.0f))
-                     .shadow(BoxShadow(0x66000000, {0.0f, 4.0f}, 16.0f));
+            auto outer_box = container({
+                .color = opts.background_color,
+                .border_radius = BorderRadius::circular(opts.border_radius),
+                .border = Border(opts.border_color, 1.0f),
+                .box_shadow = {BoxShadow(0x66000000, {0.0f, 4.0f}, 16.0f)},
+                .width = StyleValue::percent(100.0f),
+                .child = main_col,
+            });
             return outer_box;
         }
 

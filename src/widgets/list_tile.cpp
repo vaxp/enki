@@ -222,16 +222,19 @@ public:
 
         // Leading
         if (opts.leading_widget) {
-            auto lc = container(opts.leading_widget);
-            lc->width(opts.leading_width);
-            lc->align(Alignment::Center);
-            lc->margin(EdgeInsets::only(0, opts.leading_gap, 0, 0));
+            auto lc = container({
+                .align = Alignment::Center,
+                .width = StyleValue::point(opts.leading_width),
+                .margin = StyleInsets::only(0, opts.leading_gap, 0, 0),
+                .child = opts.leading_widget,
+            });
             row_children.push_back(lc);
 
             // Gap between leading and title
-            auto gap = container();
-            gap->width(opts.leading_gap);
-            gap->height(StyleValue::percent(100.0f));
+            auto gap = container({
+                .width = StyleValue::point(opts.leading_gap),
+                .height = StyleValue::percent(100.0f),
+            });
             row_children.push_back(gap);
         }
 
@@ -259,14 +262,17 @@ public:
 
         // Trailing
         if (opts.trailing_widget) {
-            auto gap = container();
-            gap->width(opts.trailing_gap);
-            gap->height(StyleValue::percent(100.0f));
+            auto gap = container({
+                .width = StyleValue::point(opts.trailing_gap),
+                .height = StyleValue::percent(100.0f),
+            });
             row_children.push_back(gap);
 
-            auto tc = container(opts.trailing_widget);
-            tc->width(opts.trailing_width);
-            tc->align(Alignment::Center);
+            auto tc = container({
+                .align = Alignment::Center,
+                .width = StyleValue::point(opts.trailing_width),
+                .child = opts.trailing_widget,
+            });
             row_children.push_back(tc);
         }
 
@@ -281,10 +287,12 @@ public:
         });
 
         // Apply content padding
-        auto padded = container(content_row);
-        padded->padding(opts.content_padding);
-        padded->minHeight(StyleValue::point(min_h));
-        padded->width(StyleValue::percent(100.0f));
+        auto padded = container({
+            .width = StyleValue::percent(100.0f),
+            .min_height = StyleValue::point(min_h),
+            .padding = StyleInsets::only(opts.content_padding.top, opts.content_padding.right, opts.content_padding.bottom, opts.content_padding.left),
+            .child = content_row,
+        });
 
         // ── Wrap in gesture detector ───────────────────────────
         auto detector = gestureDetector({

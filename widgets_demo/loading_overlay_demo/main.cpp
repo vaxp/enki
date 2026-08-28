@@ -134,10 +134,12 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto b_box = container(b_lbl);
-            b_box->color(btn_col)
-                 .borderRadius(6.0f)
-                 .paddingSymmetric(8.0f, 16.0f);
+            auto b_box = container({
+                .color = btn_col,
+                .border_radius = BorderRadius::circular(6.0f),
+                .padding = StyleInsets::symmetric(8.0f, 16.0f),
+                .child = b_lbl,
+            });
 
             auto gd = gestureDetector({
                 .child = b_box,
@@ -152,12 +154,14 @@ public:
                 .children = { h_row, ds, gd }
             });
 
-            auto card = container(col);
-            card->color(0xFF1E293B)
-                .borderRadius(10.0f)
-                .border(0xFF334155, 1.0f)
-                .paddingAll(16.0f)
-                .width(250.0f);
+            auto card = container({
+                .color = 0xFF1E293B,
+                .border_radius = BorderRadius::circular(10.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .width = StyleValue::point(250.0f),
+                .padding = StyleInsets::all(16.0f),
+                .child = col,
+            });
             return card;
         };
 
@@ -244,12 +248,14 @@ public:
         auto hud_row = row({
             .children = { hud_txt }
         });
-        auto hud_box = container(hud_row);
-        hud_box->color(0xFF1E293B)
-               .borderRadius(6.0f)
-               .border(0xFF334155, 1.0f)
-               .paddingSymmetric(8.0f, 16.0f)
-               .width(1080.0f);
+        auto hud_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF334155, 1.0f),
+            .width = StyleValue::point(1080.0f),
+            .padding = StyleInsets::symmetric(8.0f, 16.0f),
+            .child = hud_row,
+        });
 
         // ── Assemble Page Body ────────────────────────────────────────
         auto page_col = column({
@@ -258,11 +264,13 @@ public:
             .children = { title_col, cards_row, act_row, hud_box }
         });
 
-        auto background_page = container(page_col);
-        background_page->color(0xFF0B1120)
-                       .paddingAll(24.0f)
-                       .width(StyleValue::percent(100.0f))
-                       .height(StyleValue::percent(100.0f));
+        auto background_page = container({
+            .color = 0xFF0B1120,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(24.0f),
+            .child = page_col,
+        });
 
         return LoadingOverlay {
             .body = background_page,

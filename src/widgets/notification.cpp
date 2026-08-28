@@ -40,10 +40,12 @@ WidgetPtr NotificationBellWidget::build(BuildContext&) {
             .font_weight = FontWeight::Bold,
         });
 
-        auto badge_box = container(badge_txt);
-        badge_box->color(0xFFEF4444)
-                 .borderRadius(10.0f)
-                 .paddingSymmetric(1.0f, 5.0f);
+        auto badge_box = container({
+            .color = 0xFFEF4444,
+            .border_radius = BorderRadius::circular(10.0f),
+            .padding = StyleInsets::symmetric(1.0f, 5.0f),
+            .child = badge_txt,
+        });
         bell_items.push_back(badge_box);
     }
 
@@ -53,11 +55,13 @@ WidgetPtr NotificationBellWidget::build(BuildContext&) {
         .children = std::move(bell_items),
     });
 
-    auto box = container(bell_row);
-    box->color(unread > 0 ? 0x22EF4444 : 0xFF1E293B)
-       .border(unread > 0 ? 0xFFEF4444 : 0xFF334155, 1.0f)
-       .borderRadius(8.0f)
-       .paddingSymmetric(6.0f, 12.0f);
+    auto box = container({
+        .color = unread > 0 ? 0x22EF4444 : 0xFF1E293B,
+        .border_radius = BorderRadius::circular(8.0f),
+        .border = Border(unread > 0 ? 0xFFEF4444 : 0xFF334155, 1.0f),
+        .padding = StyleInsets::symmetric(6.0f, 12.0f),
+        .child = bell_row,
+    });
 
     auto mgr = manager;
     return gestureDetector({
@@ -176,8 +180,12 @@ public:
             .text = item.icon,
             .font_size = 16.0f,
         });
-        auto ic_box = container(ic_txt);
-        ic_box->color(badge_bg).borderRadius(6.0f).paddingAll(6.0f);
+        auto ic_box = container({
+            .color = badge_bg,
+            .border_radius = BorderRadius::circular(6.0f),
+            .padding = StyleInsets::all(6.0f),
+            .child = ic_txt,
+        });
 
         // Title + Timestamp
         auto title_txt = text({
@@ -222,8 +230,13 @@ public:
                     .font_weight = FontWeight::Bold,
                 });
 
-                auto b_box = container(b_txt);
-                b_box->color(bg).border(border, 1.0f).borderRadius(4.0f).paddingSymmetric(4.0f, 10.0f);
+                auto b_box = container({
+                    .color = bg,
+                    .border_radius = BorderRadius::circular(4.0f),
+                    .border = Border(border, 1.0f),
+                    .padding = StyleInsets::symmetric(4.0f, 10.0f),
+                    .child = b_txt,
+                });
 
                 auto act_copy = act;
                 auto id_copy = item.id;
@@ -257,8 +270,10 @@ public:
             .font_size = 12.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto cls_box = container(cls_txt);
-        cls_box->paddingAll(4.0f);
+        auto cls_box = container({
+            .padding = StyleInsets::all(4.0f),
+            .child = cls_txt,
+        });
         auto item_id = item.id;
         auto cls_btn = gestureDetector({
             .child = cls_box,
@@ -274,13 +289,15 @@ public:
             .children = {ic_box, text_col, cls_btn},
         });
 
-        auto card_box = container(main_row);
-        card_box->color(0xFF1E293B)
-                .border(border_col, 1.0f)
-                .borderRadius(10.0f)
-                .paddingAll(12.0f)
-                .width(380.0f)
-                .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f));
+        auto card_box = container({
+            .color = 0xFF1E293B,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(border_col, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 20.0f)},
+            .width = StyleValue::point(380.0f),
+            .padding = StyleInsets::all(12.0f),
+            .child = main_row,
+        });
 
         return card_box;
     }
@@ -302,8 +319,12 @@ public:
             .color = 0xFF38BDF8,
             .font_size = 11.0f,
         });
-        auto badge_box = container(badge_txt);
-        badge_box->color(0x2E38BDF8).borderRadius(4.0f).paddingSymmetric(2.0f, 6.0f);
+        auto badge_box = container({
+            .color = 0x2E38BDF8,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(2.0f, 6.0f),
+            .child = badge_txt,
+        });
 
         auto t_left_row = row({
             .align_items = Align::Center,
@@ -317,8 +338,10 @@ public:
             .color = 0xFF94A3B8,
             .font_size = 11.5f,
         });
-        auto mark_box = container(mark_txt);
-        mark_box->paddingAll(4.0f);
+        auto mark_box = container({
+            .padding = StyleInsets::all(4.0f),
+            .child = mark_txt,
+        });
         auto mark_btn = gestureDetector({
             .child = mark_box,
             .cursor_type = SystemCursor::Pointer,
@@ -333,8 +356,10 @@ public:
             .color = 0xFFEF4444,
             .font_size = 11.5f,
         });
-        auto clr_box = container(clr_txt);
-        clr_box->paddingAll(4.0f);
+        auto clr_box = container({
+            .padding = StyleInsets::all(4.0f),
+            .child = clr_txt,
+        });
         auto clr_btn = gestureDetector({
             .child = clr_box,
             .cursor_type = SystemCursor::Pointer,
@@ -350,8 +375,10 @@ public:
             .font_size = 13.0f,
             .font_weight = FontWeight::Bold,
         });
-        auto cls_box = container(cls_txt);
-        cls_box->paddingAll(4.0f);
+        auto cls_box = container({
+            .padding = StyleInsets::all(4.0f),
+            .child = cls_txt,
+        });
         auto cls_btn = gestureDetector({
             .child = cls_box,
             .cursor_type = SystemCursor::Pointer,
@@ -383,11 +410,13 @@ public:
                 .font_weight = is_act ? FontWeight::Bold : FontWeight::Normal,
             });
 
-            auto b = container(t);
-            b->color(is_act ? 0xFF0284C7 : 0xFF0F172A)
-             .border(is_act ? 0xFF38BDF8 : 0xFF334155, 1.0f)
-             .borderRadius(6.0f)
-             .paddingSymmetric(4.0f, 10.0f);
+            auto b = container({
+                .color = is_act ? 0xFF0284C7 : 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(is_act ? 0xFF38BDF8 : 0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(4.0f, 10.0f),
+                .child = t,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -422,8 +451,12 @@ public:
                 // Unread dot indicator
                 std::vector<WidgetPtr> row_elements;
                 if (!item.is_read) {
-                    auto dot = container();
-                    dot->color(0xFF38BDF8).borderRadius(4.0f).width(6.0f).height(6.0f);
+                    auto dot = container({
+                        .color = 0xFF38BDF8,
+                        .border_radius = BorderRadius::circular(4.0f),
+                        .width = StyleValue::point(6.0f),
+                        .height = StyleValue::point(6.0f),
+                    });
                     row_elements.push_back(dot);
                 }
 
@@ -468,12 +501,14 @@ public:
                     .children = std::move(row_elements),
                 });
 
-                auto item_box = container(item_row);
-                item_box->color(item.is_read ? 0xFF0F172A : 0x221E293B)
-                        .border(item.is_read ? 0xFF1E293B : 0xFF334155, 1.0f)
-                        .borderRadius(8.0f)
-                        .paddingAll(10.0f)
-                        .width(StyleValue::percent(100.0f));
+                auto item_box = container({
+                    .color = item.is_read ? 0xFF0F172A : 0x221E293B,
+                    .border_radius = BorderRadius::circular(8.0f),
+                    .border = Border(item.is_read ? 0xFF1E293B : 0xFF334155, 1.0f),
+                    .width = StyleValue::percent(100.0f),
+                    .padding = StyleInsets::all(10.0f),
+                    .child = item_row,
+                });
 
                 auto id_copy = item.id;
                 auto gd = gestureDetector({
@@ -493,8 +528,10 @@ public:
                 .color = 0xFF94A3B8,
                 .font_size = 13.0f,
             });
-            auto empty_box = container(empty_txt);
-            empty_box->paddingAll(30.0f);
+            auto empty_box = container({
+                .padding = StyleInsets::all(30.0f),
+                .child = empty_txt,
+            });
             list_rows.push_back(empty_box);
         }
 
@@ -510,13 +547,15 @@ public:
             .children = {h_row, tabs_row, list_col},
         });
 
-        auto panel_box = container(panel_col);
-        panel_box->color(0xFF1E293B)
-                 .border(0xFF334155, 1.0f)
-                 .paddingAll(16.0f)
-                 .width(380.0f)
-                 .height(StyleValue::percent(100.0f))
-                 .shadow(BoxShadow(0x99000000, {-8.0f, 0.0f}, 24.0f));
+        auto panel_box = container({
+            .color = 0xFF1E293B,
+            .border = Border(0xFF334155, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {-8.0f, 0.0f}, 24.0f)},
+            .width = StyleValue::point(380.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = panel_col,
+        });
 
         return panel_box;
     }
@@ -527,12 +566,17 @@ public:
         // ── 1. Invariant Page Body ────────────────────────────────────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->body,
+            });
             body_widget = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+            });
             body_widget = Positioned::fill(empty);
         }
 

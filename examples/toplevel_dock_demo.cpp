@@ -171,11 +171,13 @@ WidgetPtr DockAppState::buildHeader() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto active_badge = container(active_badge_lbl);
-    active_badge->padding(EdgeInsets::symmetric(5.0f, 12.0f))
-                .color(0x2010B981)
-                .borderRadius(14.0f)
-                .border(Theme::accent_green, 1.0f);
+    auto active_badge = container({
+        .color = 0x2010B981,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(Theme::accent_green, 1.0f),
+        .padding = StyleInsets::symmetric(5.0f, 12.0f),
+        .child = active_badge_lbl,
+    });
 
     // Window count badge
     auto count_lbl = text({
@@ -185,11 +187,13 @@ WidgetPtr DockAppState::buildHeader() {
         .font_weight = FontWeight::Bold,
     });
 
-    auto count_badge = container(count_lbl);
-    count_badge->padding(EdgeInsets::symmetric(5.0f, 12.0f))
-               .color(Theme::bg_badge)
-               .borderRadius(14.0f)
-               .border(Theme::border_subtle, 1.0f);
+    auto count_badge = container({
+        .color = Theme::bg_badge,
+        .border_radius = BorderRadius::circular(14.0f),
+        .border = Border(Theme::border_subtle, 1.0f),
+        .padding = StyleInsets::symmetric(5.0f, 12.0f),
+        .child = count_lbl,
+    });
 
     auto header_right = row({
         .justify_content = Justify::End,
@@ -210,12 +214,14 @@ WidgetPtr DockAppState::buildHeader() {
         }
     });
 
-    auto header_box = container(header_row);
-    header_box->padding(EdgeInsets::symmetric(12.0f, 16.0f))
-              .margin(EdgeInsets::only(0, 0, 12.0f, 0))
-              .color(0x30000000)
-              .borderRadius(10.0f)
-              .border(Theme::border_subtle, 1.0f);
+    auto header_box = container({
+        .color = 0x30000000,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(Theme::border_subtle, 1.0f),
+        .padding = StyleInsets::symmetric(12.0f, 16.0f),
+        .margin = StyleInsets::only(0, 0, 12.0f, 0),
+        .child = header_row,
+    });
 
     return header_box;
 }
@@ -242,10 +248,12 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
         .font_weight = FontWeight::Bold,
     });
 
-    auto close_box = container(close_x);
-    close_box->padding(EdgeInsets::symmetric(2.0f, 6.0f))
-             .color(0x20F43F5E)
-             .borderRadius(6.0f);
+    auto close_box = container({
+        .color = 0x20F43F5E,
+        .border_radius = BorderRadius::circular(6.0f),
+        .padding = StyleInsets::symmetric(2.0f, 6.0f),
+        .child = close_x,
+    });
 
     auto close_gd = gestureDetector({
         .key = Key::string("close_btn_" + std::to_string(tl->id())),
@@ -282,31 +290,56 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
 
     if (is_active) {
         auto b = text({ .text = "ACTIVE", .color = Theme::accent_green, .font_size = 8.5f, .font_weight = FontWeight::Bold });
-        auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x2810B981).borderRadius(4.0f);
+        auto bc = container({
+            .color = 0x2810B981,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(2.0f, 6.0f),
+            .child = b,
+        });
         badges.push_back(bc);
         badges.push_back(sizedBox(4.0f, 0));
     }
     if (tl->isMinimized()) {
         auto b = text({ .text = "MIN", .color = Theme::accent_amber, .font_size = 8.5f, .font_weight = FontWeight::Bold });
-        auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x28F59E0B).borderRadius(4.0f);
+        auto bc = container({
+            .color = 0x28F59E0B,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(2.0f, 6.0f),
+            .child = b,
+        });
         badges.push_back(bc);
         badges.push_back(sizedBox(4.0f, 0));
     }
     if (tl->isMaximized()) {
         auto b = text({ .text = "MAX", .color = Theme::primary, .font_size = 8.5f, .font_weight = FontWeight::Bold });
-        auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x280284C7).borderRadius(4.0f);
+        auto bc = container({
+            .color = 0x280284C7,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(2.0f, 6.0f),
+            .child = b,
+        });
         badges.push_back(bc);
         badges.push_back(sizedBox(4.0f, 0));
     }
     if (tl->isFullscreen()) {
         auto b = text({ .text = "FULL", .color = Theme::accent_purple, .font_size = 8.5f, .font_weight = FontWeight::Bold });
-        auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x28A855F7).borderRadius(4.0f);
+        auto bc = container({
+            .color = 0x28A855F7,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(2.0f, 6.0f),
+            .child = b,
+        });
         badges.push_back(bc);
     }
 
     if (badges.empty()) {
         auto b = text({ .text = "NORMAL", .color = Theme::text_muted, .font_size = 8.5f });
-        auto bc = container(b); bc->padding(EdgeInsets::symmetric(2.0f, 6.0f)).color(0x18FFFFFF).borderRadius(4.0f);
+        auto bc = container({
+            .color = 0x18FFFFFF,
+            .border_radius = BorderRadius::circular(4.0f),
+            .padding = StyleInsets::symmetric(2.0f, 6.0f),
+            .child = b,
+        });
         badges.push_back(bc);
     }
 
@@ -326,14 +359,16 @@ WidgetPtr DockAppState::buildWindowCard(const std::shared_ptr<ToplevelWindow>& t
         }
     });
 
-    auto card_container = container(card_col);
-    card_container->width(190.0f)
-                  .height(84.0f)
-                  .paddingAll(10.0f)
-                  .color(is_active ? Theme::bg_card_active : Theme::bg_card)
-                  .borderRadius(10.0f)
-                  .border(is_active ? Theme::border_active : Theme::border_subtle, is_active ? 1.5f : 1.0f)
-                  .shadow(is_active ? 0x4038BDF8 : 0x20000000, {0, 3}, 8.0f);
+    auto card_container = container({
+        .color = is_active ? Theme::bg_card_active : Theme::bg_card,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(is_active ? Theme::border_active : Theme::border_subtle, is_active ? 1.5f : 1.0f),
+        .box_shadow = {BoxShadow(is_active ? 0x4038BDF8 : 0x20000000, {0, 3}, 8.0f)},
+        .width = StyleValue::point(190.0f),
+        .height = StyleValue::point(84.0f),
+        .padding = StyleInsets::all(10.0f),
+        .child = card_col,
+    });
 
     // Wrap whole card in GestureDetector for Activate / Minimize / Maximize gestures
     return gestureDetector({
@@ -390,12 +425,14 @@ WidgetPtr DockAppState::buildEmptyState() {
         }
     });
 
-    auto empty_box = container(empty_col);
-    empty_box->height(84.0f)
-             .paddingAll(12.0f)
-             .color(Theme::bg_card)
-             .borderRadius(10.0f)
-             .border(Theme::border_subtle, 1.0f);
+    auto empty_box = container({
+        .color = Theme::bg_card,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(Theme::border_subtle, 1.0f),
+        .height = StyleValue::point(84.0f),
+        .padding = StyleInsets::all(12.0f),
+        .child = empty_col,
+    });
 
     return empty_box;
 }
@@ -436,9 +473,11 @@ WidgetPtr DockAppState::build(BuildContext&) {
         }
     });
 
-    auto root_container = container(main_col);
-    root_container->paddingAll(16.0f)
-                  .color(Theme::bg_window);
+    auto root_container = container({
+        .color = Theme::bg_window,
+        .padding = StyleInsets::all(16.0f),
+        .child = main_col,
+    });
 
     return root_container;
 }

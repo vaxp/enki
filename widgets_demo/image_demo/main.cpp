@@ -92,16 +92,19 @@ public:
             }
         });
 
-        auto content = container(column({
-            .children = {
-                header,
-                sizedBox(0, 14.0f),
-                body_row,
-            }
-        }));
-        content->padding(EdgeInsets::all(18.0f))
-               .color(Style::bg_dark)
-               .size(1080.0f, 660.0f);
+        auto content = container({
+            .color = Style::bg_dark,
+            .width = StyleValue::point(1080.0f),
+            .height = StyleValue::point(660.0f),
+            .padding = StyleInsets::all(18.0f),
+            .child = column({
+                .children = {
+                    header,
+                    sizedBox(0, 14.0f),
+                    body_row,
+                }
+            }),
+        });
 
         return content;
     }
@@ -154,11 +157,13 @@ private:
             }
         });
 
-        auto header_box = container(header_row);
-        header_box->padding(EdgeInsets::symmetric(14.0f, 18.0f))
-                  .borderRadius(14.0f)
-                  .color(Style::bg_card)
-                  .border(Style::border_subtle, 1.0f);
+        auto header_box = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(14.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .padding = StyleInsets::symmetric(14.0f, 18.0f),
+            .child = header_row,
+        });
 
         return header_box;
     }
@@ -171,11 +176,13 @@ private:
             .font_weight = FontWeight::Bold,
         });
 
-        auto b = container(t);
-        b->padding(EdgeInsets::symmetric(4.0f, 10.0f))
-         .borderRadius(20.0f)
-         .color(0x20000000 | (color & 0x00FFFFFF))
-         .border(color, 1.0f);
+        auto b = container({
+            .color = 0x20000000 | (color & 0x00FFFFFF),
+            .border_radius = BorderRadius::circular(20.0f),
+            .border = Border(color, 1.0f),
+            .padding = StyleInsets::symmetric(4.0f, 10.0f),
+            .child = t,
+        });
         return b;
     }
 
@@ -238,11 +245,13 @@ private:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto b = container(t);
-            b->padding(EdgeInsets::symmetric(6.0f, 10.0f))
-             .borderRadius(8.0f)
-             .color(active ? Style::primary : Style::bg_card_light)
-             .border(active ? Style::cyan_neon : Style::border_subtle, 1.0f);
+            auto b = container({
+                .color = active ? Style::primary : Style::bg_card_light,
+                .border_radius = BorderRadius::circular(8.0f),
+                .border = Border(active ? Style::cyan_neon : Style::border_subtle, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 10.0f),
+                .child = t,
+            });
 
             auto gd = gestureDetector({
                 .child = b,
@@ -262,14 +271,17 @@ private:
         });
         fit_buttons.push_back(asset_wrap);
 
-        auto panel = container(column({
-            .children = std::move(fit_buttons)
-        }));
-        panel->padding(EdgeInsets::all(14.0f))
-             .borderRadius(14.0f)
-             .color(Style::bg_card)
-             .border(Style::border_subtle, 1.0f)
-             .size(240.0f, 540.0f);
+        auto panel = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(14.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .width = StyleValue::point(240.0f),
+            .height = StyleValue::point(540.0f),
+            .padding = StyleInsets::all(14.0f),
+            .child = column({
+                .children = std::move(fit_buttons)
+            }),
+        });
         return panel;
     }
 
@@ -281,11 +293,13 @@ private:
             .font_weight = FontWeight::Bold,
         });
 
-        auto btn = container(t);
-        btn->padding(EdgeInsets::symmetric(8.0f, 12.0f))
-           .borderRadius(8.0f)
-           .color(active ? Style::primary : Style::bg_card_light)
-           .border(active ? Style::cyan_neon : Style::border_subtle, 1.0f);
+        auto btn = container({
+            .color = active ? Style::primary : Style::bg_card_light,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(active ? Style::cyan_neon : Style::border_subtle, 1.0f),
+            .padding = StyleInsets::symmetric(8.0f, 12.0f),
+            .child = t,
+        });
 
         return gestureDetector({
             .child = btn,
@@ -307,11 +321,14 @@ private:
             .opacity = current_opacity,
         });
 
-        auto img_holder = container(img);
-        img_holder->size(452.0f, 320.0f)
-                  .color(0xFF0F1422)
-                  .borderRadius(current_radius)
-                  .border(Style::border_bright, 1.5f);
+        auto img_holder = container({
+            .color = 0xFF0F1422,
+            .border_radius = BorderRadius::circular(current_radius),
+            .border = Border(Style::border_bright, 1.5f),
+            .width = StyleValue::point(452.0f),
+            .height = StyleValue::point(320.0f),
+            .child = img,
+        });
 
         std::string fit_str = "Cover";
         if (current_fit == BoxFit::Contain) fit_str = "Contain";
@@ -365,21 +382,23 @@ private:
             }
         });
 
-        auto card = container(column({
-            .children = {
-                chips_row,
-                sizedBox(0, 10.0f),
-                img_holder,
-                sizedBox(0, 14.0f),
-                toggles_row,
-            }
-        }));
-
-        card->padding(EdgeInsets::all(14.0f))
-            .borderRadius(14.0f)
-            .color(Style::bg_card)
-            .border(Style::border_subtle, 1.0f)
-            .size(480.0f, 540.0f);
+        auto card = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(14.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .width = StyleValue::point(480.0f),
+            .height = StyleValue::point(540.0f),
+            .padding = StyleInsets::all(14.0f),
+            .child = column({
+                .children = {
+                    chips_row,
+                    sizedBox(0, 10.0f),
+                    img_holder,
+                    sizedBox(0, 14.0f),
+                    toggles_row,
+                }
+            }),
+        });
 
         return card;
     }
@@ -401,14 +420,19 @@ private:
             .fit = BoxFit::Cover,
             .shape = BoxShape::Circle,
         });
-        auto avatar1_box = container(avatar1);
-        avatar1_box->borderRadius(26.0f).border(Style::primary_light, 2.0f);
+        auto avatar1_box = container({
+            .border_radius = BorderRadius::circular(26.0f),
+            .border = Border(Style::primary_light, 2.0f),
+            .child = avatar1,
+        });
 
-        auto online_dot = container();
-        online_dot->size(12.0f, 12.0f)
-                  .borderRadius(6.0f)
-                  .color(Style::emerald)
-                  .border(0xFF0A0E1A, 2.0f);
+        auto online_dot = container({
+            .color = Style::emerald,
+            .border_radius = BorderRadius::circular(6.0f),
+            .border = Border(0xFF0A0E1A, 2.0f),
+            .width = StyleValue::point(12.0f),
+            .height = StyleValue::point(12.0f),
+        });
 
         auto pos_dot = Positioned {
             .child = online_dot,
@@ -432,8 +456,11 @@ private:
             .fit = BoxFit::Cover,
             .shape = BoxShape::Circle,
         });
-        auto avatar2_box = container(avatar2);
-        avatar2_box->borderRadius(26.0f).border(Style::purple_neon, 2.0f);
+        auto avatar2_box = container({
+            .border_radius = BorderRadius::circular(26.0f),
+            .border = Border(Style::purple_neon, 2.0f),
+            .child = avatar2,
+        });
 
         auto avatar3 = image({
             .source_path = "assets/12.png",
@@ -442,8 +469,11 @@ private:
             .fit = BoxFit::Cover,
             .shape = BoxShape::Circle,
         });
-        auto avatar3_box = container(avatar3);
-        avatar3_box->borderRadius(26.0f).border(Style::cyan_neon, 2.0f);
+        auto avatar3_box = container({
+            .border_radius = BorderRadius::circular(26.0f),
+            .border = Border(Style::cyan_neon, 2.0f),
+            .child = avatar3,
+        });
 
         WidgetPtr w_av1 = av1_stack;
         WidgetPtr w_av2 = avatar2_box;
@@ -484,25 +514,27 @@ private:
         WidgetPtr w_grid1 = grid_row1;
         WidgetPtr w_grid2 = grid_row2;
 
-        auto panel = container(column({
-            .children = {
-                w_title1,
-                sizedBox(0, 10.0f),
-                w_avatars_row,
-                sizedBox(0, 18.0f),
-                w_title2,
-                sizedBox(0, 10.0f),
-                w_grid1,
-                sizedBox(0, 8.0f),
-                w_grid2,
-            }
-        }));
-
-        panel->padding(EdgeInsets::all(14.0f))
-             .borderRadius(14.0f)
-             .color(Style::bg_card)
-             .border(Style::border_subtle, 1.0f)
-             .size(290.0f, 540.0f);
+        auto panel = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(14.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .width = StyleValue::point(290.0f),
+            .height = StyleValue::point(540.0f),
+            .padding = StyleInsets::all(14.0f),
+            .child = column({
+                .children = {
+                    w_title1,
+                    sizedBox(0, 10.0f),
+                    w_avatars_row,
+                    sizedBox(0, 18.0f),
+                    w_title2,
+                    sizedBox(0, 10.0f),
+                    w_grid1,
+                    sizedBox(0, 8.0f),
+                    w_grid2,
+                }
+            }),
+        });
 
         return panel;
     }
@@ -526,19 +558,21 @@ private:
         WidgetPtr w_img = img;
         WidgetPtr w_t = t;
 
-        auto card = container(column({
-            .children = {
-                w_img,
-                sizedBox(0, 4.0f),
-                w_t,
-            }
-        }));
-
-        card->padding(EdgeInsets::all(6.0f))
-            .borderRadius(10.0f)
-            .color(Style::bg_card_light)
-            .border(accent, 1.0f)
-            .size(126.0f, 106.0f);
+        auto card = container({
+            .color = Style::bg_card_light,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(accent, 1.0f),
+            .width = StyleValue::point(126.0f),
+            .height = StyleValue::point(106.0f),
+            .padding = StyleInsets::all(6.0f),
+            .child = column({
+                .children = {
+                    w_img,
+                    sizedBox(0, 4.0f),
+                    w_t,
+                }
+            }),
+        });
 
         return gestureDetector({
             .child = card,

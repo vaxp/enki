@@ -990,11 +990,13 @@ public:
                 .children = { info_txt, nav_row },
             });
 
-            auto pag_container = container(bar_row);
-            pag_container->color(0xFF1E293B)
-                         .borderRadius(6.0f)
-                         .border(0xFF334155, 1.0f)
-                         .paddingSymmetric(6.0f, 10.0f);
+            auto pag_container = container({
+                .color = 0xFF1E293B,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(6.0f, 10.0f),
+                .child = bar_row,
+            });
 
             main_items.push_back(pag_container);
         }

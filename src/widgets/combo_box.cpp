@@ -204,10 +204,12 @@ public:
                     .font_weight = FontWeight::Bold,
                 });
 
-                auto g_box = container(g_txt);
-                g_box->paddingSymmetric(4.0f, 10.0f)
-                     .color(0x330F172A)
-                     .width(StyleValue::percent(100.0f));
+                auto g_box = container({
+                    .color = 0x330F172A,
+                    .width = StyleValue::percent(100.0f),
+                    .padding = StyleInsets::symmetric(4.0f, 10.0f),
+                    .child = g_txt,
+                });
                 menu_rows.push_back(g_box);
             }
 
@@ -267,8 +269,12 @@ public:
                     .font_weight = FontWeight::Bold,
                 });
 
-                auto b_box = container(b_txt);
-                b_box->color(0x2238BDF8).borderRadius(4.0f).paddingSymmetric(2.0f, 6.0f);
+                auto b_box = container({
+                    .color = 0x2238BDF8,
+                    .border_radius = BorderRadius::circular(4.0f),
+                    .padding = StyleInsets::symmetric(2.0f, 6.0f),
+                    .child = b_txt,
+                });
                 right_items.push_back(b_box);
             }
 
@@ -295,11 +301,13 @@ public:
                 .children = {left_row, right_row},
             });
 
-            auto item_box = container(row_wrap);
-            item_box->color(is_selected ? opts.item_selected_col : 0x00000000)
-                    .borderRadius(6.0f)
-                    .paddingSymmetric(8.0f, 10.0f)
-                    .width(StyleValue::percent(100.0f));
+            auto item_box = container({
+                .color = is_selected ? opts.item_selected_col : 0x00000000,
+                .border_radius = BorderRadius::circular(6.0f),
+                .width = StyleValue::percent(100.0f),
+                .padding = StyleInsets::symmetric(8.0f, 10.0f),
+                .child = row_wrap,
+            });
 
             auto it_copy = item;
             auto item_gd = gestureDetector({
@@ -318,13 +326,15 @@ public:
             .children = std::move(menu_rows),
         });
 
-        auto menu_panel = container(menu_col);
-        menu_panel->color(opts.menu_bg_color)
-                  .border(opts.border_color, 1.0f)
-                  .borderRadius(opts.border_radius)
-                  .paddingAll(8.0f)
-                  .width(opts.width)
-                  .shadow(BoxShadow(0x99000000, {0.0f, 10.0f}, 24.0f));
+        auto menu_panel = container({
+            .color = opts.menu_bg_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 10.0f}, 24.0f)},
+            .width = StyleValue::point(opts.width),
+            .padding = StyleInsets::all(8.0f),
+            .child = menu_col,
+        });
 
         return menu_panel;
     }
@@ -336,12 +346,17 @@ public:
         // ── 1. Invariant Page Body (100% dimensions) ──────────────────
         WidgetPtr body_widget;
         if (w->props.body) {
-            auto bx = container(w->props.body);
-            bx->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->props.body,
+            });
             body_widget = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+            });
             body_widget = Positioned::fill(empty);
         }
 

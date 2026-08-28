@@ -81,9 +81,10 @@ class TreeViewState : public State {
 
         // Indent spacers — one per depth level
         for (int i = 0; i < depth; ++i) {
-            auto sp = container();
-            sp->width(theme.indent_width);
-            sp->height(StyleValue::percent(100.0f));
+            auto sp = container({
+                .width = StyleValue::point(theme.indent_width),
+                .height = StyleValue::percent(100.0f),
+            });
             row_children.push_back(sp);
         }
 
@@ -98,10 +99,12 @@ class TreeViewState : public State {
                     .font_size = theme.arrow_size,
                 });
 
-                auto arrow_wrap = container(arrow_sym);
-                arrow_wrap->width(theme.indent_width);
-                arrow_wrap->height(theme.node_height);
-                arrow_wrap->align(Alignment::Center);
+                auto arrow_wrap = container({
+                    .align = Alignment::Center,
+                    .width = StyleValue::point(theme.indent_width),
+                    .height = StyleValue::point(theme.node_height),
+                    .child = arrow_sym,
+                });
 
                 if (!data.disabled && theme.animate_arrow) {
                     auto node_id = data.id;
@@ -124,9 +127,10 @@ class TreeViewState : public State {
                 }
             } else {
                 // Leaf: empty space to align with non-leaf arrows
-                auto sp = container();
-                sp->width(theme.indent_width);
-                sp->height(theme.node_height);
+                auto sp = container({
+                    .width = StyleValue::point(theme.indent_width),
+                    .height = StyleValue::point(theme.node_height),
+                });
                 arrow = sp;
             }
             row_children.push_back(arrow);
@@ -134,8 +138,10 @@ class TreeViewState : public State {
 
         // Leading icon
         if (data.leading_icon) {
-            auto c = container(data.leading_icon);
-            c->margin(EdgeInsets::only(0, theme.leading_gap, 0, 0));
+            auto c = container({
+                .margin = StyleInsets::only(0, theme.leading_gap, 0, 0),
+                .child = data.leading_icon,
+            });
             row_children.push_back(c);
         }
 
@@ -149,8 +155,10 @@ class TreeViewState : public State {
 
         // Trailing
         if (data.trailing) {
-            auto c = container(data.trailing);
-            c->margin(EdgeInsets::only(0, 0, 0, theme.trailing_gap));
+            auto c = container({
+                .margin = StyleInsets::only(0, 0, 0, theme.trailing_gap),
+                .child = data.trailing,
+            });
             row_children.push_back(c);
         }
 
@@ -163,15 +171,14 @@ class TreeViewState : public State {
         });
 
         // ── Wrap in selection/hover decoration ─────────────────
-        auto row_bg = container(row_content);
-        row_bg->height(theme.node_height);
-        row_bg->width(StyleValue::percent(100.0f));
-        row_bg->padding(EdgeInsets::symmetric(theme.row_padding_vertical, theme.row_padding_horizontal));
-        row_bg->borderRadius(theme.row_radius.top_left);
-
-        if (is_selected) {
-            row_bg->color(theme.selected_color);
-        }
+        auto row_bg = container({
+            .color = is_selected ? std::optional<Color>(theme.selected_color) : std::nullopt,
+            .border_radius = BorderRadius::circular(theme.row_radius.top_left),
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::point(theme.node_height),
+            .padding = StyleInsets::symmetric(theme.row_padding_vertical, theme.row_padding_horizontal),
+            .child = row_content,
+        });
 
         WidgetPtr row_widget;
         if (!data.disabled) {
@@ -243,8 +250,10 @@ public:
 
         WidgetPtr content;
         if (w->props.list_padding != EdgeInsets{}) {
-            auto pc = container(root_col);
-            pc->padding(w->props.list_padding);
+            auto pc = container({
+                .padding = StyleInsets::only(w->props.list_padding.top, w->props.list_padding.right, w->props.list_padding.bottom, w->props.list_padding.left),
+                .child = root_col,
+            });
             content = pc;
         } else {
             content = root_col;

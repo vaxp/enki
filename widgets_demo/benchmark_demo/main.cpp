@@ -53,18 +53,21 @@ public:
     bool is_hovered = false;
 
     WidgetPtr build(BuildContext& context) override {
-        auto root = container(column({
-            .children = {
-                buildHeader(),
-                sizedBox(0, 16.0f),
-                buildStatsRow(),
-                sizedBox(0, 16.0f),
-                buildControls(),
-                sizedBox(0, 16.0f),
-                buildGrid(),
-            }
-        }));
-        root->paddingAll(24.0f).color(Style::bg_dark);
+        auto root = container({
+            .color = Style::bg_dark,
+            .padding = StyleInsets::all(24.0f),
+            .child = column({
+                .children = {
+                    buildHeader(),
+                    sizedBox(0, 16.0f),
+                    buildStatsRow(),
+                    sizedBox(0, 16.0f),
+                    buildControls(),
+                    sizedBox(0, 16.0f),
+                    buildGrid(),
+                }
+            }),
+        });
         return root;
     }
 
@@ -146,12 +149,14 @@ private:
             }
         });
 
-        auto c = container(content);
-        c->width(230.0f)
-         .paddingAll(14.0f)
-         .color(Style::bg_card)
-         .borderRadius(10.0f)
-         .border(Style::border_subtle, 1.0f);
+        auto c = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(10.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .width = StyleValue::point(230.0f),
+            .padding = StyleInsets::all(14.0f),
+            .child = content,
+        });
         return c;
     }
 
@@ -163,11 +168,13 @@ private:
             .font_weight = FontWeight::Bold,
         });
 
-        auto btn_inc_box = container(btn_inc_text);
-        btn_inc_box->paddingSymmetric(18.0f, 10.0f)
-                   .color(is_hovered ? Style::primary_light : Style::primary)
-                   .borderRadius(8.0f)
-                   .border(Style::cyan_neon, is_hovered ? 1.5f : 0.0f);
+        auto btn_inc_box = container({
+            .color = is_hovered ? Style::primary_light : Style::primary,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(Style::cyan_neon, is_hovered ? 1.5f : 0.0f),
+            .padding = StyleInsets::symmetric(10.0f, 18.0f),
+            .child = btn_inc_text,
+        });
 
         auto btn_inc = gestureDetector({
             .key = Key::string("btn_inc"),
@@ -191,11 +198,13 @@ private:
             .color = Style::text_white,
             .font_size = 12.0f,
         });
-        auto btn_add_box = container(btn_add_text);
-        btn_add_box->paddingSymmetric(14.0f, 10.0f)
-                   .color(Style::bg_card)
-                   .borderRadius(8.0f)
-                   .border(Style::border_subtle, 1.0f);
+        auto btn_add_box = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .padding = StyleInsets::symmetric(10.0f, 14.0f),
+            .child = btn_add_text,
+        });
         auto btn_add = gestureDetector({
             .key = Key::string("btn_add"),
             .child = btn_add_box,
@@ -212,11 +221,13 @@ private:
             .color = Style::text_muted,
             .font_size = 12.0f,
         });
-        auto btn_reset_box = container(btn_reset_text);
-        btn_reset_box->paddingSymmetric(14.0f, 10.0f)
-                     .color(Style::bg_card)
-                     .borderRadius(8.0f)
-                     .border(Style::border_subtle, 1.0f);
+        auto btn_reset_box = container({
+            .color = Style::bg_card,
+            .border_radius = BorderRadius::circular(8.0f),
+            .border = Border(Style::border_subtle, 1.0f),
+            .padding = StyleInsets::symmetric(10.0f, 14.0f),
+            .child = btn_reset_text,
+        });
         auto btn_reset = gestureDetector({
             .key = Key::string("btn_reset"),
             .child = btn_reset_box,
@@ -268,13 +279,15 @@ private:
                 }
             });
 
-            auto card = container(col);
-            card->width(140.0f)
-                .height(68.0f)
-                .paddingAll(10.0f)
-                .color(Style::bg_card)
-                .borderRadius(8.0f)
-                .border(Style::border_subtle, 1.0f);
+            auto card = container({
+                .color = Style::bg_card,
+                .border_radius = BorderRadius::circular(8.0f),
+                .border = Border(Style::border_subtle, 1.0f),
+                .width = StyleValue::point(140.0f),
+                .height = StyleValue::point(68.0f),
+                .padding = StyleInsets::all(10.0f),
+                .child = col,
+            });
 
             items.push_back(card);
         }

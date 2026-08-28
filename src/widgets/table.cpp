@@ -106,7 +106,7 @@ WidgetPtr TableWidget::build(BuildContext& ctx) {
         for (size_t col = 0; col < table_row.cells.size(); ++col) {
             auto cell_content = table_row.cells[col];
             if (!cell_content) {
-                cell_content = std::make_shared<Container>();
+                cell_content = container();
             }
             
             // Find column width
@@ -169,8 +169,14 @@ WidgetPtr TableWidget::build(BuildContext& ctx) {
 
         WidgetPtr final_row = row_widget;
         if (table_row.decoration.has_value()) {
-            auto dec = container(row_widget);
-            dec->decoration = *table_row.decoration;
+            auto dec = container({
+                .color = table_row.decoration->color,
+                .border_radius = table_row.decoration->border_radius,
+                .border = table_row.decoration->border,
+                .box_shadow = table_row.decoration->box_shadow,
+                .shape = table_row.decoration->shape,
+                .child = row_widget,
+            });
             final_row = dec;
         }
 

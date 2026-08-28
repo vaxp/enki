@@ -79,10 +79,18 @@ public:
         auto* w = static_cast<const FocusWidget*>(widget());
         bool is_focused = node_ && node_->has_focus;
 
-        auto box = container(w->child);
+        std::optional<Border> focus_border;
+        std::optional<BorderRadius> focus_radius;
         if (w->show_focus_ring && is_focused) {
-            box->border(w->focus_ring_color, 2.0f).borderRadius(8.0f);
+            focus_border = Border(w->focus_ring_color, 2.0f);
+            focus_radius = BorderRadius::circular(8.0f);
         }
+
+        auto box = container({
+            .border_radius = focus_radius,
+            .border = focus_border,
+            .child = w->child,
+        });
 
         return gestureDetector({
             .child = box,

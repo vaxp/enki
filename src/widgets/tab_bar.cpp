@@ -351,11 +351,14 @@ WidgetPtr TabViewWidget::build(BuildContext&) {
     int idx = std::clamp(selected_index, 0,
                          children.empty() ? 0 : (int)children.size() - 1);
     if (children.empty()) {
-        return container();
+        return container({});
     }
 
-    auto outer = container(children[idx]);
-    outer->flex(1.0f).width(StyleValue::percent(100.0f));
+    auto outer = container({
+        .width = StyleValue::percent(100.0f),
+        .flex = 1.0f,
+        .child = children[idx],
+    });
     return outer;
 }
 

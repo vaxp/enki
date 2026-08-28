@@ -223,12 +223,14 @@ WidgetPtr placeholderCardSkeleton(float w) {
         .children = {head_row, body_line1, body_line2},
     });
 
-    auto card_box = container(card_col);
-    card_box->color(0xFF0F172A)
-            .border(0xFF334155, 1.0f)
-            .borderRadius(12.0f)
-            .paddingAll(16.0f)
-            .width(w);
+    auto card_box = container({
+        .color = 0xFF0F172A,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(0xFF334155, 1.0f),
+        .width = StyleValue::point(w),
+        .padding = StyleInsets::all(16.0f),
+        .child = card_col,
+    });
 
     return card_box;
 }
@@ -258,8 +260,11 @@ WidgetPtr placeholderListSkeleton(int rows, float w) {
         row_widgets.push_back(r_row);
 
         if (i < rows - 1) {
-            auto div = container();
-            div->color(0xFF1E293B).height(1.0f).width(StyleValue::percent(100.0f));
+            auto div = container({
+                .color = 0xFF1E293B,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+            });
             row_widgets.push_back(div);
         }
     }
@@ -269,12 +274,14 @@ WidgetPtr placeholderListSkeleton(int rows, float w) {
         .children = std::move(row_widgets),
     });
 
-    auto list_box = container(list_col);
-    list_box->color(0xFF0F172A)
-            .border(0xFF334155, 1.0f)
-            .borderRadius(12.0f)
-            .paddingAll(16.0f)
-            .width(w);
+    auto list_box = container({
+        .color = 0xFF0F172A,
+        .border_radius = BorderRadius::circular(12.0f),
+        .border = Border(0xFF334155, 1.0f),
+        .width = StyleValue::point(w),
+        .padding = StyleInsets::all(16.0f),
+        .child = list_col,
+    });
 
     return list_box;
 }

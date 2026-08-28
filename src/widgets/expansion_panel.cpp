@@ -118,10 +118,12 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto step_box = container(step_txt);
-            step_box->color(is_expanded ? 0xFF0284C7 : opts.step_pill_bg)
-                    .borderRadius(6.0f)
-                    .paddingSymmetric(4.0f, 8.0f);
+            auto step_box = container({
+                .color = is_expanded ? 0xFF0284C7 : opts.step_pill_bg,
+                .border_radius = BorderRadius::circular(6.0f),
+                .padding = StyleInsets::symmetric(4.0f, 8.0f),
+                .child = step_txt,
+            });
             left_items.push_back(step_box);
         }
 
@@ -169,8 +171,12 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto b_box = container(b_txt);
-            b_box->color(item.badge_bg).borderRadius(4.0f).paddingSymmetric(3.0f, 8.0f);
+            auto b_box = container({
+                .color = item.badge_bg,
+                .border_radius = BorderRadius::circular(4.0f),
+                .padding = StyleInsets::symmetric(3.0f, 8.0f),
+                .child = b_txt,
+            });
             right_items.push_back(b_box);
         }
 
@@ -183,8 +189,10 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto chv_box = container(chv_txt);
-            chv_box->paddingAll(2.0f);
+            auto chv_box = container({
+                .padding = StyleInsets::all(2.0f),
+                .child = chv_txt,
+            });
             right_items.push_back(chv_box);
         }
 
@@ -202,13 +210,12 @@ public:
             .children = {left_row, right_row},
         });
 
-        auto header_box = container(h_row);
-        header_box->paddingSymmetric(12.0f, 16.0f)
-                  .width(StyleValue::percent(100.0f));
-
-        if (is_expanded) {
-            header_box->color(0x1A38BDF8); // Subtle blue highlight
-        }
+        auto header_box = container({
+            .color = is_expanded ? std::optional<Color>(0x1A38BDF8) : std::nullopt,
+            .width = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(12.0f, 16.0f),
+            .child = h_row,
+        });
 
         // GestureDetector for Header
         auto header_gd = gestureDetector({
@@ -224,19 +231,28 @@ public:
         // ── 3. Expanded Body & Footer Actions ─────────────────────────
         if (is_expanded && item.body) {
             // Divider
-            auto div = container();
-            div->color(opts.divider_color).height(1.0f).width(StyleValue::percent(100.0f));
+            auto div = container({
+                .color = opts.divider_color,
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::point(1.0f),
+            });
             panel_col_items.push_back(div);
 
             // Body
-            auto body_box = container(item.body);
-            body_box->paddingAll(16.0f).width(StyleValue::percent(100.0f));
+            auto body_box = container({
+                .width = StyleValue::percent(100.0f),
+                .padding = StyleInsets::all(16.0f),
+                .child = item.body,
+            });
             panel_col_items.push_back(body_box);
 
             // Optional Footer Action Bar
             if (!item.footer_actions.empty()) {
-                auto f_div = container();
-                f_div->color(opts.divider_color).height(1.0f).width(StyleValue::percent(100.0f));
+                auto f_div = container({
+                    .color = opts.divider_color,
+                    .width = StyleValue::percent(100.0f),
+                    .height = StyleValue::point(1.0f),
+                });
                 panel_col_items.push_back(f_div);
 
                 auto actions_row = row({
@@ -247,10 +263,12 @@ public:
                     .children = item.footer_actions,
                 });
 
-                auto footer_box = container(actions_row);
-                footer_box->paddingSymmetric(10.0f, 16.0f)
-                          .color(0x330F172A)
-                          .width(StyleValue::percent(100.0f));
+                auto footer_box = container({
+                    .color = 0x330F172A,
+                    .width = StyleValue::percent(100.0f),
+                    .padding = StyleInsets::symmetric(10.0f, 16.0f),
+                    .child = actions_row,
+                });
                 panel_col_items.push_back(footer_box);
             }
         }
@@ -261,13 +279,15 @@ public:
         });
 
         // ── 4. Card Styling & Elevation ───────────────────────────────
-        auto card = container(panel_col);
-        card->color(opts.background_color)
-            .border(is_expanded ? opts.expanded_border_col : opts.border_color, 1.0f)
-            .borderRadius(opts.border_radius)
-            .width(StyleValue::percent(100.0f))
-            .shadow(is_expanded ? BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)
-                                : BoxShadow(0x44000000, {0.0f, 2.0f}, 8.0f));
+        auto card = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(is_expanded ? opts.expanded_border_col : opts.border_color, 1.0f),
+            .box_shadow = is_expanded ? std::vector<BoxShadow>{BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)}
+                                      : std::vector<BoxShadow>{BoxShadow(0x44000000, {0.0f, 2.0f}, 8.0f)},
+            .width = StyleValue::percent(100.0f),
+            .child = panel_col,
+        });
 
         return card;
     }

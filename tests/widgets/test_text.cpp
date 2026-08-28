@@ -31,7 +31,9 @@ void test_text_basic_measurement() {
         .font_size = 16.0f,
     });
 
-    auto c = container(t);
+    auto c = container({
+        .child = t,
+    });
     auto el = c->createElement();
     el->mount(nullptr, 0);
 
@@ -63,7 +65,9 @@ void test_text_multiline_wrapping() {
         .text = longText,
         .font_size = 14.0f,
     });
-    auto c1 = container(t1);
+    auto c1 = container({
+        .child = t1,
+    });
 
     auto el1 = c1->createElement();
     el1->mount(nullptr, 0);
@@ -82,8 +86,10 @@ void test_text_multiline_wrapping() {
         .text = longText,
         .font_size = 14.0f,
     });
-    auto c2 = container(t2);
-    c2->width(150.0f);
+    auto c2 = container({
+        .width = 150.0f,
+        .child = t2,
+    });
 
     auto el2 = c2->createElement();
     el2->mount(nullptr, 0);
@@ -117,8 +123,10 @@ void test_text_overflow_max_lines() {
         .max_lines = 1,
     });
 
-    auto c = container(t);
-    c->width(100.0f);
+    auto c = container({
+        .width = 100.0f,
+        .child = t,
+    });
 
     auto el = c->createElement();
     el->mount(nullptr, 0);
@@ -149,7 +157,9 @@ void test_richtext_spans() {
     });
 
     auto rt = richText(rootSpan);
-    auto c = container(rt);
+    auto c = container({
+        .child = rt,
+    });
     auto el = c->createElement();
     el->mount(nullptr, 0);
 
@@ -186,10 +196,12 @@ void test_text_flexbox_integration() {
     });
 
     std::vector<WidgetPtr> colChildren = {title, subtitle};
-    auto card = container(column({
-        .children = std::move(colChildren)
-    }));
-    card->padding(EdgeInsets::all(16.0f));
+    auto card = container({
+        .padding = StyleInsets::all(16.0f),
+        .child = column({
+            .children = std::move(colChildren)
+        }),
+    });
 
     auto el = card->createElement();
     el->mount(nullptr, 0);
@@ -345,8 +357,13 @@ void test_text_render_snapshot_png() {
     });
     auto codeDemo = richText(codeSpan);
 
-    auto codeBox = container(codeDemo);
-    codeBox->color(0xFF0F172A).borderRadius(10.0f).border(0xFF1E293B, 1.0f).paddingAll(12.0f);
+    auto codeBox = container({
+        .color = 0xFF0F172A,
+        .border_radius = BorderRadius::circular(10.0f),
+        .border = Border(0xFF1E293B, 1.0f),
+        .padding = StyleInsets::all(12.0f),
+        .child = codeDemo,
+    });
 
     auto mainCol = column({
         .children = {
@@ -359,9 +376,11 @@ void test_text_render_snapshot_png() {
         }
     });
 
-    auto root = container(mainCol);
-    root->color(0xFF0B0F19)
-        .paddingAll(24.0f);
+    auto root = container({
+        .color = 0xFF0B0F19,
+        .padding = StyleInsets::all(24.0f),
+        .child = mainCol,
+    });
 
     auto el = root->createElement();
     el->mount(nullptr, 0);

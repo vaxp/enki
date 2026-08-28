@@ -201,11 +201,11 @@ bool RenderDecoratedBox::hitTestSelf(Point localPoint) const {
 // Container Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-std::unique_ptr<RenderObject> Container::createRenderObject(BuildContext& ctx) {
+std::unique_ptr<RenderObject> ContainerWidget::createRenderObject(BuildContext& ctx) {
     return std::make_unique<RenderDecoratedBox>(decoration, style);
 }
 
-void Container::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
+void ContainerWidget::updateRenderObject(BuildContext& ctx, RenderObject& renderObject) {
     if (auto* rdb = dynamic_cast<RenderDecoratedBox*>(&renderObject)) {
         rdb->setDecoration(decoration);
         rdb->setStyle(style);

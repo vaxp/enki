@@ -210,11 +210,12 @@ public:
             std::vector<WidgetPtr> dots;
             size_t dot_count = std::min(date_events.size(), size_t(3));
             for (size_t i = 0; i < dot_count; ++i) {
-                auto dot = container();
-                dot->color(is_selected ? 0xFFFFFFFF : date_events[i].color)
-                   .borderRadius(2.0f)
-                   .width(4.0f)
-                   .height(4.0f);
+                auto dot = container({
+                    .color = is_selected ? 0xFFFFFFFF : date_events[i].color,
+                    .border_radius = BorderRadius::circular(2.0f),
+                    .width = StyleValue::point(4.0f),
+                    .height = StyleValue::point(4.0f),
+                });
                 dots.push_back(dot);
             }
             auto dot_row = row({
@@ -232,16 +233,29 @@ public:
             .children = std::move(cell_col_items),
         });
 
-        auto cell_box = container(cell_col);
-        cell_box->width(42.0f).height(40.0f);
+        std::optional<Color> cell_bg;
+        std::optional<BorderRadius> cell_radius;
+        std::optional<Border> cell_border;
 
         if (is_selected) {
-            cell_box->color(opts.selected_bg_color).borderRadius(8.0f);
+            cell_bg = opts.selected_bg_color;
+            cell_radius = BorderRadius::circular(8.0f);
         } else if (is_in_range) {
-            cell_box->color(opts.in_range_bg_color).borderRadius(4.0f);
+            cell_bg = opts.in_range_bg_color;
+            cell_radius = BorderRadius::circular(4.0f);
         } else if (is_today && opts.highlight_today) {
-            cell_box->border(opts.today_ring_color, 1.0f).borderRadius(8.0f);
+            cell_border = Border(opts.today_ring_color, 1.0f);
+            cell_radius = BorderRadius::circular(8.0f);
         }
+
+        auto cell_box = container({
+            .color = cell_bg,
+            .border_radius = cell_radius,
+            .border = cell_border,
+            .width = StyleValue::point(42.0f),
+            .height = StyleValue::point(40.0f),
+            .child = cell_col,
+        });
 
         return gestureDetector({
             .child = cell_box,
@@ -274,11 +288,13 @@ public:
                 .font_weight = FontWeight::Bold,
             });
 
-            auto b = container(t);
-            b->color(0xFF0F172A)
-             .border(0xFF334155, 1.0f)
-             .borderRadius(6.0f)
-             .paddingSymmetric(4.0f, 10.0f);
+            auto b = container({
+                .color = 0xFF0F172A,
+                .border_radius = BorderRadius::circular(6.0f),
+                .border = Border(0xFF334155, 1.0f),
+                .padding = StyleInsets::symmetric(4.0f, 10.0f),
+                .child = t,
+            });
 
             return gestureDetector({
                 .child = b,
@@ -329,8 +345,11 @@ public:
                 .children = {t},
             });
 
-            auto tb = container(tc);
-            tb->width(42.0f).height(24.0f);
+            auto tb = container({
+                .width = StyleValue::point(42.0f),
+                .height = StyleValue::point(24.0f),
+                .child = tc,
+            });
             weekday_items.push_back(tb);
         }
 
@@ -401,13 +420,15 @@ public:
             .children = {header_row, weekday_row, grid_col},
         });
 
-        auto cal_card = container(cal_col);
-        cal_card->color(opts.background_color)
-                .border(opts.border_color, 1.0f)
-                .borderRadius(opts.border_radius)
-                .paddingAll(16.0f)
-                .width(opts.width)
-                .shadow(BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f));
+        auto cal_card = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::circular(opts.border_radius),
+            .border = Border(opts.border_color, 1.0f),
+            .box_shadow = {BoxShadow(0x99000000, {0.0f, 8.0f}, 24.0f)},
+            .width = StyleValue::point(opts.width),
+            .padding = StyleInsets::all(16.0f),
+            .child = cal_col,
+        });
 
         return cal_card;
     }

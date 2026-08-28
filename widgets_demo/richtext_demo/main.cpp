@@ -80,8 +80,10 @@ public:
             .children = { title, rt }
         });
         
-        auto root_container = container(root);
-        root_container->color(0xFF0F172A); // Slate 900
+        auto root_container = container({
+            .color = 0xFF0F172A, // Slate 900
+            .child = root,
+        });
         return root_container;
     }
 };

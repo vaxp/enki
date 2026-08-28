@@ -249,14 +249,17 @@ public:
         // ── 1. Stable Background Body (Always 100% width & height) ─────
         WidgetPtr body_widget;
         if (w->body) {
-            auto bx = container(w->body);
-            bx->width(StyleValue::percent(100.0f))
-              .height(StyleValue::percent(100.0f));
+            auto bx = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = w->body,
+            });
             body_widget = Positioned::fill(bx);
         } else {
-            auto empty = container();
-            empty->width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f));
+            auto empty = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+            });
             body_widget = Positioned::fill(empty);
         }
 
@@ -285,11 +288,12 @@ public:
         // A. Drag Handle Pill
         std::vector<WidgetPtr> handle_row_items;
         if (opts.show_drag_handle) {
-            auto pill = container();
-            pill->color(opts.handle_color)
-                .borderRadius(2.5f)
-                .width(44.0f)
-                .height(5.0f);
+            auto pill = container({
+                .color = opts.handle_color,
+                .border_radius = BorderRadius::circular(2.5f),
+                .width = StyleValue::point(44.0f),
+                .height = StyleValue::point(5.0f),
+            });
             handle_row_items.push_back(pill);
         }
         auto handle_row = row({
@@ -384,8 +388,11 @@ public:
         // D. Combine Panel
         std::vector<WidgetPtr> sheet_kids = {hdr_detector};
         if (w->sheet_content) {
-            auto content_box = container(w->sheet_content);
-            content_box->flex(1.0f).width(StyleValue::percent(100.0f));
+            auto content_box = container({
+                .width = StyleValue::percent(100.0f),
+                .flex = 1.0f,
+                .child = w->sheet_content,
+            });
             sheet_kids.push_back(content_box);
         }
 
@@ -396,14 +403,16 @@ public:
             .children = std::move(sheet_kids),
         });
 
-        auto sheet_box = container(sheet_col);
-        sheet_box->color(opts.background_color)
-                 .border(opts.border_color, 1.0f)
-                 .borderRadius(BorderRadius::only(opts.border_radius, opts.border_radius, 0.0f, 0.0f))
-                 .paddingAll(16.0f)
-                 .width(StyleValue::percent(100.0f))
-                 .height(StyleValue::percent(100.0f))
-                 .clip(true);
+        auto sheet_box = container({
+            .color = opts.background_color,
+            .border_radius = BorderRadius::only(opts.border_radius, opts.border_radius, 0.0f, 0.0f),
+            .border = Border(opts.border_color, 1.0f),
+            .clip_content = true,
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::all(16.0f),
+            .child = sheet_col,
+        });
 
         // Positioned sheet panel sliding up from bottom
         auto pos_sheet = Positioned {

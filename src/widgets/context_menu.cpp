@@ -163,11 +163,11 @@ public:
 
         // 1. Divider Item
         if (item_base->itemType() == ContextMenuItemType::Divider) {
-            auto div = container(nullptr);
-            div->height(1.0f)
-               .color(opt.border_color)
-               .margin(StyleInsets::symmetric(4.0f, 0.0f));
-            return div;
+            return container({
+                .color = opt.border_color,
+                .height = StyleValue::point(1.0f),
+                .margin = StyleInsets::symmetric(4.0f, 0.0f),
+            });
         }
 
         // 2. Standard Item or SubMenu Item
@@ -218,8 +218,9 @@ public:
         row_elements.push_back(label_text);
 
         // Flexible Spacer
-        auto spacer = container(nullptr);
-        spacer->flexGrow(1.0f);
+        auto spacer = flexItem({
+            .flex_grow = 1.0f,
+        });
         row_elements.push_back(spacer);
 
         // Trailing Shortcut / Submenu arrow
@@ -244,11 +245,13 @@ public:
             bg_color = opt.hover_color;
         }
 
-        auto item_container = container(item_row);
-        item_container->color(bg_color)
-                      .borderRadius(4.0f)
-                      .paddingSymmetric(6.0f, 10.0f)
-                      .minHeight(StyleValue::point(opt.item_height));
+        auto item_container = container({
+            .color = bg_color,
+            .border_radius = BorderRadius::circular(4.0f),
+            .min_height = StyleValue::point(opt.item_height),
+            .padding = StyleInsets::symmetric(6.0f, 10.0f),
+            .child = item_row,
+        });
 
         return gestureDetector({
             .child = item_container,
@@ -345,8 +348,10 @@ public:
                 .children = std::move(rows),
             });
 
-            auto inner = container(menu_col);
-            inner->padding(menu_widget->options.padding);
+            auto inner = container({
+                .padding = StyleInsets::only(menu_widget->options.padding.top, menu_widget->options.padding.right, menu_widget->options.padding.bottom, menu_widget->options.padding.left),
+                .child = menu_col,
+            });
 
             return std::make_shared<ContextMenuBackgroundWidget>(menu_widget->options, inner);
         });

@@ -15,9 +15,10 @@ WidgetPtr GridTileBarWidget::build(BuildContext& ctx) {
 
     if (props.leading_widget) {
         row_children.push_back(props.leading_widget);
-        auto gap = container();
-        gap->width(props.leading_gap);
-        gap->height(StyleValue::percent(100.0f));
+        auto gap = container({
+            .width = StyleValue::point(props.leading_gap),
+            .height = StyleValue::percent(100.0f),
+        });
         row_children.push_back(gap);
     }
 
@@ -46,9 +47,10 @@ WidgetPtr GridTileBarWidget::build(BuildContext& ctx) {
     }
 
     if (props.trailing_widget) {
-        auto gap = container();
-        gap->width(props.leading_gap);
-        gap->height(StyleValue::percent(100.0f));
+        auto gap = container({
+            .width = StyleValue::point(props.leading_gap),
+            .height = StyleValue::percent(100.0f),
+        });
         row_children.push_back(gap);
         row_children.push_back(props.trailing_widget);
     }
@@ -59,9 +61,11 @@ WidgetPtr GridTileBarWidget::build(BuildContext& ctx) {
         .children = std::move(row_children),
     });
 
-    auto bar = container(content_row);
-    bar->color(props.background_color);
-    bar->padding(EdgeInsets::symmetric(props.padding_vertical, props.padding_horizontal));
+    auto bar = container({
+        .color = props.background_color,
+        .padding = StyleInsets::symmetric(props.padding_vertical, props.padding_horizontal),
+        .child = content_row,
+    });
 
     return bar;
 }

@@ -174,164 +174,25 @@ private:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Container Widget
+// Container Widget Implementation
 // ════════════════════════════════════════════════════════════════
 
-class Container : public SingleChildRenderObjectWidget {
+class ContainerWidget : public SingleChildRenderObjectWidget {
 public:
     BoxDecoration            decoration;
     FlexboxStyle             style;
     std::optional<Alignment> alignment;
 
-    Container() = default;
-    explicit Container(WidgetPtr c) : SingleChildRenderObjectWidget(Key::none(), std::move(c)) {}
-    Container(Key k, WidgetPtr c)
+    ContainerWidget() = default;
+    explicit ContainerWidget(WidgetPtr c) : SingleChildRenderObjectWidget(Key::none(), std::move(c)) {}
+    ContainerWidget(Key k, WidgetPtr c)
         : SingleChildRenderObjectWidget(std::move(k), std::move(c)) {}
-    Container(BoxDecoration dec, WidgetPtr c)
+    ContainerWidget(BoxDecoration dec, WidgetPtr c)
         : SingleChildRenderObjectWidget(Key::none(), std::move(c)), decoration(std::move(dec)) {}
-    Container(Key k, BoxDecoration dec, WidgetPtr c = nullptr)
+    ContainerWidget(Key k, BoxDecoration dec, WidgetPtr c = nullptr)
         : SingleChildRenderObjectWidget(std::move(k), std::move(c)), decoration(std::move(dec)) {}
-    Container(Key k, BoxDecoration dec, FlexboxStyle s, WidgetPtr c)
+    ContainerWidget(Key k, BoxDecoration dec, FlexboxStyle s, WidgetPtr c)
         : SingleChildRenderObjectWidget(std::move(k), std::move(c)), decoration(std::move(dec)), style(std::move(s)) {}
-
-    // ── Fluent Visual Styling ──────────────────────────────────
-    Container& color(Color c) {
-        decoration.color = c;
-        return *this;
-    }
-
-    Container& gradient(GradientConfig grad) {
-        decoration.gradient = std::move(grad);
-        return *this;
-    }
-
-    Container& borderRadius(BorderRadius r) {
-        decoration.border_radius = r;
-        return *this;
-    }
-
-    Container& borderRadius(float r) {
-        decoration.border_radius = BorderRadius::circular(r);
-        return *this;
-    }
-
-    Container& border(Border b) {
-        decoration.border = b;
-        style.border = StyleBorders::uniform(b.width);
-        return *this;
-    }
-
-    Container& border(Color c, float width) {
-        decoration.border = Border(c, width);
-        style.border = StyleBorders::uniform(width);
-        return *this;
-    }
-
-    Container& shadow(BoxShadow s) {
-        decoration.box_shadow.push_back(s);
-        return *this;
-    }
-
-    Container& shadow(Color color, Point offset = {0, 4}, float blur = 8, float spread = 0) {
-        decoration.box_shadow.emplace_back(color, offset, blur, spread);
-        return *this;
-    }
-
-    Container& shape(BoxShape s) {
-        decoration.shape = s;
-        return *this;
-    }
-
-    Container& clip(bool clip_content = true) {
-        decoration.clip_content = clip_content;
-        return *this;
-    }
-
-    // ── Fluent Dimensions & Flexbox Constraints ────────────────
-    Container& width(StyleValue w) { style.width = w; return *this; }
-    Container& width(float w) { style.width = StyleValue::point(w); return *this; }
-    Container& height(StyleValue h) { style.height = h; return *this; }
-    Container& height(float h) { style.height = StyleValue::point(h); return *this; }
-    Container& size(float w, float h) {
-        style.width = StyleValue::point(w);
-        style.height = StyleValue::point(h);
-        return *this;
-    }
-
-    Container& minWidth(StyleValue mw) { style.min_width = mw; return *this; }
-    Container& minHeight(StyleValue mh) { style.min_height = mh; return *this; }
-    Container& maxWidth(StyleValue mw) { style.max_width = mw; return *this; }
-    Container& maxHeight(StyleValue mh) { style.max_height = mh; return *this; }
-    Container& aspectRatio(float ar) { style.aspect_ratio = ar; return *this; }
-
-    // ── Insets & Margins ───────────────────────────────────────
-    Container& padding(StyleInsets p) { style.padding = p; return *this; }
-    Container& padding(EdgeInsets p) { style.padding = StyleInsets::only(p.top, p.right, p.bottom, p.left); return *this; }
-    Container& paddingAll(float p) { style.padding = StyleInsets::all(p); return *this; }
-    Container& paddingSymmetric(float v, float h) { style.padding = StyleInsets::symmetric(v, h); return *this; }
-
-    Container& margin(StyleInsets m) { style.margin = m; return *this; }
-    Container& margin(EdgeInsets m) { style.margin = StyleInsets::only(m.top, m.right, m.bottom, m.left); return *this; }
-    Container& marginAll(float m) { style.margin = StyleInsets::all(m); return *this; }
-    Container& marginSymmetric(float v, float h) { style.margin = StyleInsets::symmetric(v, h); return *this; }
-
-    // ── Flex Factors ───────────────────────────────────────────
-    Container& flex(float f) { style.flex = f; return *this; }
-    Container& flexGrow(float fg) { style.flex_grow = fg; return *this; }
-    Container& flexShrink(float fs) { style.flex_shrink = fs; return *this; }
-    Container& flexBasis(StyleValue fb) { style.flex_basis = fb; return *this; }
-    Container& alignSelf(Align as) { style.align_self = as; return *this; }
-    Container& positionType(PositionType pt) { style.position_type = pt; return *this; }
-    Container& position(StyleInsets p) { style.position = p; return *this; }
-
-    // ── Alignment ──────────────────────────────────────────────
-    Container& align(Alignment a) {
-        alignment = a;
-        switch (a) {
-            case Alignment::TopLeft:
-                style.justify_content = Justify::Start;
-                style.align_items = Align::Start;
-                break;
-            case Alignment::TopCenter:
-                style.justify_content = Justify::Start;
-                style.align_items = Align::Center;
-                break;
-            case Alignment::TopRight:
-                style.justify_content = Justify::Start;
-                style.align_items = Align::End;
-                break;
-            case Alignment::CenterLeft:
-                style.justify_content = Justify::Center;
-                style.align_items = Align::Start;
-                break;
-            case Alignment::Center:
-                style.justify_content = Justify::Center;
-                style.align_items = Align::Center;
-                break;
-            case Alignment::CenterRight:
-                style.justify_content = Justify::Center;
-                style.align_items = Align::End;
-                break;
-            case Alignment::BottomLeft:
-                style.justify_content = Justify::End;
-                style.align_items = Align::Start;
-                break;
-            case Alignment::BottomCenter:
-                style.justify_content = Justify::End;
-                style.align_items = Align::Center;
-                break;
-            case Alignment::BottomRight:
-                style.justify_content = Justify::End;
-                style.align_items = Align::End;
-                break;
-        }
-        return *this;
-    }
-
-    Container& setChild(WidgetPtr c) {
-        this->child = std::move(c);
-        return *this;
-    }
 
     [[nodiscard]] std::unique_ptr<RenderObject> createRenderObject(BuildContext& ctx) override;
     void updateRenderObject(BuildContext& ctx, RenderObject& renderObject) override;
@@ -339,10 +200,10 @@ public:
 };
 
 // ════════════════════════════════════════════════════════════════
-// Declarative Props (C++20 Designated Initializers Support)
+// Declarative Container Struct (C++20 Designated Initializers)
 // ════════════════════════════════════════════════════════════════
 
-struct ContainerProps {
+struct Container {
     // ── Visual Decoration ──────────────────────────────────────
     std::optional<Color>          color;
     std::optional<GradientConfig> gradient;
@@ -379,89 +240,123 @@ struct ContainerProps {
 
     WidgetPtr child = nullptr;
     Key key = Key::none();
+
+    operator WidgetPtr() const;
 };
+
+using ContainerProps = Container;
 
 // ════════════════════════════════════════════════════════════════
 // Factory Functions
 // ════════════════════════════════════════════════════════════════
 
-inline std::shared_ptr<Container> container(WidgetPtr child = nullptr) {
-    return std::make_shared<Container>(std::move(child));
-}
-
-inline std::shared_ptr<Container> container(Key key, WidgetPtr child = nullptr) {
-    return std::make_shared<Container>(std::move(key), std::move(child));
-}
-
-inline std::shared_ptr<Container> container(BoxDecoration decoration, WidgetPtr child = nullptr) {
-    return std::make_shared<Container>(std::move(decoration), std::move(child));
-}
-
-inline std::shared_ptr<Container> container(Key key, BoxDecoration decoration, WidgetPtr child = nullptr) {
-    return std::make_shared<Container>(std::move(key), std::move(decoration), std::move(child));
-}
-
-inline std::shared_ptr<Container> container(ContainerProps props) {
-    auto c = std::make_shared<Container>(props.key, std::move(props.child));
+inline std::shared_ptr<ContainerWidget> container(ContainerProps props = {}) {
+    auto c = std::make_shared<ContainerWidget>(props.key, std::move(props.child));
     
     // Apply Decoration
-    if (props.color) c->color(*props.color);
-    if (props.gradient) c->gradient(*props.gradient);
-    if (props.border_radius) c->borderRadius(*props.border_radius);
-    if (props.border) c->border(*props.border);
-    for (const auto& shadow : props.box_shadow) c->shadow(shadow);
-    if (props.shape) c->shape(*props.shape);
-    if (props.clip_content) c->clip(*props.clip_content);
+    if (props.color) c->decoration.color = *props.color;
+    if (props.gradient) c->decoration.gradient = std::move(*props.gradient);
+    if (props.border_radius) c->decoration.border_radius = *props.border_radius;
+    if (props.border) {
+        c->decoration.border = *props.border;
+        c->style.border = StyleBorders::uniform(props.border->width);
+    }
+    c->decoration.box_shadow = std::move(props.box_shadow);
+    if (props.shape) c->decoration.shape = *props.shape;
+    if (props.clip_content) c->decoration.clip_content = *props.clip_content;
     
     // Apply Alignment
-    if (props.align) c->align(*props.align);
+    if (props.align) {
+        c->alignment = props.align;
+        switch (*props.align) {
+            case Alignment::TopLeft:
+                c->style.justify_content = Justify::Start;
+                c->style.align_items = Align::Start;
+                break;
+            case Alignment::TopCenter:
+                c->style.justify_content = Justify::Start;
+                c->style.align_items = Align::Center;
+                break;
+            case Alignment::TopRight:
+                c->style.justify_content = Justify::Start;
+                c->style.align_items = Align::End;
+                break;
+            case Alignment::CenterLeft:
+                c->style.justify_content = Justify::Center;
+                c->style.align_items = Align::Start;
+                break;
+            case Alignment::Center:
+                c->style.justify_content = Justify::Center;
+                c->style.align_items = Align::Center;
+                break;
+            case Alignment::CenterRight:
+                c->style.justify_content = Justify::Center;
+                c->style.align_items = Align::End;
+                break;
+            case Alignment::BottomLeft:
+                c->style.justify_content = Justify::End;
+                c->style.align_items = Align::Start;
+                break;
+            case Alignment::BottomCenter:
+                c->style.justify_content = Justify::End;
+                c->style.align_items = Align::Center;
+                break;
+            case Alignment::BottomRight:
+                c->style.justify_content = Justify::End;
+                c->style.align_items = Align::End;
+                break;
+        }
+    }
     
     // Apply Constraints & Dimensions
-    if (props.width) c->width(*props.width);
-    if (props.height) c->height(*props.height);
-    if (props.min_width) c->minWidth(*props.min_width);
-    if (props.min_height) c->minHeight(*props.min_height);
-    if (props.max_width) c->maxWidth(*props.max_width);
-    if (props.max_height) c->maxHeight(*props.max_height);
-    if (props.aspect_ratio) c->aspectRatio(*props.aspect_ratio);
+    if (props.width) c->style.width = *props.width;
+    if (props.height) c->style.height = *props.height;
+    if (props.min_width) c->style.min_width = *props.min_width;
+    if (props.min_height) c->style.min_height = *props.min_height;
+    if (props.max_width) c->style.max_width = *props.max_width;
+    if (props.max_height) c->style.max_height = *props.max_height;
+    if (props.aspect_ratio) c->style.aspect_ratio = props.aspect_ratio;
     
     // Apply Insets
-    if (props.padding) c->padding(*props.padding);
-    if (props.margin) c->margin(*props.margin);
-    if (props.position) c->position(*props.position);
+    if (props.padding) c->style.padding = *props.padding;
+    if (props.margin) c->style.margin = *props.margin;
+    if (props.position) c->style.position = *props.position;
     
     // Apply Flex Factors
-    if (props.flex) c->flex(*props.flex);
-    if (props.flex_grow) c->flexGrow(*props.flex_grow);
-    if (props.flex_shrink) c->flexShrink(*props.flex_shrink);
-    if (props.flex_basis) c->flexBasis(*props.flex_basis);
-    if (props.align_self) c->alignSelf(*props.align_self);
-    if (props.position_type) c->positionType(*props.position_type);
+    if (props.flex) c->style.flex = props.flex;
+    if (props.flex_grow) c->style.flex_grow = props.flex_grow;
+    if (props.flex_shrink) c->style.flex_shrink = props.flex_shrink;
+    if (props.flex_basis) c->style.flex_basis = *props.flex_basis;
+    if (props.align_self) c->style.align_self = props.align_self;
+    if (props.position_type) c->style.position_type = props.position_type;
     
     return c;
 }
 
-inline std::shared_ptr<Container> container(ContainerProps props, WidgetPtr child) {
-    props.child = std::move(child);
-    return container(std::move(props));
+inline Container::operator WidgetPtr() const {
+    return container(*this);
 }
 
-inline std::shared_ptr<Container> sizedBox(float width, float height, WidgetPtr child = nullptr) {
-    auto c = std::make_shared<Container>(std::move(child));
-    c->size(width, height);
-    return c;
+inline std::shared_ptr<ContainerWidget> sizedBox(float width, float height, WidgetPtr child = nullptr) {
+    return container({
+        .width = StyleValue::point(width),
+        .height = StyleValue::point(height),
+        .child = std::move(child)
+    });
 }
 
-inline std::shared_ptr<Container> paddingBox(EdgeInsets insets, WidgetPtr child) {
-    auto c = std::make_shared<Container>(std::move(child));
-    c->padding(insets);
-    return c;
+inline std::shared_ptr<ContainerWidget> paddingBox(EdgeInsets insets, WidgetPtr child) {
+    return container({
+        .padding = StyleInsets::only(insets.top, insets.right, insets.bottom, insets.left),
+        .child = std::move(child)
+    });
 }
 
-inline std::shared_ptr<Container> centerBox(WidgetPtr child) {
-    auto c = std::make_shared<Container>(std::move(child));
-    c->align(Alignment::Center);
-    return c;
+inline std::shared_ptr<ContainerWidget> centerBox(WidgetPtr child) {
+    return container({
+        .align = Alignment::Center,
+        .child = std::move(child)
+    });
 }
 
 } // namespace enki

@@ -23,9 +23,10 @@ private:
 public:
     WidgetPtr build(BuildContext&) override {
         if (is_dismissed_) {
-            auto empty = container();
-            empty->height(0.0f).width(0.0f);
-            return empty;
+            return container({
+                .width = StyleValue::point(0.0f),
+                .height = StyleValue::point(0.0f),
+            });
         }
 
         auto* w = static_cast<const DismissibleWidget*>(widget());
@@ -44,14 +45,19 @@ public:
         std::vector<WidgetPtr> stack_items;
 
         if (active_bg) {
-            auto bg_box = container(active_bg);
-            bg_box->width(StyleValue::percent(100.0f)).height(StyleValue::percent(100.0f));
+            auto bg_box = container({
+                .width = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .child = active_bg,
+            });
             stack_items.push_back(Positioned::fill(bg_box));
         }
 
         // ── 2. Foreground Swiping Child ───────────────────────────────
-        auto child_box = container(w->child);
-        child_box->width(StyleValue::percent(100.0f));
+        auto child_box = container({
+            .width = StyleValue::percent(100.0f),
+            .child = w->child,
+        });
 
         auto gd = gestureDetector({
             .child = child_box,
