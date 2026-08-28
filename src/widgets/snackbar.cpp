@@ -20,14 +20,28 @@
 
 namespace enki {
 
-class SnackbarState : public State {
+// ════════════════════════════════════════════════════════════════
+// Internal Floating Snackbar Card Widget (Isolated State)
+// ════════════════════════════════════════════════════════════════
+
+class SnackbarCardWidget : public StatefulWidget {
+public:
+    SnackbarOptions options;
+    std::function<void()> on_close_request;
+
+    SnackbarCardWidget(SnackbarOptions opts, std::function<void()> on_close)
+        : options(std::move(opts)), on_close_request(std::move(on_close)) {}
+
+    [[nodiscard]] std::unique_ptr<State> createState() override;
+    [[nodiscard]] std::string_view typeName() const override { return "SnackbarCard"; }
+};
+
+class SnackbarCardState : public State {
 private:
     AnimationController anim_;
     std::unique_ptr<Ticker> ticker_;
-
-    SnackbarOptions current_opts_;
-    bool is_visible_ = false;
     bool is_hovered_ = false;
+    bool is_closing_ = false;
 
     double display_duration_sec_ = 4.0;
     double elapsed_sec_ = 0.0;
@@ -36,8 +50,11 @@ private:
 public:
     void initState() override {
         State::initState();
-        auto* w = static_cast<const SnackbarWidget*>(widget());
-        current_opts_ = w->initial_options;
+        auto* w = static_cast<const SnackbarCardWidget*>(widget());
+        display_duration_sec_ = w->options.duration_ms > 0 ? (w->options.duration_ms / 1000.0) : 0.0;
+        elapsed_sec_ = 0.0;
+        is_hovered_ = false;
+        is_closing_ = false;
 
         anim_.setDuration(std::chrono::milliseconds(180));
         anim_.addListener([this] { setState([] {}); });
@@ -50,32 +67,39 @@ public:
             double dt = std::chrono::duration<double>(now - last_tick_time_).count();
             last_tick_time_ = now;
 
+            auto* card_w = static_cast<const SnackbarCardWidget*>(widget());
+            bool needs_rebuild = false;
+
             // Tick slide animation
             if (anim_.isAnimating()) {
                 anim_.tick();
+                needs_rebuild = true;
+                if (!anim_.isAnimating() && is_closing_) {
+                    if (card_w->on_close_request) card_w->on_close_request();
+                    return;
+                }
             }
 
-            // Tick auto-dismiss timer
-            if (is_visible_ && !anim_.isAnimating() && current_opts_.duration_ms > 0) {
-                if (!(is_hovered_ && current_opts_.pause_on_hover)) {
+            // Tick auto-dismiss timer when not closing
+            if (!is_closing_ && card_w->options.duration_ms > 0) {
+                if (!(is_hovered_ && card_w->options.pause_on_hover)) {
                     elapsed_sec_ += dt;
                     if (elapsed_sec_ >= display_duration_sec_) {
-                        hideSnackbar();
-                    } else {
-                        // Request frame repaint for smooth progress bar
-                        setState([] {});
+                        startDismiss();
+                    } else if (card_w->options.show_progress_bar) {
+                        needs_rebuild = true;
                     }
                 }
             }
+
+            if (needs_rebuild) {
+                setState([] {});
+            }
         });
+
         ticker_->start();
-
-        wireController();
-    }
-
-    void didUpdateWidget(const Widget& old) override {
-        State::didUpdateWidget(old);
-        wireController();
+        anim_.forward();
+        if (w->options.on_shown) w->options.on_shown();
     }
 
     void dispose() override {
@@ -84,40 +108,18 @@ public:
         State::dispose();
     }
 
-    void wireController() {
-        auto* w = static_cast<const SnackbarWidget*>(widget());
-        if (w->controller) {
-            w->controller->show_fn = [this](const SnackbarOptions& opts) { showSnackbar(opts); };
-            w->controller->hide_fn = [this] { hideSnackbar(); };
-            w->controller->is_open_fn = [this] { return is_visible_; };
-        }
-    }
-
-    void showSnackbar(const SnackbarOptions& opts) {
-        current_opts_ = opts;
-        display_duration_sec_ = opts.duration_ms > 0 ? (opts.duration_ms / 1000.0) : 0.0;
-        elapsed_sec_ = 0.0;
-        is_visible_ = true;
-        is_hovered_ = false;
-        last_tick_time_ = std::chrono::steady_clock::now();
-
-        anim_.forward();
-        if (current_opts_.on_shown) current_opts_.on_shown();
-        setState([] {});
-    }
-
-    void hideSnackbar() {
-        if (!is_visible_) return;
-        is_visible_ = false;
+    void startDismiss() {
+        if (is_closing_) return;
+        is_closing_ = true;
+        auto* w = static_cast<const SnackbarCardWidget*>(widget());
+        if (w->options.on_dismissed) w->options.on_dismissed();
         anim_.reverse();
-        if (current_opts_.on_dismissed) current_opts_.on_dismissed();
-        setState([] {});
     }
 
-    // ── Build Snackbar Card ───────────────────────────────────────
-
-    WidgetPtr buildSnackbarCard(float t) {
-        const auto& opts = current_opts_;
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const SnackbarCardWidget*>(widget());
+        const auto& opts = w->options;
+        float t = anim_.value();
 
         // Left Section: Icon badge + Title / Message
         std::vector<WidgetPtr> left_items;
@@ -194,7 +196,7 @@ public:
                 .cursor_type = SystemCursor::Pointer,
                 .on_tap_up = [this, act](const TapUpDetails&) {
                     if (act.on_click) act.on_click();
-                    hideSnackbar();
+                    startDismiss();
                 },
             });
             right_items.push_back(act_btn);
@@ -217,7 +219,7 @@ public:
                 .child = cls_box,
                 .cursor_type = SystemCursor::Pointer,
                 .on_tap_up = [this](const TapUpDetails&) {
-                    hideSnackbar();
+                    startDismiss();
                 },
             });
             right_items.push_back(cls_btn);
@@ -279,7 +281,7 @@ public:
         });
 
         // Hover Detector for Pause-on-Hover
-        return gestureDetector({
+        auto card = gestureDetector({
             .child = card_box,
             .on_hover_enter = [this](const PointerEvent&) {
                 is_hovered_ = true;
@@ -288,46 +290,8 @@ public:
                 is_hovered_ = false;
             },
         });
-    }
 
-    WidgetPtr build(BuildContext&) override {
-        auto* w = static_cast<const SnackbarWidget*>(widget());
-        const auto& opts = current_opts_;
-        float t = anim_.value();
-
-        // ── 1. Invariant Page Body (100% dimensions) ──────────────────
-        WidgetPtr body_widget;
-        if (w->body) {
-            auto bx = container({
-                .width = StyleValue::percent(100.0f),
-                .height = StyleValue::percent(100.0f),
-                .child = w->body,
-            });
-            body_widget = Positioned::fill(bx);
-        } else {
-            auto empty = container({
-                .width = StyleValue::percent(100.0f),
-                .height = StyleValue::percent(100.0f),
-            });
-            body_widget = Positioned::fill(empty);
-        }
-
-        // When hidden and not animating: render only body
-        if (t <= 0.001f && !is_visible_) {
-            return Stack {
-                .width  = StyleValue::percent(100.0f),
-                .height = StyleValue::percent(100.0f),
-                .children = { body_widget },
-            };
-        }
-
-        // ── 2. Floating Snackbar Card & Positioning ───────────────────
-        auto card = buildSnackbarCard(t);
-
-        WidgetPtr pos_card;
         float margin = opts.margin;
-
-        // Slide entrance delta:
         float slide_offset = (1.0f - t) * -30.0f;
 
         switch (opts.placement) {
@@ -338,29 +302,26 @@ public:
                     .children = {card},
                 });
 
-                pos_card = Positioned {
+                return Positioned {
                     .child = row_wrap,
                     .right = StyleValue::point(0.0f),
                     .bottom = StyleValue::point(margin + slide_offset),
                     .left = StyleValue::point(0.0f),
                 };
-                break;
             }
             case SnackbarPlacement::BottomRight: {
-                pos_card = Positioned {
+                return Positioned {
                     .child = card,
                     .right = StyleValue::point(margin),
                     .bottom = StyleValue::point(margin + slide_offset),
                 };
-                break;
             }
             case SnackbarPlacement::BottomLeft: {
-                pos_card = Positioned {
+                return Positioned {
                     .child = card,
                     .bottom = StyleValue::point(margin + slide_offset),
                     .left = StyleValue::point(margin),
                 };
-                break;
             }
             case SnackbarPlacement::TopCenter: {
                 auto row_wrap = row({
@@ -369,39 +330,105 @@ public:
                     .children = {card},
                 });
 
-                pos_card = Positioned {
+                return Positioned {
                     .child = row_wrap,
                     .top = StyleValue::point(margin - slide_offset),
                     .right = StyleValue::point(0.0f),
                     .left = StyleValue::point(0.0f),
                 };
-                break;
             }
             case SnackbarPlacement::TopRight: {
-                pos_card = Positioned {
+                return Positioned {
                     .child = card,
                     .top = StyleValue::point(margin - slide_offset),
                     .right = StyleValue::point(margin),
                 };
-                break;
             }
             case SnackbarPlacement::TopLeft: {
-                pos_card = Positioned {
+                return Positioned {
                     .child = card,
                     .top = StyleValue::point(margin - slide_offset),
                     .left = StyleValue::point(margin),
                 };
-                break;
             }
         }
+        return card;
+    }
+};
 
-        // ── 3. Stack Composition: Body + Floating Snackbar ───────────
+std::unique_ptr<State> SnackbarCardWidget::createState() {
+    return std::make_unique<SnackbarCardState>();
+}
+
+// ════════════════════════════════════════════════════════════════
+// Snackbar Root Overlay State
+// ════════════════════════════════════════════════════════════════
+
+class SnackbarState : public State {
+private:
+    SnackbarOptions current_opts_;
+    bool is_visible_ = false;
+
+public:
+    void initState() override {
+        State::initState();
+        auto* w = static_cast<const SnackbarWidget*>(widget());
+        current_opts_ = w->initial_options;
+        wireController();
+    }
+
+    void didUpdateWidget(const Widget& old) override {
+        State::didUpdateWidget(old);
+        wireController();
+    }
+
+    void wireController() {
+        auto* w = static_cast<const SnackbarWidget*>(widget());
+        if (w->controller) {
+            w->controller->show_fn = [this](const SnackbarOptions& opts) { showSnackbar(opts); };
+            w->controller->hide_fn = [this] { hideSnackbar(); };
+            w->controller->is_open_fn = [this] { return is_visible_; };
+        }
+    }
+
+    void showSnackbar(const SnackbarOptions& opts) {
+        current_opts_ = opts;
+        is_visible_ = true;
+        setState([] {});
+    }
+
+    void hideSnackbar() {
+        if (!is_visible_) return;
+        is_visible_ = false;
+        setState([] {});
+    }
+
+    WidgetPtr build(BuildContext&) override {
+        auto* w = static_cast<const SnackbarWidget*>(widget());
+
+        // ── 1. Invariant Page Body (Fill Stack directly) ─────────────
+        WidgetPtr body_widget = w->body ? Positioned::fill(w->body) : Positioned::fill(container());
+
+        if (!is_visible_) {
+            return Stack {
+                .width  = StyleValue::percent(100.0f),
+                .height = StyleValue::percent(100.0f),
+                .children = { body_widget },
+            };
+        }
+
+        // ── 2. Floating Snackbar Card (Isolated Widget) ───────────────
+        auto card_widget = std::make_shared<SnackbarCardWidget>(
+            current_opts_,
+            [this] { hideSnackbar(); }
+        );
+
         return Stack {
-            .width = StyleValue::percent(100.0f),
+            .width  = StyleValue::percent(100.0f),
             .height = StyleValue::percent(100.0f),
             .children = {
                 body_widget,
-                pos_card,
+                card_widget
             }
         };
     }
