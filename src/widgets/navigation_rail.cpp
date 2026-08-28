@@ -37,13 +37,16 @@ public:
         else              expand_anim_.setValue(0.0f);
 
         ticker_ = createTicker([this] {
-            if (expand_anim_.isAnimating()) expand_anim_.tick();
+            if (expand_anim_.isAnimating()) {
+                expand_anim_.tick();
+            } else if (ticker_ && ticker_->isActive()) {
+                ticker_->stop();
+            }
         });
-        ticker_->start();
     }
 
     void dispose() override {
-        ticker_->stop();
+        if (ticker_) ticker_->stop();
         expand_anim_.dispose();
         State::dispose();
     }
@@ -77,6 +80,9 @@ public:
                 .cursor_type = SystemCursor::Pointer,
                 .on_tap = [this] {
                     is_expanded_ = !is_expanded_;
+                    if (ticker_ && !ticker_->isActive()) {
+                        ticker_->start();
+                    }
                     if (is_expanded_) expand_anim_.forward();
                     else              expand_anim_.reverse();
                 },
@@ -96,11 +102,11 @@ public:
             // Icon
             WidgetPtr icon_node = Icon { .data = item.icon, .size = opts.icon_font_size, .color = text_col };
 
-            WidgetPtr row_content;
+            std::vector<WidgetPtr> row_children;
+            row_children.push_back(icon_node);
 
             // When expanded, show label alongside icon
             if (t > 0.01f && !item.label.empty()) {
-                // Alpha-fade the label based on expansion progress
                 uint8_t alpha = static_cast<uint8_t>(std::clamp(t * 2.0f - 0.4f, 0.0f, 1.0f) * 255);
                 auto faded_label = text({
                     .text = item.label,
@@ -108,21 +114,31 @@ public:
                     .font_size = opts.label_font_size,
                     .font_weight = active ? FontWeight::Bold : FontWeight::Normal,
                 });
+                row_children.push_back(faded_label);
 
-                row_content = row({
-                    .align_items = Align::Center,
-                    .gap = StyleValue::point(12.0f),
-                    .padding = StyleInsets::only(0, 0, 0, 16.0f),
-                    .children = { icon_node, faded_label },
-                });
-
-            } else {
-                row_content = row({
-                    .align_items = Align::Center,
-                    .padding = StyleInsets::only(0, 0, 0, 16.0f),
-                    .children = { icon_node },
-                });
+                if (!item.badge.empty()) {
+                    auto badge_t = text({
+                        .text = item.badge,
+                        .color = (opts.badge_text_color & 0x00FFFFFF) | (static_cast<uint32_t>(alpha) << 24),
+                        .font_size = 9.0f,
+                    });
+                    auto badge_box = container({
+                        .color = (opts.badge_color & 0x00FFFFFF) | (static_cast<uint32_t>(alpha) << 24),
+                        .border_radius = BorderRadius::circular(8.0f),
+                        .padding = StyleInsets::symmetric(1.0f, 5.0f),
+                        .margin = StyleInsets::only(0, 0, 0, 8.0f),
+                        .child = badge_t,
+                    });
+                    row_children.push_back(badge_box);
+                }
             }
+
+            auto row_content = row({
+                .align_items = Align::Center,
+                .gap = StyleValue::point(12.0f),
+                .padding = StyleInsets::only(0, 0, 0, 16.0f),
+                .children = std::move(row_children),
+            });
 
             // Item container with indicator background
             Color bg_col = active ? opts.indicator_color : (hovered ? opts.hover_color : Colors::Transparent);
@@ -136,32 +152,10 @@ public:
                 .child = row_content,
             });
 
-            // Badge — shown inline (no absolute positioning needed here)
-            WidgetPtr item_widget = item_box;
-            if (!item.badge.empty()) {
-                auto badge_t = text({
-                    .text = item.badge,
-                    .color = opts.badge_text_color,
-                    .font_size = 9.0f,
-                });
-                auto badge_box = container({
-                    .color = opts.badge_color,
-                    .border_radius = BorderRadius::circular(8.0f),
-                    .padding = StyleInsets::symmetric(1.0f, 4.0f),
-                    .child = badge_t,
-                });
-
-                // Show badge next to item in a row
-                item_widget = row({
-                    .align_items = Align::Center,
-                    .children = { item_box, badge_box },
-                });
-            }
-
             int idx = i;
             auto on_sel = w->on_item_selected;
             auto det = gestureDetector({
-                .child = item_widget,
+                .child = item_box,
                 .hit_test_behavior = HitTestBehavior::Opaque,
                 .cursor_type = SystemCursor::Pointer,
                 .on_tap = [on_sel, idx] {
@@ -180,7 +174,9 @@ public:
 
         auto items_column = column({
             .gap = StyleValue::point(4.0f),
-            .padding = StyleInsets{opts.padding_v, 0, opts.padding_v, 0},
+            .width = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+            .padding = StyleInsets::symmetric(opts.padding_v, 0.0f),
             .children = std::move(items_col),
         });
 
@@ -188,6 +184,7 @@ public:
         auto rail = container({
             .color = opts.background_color,
             .border = Border(opts.border_color, opts.border_right_width),
+            .clip_content = true,
             .width = StyleValue::point(cur_w),
             .height = StyleValue::percent(100.0f),
             .child = items_column,
