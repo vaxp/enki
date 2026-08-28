@@ -359,9 +359,10 @@ enum class StackFit {
 
 /// How content overflowing its bounds is clipped.
 enum class Clip {
-    None,        ///< No clipping; content is allowed to overflow.
-    HardEdge,    ///< Clips with sharp edge (fastest, no anti-aliasing).
-    AntiAlias    ///< Clips with anti-aliased edges.
+    None,                   ///< No clipping; content is allowed to overflow.
+    HardEdge,               ///< Clips with sharp edge (fastest, no anti-aliasing).
+    AntiAlias,              ///< Clips with anti-aliased edges.
+    AntiAliasWithSaveLayer  ///< Clips with anti-aliasing and a saveLayer.
 };
 
 /// Shape of a box (Rectangle or Circle).

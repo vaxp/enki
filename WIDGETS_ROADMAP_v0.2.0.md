@@ -19,14 +19,14 @@
 
 ## 12. Paint & Visual Effects (8 widgets)
 
-- [ ] **ClipRect** — Clips child to a rectangular boundary
-- [ ] **ClipRRect** — Clips child to a rounded rectangle boundary
-- [ ] **ClipOval** — Clips child to an ellipse/circle boundary
-- [ ] **ClipPath** — Clips child to an arbitrary Skia path
-- [ ] **BackdropFilter** — Applies Skia ImageFilter (blur, color matrix) to content *behind* it
-- [ ] **DecoratedBox** — Paints a BoxDecoration (gradient, border, shadow, image) around/behind a child
-- [ ] **ShaderMask** — Applies a gradient or image shader as a mask over child paint
-- [ ] **ColorFiltered** — Applies a ColorFilter (e.g. grayscale, sepia, invert) to child rendering
+- [x] **ClipRect** — Clips child to a rectangular boundary
+- [x] **ClipRRect** — Clips child to a rounded rectangle boundary
+- [x] **ClipOval** — Clips child to an ellipse/circle boundary
+- [x] **ClipPath** — Clips child to an arbitrary Skia path
+- [x] **BackdropFilter** — Applies Skia ImageFilter (blur, color matrix) to content *behind* it
+- [x] **DecoratedBox** — Paints a BoxDecoration (gradient, border, shadow, image) around/behind a child
+- [x] **ShaderMask** — Applies a gradient or image shader as a mask over child paint
+- [x] **ColorFiltered** — Applies a ColorFilter (e.g. grayscale, sepia, invert) to child rendering
 
 ---
 

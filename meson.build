@@ -323,6 +323,8 @@ enki_sources = files(
   'src/widgets/loading_overlay.cpp',
   'src/widgets/popup.cpp',
   'src/widgets/menu.cpp',
+  'src/widgets/clip.cpp',
+  'src/widgets/paint_effects.cpp',
 
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',

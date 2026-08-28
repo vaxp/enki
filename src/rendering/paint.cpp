@@ -3,6 +3,7 @@
 
 #include "enki/rendering/paint.hpp"
 #include <include/core/SkShader.h>
+#include <include/core/SkColorFilter.h>
 #include <include/effects/SkGradientShader.h>
 #include <include/effects/SkImageFilters.h>
 #include <vector>
@@ -23,6 +24,14 @@ public:
     void* getNativeHandle() const override { return filter_.get(); }
 private:
     sk_sp<SkImageFilter> filter_;
+};
+
+class SkiaColorFilterWrapper : public ColorFilter {
+public:
+    explicit SkiaColorFilterWrapper(sk_sp<SkColorFilter> filter) : filter_(std::move(filter)) {}
+    void* getNativeHandle() const override { return filter_.get(); }
+private:
+    sk_sp<SkColorFilter> filter_;
 };
 
 Paint::Paint() = default;
@@ -71,6 +80,67 @@ std::shared_ptr<Shader> Gradient::radial(
 std::shared_ptr<ImageFilter> ImageFilter::blur(float sigmaX, float sigmaY) {
     auto filter = SkImageFilters::Blur(sigmaX, sigmaY, nullptr);
     return std::make_shared<SkiaImageFilterWrapper>(std::move(filter));
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::mode(Color color, BlendMode mode) {
+    auto filter = SkColorFilters::Blend(static_cast<SkColor>(color), static_cast<SkBlendMode>(mode));
+    return std::make_shared<SkiaColorFilterWrapper>(std::move(filter));
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::matrix(const float matrix[20]) {
+    if (!matrix) return nullptr;
+    auto filter = SkColorFilters::Matrix(matrix);
+    return std::make_shared<SkiaColorFilterWrapper>(std::move(filter));
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::matrix(const std::vector<float>& matrix) {
+    if (matrix.size() < 20) return nullptr;
+    return ColorFilter::matrix(matrix.data());
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::grayscale() {
+    const float m[20] = {
+        0.2126f, 0.7152f, 0.0722f, 0.0f, 0.0f,
+        0.2126f, 0.7152f, 0.0722f, 0.0f, 0.0f,
+        0.2126f, 0.7152f, 0.0722f, 0.0f, 0.0f,
+        0.0f,    0.0f,    0.0f,    1.0f, 0.0f
+    };
+    return ColorFilter::matrix(m);
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::sepia() {
+    const float m[20] = {
+        0.393f, 0.769f, 0.189f, 0.0f, 0.0f,
+        0.349f, 0.686f, 0.168f, 0.0f, 0.0f,
+        0.272f, 0.534f, 0.131f, 0.0f, 0.0f,
+        0.0f,   0.0f,   0.0f,   1.0f, 0.0f
+    };
+    return ColorFilter::matrix(m);
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::invert() {
+    const float m[20] = {
+        -1.0f,  0.0f,  0.0f, 0.0f, 255.0f,
+         0.0f, -1.0f,  0.0f, 0.0f, 255.0f,
+         0.0f,  0.0f, -1.0f, 0.0f, 255.0f,
+         0.0f,  0.0f,  0.0f, 1.0f, 0.0f
+    };
+    return ColorFilter::matrix(m);
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::tint(Color color, float strength) {
+    (void)strength;
+    return ColorFilter::mode(color, BlendMode::SrcATop);
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::linearToSrgbGamma() {
+    auto filter = SkColorFilters::LinearToSRGBGamma();
+    return std::make_shared<SkiaColorFilterWrapper>(std::move(filter));
+}
+
+std::shared_ptr<ColorFilter> ColorFilter::srgbToLinearGamma() {
+    auto filter = SkColorFilters::SRGBToLinearGamma();
+    return std::make_shared<SkiaColorFilterWrapper>(std::move(filter));
 }
 
 } // namespace enki

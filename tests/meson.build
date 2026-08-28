@@ -241,3 +241,10 @@ test('test_richtext',
     dependencies : test_deps,
   ),
 )
+
+test('test_paint_effects',
+  executable('test_paint_effects',
+    'widgets/test_paint_effects.cpp',
+    dependencies : test_deps,
+  ),
+)
