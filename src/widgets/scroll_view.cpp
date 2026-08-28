@@ -56,9 +56,6 @@ void RenderScrollView::syncLayout() {
     float cw = child->size().width;
     float ch = child->size().height;
     
-    std::cout << "[RenderScrollView::syncLayout] Viewport: " << size_.width << "x" << size_.height 
-              << " | Child: " << cw << "x" << ch << std::endl;
-    
     if (options.direction == Axis::Vertical) {
         max_scroll_y = std::max(0.0f, ch - size_.height);
         max_scroll_x = 0.0f;
