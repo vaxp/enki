@@ -270,5 +270,12 @@ test('test_utility',
   ),
 )
 
+test('test_sliver',
+  executable('test_sliver',
+    'widgets/test_sliver.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 
 

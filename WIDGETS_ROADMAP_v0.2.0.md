@@ -44,10 +44,10 @@
 
 ## 14. Scrolling — Extended (4 widgets)
 
-- [ ] **SliverList** — A sliver delegate that lazily builds list items within a CustomScrollView
-- [ ] **SliverGrid** — A sliver delegate that lazily builds grid items within a CustomScrollView
-- [ ] **SliverAppBar** — A collapsible, pinned, or floating header sliver within a CustomScrollView
-- [ ] **CustomScrollView** — A scroll viewport accepting an ordered list of slivers
+- [x] **SliverList** — A sliver delegate that lazily builds list items within a CustomScrollView
+- [x] **SliverGrid** — A sliver delegate that lazily builds grid items within a CustomScrollView
+- [x] **SliverAppBar** — A collapsible, pinned, or floating header sliver within a CustomScrollView
+- [x] **CustomScrollView** — A scroll viewport accepting an ordered list of slivers
 
 ---
 
