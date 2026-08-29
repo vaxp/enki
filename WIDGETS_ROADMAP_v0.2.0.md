@@ -76,9 +76,9 @@
 
 ## 17. Typography — Extended (3 widgets)
 
-- [ ] **SelectableText** — Text widget with mouse-selection highlight, copy-to-clipboard support
-- [ ] **Marquee** — Auto-scrolling single-line text (ticker tape) with configurable speed and direction
-- [ ] **CodeBlock** — Syntax-highlighted, monospace code display with line numbers and copy button
+- [x] **SelectableText** — Text widget with mouse-selection highlight, copy-to-clipboard support
+- [x] **Marquee** — Auto-scrolling single-line text (ticker tape) with configurable speed and direction
+- [x] **CodeBlock** — Syntax-highlighted, monospace code display with line numbers and copy button
 
 ---
 

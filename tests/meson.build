@@ -277,5 +277,12 @@ test('test_sliver',
   ),
 )
 
+test('test_typography',
+  executable('test_typography',
+    'widgets/test_typography.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 
 

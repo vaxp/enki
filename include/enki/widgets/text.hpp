@@ -92,6 +92,29 @@ enum class TextDecorationStyle {
 };
 
 // ════════════════════════════════════════════════════════════════
+// TextSelection Model
+// ════════════════════════════════════════════════════════════════
+
+struct TextSelection {
+    size_t base_offset = 0;
+    size_t extent_offset = 0;
+
+    [[nodiscard]] size_t start() const { return std::min(base_offset, extent_offset); }
+    [[nodiscard]] size_t end() const { return std::max(base_offset, extent_offset); }
+    [[nodiscard]] bool isCollapsed() const { return base_offset == extent_offset; }
+    [[nodiscard]] bool isValid() const { return base_offset != static_cast<size_t>(-1) && extent_offset != static_cast<size_t>(-1); }
+
+    static constexpr TextSelection collapsed(size_t offset) {
+        return TextSelection{offset, offset};
+    }
+    static constexpr TextSelection empty() {
+        return TextSelection{static_cast<size_t>(-1), static_cast<size_t>(-1)};
+    }
+
+    constexpr bool operator==(const TextSelection&) const = default;
+};
+
+// ════════════════════════════════════════════════════════════════
 // TextStyle — Detailed Typography Configuration
 // ════════════════════════════════════════════════════════════════
 
@@ -219,6 +242,9 @@ public:
     void setOverflow(TextOverflow overflow);
     void setMaxLines(std::optional<size_t> maxLines);
     void setSoftWrap(bool softWrap);
+    void setSelectable(bool selectable);
+    void setSelectionColor(Color color);
+    void setOnSelectionChanged(std::function<void(TextSelection)> callback);
 
     [[nodiscard]] const std::string& getTextData() const { return text_data_; }
     [[nodiscard]] const TextStyle& getDefaultStyle() const { return default_style_; }
@@ -227,6 +253,14 @@ public:
     [[nodiscard]] TextOverflow getOverflow() const { return overflow_; }
     [[nodiscard]] const std::optional<size_t>& getMaxLines() const { return max_lines_; }
     [[nodiscard]] bool getSoftWrap() const { return soft_wrap_; }
+    [[nodiscard]] bool isSelectable() const { return selectable_; }
+    [[nodiscard]] Color getSelectionColor() const { return selection_color_; }
+    [[nodiscard]] TextSelection getSelection() const { return selection_; }
+
+    void selectAll();
+    void clearSelection();
+    [[nodiscard]] std::string getSelectedText() const;
+    void copyToClipboard();
 
     void paint(PaintContext& ctx) override;
 
@@ -248,17 +282,27 @@ protected:
 
 private:
 
-    std::string                 text_data_;
-    std::shared_ptr<InlineSpan> span_;
-    TextStyle                   default_style_;
-    TextAlign                   text_align_;
-    TextDirection               text_direction_;
-    TextOverflow                overflow_;
-    std::optional<size_t>       max_lines_;
-    bool                        soft_wrap_;
+    std::string                         text_data_;
+    std::shared_ptr<InlineSpan>         span_;
+    TextStyle                           default_style_;
+    TextAlign                           text_align_;
+    TextDirection                       text_direction_;
+    TextOverflow                        overflow_;
+    std::optional<size_t>               max_lines_;
+    bool                                soft_wrap_;
+    bool                                selectable_ = false;
+    Color                               selection_color_ = 0x6038BDF8;
+    std::function<void(TextSelection)>  on_selection_changed_ = nullptr;
+
+    TextSelection                       selection_ = TextSelection::empty();
+    bool                                is_dragging_ = false;
+    size_t                              selection_anchor_ = 0;
+    Point                               last_click_pos_{0.0f, 0.0f};
+    std::chrono::steady_clock::time_point last_click_time_{};
+    int                                 click_count_ = 0;
 
     struct Impl;
-    std::unique_ptr<Impl>       impl_;
+    std::unique_ptr<Impl>               impl_;
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -268,13 +312,16 @@ private:
 /// @brief A widget that displays a string of text with a single style.
 class Text : public SingleChildRenderObjectWidget {
 public:
-    std::string           data;
-    TextStyle             style;
-    TextAlign             text_align = TextAlign::Start;
-    TextDirection         text_direction = TextDirection::LTR;
-    TextOverflow          overflow = TextOverflow::Clip;
-    std::optional<size_t> max_lines;
-    bool                  soft_wrap = true;
+    std::string                         data;
+    TextStyle                           style;
+    TextAlign                           text_align = TextAlign::Start;
+    TextDirection                       text_direction = TextDirection::LTR;
+    TextOverflow                        overflow = TextOverflow::Clip;
+    std::optional<size_t>               max_lines;
+    bool                                soft_wrap = true;
+    bool                                selectable = false;
+    Color                               selection_color = 0x6038BDF8;
+    std::function<void(TextSelection)>  on_selection_changed = nullptr;
 
     explicit Text(std::string text, Key key = Key::none())
         : SingleChildRenderObjectWidget(std::move(key)), data(std::move(text)) {}
@@ -294,13 +341,16 @@ public:
 /// @brief A widget that displays text using multiple spans with individual styles.
 class RichText : public SingleChildRenderObjectWidget {
 public:
-    std::shared_ptr<InlineSpan> text_span;
-    TextStyle                   default_style;
-    TextAlign                   text_align = TextAlign::Start;
-    TextDirection               text_direction = TextDirection::LTR;
-    TextOverflow                overflow = TextOverflow::Clip;
-    std::optional<size_t>       max_lines;
-    bool                        soft_wrap = true;
+    std::shared_ptr<InlineSpan>         text_span;
+    TextStyle                           default_style;
+    TextAlign                           text_align = TextAlign::Start;
+    TextDirection                       text_direction = TextDirection::LTR;
+    TextOverflow                        overflow = TextOverflow::Clip;
+    std::optional<size_t>               max_lines;
+    bool                                soft_wrap = true;
+    bool                                selectable = false;
+    Color                               selection_color = 0x6038BDF8;
+    std::function<void(TextSelection)>  on_selection_changed = nullptr;
 
     explicit RichText(std::shared_ptr<InlineSpan> span, Key key = Key::none())
         : SingleChildRenderObjectWidget(std::move(key)), text_span(std::move(span)) {}
@@ -318,37 +368,45 @@ struct TextProps {
     std::string text;
     
     // ── Common TextStyle Overrides ─────────────────────────────
-    std::optional<Color>          color;
-    std::optional<float>          font_size;
-    std::optional<FontWeight>     font_weight;
-    std::optional<FontStyle>      font_style;
-    std::optional<std::string>    font_family;
-    std::optional<float>          letter_spacing;
-    std::optional<float>          word_spacing;
-    std::optional<float>          height;
-    std::vector<BoxShadow>        shadows;
+    std::optional<Color>                color;
+    std::optional<float>                font_size;
+    std::optional<FontWeight>           font_weight;
+    std::optional<FontStyle>            font_style;
+    std::optional<std::string>          font_family;
+    std::optional<float>                letter_spacing;
+    std::optional<float>                word_spacing;
+    std::optional<float>                height;
+    std::vector<BoxShadow>              shadows;
     
     // ── Full Style Override ────────────────────────────────────
-    std::optional<TextStyle>      style;
+    std::optional<TextStyle>            style;
 
     // ── Paragraph Layout ───────────────────────────────────────
-    std::optional<TextAlign>      text_align;
-    std::optional<TextDirection>  text_direction;
-    std::optional<TextOverflow>   overflow;
-    std::optional<size_t>         max_lines;
-    std::optional<bool>           soft_wrap;
+    std::optional<TextAlign>            text_align;
+    std::optional<TextDirection>        text_direction;
+    std::optional<TextOverflow>         overflow;
+    std::optional<size_t>               max_lines;
+    std::optional<bool>                 soft_wrap;
+
+    // ── Selection Support ──────────────────────────────────────
+    std::optional<bool>                 selectable;
+    std::optional<Color>                selection_color;
+    std::function<void(TextSelection)>  on_selection_changed = nullptr;
 
     Key key = Key::none();
 };
 
 struct RichTextProps {
-    std::shared_ptr<InlineSpan>   text_span;
-    std::optional<TextStyle>      default_style;
-    std::optional<TextAlign>      text_align;
-    std::optional<TextDirection>  text_direction;
-    std::optional<TextOverflow>   overflow;
-    std::optional<size_t>         max_lines;
-    std::optional<bool>           soft_wrap;
+    std::shared_ptr<InlineSpan>         text_span;
+    std::optional<TextStyle>            default_style;
+    std::optional<TextAlign>            text_align;
+    std::optional<TextDirection>        text_direction;
+    std::optional<TextOverflow>         overflow;
+    std::optional<size_t>               max_lines;
+    std::optional<bool>                 soft_wrap;
+    std::optional<bool>                 selectable;
+    std::optional<Color>                selection_color;
+    std::function<void(TextSelection)>  on_selection_changed = nullptr;
 
     Key key = Key::none();
 };
@@ -387,6 +445,11 @@ inline std::shared_ptr<Text> text(TextProps props) {
     if (props.overflow) t->overflow = *props.overflow;
     if (props.max_lines) t->max_lines = *props.max_lines;
     if (props.soft_wrap) t->soft_wrap = *props.soft_wrap;
+
+    // Apply Selection Configuration
+    if (props.selectable) t->selectable = *props.selectable;
+    if (props.selection_color) t->selection_color = *props.selection_color;
+    if (props.on_selection_changed) t->on_selection_changed = props.on_selection_changed;
     
     return t;
 }
@@ -404,6 +467,9 @@ inline std::shared_ptr<RichText> richText(RichTextProps props) {
     if (props.overflow) r->overflow = *props.overflow;
     if (props.max_lines) r->max_lines = *props.max_lines;
     if (props.soft_wrap) r->soft_wrap = *props.soft_wrap;
+    if (props.selectable) r->selectable = *props.selectable;
+    if (props.selection_color) r->selection_color = *props.selection_color;
+    if (props.on_selection_changed) r->on_selection_changed = props.on_selection_changed;
     return r;
 }
  

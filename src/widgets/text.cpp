@@ -3,6 +3,8 @@
 
 #include "enki/widgets/text.hpp"
 #include "enki/rendering/canvas.hpp"
+#include "enki/rendering/paint.hpp"
+#include "enki/platform/platform.hpp"
 #include <include/core/SkColor.h>
 #include <include/core/SkFontStyle.h>
 #include <include/core/SkFontMgr.h>
@@ -16,6 +18,8 @@
 #include <modules/skparagraph/include/DartTypes.h>
 #include <layout_engine/Anu.h>
 #include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <limits>
 #include <iostream>
 
@@ -99,21 +103,17 @@ skia::textlayout::TextStyle toSkTextStyle(const TextStyle& s) {
     SkFontStyle fontStyle(static_cast<int>(s.font_weight), SkFontStyle::kNormal_Width, slant);
     sk.setFontStyle(fontStyle);
 
-    // Font Families
-    std::vector<SkString> families;
-    if (!s.font_family.empty()) {
-        families.emplace_back(s.font_family.c_str());
+    // Font Families — only set when custom family/families are requested
+    if (!s.font_family.empty() || !s.font_families.empty()) {
+        std::vector<SkString> families;
+        if (!s.font_family.empty()) {
+            families.emplace_back(s.font_family.c_str());
+        }
+        for (const auto& fam : s.font_families) {
+            families.emplace_back(fam.c_str());
+        }
+        sk.setFontFamilies(families);
     }
-    for (const auto& fam : s.font_families) {
-        families.emplace_back(fam.c_str());
-    }
-    // Fallback standard families
-    families.emplace_back("Inter");
-    families.emplace_back("Roboto");
-    families.emplace_back("Ubuntu");
-    families.emplace_back("DejaVu Sans");
-    families.emplace_back("sans-serif");
-    sk.setFontFamilies(families);
 
     // Spacing
     sk.setLetterSpacing(s.letter_spacing);
@@ -178,6 +178,7 @@ public:
     void addText(const std::string& text, const TextSpan* span = nullptr) {
         if (!text.empty()) {
             builder->addText(text.c_str(), text.size());
+            accumulated_text += text;
             size_t end_index = current_index + text.size();
             if (span && (span->on_click || span->on_hover)) {
                 interactive_spans.push_back({current_index, end_index, span});
@@ -188,6 +189,7 @@ public:
 
     skia::textlayout::ParagraphBuilder* builder;
     size_t current_index;
+    std::string accumulated_text;
     std::vector<SpanRange> interactive_spans;
 };
 
@@ -215,6 +217,7 @@ void TextSpan::build(ParagraphBuilderContext& builder, const TextStyle& inherite
 struct RenderParagraph::Impl {
     std::unique_ptr<skia::textlayout::Paragraph> paragraph;
     float current_layout_width = -1.0f;
+    std::string full_text;
     std::vector<ParagraphBuilderContext::SpanRange> interactive_spans;
     const TextSpan* hovered_span = nullptr;
 
@@ -243,6 +246,7 @@ struct RenderParagraph::Impl {
         auto builder = skia::textlayout::ParagraphBuilder::make(pStyle, getSharedFontCollection());
         if (!builder) {
             paragraph = nullptr;
+            full_text.clear();
             return;
         }
 
@@ -251,6 +255,7 @@ struct RenderParagraph::Impl {
             rootSpan->build(ctx, defaultStyle);
         }
 
+        full_text = std::move(ctx.accumulated_text);
         interactive_spans = std::move(ctx.interactive_spans);
         paragraph = builder->Build();
         current_layout_width = -1.0f;
@@ -414,6 +419,69 @@ void RenderParagraph::setSoftWrap(bool softWrap) {
     }
 }
 
+void RenderParagraph::setSelectable(bool selectable) {
+    if (selectable_ != selectable) {
+        selectable_ = selectable;
+        if (!selectable_) {
+            clearSelection();
+        }
+        markNeedsPaint();
+    }
+}
+
+void RenderParagraph::setSelectionColor(Color color) {
+    if (selection_color_ != color) {
+        selection_color_ = color;
+        if (!selection_.isCollapsed()) {
+            markNeedsPaint();
+        }
+    }
+}
+
+void RenderParagraph::setOnSelectionChanged(std::function<void(TextSelection)> callback) {
+    on_selection_changed_ = std::move(callback);
+}
+
+void RenderParagraph::selectAll() {
+    if (!impl_ || !impl_->paragraph) return;
+    const std::string& all_text = !text_data_.empty() ? text_data_ : impl_->full_text;
+    selection_ = TextSelection{0, all_text.length()};
+    if (on_selection_changed_) {
+        on_selection_changed_(selection_);
+    }
+    markNeedsPaint();
+}
+
+void RenderParagraph::clearSelection() {
+    if (selection_.isValid() && !selection_.isCollapsed()) {
+        selection_ = TextSelection::empty();
+        if (on_selection_changed_) {
+            on_selection_changed_(selection_);
+        }
+        markNeedsPaint();
+    }
+}
+
+std::string RenderParagraph::getSelectedText() const {
+    const std::string& all_text = !text_data_.empty() ? text_data_ : (impl_ ? impl_->full_text : "");
+    if (!selection_.isValid() || selection_.isCollapsed() || all_text.empty()) {
+        return "";
+    }
+    size_t s = selection_.start();
+    size_t e = std::min(selection_.end(), all_text.length());
+    if (s >= e) return "";
+    return all_text.substr(s, e - s);
+}
+
+void RenderParagraph::copyToClipboard() {
+    std::string sel = getSelectedText();
+    if (!sel.empty()) {
+        if (auto* p = Platform::instance()) {
+            p->setClipboardText(sel);
+        }
+    }
+}
+
 void RenderParagraph::rebuildParagraph() {
     impl_->build(span_.get(), default_style_, text_align_, text_direction_, overflow_, max_lines_, soft_wrap_);
 }
@@ -474,6 +542,30 @@ void RenderParagraph::paint(PaintContext& ctx) {
     // Layout paragraph to the exact allocated box width
     layoutParagraph(size_.width);
 
+    // Draw selection background if selectable and active
+    if (selectable_ && selection_.isValid() && !selection_.isCollapsed()) {
+        size_t s = selection_.start();
+        size_t e = selection_.end();
+        auto rect_boxes = impl_->paragraph->getRectsForRange(
+            s, e,
+            skia::textlayout::RectHeightStyle::kTight,
+            skia::textlayout::RectWidthStyle::kTight
+        );
+
+        Paint sel_paint;
+        sel_paint.setColor(selection_color_);
+
+        for (const auto& box : rect_boxes) {
+            Rect r = Rect::fromLTWH(
+                ctx.offset.x + box.rect.fLeft,
+                ctx.offset.y + box.rect.fTop,
+                box.rect.width(),
+                box.rect.height()
+            );
+            ctx.canvas.drawRRect(r, BorderRadius::circular(3.0f), sel_paint);
+        }
+    }
+
     // Draw via canvas drawParagraph interface
     ctx.canvas.drawParagraph(impl_->paragraph.get(), ctx.offset.x, ctx.offset.y);
 }
@@ -488,22 +580,61 @@ const TextSpan* findSpanAtPosition(const std::vector<ParagraphBuilderContext::Sp
 }
 
 bool RenderParagraph::hitTestSelf(Point localPoint) const {
-    if (!impl_ || !impl_->paragraph || impl_->interactive_spans.empty()) return false;
     if (localPoint.x >= 0 && localPoint.x <= size_.width &&
         localPoint.y >= 0 && localPoint.y <= size_.height) {
-        // optionally: only return true if we hit an interactive span
-        auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(localPoint.x, localPoint.y);
-        const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
-        return span != nullptr;
+        if (selectable_) return true;
+        if (impl_ && impl_->paragraph && !impl_->interactive_spans.empty()) {
+            auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(localPoint.x, localPoint.y);
+            const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
+            return span != nullptr;
+        }
     }
     return false;
 }
 
 void RenderParagraph::handlePointerDown(const PointerEvent& e) {
-    // We defer actual click to pointer up.
+    if (selectable_ && impl_ && impl_->paragraph) {
+        layoutParagraph(size_.width);
+        auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
+        size_t char_pos = static_cast<size_t>(pos.position);
+
+        auto now = std::chrono::steady_clock::now();
+        float dist = std::hypot(e.localPosition.x - last_click_pos_.x, e.localPosition.y - last_click_pos_.y);
+        auto dt_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_click_time_).count();
+
+        if (dt_ms < 350 && dist < 10.0f) {
+            click_count_++;
+        } else {
+            click_count_ = 1;
+        }
+        last_click_pos_ = e.localPosition;
+        last_click_time_ = now;
+
+        if (click_count_ == 2) {
+            auto range = impl_->paragraph->getWordBoundary(char_pos);
+            selection_ = TextSelection{range.start, range.end};
+            selection_anchor_ = range.start;
+            is_dragging_ = true;
+        } else if (click_count_ >= 3) {
+            selectAll();
+            is_dragging_ = false;
+        } else {
+            selection_anchor_ = char_pos;
+            selection_ = TextSelection::collapsed(char_pos);
+            is_dragging_ = true;
+        }
+
+        if (on_selection_changed_) {
+            on_selection_changed_(selection_);
+        }
+        markNeedsPaint();
+    }
 }
 
 void RenderParagraph::handlePointerUp(const PointerEvent& e) {
+    if (selectable_) {
+        is_dragging_ = false;
+    }
     if (!impl_ || !impl_->paragraph) return;
     auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
     const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
@@ -514,11 +645,27 @@ void RenderParagraph::handlePointerUp(const PointerEvent& e) {
 
 void RenderParagraph::handlePointerMove(const PointerEvent& e) {
     if (!impl_ || !impl_->paragraph) return;
+
+    if (selectable_ && is_dragging_) {
+        layoutParagraph(size_.width);
+        auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
+        size_t char_pos = static_cast<size_t>(pos.position);
+
+        TextSelection new_sel{selection_anchor_, char_pos};
+        if (new_sel != selection_) {
+            selection_ = new_sel;
+            if (on_selection_changed_) {
+                on_selection_changed_(selection_);
+            }
+            markNeedsPaint();
+        }
+    }
+
     bool is_in_bounds = (e.localPosition.x >= 0 && e.localPosition.x <= size_.width &&
                          e.localPosition.y >= 0 && e.localPosition.y <= size_.height);
     
     const TextSpan* new_hovered = nullptr;
-    if (is_in_bounds) {
+    if (is_in_bounds && !impl_->interactive_spans.empty()) {
         auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
         new_hovered = findSpanAtPosition(impl_->interactive_spans, pos.position);
     }
@@ -547,7 +694,10 @@ SystemCursor RenderParagraph::cursor() const {
     if (impl_ && impl_->hovered_span && (impl_->hovered_span->on_click || impl_->hovered_span->on_hover)) {
         return SystemCursor::Pointer;
     }
-    return SystemCursor::Text;
+    if (selectable_) {
+        return SystemCursor::Text;
+    }
+    return SystemCursor::Default;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -566,12 +716,18 @@ std::unique_ptr<RenderObject> Text::createRenderObject(BuildContext&) {
         soft_wrap
     );
     rp->setText(data, style, text_align, text_direction, overflow, max_lines, soft_wrap);
+    rp->setSelectable(selectable);
+    rp->setSelectionColor(selection_color);
+    rp->setOnSelectionChanged(on_selection_changed);
     return rp;
 }
 
 void Text::updateRenderObject(BuildContext&, RenderObject& renderObject) {
     if (auto* rp = dynamic_cast<RenderParagraph*>(&renderObject)) {
         rp->setText(data, style, text_align, text_direction, overflow, max_lines, soft_wrap);
+        rp->setSelectable(selectable);
+        rp->setSelectionColor(selection_color);
+        rp->setOnSelectionChanged(on_selection_changed);
     }
 }
 
@@ -580,7 +736,7 @@ void Text::updateRenderObject(BuildContext&, RenderObject& renderObject) {
 // ════════════════════════════════════════════════════════════════
 
 std::unique_ptr<RenderObject> RichText::createRenderObject(BuildContext&) {
-    return std::make_unique<RenderParagraph>(
+    auto rp = std::make_unique<RenderParagraph>(
         text_span,
         default_style,
         text_align,
@@ -589,6 +745,10 @@ std::unique_ptr<RenderObject> RichText::createRenderObject(BuildContext&) {
         max_lines,
         soft_wrap
     );
+    rp->setSelectable(selectable);
+    rp->setSelectionColor(selection_color);
+    rp->setOnSelectionChanged(on_selection_changed);
+    return rp;
 }
 
 void RichText::updateRenderObject(BuildContext&, RenderObject& renderObject) {
@@ -600,6 +760,9 @@ void RichText::updateRenderObject(BuildContext&, RenderObject& renderObject) {
         rp->setOverflow(overflow);
         rp->setMaxLines(max_lines);
         rp->setSoftWrap(soft_wrap);
+        rp->setSelectable(selectable);
+        rp->setSelectionColor(selection_color);
+        rp->setOnSelectionChanged(on_selection_changed);
     }
 }
 
