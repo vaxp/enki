@@ -31,3 +31,11 @@ executable('desktop_shell_demo',
   install : false,
 )
 
+if get_option('enable_webview')
+  executable('web_host_demo',
+    'web_host_demo.cpp',
+    dependencies : [enki_dep, web_technology_dep],
+    install : false,
+  )
+endif
+

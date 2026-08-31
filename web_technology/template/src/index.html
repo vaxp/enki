@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enki Workstation Pro</title>
+    <link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+
+    <!-- ── Frameless Titlebar ─────────────────────────────────── -->
+    <header id="titlebar">
+        <div class="titlebar-left">
+            <div class="app-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">ENKI <span class="logo-badge">PRO</span></span>
+            </div>
+            <div class="titlebar-divider"></div>
+            <span id="window-title-display">Workstation Dashboard</span>
+        </div>
+
+        <div class="titlebar-center">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="global-search" placeholder="Search files, APIs, commands... (Ctrl+K)">
+            </div>
+        </div>
+
+        <div class="titlebar-right">
+            <!-- Live FPS HUD -->
+            <div class="fps-badge" id="fps-hud" title="Live Render Frame Rate">
+                <span class="fps-dot"></span>
+                <span class="fps-num" id="live-fps">60</span>
+                <span class="fps-unit">FPS</span>
+                <span class="frame-time" id="live-frame-time">16.6ms</span>
+            </div>
+            <div class="engine-badge">
+                <span class="status-dot"></span>
+                <span>Enki Native C++</span>
+            </div>
+            <div class="clock" id="live-clock">12:00:00</div>
+            <div class="window-controls">
+                <button id="btn-minimize" title="Minimize" onclick="enki.window.minimize()">─</button>
+                <button id="btn-maximize" title="Maximize" onclick="enki.window.maximize()">□</button>
+                <button id="btn-close" class="close-btn" title="Close" onclick="enki.window.close()">✕</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main App Layout ────────────────────────────────────── -->
+    <div id="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-label">WORKSPACE</div>
+                <nav class="nav-menu">
+                    <button class="nav-item active" data-tab="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
+                    <button class="nav-item" data-tab="sysmonitor">
+                        <span class="nav-icon">💻</span>
+                        <span class="nav-text">System Monitor</span>
+                    </button>
+                    <button class="nav-item" data-tab="filestudio">
+                        <span class="nav-icon">📂</span>
+                        <span class="nav-text">File Studio</span>
+                    </button>
+                    <button class="nav-item" data-tab="apiplayground">
+                        <span class="nav-icon">⚡</span>
+                        <span class="nav-text">API Playground</span>
+                    </button>
+                    <button class="nav-item" data-tab="uishowcase">
+                        <span class="nav-icon">🎨</span>
+                        <span class="nav-text">UI Showcase</span>
+                    </button>
+                    <button class="nav-item" data-tab="webportal">
+                        <span class="nav-icon">🌐</span>
+                        <span class="nav-text">VAXP Portal</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="sidebar-spacer"></div>
+
+            <!-- Quick Engine Stats in Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="quick-stat-row">
+                    <span>Platform:</span>
+                    <strong id="side-platform">Linux</strong>
+                </div>
+                <div class="quick-stat-row">
+                    <span>Architecture:</span>
+                    <strong id="side-arch">x86_64</strong>
+                </div>
+                <div class="quick-stat-row">
+                    <span>Engine:</span>
+                    <strong class="text-accent">Chromium 144</strong>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Dynamic Content Viewport -->
+        <main id="content-viewport">
+
+            <!-- ══════════════ TAB 1: DASHBOARD ══════════════ -->
+            <section id="tab-dashboard" class="tab-view active">
+                <div class="view-header">
+                    <div>
+                        <h2>Engine Overview & Performance</h2>
+                        <p class="subtitle">Real-time workstation metrics powered by Enki C++ Runtime</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="demoNotify()">🔔 Test Notification</button>
+                        <button class="btn btn-primary" onclick="refreshSystemMetrics()">🔄 Refresh Stats</button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper purple">💻</div>
+                        <div class="stat-content">
+                            <span class="stat-title">Platform OS</span>
+                            <div class="stat-value" id="kpi-os">Linux</div>
+                            <span class="stat-desc">Native X11 Host Mode</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper cyan">🧠</div>
+                        <div class="stat-content">
+                            <span class="stat-title">Total Physical Memory</span>
+                            <div class="stat-value" id="kpi-ram">-- GB</div>
+                            <span class="stat-desc">Direct Kernel Syscall</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper emerald">⚡</div>
+                        <div class="stat-content">
+                            <span class="stat-title">CPU Logical Cores</span>
+                            <div class="stat-value" id="kpi-cpus">--</div>
+                            <span class="stat-desc">Hardware Thread Capacity</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper amber">🛡️</div>
+                        <div class="stat-content">
+                            <span class="stat-title">Native Bridge IPC</span>
+                            <div class="stat-value text-emerald">Active</div>
+                            <span class="stat-desc">Zero-overhead V8 bindings</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Oscilloscope Chart -->
+                <div class="chart-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <span class="panel-icon">📈</span>
+                            <h3>Real-time Engine Load & Latency</h3>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="legend-item"><span class="legend-dot cpu"></span> Simulated CPU Load</span>
+                            <span class="legend-item"><span class="legend-dot ram"></span> Memory Oscillation</span>
+                            <span class="legend-item"><span class="legend-dot fps"></span> Frame Sync</span>
+                        </div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="live-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- GPU Benchmark & Particle Stress Test -->
+                <div class="card benchmark-card" style="margin-bottom: 24px;">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <span class="panel-icon">🔥</span>
+                            <h3>GPU & WebGL Particle Stress Benchmark (Live FPS Test)</h3>
+                        </div>
+                        <div class="benchmark-controls">
+                            <button class="btn-xs" onclick="setBenchmarkParticles(500)">500 Particles</button>
+                            <button class="btn-xs" onclick="setBenchmarkParticles(2000)">2,000 Particles</button>
+                            <button class="btn-xs" onclick="setBenchmarkParticles(5000)">5,000 (Extreme)</button>
+                            <button class="btn-xs text-accent" onclick="toggleBenchmarkStress()">▶ Toggle Live Stress</button>
+                        </div>
+                    </div>
+                    <div class="benchmark-container">
+                        <canvas id="benchmark-canvas"></canvas>
+                        <div class="benchmark-stats-overlay">
+                            <div>Particles: <strong id="bench-particles-count">1,000</strong></div>
+                            <div>Instant FPS: <strong id="bench-live-fps" class="text-emerald">60.0</strong></div>
+                            <div>Frame Time: <strong id="bench-frame-time" class="text-cyan">16.6 ms</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions & Highlights -->
+                <div class="dashboard-bottom-grid">
+                    <div class="card card-gradient">
+                        <h3>🚀 Welcome to Next-Gen Enki Web</h3>
+                        <p>This desktop application runs natively on Linux without Electron or GTK/Qt dependencies. Chromium renders the interface while the Enki C++ backend delivers high-performance native OS integration.</p>
+                        <div class="action-buttons-row">
+                            <button class="btn btn-primary" onclick="switchTab('filestudio')">📂 Explore File Studio</button>
+                            <button class="btn btn-outline" onclick="switchTab('apiplayground')">⚡ Try Native APIs</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📋 System Identifiers</h3>
+                        <div class="system-list">
+                            <div class="system-list-item">
+                                <span>Hostname</span>
+                                <code id="dash-hostname">hostname</code>
+                            </div>
+                            <div class="system-list-item">
+                                <span>Architecture</span>
+                                <code id="dash-arch">x86_64</code>
+                            </div>
+                            <div class="system-list-item">
+                                <span>Subsystem Mode</span>
+                                <code class="text-purple">Windowed Native X11</code>
+                            </div>
+                            <div class="system-list-item">
+                                <span>Security Permissions</span>
+                                <code class="text-emerald">Full Native Access</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════ TAB 2: SYSTEM MONITOR ══════════════ -->
+            <section id="tab-sysmonitor" class="tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>System & Hardware Diagnostics</h2>
+                        <p class="subtitle">Hardware metrics inspected via <code>window.enki.system.*</code></p>
+                    </div>
+                    <button class="btn btn-primary" onclick="refreshSystemMetrics()">🔄 Query Hardware</button>
+                </div>
+
+                <div class="monitor-grid">
+                    <!-- Gauge 1: RAM -->
+                    <div class="gauge-card">
+                        <h3>Memory Allocation</h3>
+                        <div class="gauge-circle-container">
+                            <svg viewBox="0 0 100 100" class="gauge-svg">
+                                <circle class="gauge-bg" cx="50" cy="50" r="42"></circle>
+                                <circle id="ram-gauge-circle" class="gauge-progress purple" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="80"></circle>
+                            </svg>
+                            <div class="gauge-label">
+                                <span class="gauge-percent" id="ram-percent">68%</span>
+                                <span class="gauge-sub">Allocated</span>
+                            </div>
+                        </div>
+                        <div class="gauge-details">
+                            <div class="detail-row"><span>Total RAM:</span><strong id="mon-ram-total">-- GB</strong></div>
+                            <div class="detail-row"><span>Active Host Process:</span><strong class="text-emerald">Normal</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Gauge 2: CPU Capacity -->
+                    <div class="gauge-card">
+                        <h3>CPU Thread Distribution</h3>
+                        <div class="gauge-circle-container">
+                            <svg viewBox="0 0 100 100" class="gauge-svg">
+                                <circle class="gauge-bg" cx="50" cy="50" r="42"></circle>
+                                <circle id="cpu-gauge-circle" class="gauge-progress cyan" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="130"></circle>
+                            </svg>
+                            <div class="gauge-label">
+                                <span class="gauge-percent" id="cpu-cores-count">--</span>
+                                <span class="gauge-sub">Cores Online</span>
+                            </div>
+                        </div>
+                        <div class="gauge-details">
+                            <div class="detail-row"><span>Architecture:</span><strong id="mon-arch">--</strong></div>
+                            <div class="detail-row"><span>Multithreading:</span><strong class="text-cyan">Enabled</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Raw System Info Table -->
+                    <div class="table-card">
+                        <h3>Detailed Environment Spec</h3>
+                        <table class="specs-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Value</th>
+                                    <th>Provider</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>OS Platform</td>
+                                    <td><span class="badge purple" id="tbl-os">Linux</span></td>
+                                    <td><code>enki.system.platform()</code></td>
+                                </tr>
+                                <tr>
+                                    <td>CPU Architecture</td>
+                                    <td><span class="badge blue" id="tbl-arch">x86_64</span></td>
+                                    <td><code>enki.system.arch()</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Host Station Name</td>
+                                    <td><span class="badge cyan" id="tbl-host">localhost</span></td>
+                                    <td><code>enki.system.hostname()</code></td>
+                                </tr>
+                                <tr>
+                                    <td>RAM Capacity</td>
+                                    <td><span class="badge emerald" id="tbl-ram">-- GB</span></td>
+                                    <td><code>enki.system.memory()</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Logical Cores</td>
+                                    <td><span class="badge amber" id="tbl-cpus">--</span></td>
+                                    <td><code>enki.system.cpuCount()</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════ TAB 3: FILE STUDIO ══════════════ -->
+            <section id="tab-filestudio" class="tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>File Studio & Native Editor</h2>
+                        <p class="subtitle">Direct asynchronous filesystem read/write via <code>window.enki.fs.*</code> & native dialogs</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="editorOpenFile()">📂 Open File</button>
+                        <button class="btn btn-secondary" onclick="editorSaveFile()">💾 Save As...</button>
+                        <button class="btn btn-primary" onclick="editorQuickSave()">⚡ Quick Write</button>
+                    </div>
+                </div>
+
+                <div class="editor-layout">
+                    <!-- Left file tools sidebar -->
+                    <div class="editor-sidebar">
+                        <div class="editor-sidebar-header">
+                            <span>EXPLORER & SAMPLES</span>
+                            <button class="btn-icon" title="Scan Current Folder" onclick="listCurrentDir()">🔄</button>
+                        </div>
+                        <div class="file-tree" id="file-tree-list">
+                            <div class="file-item" onclick="loadSampleText('manifest')">
+                                <span class="file-icon">📄</span>
+                                <span class="file-name">enki.json</span>
+                            </div>
+                            <div class="file-item" onclick="loadSampleText('hello')">
+                                <span class="file-icon">📝</span>
+                                <span class="file-name">hello_world.txt</span>
+                            </div>
+                            <div class="file-item" onclick="loadSampleText('script')">
+                                <span class="file-icon">📜</span>
+                                <span class="file-name">app_logic.js</span>
+                            </div>
+                        </div>
+
+                        <div class="editor-sidebar-footer">
+                            <div class="file-meta">
+                                <div>Path: <span id="current-file-path">Unsaved Document</span></div>
+                                <div>Characters: <span id="editor-char-count">0</span></div>
+                                <div>Lines: <span id="editor-line-count">1</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right code editor -->
+                    <div class="editor-main">
+                        <div class="editor-toolbar">
+                            <div class="active-tab-title">
+                                <span class="file-icon">📝</span>
+                                <span id="editor-tab-name">document.txt</span>
+                                <span class="dirty-indicator" id="dirty-dot">•</span>
+                            </div>
+                            <div class="editor-toolbar-actions">
+                                <button class="btn-xs" onclick="clearEditor()">Clear</button>
+                                <button class="btn-xs" onclick="copyEditorContent()">Copy to Clipboard</button>
+                            </div>
+                        </div>
+                        <textarea id="code-editor" placeholder="Write or open a file here..." spellcheck="false"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════ TAB 4: API PLAYGROUND ══════════════ -->
+            <section id="tab-apiplayground" class="tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Native C++ APIs & Permissions Playground</h2>
+                        <p class="subtitle">Test every subsystem and simulate live permission grants/revocations</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Permissions Management & Simulation -->
+                <div class="card permissions-card" style="margin-bottom: 24px;">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <span class="panel-icon">🛡️</span>
+                            <h3>Security & Permissions Live Simulator</h3>
+                        </div>
+                        <span class="badge emerald" id="active-perms-count">7 Permissions Granted</span>
+                    </div>
+                    <p>Toggle any permission on or off to test Enki's runtime security enforcement. When a permission is revoked, native requests are blocked with a security violation alert.</p>
+                    <div class="permissions-table-container">
+                        <table class="specs-table">
+                            <thead>
+                                <tr>
+                                    <th>Permission Token</th>
+                                    <th>Target Subsystem</th>
+                                    <th>Runtime Access</th>
+                                    <th>Live Test Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>"fs.read"</code></td>
+                                    <td>Filesystem Read / Directory Scan</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-fs-read" checked onchange="togglePerm('fs.read', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('fs.read')">⚡ Test Read File</button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>"fs.write"</code></td>
+                                    <td>Filesystem Write / Modify</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-fs-write" checked onchange="togglePerm('fs.write', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('fs.write')">⚡ Test Write File</button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>"dialog"</code></td>
+                                    <td>Native File/Message Dialogs</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-dialog" checked onchange="togglePerm('dialog', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('dialog')">⚡ Test Open Dialog</button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>"clipboard"</code></td>
+                                    <td>System Clipboard Read/Write</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-clipboard" checked onchange="togglePerm('clipboard', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('clipboard')">⚡ Test Clipboard Copy</button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>"notifications"</code></td>
+                                    <td>Desktop OS Notifications Daemon</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-notifications" checked onchange="togglePerm('notifications', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('notifications')">⚡ Test Notification</button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>"system.info"</code></td>
+                                    <td>Hardware / Kernel Inspection</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-system-info" checked onchange="togglePerm('system.info', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('system.info')">⚡ Test Hardware Query</button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>"shell.open_external"</code></td>
+                                    <td>System Browser URL Opener</td>
+                                    <td>
+                                        <label class="switch">
+                                            <input type="checkbox" id="perm-shell" checked onchange="togglePerm('shell.open_external', this.checked)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </td>
+                                    <td><button class="btn-xs" onclick="testPermAction('shell.open_external')">⚡ Test Open Browser</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="api-grid">
+                    <!-- Dialogs API -->
+                    <div class="api-card">
+                        <div class="api-card-header">
+                            <span class="api-icon">💬</span>
+                            <div>
+                                <h3>enki.dialog</h3>
+                                <p>Native OS file and message dialogs</p>
+                            </div>
+                        </div>
+                        <div class="api-card-actions">
+                            <button class="btn btn-secondary btn-block" onclick="testDialogOpen()">📂 Open File Dialog</button>
+                            <button class="btn btn-secondary btn-block" onclick="testDialogSave()">💾 Save File Dialog</button>
+                            <button class="btn btn-secondary btn-block" onclick="testDialogConfirm()">❓ Confirmation Box</button>
+                            <button class="btn btn-secondary btn-block" onclick="testDialogMessage()">ℹ️ Alert Message Box</button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications API -->
+                    <div class="api-card">
+                        <div class="api-card-header">
+                            <span class="api-icon">🔔</span>
+                            <div>
+                                <h3>enki.notification</h3>
+                                <p>Desktop notification daemon bridge</p>
+                            </div>
+                        </div>
+                        <div class="api-card-body">
+                            <input type="text" id="notif-title" class="input-field" value="Enki Desktop Alert" placeholder="Notification Title">
+                            <input type="text" id="notif-body" class="input-field" value="Your build completed successfully in 0.42s!" placeholder="Notification Body">
+                        </div>
+                        <div class="api-card-actions">
+                            <button class="btn btn-primary btn-block" onclick="sendCustomNotification()">🚀 Trigger Notification</button>
+                        </div>
+                    </div>
+
+                    <!-- Clipboard API -->
+                    <div class="api-card">
+                        <div class="api-card-header">
+                            <span class="api-icon">📋</span>
+                            <div>
+                                <h3>enki.clipboard</h3>
+                                <p>System clipboard read/write</p>
+                            </div>
+                        </div>
+                        <div class="api-card-body">
+                            <input type="text" id="clip-input" class="input-field" value="Enki Web Host is ultra fast!" placeholder="Text to copy">
+                        </div>
+                        <div class="api-card-actions">
+                            <button class="btn btn-secondary btn-block" onclick="testClipboardWrite()">📥 Copy to Clipboard</button>
+                            <button class="btn btn-secondary btn-block" onclick="testClipboardRead()">📤 Read from Clipboard</button>
+                        </div>
+                    </div>
+
+                    <!-- Window Management API -->
+                    <div class="api-card">
+                        <div class="api-card-header">
+                            <span class="api-icon">🪟</span>
+                            <div>
+                                <h3>enki.window</h3>
+                                <p>Native OS window properties & resizing</p>
+                            </div>
+                        </div>
+                        <div class="api-card-body">
+                            <input type="text" id="win-title-input" class="input-field" value="Enki Workstation Pro - Custom Title" placeholder="New Window Title">
+                        </div>
+                        <div class="api-card-actions">
+                            <button class="btn btn-secondary btn-block" onclick="testChangeTitle()">🏷️ Set Title</button>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" onclick="enki.window.setSize(1024, 768)">1024x768</button>
+                                <button class="btn btn-secondary" onclick="enki.window.setSize(1360, 860)">1360x860</button>
+                                <button class="btn btn-secondary" onclick="enki.window.setSize(1600, 900)">1600x900</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shell API -->
+                    <div class="api-card">
+                        <div class="api-card-header">
+                            <span class="api-icon">🌐</span>
+                            <div>
+                                <h3>enki.shell</h3>
+                                <p>External system browser & URI handler</p>
+                            </div>
+                        </div>
+                        <div class="api-card-body">
+                            <input type="text" id="shell-url-input" class="input-field" value="https://github.com" placeholder="URL or file URI">
+                        </div>
+                        <div class="api-card-actions">
+                            <button class="btn btn-primary btn-block" onclick="testShellOpen()">🔗 Open External Link</button>
+                        </div>
+                    </div>
+
+                    <!-- Path API -->
+                    <div class="api-card">
+                        <div class="api-card-header">
+                            <span class="api-icon">🧭</span>
+                            <div>
+                                <h3>enki.path</h3>
+                                <p>Platform-agnostic path manipulation</p>
+                            </div>
+                        </div>
+                        <div class="api-card-body">
+                            <div class="path-demo-output" id="path-demo-box">
+                                点击测试 Path 实用函数
+                            </div>
+                        </div>
+                        <div class="api-card-actions">
+                            <button class="btn btn-secondary btn-block" onclick="testPathUtilities()">🧪 Run Path Diagnostics</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Response Console -->
+                <div class="console-panel">
+                    <div class="console-header">
+                        <span>📟 IPC RESPONSE CONSOLE</span>
+                        <button class="btn-xs" onclick="clearConsole()">Clear Console</button>
+                    </div>
+                    <pre id="api-console-output">// API output logs will appear here in real time...</pre>
+                </div>
+            </section>
+
+            <!-- ══════════════ TAB 5: UI SHOWCASE ══════════════ -->
+            <section id="tab-uishowcase" class="tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Modern Web Component Showcase</h2>
+                        <p class="subtitle">Rich CSS variables, glassmorphism, animated cards & custom form controls</p>
+                    </div>
+                </div>
+
+                <div class="showcase-grid">
+                    <!-- Glass Card -->
+                    <div class="card glass-card">
+                        <h3>Glassmorphism Card</h3>
+                        <p>Leverages backdrop blur, subtle borders, and multi-layer drop shadows for a premium modern aesthetic.</p>
+                        <div class="tags-row">
+                            <span class="badge purple">CSS Backdrop Filter</span>
+                            <span class="badge blue">Hardware Accelerated</span>
+                            <span class="badge emerald">60 FPS</span>
+                        </div>
+                    </div>
+
+                    <!-- Gradient Glow Card -->
+                    <div class="card glow-card">
+                        <h3>Gradient Glow Elevation</h3>
+                        <p>Dynamic glowing radial accents create depth and emphasize high-priority interactive widgets.</p>
+                        <button class="btn btn-primary" onclick="showToast('Success!', 'Gradient component interacted with.', 'success')">Trigger Toast</button>
+                    </div>
+
+                    <!-- Interactive Controls -->
+                    <div class="card">
+                        <h3>Custom UI Controls</h3>
+                        <div class="control-row">
+                            <label>Hardware Acceleration</label>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="control-row">
+                            <label>V8 Snapshot Optimization</label>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="control-row">
+                            <label>Audio Mute</label>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════ TAB 6: VAXP WEB PORTAL ══════════════ -->
+            <section id="tab-webportal" class="tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>VAXP Web Portal & Online Studio</h2>
+                        <p class="subtitle">Embedded live web view displaying <code>https://vaxp.org</code> inside Enki Web Host</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="reloadWebPortal()">🔄 Reload Page</button>
+                        <button class="btn btn-primary" onclick="enki.shell.openExternal('https://vaxp.org')">🔗 Open in External Browser</button>
+                    </div>
+                </div>
+
+                <div class="web-browser-container">
+                    <div class="browser-toolbar">
+                        <div class="browser-nav-buttons">
+                            <button class="btn-icon-browser" title="Back" onclick="portalGoBack()">◀</button>
+                            <button class="btn-icon-browser" title="Forward" onclick="portalGoForward()">▶</button>
+                            <button class="btn-icon-browser" title="Reload" onclick="reloadWebPortal()">🔄</button>
+                        </div>
+                        <div class="browser-address-bar">
+                            <span class="ssl-icon">🔒</span>
+                            <input type="text" id="portal-url-input" value="https://vaxp.org" placeholder="https://..." onkeydown="if(event.key==='Enter') navigateWebPortal()">
+                            <button class="btn-navigate" onclick="navigateWebPortal()">Go</button>
+                        </div>
+                        <div class="browser-status-badge">
+                            <span class="status-dot"></span>
+                            <span>Live Chromium Frame</span>
+                        </div>
+                    </div>
+                    <div class="iframe-wrapper">
+                        <iframe id="vaxp-iframe" src="https://vaxp.org" allow="clipboard-read; clipboard-write; fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"></iframe>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ── Toast Notifications Container ──────────────────────── -->
+    <div id="toast-container"></div>
+
+    <script src="main.js"></script>
+</body>
+</html>
