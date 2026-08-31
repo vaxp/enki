@@ -176,15 +176,29 @@ public:
     }
 
     void setComposition(std::shared_ptr<LottieComposition> comp) {
+        if (composition_ == comp) {
+            markNeedsPaint();
+            return;
+        }
         composition_ = std::move(comp);
         markNeedsLayout();
         markNeedsPaint();
     }
 
     void setStyle(const LottieStyle& s) {
+        bool layout_changed = (style_.width != s.width ||
+                               style_.height != s.height ||
+                               style_.min_width != s.min_width ||
+                               style_.min_height != s.min_height ||
+                               style_.max_width != s.max_width ||
+                               style_.max_height != s.max_height ||
+                               style_.fit != s.fit ||
+                               style_.alignment != s.alignment);
         style_ = s;
-        applyStyleToNode();
-        markNeedsLayout();
+        if (layout_changed) {
+            applyStyleToNode();
+            markNeedsLayout();
+        }
         markNeedsPaint();
     }
 
