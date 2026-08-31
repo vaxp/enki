@@ -87,6 +87,7 @@ subdir('motion_demo')
 subdir('feedback_status_demo')
 subdir('utility_demo')
 subdir('typography_demo')
+subdir('lottie_demo')
 
 
 

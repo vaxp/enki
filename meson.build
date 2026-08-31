@@ -130,6 +130,9 @@ skia_dep = cpp.find_library('skia', dirs : [meson.current_source_dir() + '/core/
 skparagraph_dep = cpp.find_library('skparagraph', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
 skshaper_dep = cpp.find_library('skshaper', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
 skunicode_dep = cpp.find_library('skunicode', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+skottie_dep = cpp.find_library('skottie', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+sksg_dep = cpp.find_library('sksg', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
+skresources_dep = cpp.find_library('skresources', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
 
 # Optional system Skia
 if not skia_dep.found()
@@ -182,6 +185,15 @@ if skia_dep.found()
   endif
   if skunicode_dep.found()
     enki_deps += skunicode_dep
+  endif
+  if skottie_dep.found()
+    enki_deps += skottie_dep
+  endif
+  if sksg_dep.found()
+    enki_deps += sksg_dep
+  endif
+  if skresources_dep.found()
+    enki_deps += skresources_dep
   endif
   if fontconfig_dep.found()
     enki_deps += fontconfig_dep
@@ -303,6 +315,7 @@ enki_sources = files(
   'src/widgets/focus.cpp',
   'src/widgets/stack.cpp',
   'src/widgets/image.cpp',
+  'src/widgets/lottie.cpp',
   'src/widgets/scroll_view.cpp',
   'src/widgets/icon.cpp',
   'src/widgets/divider.cpp',
@@ -368,6 +381,7 @@ enki_sources = files(
 
   # Animation
   'src/animation/animation_controller.cpp',
+  'src/animation/lottie_controller.cpp',
   'src/animation/tween.cpp',
   'src/animation/curves.cpp',
 
@@ -399,12 +413,24 @@ if get_option('enable_webview')
 endif
 
 # ============================================================
+# Lottie Rendering Subsystem (-fno-rtti to match Skia Skottie)
+# ============================================================
+lottie_rendering_lib = static_library('enki_lottie_rendering',
+  'src/rendering/lottie_composition.cpp',
+  include_directories : enki_platform_inc,
+  dependencies : enki_deps,
+  cpp_args : ['-fno-rtti'],
+  pic : true,
+)
+
+# ============================================================
 # Library target
 # ============================================================
 enki_lib = library('enki',
   enki_sources,
   include_directories : enki_platform_inc,
   dependencies : enki_deps,
+  link_whole : [lottie_rendering_lib],
   install : true,
 )
 
@@ -430,6 +456,6 @@ endif
 # Examples
 # ============================================================
 if get_option('build_examples')
- subdir('examples')
-# subdir('widgets_demo')
+  subdir('examples')
+  subdir('widgets_demo')
 endif

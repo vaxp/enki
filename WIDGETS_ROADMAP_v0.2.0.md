@@ -69,7 +69,7 @@
 - [ ] **VideoPlayer** — Embeds a native video surface with play/pause/seek controls
 - [ ] **AudioWaveform** — Renders a real-time or static audio amplitude waveform visualization
 - [ ] **SkiaCanvas** — Raw Skia canvas widget: exposes a PaintCallback for custom 2D drawing
-- [ ] **Lottie** — Renders Lottie / Rive JSON animations on a Skia canvas
+- [x] **Lottie** — Renders Lottie / Rive JSON animations on a Skia canvas
 - [x] **WebView** — Embeds a native browser/webview surface (Chromium Embedded / WebKitGTK)
 
 ---
