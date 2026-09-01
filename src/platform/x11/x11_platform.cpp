@@ -940,9 +940,11 @@ public:
             }
         }
 
+        auto self = weak_from_this().lock();
+
         if (new_title != title_) {
             title_ = new_title;
-            if (owner_) owner_->onToplevelTitleChanged().emit(shared_from_this(), title_);
+            if (self && owner_) owner_->onToplevelTitleChanged().emit(self, title_);
         }
 
         // 2. App ID / WM_CLASS
@@ -959,7 +961,7 @@ public:
             }
             if (new_app_id != app_id_) {
                 app_id_ = new_app_id;
-                if (owner_) owner_->onToplevelAppIdChanged().emit(shared_from_this(), app_id_);
+                if (self && owner_) owner_->onToplevelAppIdChanged().emit(self, app_id_);
             }
         }
 
@@ -988,7 +990,7 @@ public:
 
         if (new_state != state_) {
             state_ = new_state;
-            if (owner_) owner_->onToplevelStateChanged().emit(shared_from_this(), state_);
+            if (self && owner_) owner_->onToplevelStateChanged().emit(self, state_);
         }
     }
 
