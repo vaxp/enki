@@ -84,6 +84,9 @@ struct BackendConfig {
 
     /// Window title shown in the OS title bar (windowed_mode only).
     std::string window_title = "Enki Web Host";
+
+    /// Initial URL to load immediately upon browser creation (avoids about:blank roundtrip).
+    std::string initial_url;
 };
 
 // ════════════════════════════════════════════════════════════════

@@ -80,16 +80,6 @@ private:
     int current_height_ = 0;
     WindowState state_  = WindowState::Normal;
 
-    bool is_moving_   = false;
-    bool is_resizing_ = false;
-    WindowEdge resize_edge_ = WindowEdge::NoneEdge;
-    int drag_start_root_x_ = 0;
-    int drag_start_root_y_ = 0;
-    int drag_orig_win_x_   = 0;
-    int drag_orig_win_y_   = 0;
-    int drag_orig_win_w_   = 0;
-    int drag_orig_win_h_   = 0;
-
     Signal<WindowState> on_state_changed_;
     Signal<bool>        on_maximized_;
     Signal<bool>        on_focus_;

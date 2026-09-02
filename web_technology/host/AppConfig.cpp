@@ -83,8 +83,10 @@ std::string extract_block(const std::string& json, const std::string& key)
     std::smatch m;
     if (!std::regex_search(json, m, rx)) return "";
 
-    auto pos   = m.suffix().first - json.begin() + m.position();
-    size_t start = json.find('{', pos + m.position());
+    size_t start = m.position() + m.length() - 1; // موقع القوس المفتوح '{'
+    if (json[start] != '{') {
+        start = json.find('{', m.position());
+    }
     if (start == std::string::npos) return "";
 
     int depth = 0;

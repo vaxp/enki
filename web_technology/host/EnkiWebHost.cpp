@@ -142,6 +142,7 @@ int EnkiWebHost::run()
     bcfg.background_color = 0xFF0F0F1A;  // يطابق --bg في CSS
     bcfg.windowed_mode  = true;           
     bcfg.window_title   = cfg.window.title.empty() ? cfg.name : cfg.window.title;
+    bcfg.initial_url    = cfg.entry_url();
 
     if (cfg.devtools) {
         bcfg.devtools_port = 9222;
@@ -152,11 +153,6 @@ int EnkiWebHost::run()
                                                   /*subprocess_path=*/"",
                                                   /*windowed_mode=*/true)) {
         std::cerr << "[EnkiWebHost] Failed to initialize CEF global context.\n";
-        return 1;
-    }
-
-    if (!impl_->backend->initialize(bcfg)) {
-        std::cerr << "[EnkiWebHost] Failed to initialize CEF backend.\n";
         return 1;
     }
 
@@ -173,8 +169,10 @@ int EnkiWebHost::run()
         impl_->backend->eval_js(impl_->js_bootstrap);
     });
 
-    // ── 7. تحميل صفحة التطبيق ──────────────────────────────────
-    impl_->backend->load_url(cfg.entry_url());
+    if (!impl_->backend->initialize(bcfg)) {
+        std::cerr << "[EnkiWebHost] Failed to initialize CEF backend.\n";
+        return 1;
+    }
 
     // ── 8. حلقة الأحداث الرئيسية ──────────────────────────────
     // TODO: دمج مع نافذة Enki الأصلية (X11/Wayland event loop)
