@@ -39,8 +39,48 @@ bool X11Window::init(const WindowConfig& cfg) {
 
     int screen_w = DisplayWidth(display_,  screen);
     int screen_h = DisplayHeight(display_, screen);
+
+    ::Window parent_x11 = 0;
+    if (cfg.parent_window) {
+        auto* parent_x11_win = static_cast<X11Window*>(cfg.parent_window->getBackendWindow());
+        if (parent_x11_win) {
+            parent_x11 = parent_x11_win->getX11Window();
+        }
+    }
+
     int pos_x = (cfg.x >= 0) ? cfg.x : (screen_w - current_width_)  / 2;
     int pos_y = (cfg.y >= 0) ? cfg.y : (screen_h - current_height_) / 2;
+
+    if (cfg.mode == WindowMode::Popup) {
+        if (parent_x11 != 0) {
+            int root_x = 0, root_y = 0;
+            ::Window child = 0;
+            XTranslateCoordinates(display_, parent_x11, root,
+                                  cfg.x >= 0 ? cfg.x : 0,
+                                  cfg.y >= 0 ? cfg.y : 0,
+                                  &root_x, &root_y, &child);
+            pos_x = root_x;
+            pos_y = root_y;
+        } else {
+            // Fallback: place near pointer if parent window is not supplied
+            int root_x = 0, root_y = 0, win_x = 0, win_y = 0;
+            unsigned int mask = 0;
+            ::Window root_ret = 0, child_ret = 0;
+            if (XQueryPointer(display_, root, &root_ret, &child_ret, &root_x, &root_y, &win_x, &win_y, &mask)) {
+                pos_x = root_x;
+                pos_y = root_y;
+            }
+        }
+
+        // Clamp to screen bounds so popup doesn't overflow screen
+        if (pos_x + current_width_ > screen_w - 5) {
+            pos_x = screen_w - current_width_ - 5;
+        }
+        if (pos_y + current_height_ > screen_h - 5) {
+            pos_y = screen_h - current_height_ - 5;
+        }
+    }
+
     if (pos_x < 0) pos_x = 0;
     if (pos_y < 0) pos_y = 0;
 
@@ -73,7 +113,7 @@ bool X11Window::init(const WindowConfig& cfg) {
                        KeyReleaseMask | FocusChangeMask | PropertyChangeMask;
     unsigned long valuemask = CWColormap | CWBorderPixel | CWBitGravity | CWEventMask;
 
-    if (cfg.override_redirect) {
+    if (cfg.override_redirect || cfg.mode == WindowMode::Popup) {
         swa.override_redirect = True;
         valuemask |= CWOverrideRedirect;
     }
@@ -92,14 +132,23 @@ bool X11Window::init(const WindowConfig& cfg) {
 
     setTitle(cfg.title);
 
-    // Set _NET_WM_WINDOW_TYPE to _NET_WM_WINDOW_TYPE_NORMAL
+    // Set _NET_WM_WINDOW_TYPE
     Atom net_wm_window_type = XInternAtom(display_, "_NET_WM_WINDOW_TYPE", False);
-    Atom net_wm_window_type_normal = XInternAtom(display_, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-    XChangeProperty(display_, x11_window_, net_wm_window_type, XA_ATOM, 32,
-                    PropModeReplace, (unsigned char*)&net_wm_window_type_normal, 1);
+    if (cfg.mode == WindowMode::Popup) {
+        Atom net_wm_window_type_popup = XInternAtom(display_, "_NET_WM_WINDOW_TYPE_POPUP_MENU", False);
+        XChangeProperty(display_, x11_window_, net_wm_window_type, XA_ATOM, 32,
+                        PropModeReplace, (unsigned char*)&net_wm_window_type_popup, 1);
+    } else {
+        Atom net_wm_window_type_normal = XInternAtom(display_, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+        XChangeProperty(display_, x11_window_, net_wm_window_type, XA_ATOM, 32,
+                        PropModeReplace, (unsigned char*)&net_wm_window_type_normal, 1);
+    }
+
+    if (parent_x11 != 0) {
+        XSetTransientForHint(display_, x11_window_, parent_x11);
+    }
 
     // WM_DELETE_WINDOW protocol
-    Atom wm_proto  = backend_.getAtomWmProtocols();
     Atom wm_delete = backend_.getAtomWmDeleteWindow();
     XSetWMProtocols(display_, x11_window_, &wm_delete, 1);
 
@@ -164,6 +213,9 @@ bool X11Window::init(const WindowConfig& cfg) {
     eglSwapInterval(egl_display_, cfg.vsync ? 1 : 0);
 
     XMapWindow(display_, x11_window_);
+    if (cfg.mode == WindowMode::Popup) {
+        XRaiseWindow(display_, x11_window_);
+    }
     XFlush(display_);
     return true;
 }
@@ -205,10 +257,23 @@ void X11Window::setSize(int w, int h) {
 }
 
 void X11Window::setPosition(int x, int y) {
-    if (display_ && x11_window_) {
-        XMoveWindow(display_, x11_window_, x, y);
-        XFlush(display_);
+    if (!display_ || !x11_window_) return;
+    int target_x = x;
+    int target_y = y;
+    if (config_.mode == WindowMode::Popup && config_.parent_window) {
+        auto* parent_x11_win = static_cast<X11Window*>(config_.parent_window->getBackendWindow());
+        if (parent_x11_win) {
+            int root_x = 0, root_y = 0;
+            ::Window child = 0;
+            ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+            if (XTranslateCoordinates(display_, parent_x11_win->getX11Window(), root, x, y, &root_x, &root_y, &child)) {
+                target_x = root_x;
+                target_y = root_y;
+            }
+        }
     }
+    XMoveWindow(display_, x11_window_, target_x, target_y);
+    XFlush(display_);
 }
 
 void X11Window::setBorderless(bool borderless) {

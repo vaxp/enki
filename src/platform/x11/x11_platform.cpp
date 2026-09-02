@@ -348,8 +348,8 @@ bool X11PlatformBackend::pollEvents() {
                 }
             }
 
-            owner_->onMouseMove().emit(x, y);
             owner_->onTargetedMouseMove().emit(win_handle, x, y);
+            owner_->onMouseMove().emit(x, y);
             break;
         }
 
@@ -358,15 +358,15 @@ bool X11PlatformBackend::pollEvents() {
             float x = (float)xev.xbutton.x, y = (float)xev.xbutton.y;
             int   b = xev.xbutton.button;
             if (b == 4) {
-                owner_->onScroll().emit(0.0f,  1.0f);
                 owner_->onTargetedScroll().emit(win_handle, 0.0f, 1.0f);
+                owner_->onScroll().emit(0.0f,  1.0f);
             } else if (b == 5) {
-                owner_->onScroll().emit(0.0f, -1.0f);
                 owner_->onTargetedScroll().emit(win_handle, 0.0f, -1.0f);
+                owner_->onScroll().emit(0.0f, -1.0f);
             } else {
                 int btn_code = (b == 1 ? 1 : (b == 3 ? 3 : 2));
-                owner_->onMouseDown().emit(x, y, btn_code);
                 owner_->onTargetedMouseDown().emit(win_handle, x, y, btn_code);
+                owner_->onMouseDown().emit(x, y, btn_code);
             }
             break;
         }
@@ -385,8 +385,8 @@ bool X11PlatformBackend::pollEvents() {
 
             if (b != 4 && b != 5) {
                 int btn_code = (b == 1 ? 1 : (b == 3 ? 3 : 2));
-                owner_->onMouseUp().emit(x, y, btn_code);
                 owner_->onTargetedMouseUp().emit(win_handle, x, y, btn_code);
+                owner_->onMouseUp().emit(x, y, btn_code);
             }
             break;
         }

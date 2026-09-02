@@ -138,6 +138,7 @@ void SurfaceHost::paint(GrDirectContext* gr_ctx, Color clear_color) {
     if (w <= 0 || h <= 0) return;
 
     makeCurrent();
+    gr_ctx->resetContext();
 
     if (!cached_surface_ || cached_w_ != w || cached_h_ != h) {
         recreateSkSurface(gr_ctx, w, h);
