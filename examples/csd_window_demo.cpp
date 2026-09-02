@@ -90,7 +90,7 @@ public:
                     .font_weight = FontWeight::Bold,
                 }),
                 container(ContainerProps{.height = 6.0f}),
-                text("GDK-Grade Native Wayland & X11 Window Frame Architecture", TextStyle{
+                text(" Native Wayland & X11 Window Frame Architecture", TextStyle{
                     .color = 0xFF88C0D0,
                     .font_size = 14.0f,
                     .font_weight = FontWeight::Medium,
@@ -267,6 +267,10 @@ int main() {
     config.width = 920;
     config.height = 620;
     config.enable_csd = true;
+    config.target_fps  = 0;
+    config.vsync       = false;
+    config.show_performance_overlay = true;
+    config.clear_color = 0xFF14171F;
     config.app_id = "org.enki.csd_demo";
 
     auto app_res = App::create(std::make_shared<CsdDemoApp>(), config);

@@ -21,7 +21,7 @@
 **Enki Web Host** is a native web application runtime embedded in the Enki Framework. It allows developers to build fully-featured desktop applications using standard web technologies — HTML, CSS, and JavaScript — while having direct access to the operating system through a set of native APIs exposed under `window.enki.*`.
 
 Think of it as Electron, but:
-- Built on top of **Enki's native rendering stack** (no GTK, no Qt)
+- Built on top of **Enki's native rendering stack** 
 - **No desktop environment dependency** — runs on any X11 Linux system
 - Ships with **Chromium 144** via CEF (Chromium Embedded Framework)
 - Exposes a clean, permission-gated **`window.enki.*` API surface**
