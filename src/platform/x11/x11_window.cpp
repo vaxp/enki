@@ -93,8 +93,8 @@ bool X11Window::init(const WindowConfig& cfg) {
     Atom wm_delete = backend_.getAtomWmDeleteWindow();
     XSetWMProtocols(display_, x11_window_, &wm_delete, 1);
 
-    if (cfg.borderless)    setBorderless(true);
-    if (cfg.always_on_top) setAlwaysOnTop(true);
+    if (cfg.borderless || cfg.csd) setBorderless(true);
+    if (cfg.always_on_top)         setAlwaysOnTop(true);
 
     // Set _NET_WM_PID
     Atom net_pid = XInternAtom(display_, "_NET_WM_PID", False);
@@ -215,6 +215,217 @@ void X11Window::setAlwaysOnTop(bool on_top) {
     XSendEvent(display_, DefaultRootWindow(display_), False,
                SubstructureRedirectMask | SubstructureNotifyMask, &xev);
     XFlush(display_);
+}
+
+// ── Client-Side Decoration (CSD) Operations ─────────────────────
+
+void X11Window::beginMove(float local_x, float local_y, int button) {
+    if (!display_ || !x11_window_) return;
+    int root_x = 0, root_y = 0;
+    ::Window child = 0;
+    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+    XTranslateCoordinates(display_, x11_window_, root,
+                          static_cast<int>(local_x), static_cast<int>(local_y),
+                          &root_x, &root_y, &child);
+
+    XClientMessageEvent xclient{};
+    xclient.type = ClientMessage;
+    xclient.window = x11_window_;
+    xclient.message_type = backend_.getAtomNetWmMoveresize();
+    xclient.format = 32;
+    xclient.data.l[0] = root_x;
+    xclient.data.l[1] = root_y;
+    xclient.data.l[2] = 8; // _NET_WM_MOVERESIZE_MOVE
+    xclient.data.l[3] = button;
+    xclient.data.l[4] = 1; // normal source indication
+
+    XUngrabPointer(display_, CurrentTime);
+    XSendEvent(display_, root, False,
+               SubstructureRedirectMask | SubstructureNotifyMask,
+               (XEvent*)&xclient);
+    XFlush(display_);
+}
+
+void X11Window::beginResize(WindowEdge edge, float local_x, float local_y, int button) {
+    if (!display_ || !x11_window_ || edge == WindowEdge::NoneEdge) return;
+    int root_x = 0, root_y = 0;
+    ::Window child = 0;
+    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+    XTranslateCoordinates(display_, x11_window_, root,
+                          static_cast<int>(local_x), static_cast<int>(local_y),
+                          &root_x, &root_y, &child);
+
+    long direction = 0;
+    switch (edge) {
+        case WindowEdge::TopLeft:     direction = 0; break;
+        case WindowEdge::Top:         direction = 1; break;
+        case WindowEdge::TopRight:    direction = 2; break;
+        case WindowEdge::Right:       direction = 3; break;
+        case WindowEdge::BottomRight: direction = 4; break;
+        case WindowEdge::Bottom:      direction = 5; break;
+        case WindowEdge::BottomLeft:  direction = 6; break;
+        case WindowEdge::Left:        direction = 7; break;
+        default: return;
+    }
+
+    XClientMessageEvent xclient{};
+    xclient.type = ClientMessage;
+    xclient.window = x11_window_;
+    xclient.message_type = backend_.getAtomNetWmMoveresize();
+    xclient.format = 32;
+    xclient.data.l[0] = root_x;
+    xclient.data.l[1] = root_y;
+    xclient.data.l[2] = direction;
+    xclient.data.l[3] = button;
+    xclient.data.l[4] = 1;
+
+    XUngrabPointer(display_, CurrentTime);
+    XSendEvent(display_, root, False,
+               SubstructureRedirectMask | SubstructureNotifyMask,
+               (XEvent*)&xclient);
+    XFlush(display_);
+}
+
+void X11Window::setMaximized(bool max) {
+    if (!display_ || !x11_window_) return;
+    Atom wm_state = backend_.getAtomNetWmState();
+    Atom max_vert = backend_.getAtomNetWmStateMaxVert();
+    Atom max_horz = backend_.getAtomNetWmStateMaxHorz();
+    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+
+    XClientMessageEvent xclient{};
+    xclient.type = ClientMessage;
+    xclient.window = x11_window_;
+    xclient.message_type = wm_state;
+    xclient.format = 32;
+    xclient.data.l[0] = max ? 1 : 0; // 1 = _NET_WM_STATE_ADD, 0 = _NET_WM_STATE_REMOVE
+    xclient.data.l[1] = max_vert;
+    xclient.data.l[2] = max_horz;
+    xclient.data.l[3] = 1;
+
+    XSendEvent(display_, root, False,
+               SubstructureRedirectMask | SubstructureNotifyMask,
+               (XEvent*)&xclient);
+    XFlush(display_);
+}
+
+void X11Window::setMinimized(bool min) {
+    if (!display_ || !x11_window_) return;
+    if (min) {
+        XIconifyWindow(display_, x11_window_, backend_.getDefaultScreen());
+        XFlush(display_);
+    }
+}
+
+void X11Window::setFullscreen(bool full) {
+    if (!display_ || !x11_window_) return;
+    Atom wm_state = backend_.getAtomNetWmState();
+    Atom fullscreen = backend_.getAtomNetWmStateFullscreen();
+    ::Window root = RootWindow(display_, backend_.getDefaultScreen());
+
+    XClientMessageEvent xclient{};
+    xclient.type = ClientMessage;
+    xclient.window = x11_window_;
+    xclient.message_type = wm_state;
+    xclient.format = 32;
+    xclient.data.l[0] = full ? 1 : 0;
+    xclient.data.l[1] = fullscreen;
+    xclient.data.l[2] = 0;
+    xclient.data.l[3] = 1;
+
+    XSendEvent(display_, root, False,
+               SubstructureRedirectMask | SubstructureNotifyMask,
+               (XEvent*)&xclient);
+    XFlush(display_);
+}
+
+void X11Window::toggleMaximize() {
+    setMaximized(!isMaximized());
+}
+
+void X11Window::showWindowMenu(float /*local_x*/, float /*local_y*/, int /*button*/) {}
+
+void X11Window::setDecorated(bool decorated) {
+    setBorderless(!decorated);
+}
+
+void X11Window::setWindowGeometry(int x, int y, int width, int height) {
+    if (!display_ || !x11_window_) return;
+    long left = x > 0 ? x : 0;
+    long top = y > 0 ? y : 0;
+    long right = (current_width_ > (x + width)) ? (current_width_ - (x + width)) : 0;
+    long bottom = (current_height_ > (y + height)) ? (current_height_ - (y + height)) : 0;
+
+    unsigned long extents[4] = {
+        static_cast<unsigned long>(left),
+        static_cast<unsigned long>(right),
+        static_cast<unsigned long>(top),
+        static_cast<unsigned long>(bottom)
+    };
+    Atom frame_extents = backend_.getAtomGtkFrameExtents();
+    if (frame_extents) {
+        XChangeProperty(display_, x11_window_, frame_extents, XA_CARDINAL, 32,
+                        PropModeReplace, reinterpret_cast<unsigned char*>(extents), 4);
+        XFlush(display_);
+    }
+}
+
+void X11Window::updateState() {
+    if (!display_ || !x11_window_) return;
+    Atom net_wm_state = backend_.getAtomNetWmState();
+    Atom actual_type = None;
+    int actual_format = 0;
+    unsigned long nitems = 0, bytes_after = 0;
+    unsigned char* prop_data = nullptr;
+
+    WindowState new_state = state_ & WindowState::Activated;
+    int status = XGetWindowProperty(display_, x11_window_, net_wm_state,
+                                    0, 64, False, XA_ATOM,
+                                    &actual_type, &actual_format, &nitems, &bytes_after,
+                                    &prop_data);
+    if (status == Success && prop_data && nitems > 0) {
+        Atom* atoms = reinterpret_cast<Atom*>(prop_data);
+        Atom max_vert = backend_.getAtomNetWmStateMaxVert();
+        Atom max_horz = backend_.getAtomNetWmStateMaxHorz();
+        Atom fullscreen = backend_.getAtomNetWmStateFullscreen();
+        Atom hidden = backend_.getAtomNetWmStateHidden();
+
+        bool has_vert = false, has_horz = false;
+        for (unsigned long i = 0; i < nitems; ++i) {
+            if (atoms[i] == max_vert) has_vert = true;
+            if (atoms[i] == max_horz) has_horz = true;
+            if (atoms[i] == fullscreen) new_state |= WindowState::Fullscreen;
+            if (atoms[i] == hidden) new_state |= WindowState::Minimized;
+        }
+        if (has_vert && has_horz) {
+            new_state |= WindowState::Maximized;
+        }
+        XFree(prop_data);
+    }
+
+    bool max_changed = (hasWindowState(state_, WindowState::Maximized) != hasWindowState(new_state, WindowState::Maximized));
+    bool state_changed = (state_ != new_state);
+    state_ = new_state;
+
+    if (max_changed) {
+        on_maximized_.emit(hasWindowState(state_, WindowState::Maximized));
+    }
+    if (state_changed) {
+        on_state_changed_.emit(state_);
+    }
+}
+
+void X11Window::handleFocus(bool focused) {
+    bool prev_focused = hasWindowState(state_, WindowState::Activated);
+    if (focused) {
+        state_ |= WindowState::Activated;
+    } else {
+        state_ = static_cast<WindowState>(static_cast<uint32_t>(state_) & ~static_cast<uint32_t>(WindowState::Activated));
+    }
+    if (prev_focused != focused) {
+        on_focus_.emit(focused);
+        on_state_changed_.emit(state_);
+    }
 }
 
 Size X11Window::getSize() const {

@@ -63,7 +63,7 @@ if wayland_scanner.found() and wayland_client_dep.found()
   proto_c_sources = []
   proto_h_sources = []
 
-  foreach proto : ['wlr-layer-shell-unstable-v1', 'xdg-shell', 'wlr-foreign-toplevel-management-unstable-v1', 'xdg-output-unstable-v1']
+  foreach proto : ['wlr-layer-shell-unstable-v1', 'xdg-shell', 'wlr-foreign-toplevel-management-unstable-v1', 'xdg-output-unstable-v1', 'xdg-decoration-unstable-v1']
     xml = 'protocols' / proto + '.xml'
 
     hdr = custom_target(proto + '-client-header',
@@ -343,6 +343,8 @@ enki_sources = files(
   'src/widgets/utility.cpp',
   'src/widgets/marquee.cpp',
   'src/widgets/code_block.cpp',
+  'src/widgets/titlebar.cpp',
+  'src/widgets/window_frame.cpp',
 
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',
@@ -449,7 +451,7 @@ install_subdir('include/enki', install_dir : get_option('includedir'))
 # Tests
 # ============================================================
 if get_option('build_tests')
-#  subdir('tests')
+  subdir('tests')
 endif
 
 # ============================================================

@@ -648,6 +648,10 @@ void WaylandPlatformBackend::shutdown() {
         zxdg_output_manager_v1_destroy(xdg_output_manager_);
         xdg_output_manager_ = nullptr;
     }
+    if (decoration_manager_) {
+        zxdg_decoration_manager_v1_destroy(decoration_manager_);
+        decoration_manager_ = nullptr;
+    }
     output_map_.clear();
     outputs_.clear();
 
@@ -947,6 +951,9 @@ void WaylandPlatformBackend::handleGlobal(uint32_t name, const char* interface, 
                 zxdg_output_v1_add_listener(out->xdg_output_, &wayland_xdg_output_listener, out.get());
             }
         }
+    } else if (std::strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
+        decoration_manager_ = static_cast<zxdg_decoration_manager_v1*>(
+            wl_registry_bind(registry_, name, &zxdg_decoration_manager_v1_interface, 1));
     } else if (std::strcmp(interface, wl_output_interface.name) == 0) {
         auto* output = static_cast<wl_output*>(
             wl_registry_bind(registry_, name, &wl_output_interface, std::min<uint32_t>(version, 4)));
@@ -1097,6 +1104,18 @@ void WaylandPlatformBackend::updateWaylandCursor() {
         case SystemCursor::ResizeVertical:
             names[0] = "ns-resize";
             names[1] = "v_double_arrow";
+            break;
+        case SystemCursor::ResizeTopLeft:
+        case SystemCursor::ResizeBottomRight:
+            names[0] = "nwse-resize";
+            names[1] = "nw-resize";
+            names[2] = "se-resize";
+            break;
+        case SystemCursor::ResizeTopRight:
+        case SystemCursor::ResizeBottomLeft:
+            names[0] = "nesw-resize";
+            names[1] = "ne-resize";
+            names[2] = "sw-resize";
             break;
         case SystemCursor::Wait:
             names[0] = "wait";

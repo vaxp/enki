@@ -37,6 +37,23 @@ public:
     [[nodiscard]] xdg_surface* getXdgSurface() const { return xdg_surface_; }
     [[nodiscard]] xdg_toplevel* getXdgToplevel() const { return xdg_toplevel_; }
 
+    // ── Client-Side Decoration (CSD) Operations ─────────────────
+    void beginMove(float local_x = 0.0f, float local_y = 0.0f, int button = 1);
+    void beginResize(WindowEdge edge, float local_x = 0.0f, float local_y = 0.0f, int button = 1);
+    void setMaximized(bool max);
+    void setMinimized(bool min);
+    void setFullscreen(bool full);
+    void toggleMaximize();
+    void showWindowMenu(float local_x = 0.0f, float local_y = 0.0f, int button = 3);
+    void setDecorated(bool decorated);
+    void setWindowGeometry(int x, int y, int width, int height);
+
+    [[nodiscard]] bool isMaximized() const { return hasWindowState(state_, WindowState::Maximized); }
+    [[nodiscard]] bool isMinimized() const { return hasWindowState(state_, WindowState::Minimized); }
+    [[nodiscard]] bool isFullscreen() const { return hasWindowState(state_, WindowState::Fullscreen); }
+    [[nodiscard]] bool isActivated() const { return hasWindowState(state_, WindowState::Activated); }
+    [[nodiscard]] WindowState getWindowState() const { return state_; }
+
     // XDG Shell Protocol Callbacks
     void handleSurfaceConfigure(uint32_t serial);
     void handleToplevelConfigure(int32_t width, int32_t height, wl_array* states);
@@ -44,19 +61,22 @@ public:
     void handleClose();
 
     // Signals
-    Signal<int, int>& onResize() { return on_resize_; }
-    Signal<>&         onClose()  { return on_close_; }
-    Signal<bool>&     onFocus()  { return on_focus_; }
+    Signal<int, int>&       onResize()       { return on_resize_; }
+    Signal<>&               onClose()        { return on_close_; }
+    Signal<bool>&           onFocus()        { return on_focus_; }
+    Signal<WindowState>&     onStateChanged() { return on_state_changed_; }
+    Signal<bool>&           onMaximized()    { return on_maximized_; }
 
 private:
     WaylandPlatformBackend& backend_;
     WindowConfig            config_;
 
-    wl_surface*             wl_surface_    = nullptr;
-    xdg_surface*            xdg_surface_   = nullptr;
-    xdg_toplevel*           xdg_toplevel_  = nullptr;
-    xdg_popup*              xdg_popup_     = nullptr;
-    wl_egl_window*          egl_window_    = nullptr;
+    wl_surface*                 wl_surface_    = nullptr;
+    xdg_surface*                xdg_surface_   = nullptr;
+    xdg_toplevel*               xdg_toplevel_  = nullptr;
+    xdg_popup*                  xdg_popup_     = nullptr;
+    zxdg_toplevel_decoration_v1* decoration_   = nullptr;
+    wl_egl_window*              egl_window_    = nullptr;
 
     EGLDisplay              egl_display_   = EGL_NO_DISPLAY;
     EGLSurface              egl_surface_   = EGL_NO_SURFACE;
@@ -66,10 +86,13 @@ private:
     int32_t                 current_height_ = 0;
     bool                    configured_     = false;
     float                   scale_factor_   = 1.0f;
+    WindowState             state_          = WindowState::Normal;
 
     Signal<int, int>        on_resize_;
     Signal<>                on_close_;
     Signal<bool>            on_focus_;
+    Signal<WindowState>     on_state_changed_;
+    Signal<bool>            on_maximized_;
 };
 
 } // namespace enki::wayland

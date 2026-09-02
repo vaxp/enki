@@ -20,6 +20,7 @@ extern "C" {
 #include "xdg-shell-client-protocol.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
 }
 
 #include "enki/platform/output.hpp"
@@ -47,6 +48,7 @@ public:
     [[nodiscard]] zwlr_layer_shell_v1* getLayerShell() const { return layer_shell_; }
     [[nodiscard]] xdg_wm_base* getXdgWmBase() const { return xdg_wm_base_; }
     [[nodiscard]] zxdg_output_manager_v1* getXdgOutputManager() const { return xdg_output_manager_; }
+    [[nodiscard]] zxdg_decoration_manager_v1* getDecorationManager() const { return decoration_manager_; }
     [[nodiscard]] wl_seat* getSeat() const { return seat_; }
     [[nodiscard]] EGLDisplay getEGLDisplay() const { return egl_display_; }
     [[nodiscard]] EGLConfig getEGLConfig() const { return egl_config_; }
@@ -150,6 +152,7 @@ private:
     wl_data_device*                     data_device_         = nullptr;
     zwlr_foreign_toplevel_manager_v1*   toplevel_manager_    = nullptr;
     zxdg_output_manager_v1*             xdg_output_manager_  = nullptr;
+    zxdg_decoration_manager_v1*         decoration_manager_  = nullptr;
 
     // Wayland cursor support
     wl_cursor_theme*     cursor_theme_   = nullptr;

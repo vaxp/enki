@@ -31,6 +31,12 @@ executable('desktop_shell_demo',
   install : false,
 )
 
+executable('csd_window_demo',
+  'csd_window_demo.cpp',
+  dependencies : example_deps,
+  install : false,
+)
+
 if get_option('enable_webview')
   executable('web_host_demo',
     'web_host_demo.cpp',

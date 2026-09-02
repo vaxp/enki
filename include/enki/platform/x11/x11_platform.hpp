@@ -74,6 +74,8 @@ public:
     [[nodiscard]] Atom getAtomNetWmStateMaxHorz() const { return atom_net_wm_state_max_horz_; }
     [[nodiscard]] Atom getAtomNetWmStateHidden()  const { return atom_net_wm_state_hidden_; }
     [[nodiscard]] Atom getAtomNetWmStateFullscreen() const { return atom_net_wm_state_fullscreen_; }
+    [[nodiscard]] Atom getAtomNetWmMoveresize() const { return atom_net_wm_moveresize_; }
+    [[nodiscard]] Atom getAtomGtkFrameExtents() const { return atom_gtk_frame_extents_; }
     [[nodiscard]] Atom getAtomNetWmName() const { return atom_net_wm_name_; }
     [[nodiscard]] Atom getAtomWmClass() const { return atom_wm_class_; }
 
@@ -128,6 +130,8 @@ private:
     Atom atom_net_wm_state_hidden_    = None;
     Atom atom_net_wm_state_fullscreen_= None;
     Atom atom_net_wm_state_focused_   = None;
+    Atom atom_net_wm_moveresize_      = None;
+    Atom atom_gtk_frame_extents_      = None;
 
     // XDnD Atoms
     Atom atom_xdnd_aware_       = None;
