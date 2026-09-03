@@ -50,6 +50,7 @@ Enki integrates Google's hardware-accelerated **Skia Skottie** animation module 
 | 1 | [**Lottie**](./lottie.md) | `struct LottieProps`, `lottie(...)` | `<enki/widgets/lottie.hpp>` | High-performance vector animation player with controllers, markers, and hover triggers. |
 | 2 | [**SkiaCanvas**](./skia_canvas.md) | `struct SkiaCanvas`, `skiaCanvas(...)` | `<enki/widgets/skia_canvas.hpp>` | Raw Skia 2D canvas widget exposing PaintCallback for custom GPU drawing. |
 | 3 | [**AudioWaveform**](./audio_waveform.md) | `struct AudioWaveform`, `audioWaveform(...)` | `<enki/widgets/audio_waveform.hpp>` | Real-time audio spectrum analyzer (Wave Music) and live microphone waveform (Wave Mic). |
+| 4 | [**VideoPlayer**](./video_player.md) | `struct VideoPlayerProps`, `videoPlayer(...)` | `<enki/widgets/video_player.hpp>` | Hardware Zero-Copy video player with A/V Master Clock sync and glassmorphic HUD. |
 
 ---
 
