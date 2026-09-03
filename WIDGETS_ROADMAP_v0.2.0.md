@@ -67,8 +67,8 @@
 ## 16. Media & Canvas (5 widgets)
 
 - [ ] **VideoPlayer** — Embeds a native video surface with play/pause/seek controls
-- [ ] **AudioWaveform** — Renders a real-time or static audio amplitude waveform visualization
-- [ ] **SkiaCanvas** — Raw Skia canvas widget: exposes a PaintCallback for custom 2D drawing
+- [x] **AudioWaveform** — Renders a real-time or static audio amplitude waveform visualization
+- [x] **SkiaCanvas** — Raw Skia canvas widget: exposes a PaintCallback for custom 2D drawing
 - [x] **Lottie** — Renders Lottie / Rive JSON animations on a Skia canvas
 - [x] **WebView** — Embeds a native browser/webview surface (Chromium Embedded / WebKitGTK)
 

@@ -884,7 +884,7 @@ FT_BEGIN_HEADER
    *
    * There are many PCF fonts just called 'Fixed' which look completely
    * different, and which have nothing to do with each other.  When selecting
-   * 'Fixed' in KDE or Gnome one gets results that appear rather random, the
+   * one gets results that appear rather random, the
    * style changes often if one changes the size and one cannot select some
    * fonts at all.  This option makes the 'pcf' module prepend the foundry
    * name (plus a space) to the family name.
