@@ -284,5 +284,12 @@ test('test_typography',
   ),
 )
 
+test('test_rich_inputs',
+  executable('test_rich_inputs',
+    'widgets/test_rich_inputs.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 
 

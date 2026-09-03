@@ -53,14 +53,14 @@
 
 ## 15. Rich Input Controls (8 widgets)
 
-- [ ] **OTPField** — One-time password input: N segmented single-character boxes with auto-focus advance
-- [ ] **PinField** — Secure PIN entry: boxed digit inputs with masked display
-- [ ] **TagInput** — Inline multi-tag text input: type + press Enter/comma to add removable tag chips
-- [ ] **RatingBar** — Star (or custom icon) rating input widget with half-star and keyboard support
-- [ ] **Knob** — Circular rotary dial input mapping angle to a numeric range (audio/studio style)
-- [ ] **ToggleButton** — Single pressable button that switches between ON/OFF visual states
-- [ ] **SegmentedControl** — Horizontally grouped mutually-exclusive option buttons (iOS/Material style)
-- [ ] **FileDropZone** — A drag-and-drop surface that accepts file drops from the OS and reports paths
+- [x] **OTPField** — One-time password input: N segmented single-character boxes with auto-focus advance
+- [x] **PinField** — Secure PIN entry: boxed digit inputs with masked display
+- [x] **TagInput** — Inline multi-tag text input: type + press Enter/comma to add removable tag chips
+- [x] **RatingBar** — Star (or custom icon) rating input widget with half-star and keyboard support
+- [x] **Knob** — Circular rotary dial input mapping angle to a numeric range (audio/studio style)
+- [x] **ToggleButton** — Single pressable button that switches between ON/OFF visual states
+- [x] **SegmentedControl** — Horizontally grouped mutually-exclusive option buttons (iOS/Material style)
+- [x] **FileDropZone** — A drag-and-drop surface that accepts file drops from the OS and reports paths
 
 ---
 

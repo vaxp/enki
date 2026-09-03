@@ -358,6 +358,16 @@ enki_sources = files(
   'src/widgets/titlebar.cpp',
   'src/widgets/window_frame.cpp',
 
+  # Rich Input Controls (Roadmap v0.2.0 Section 15)
+  'src/widgets/toggle_button.cpp',
+  'src/widgets/segmented_control.cpp',
+  'src/widgets/rating_bar.cpp',
+  'src/widgets/knob.cpp',
+  'src/widgets/otp_field.cpp',
+  'src/widgets/pin_field.cpp',
+  'src/widgets/tag_input.cpp',
+  'src/widgets/file_drop_zone.cpp',
+
   'src/widgets/icon_button.cpp',
   'src/widgets/floating_action_button.cpp',
   'src/widgets/slider.cpp',
