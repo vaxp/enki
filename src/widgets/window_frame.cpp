@@ -106,6 +106,13 @@ public:
             TitleBarProps tbp;
             tbp.window = win;
             tbp.title = p.title;
+            tbp.style = p.titlebar_style;
+            if (p.titlebar_background_color) {
+                tbp.background_color = *p.titlebar_background_color;
+            }
+            if (p.titlebar_inactive_background_color) {
+                tbp.inactive_background_color = *p.titlebar_inactive_background_color;
+            }
             tb = std::make_shared<TitleBar>(tbp);
         }
 
