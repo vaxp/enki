@@ -8,12 +8,12 @@
 
 ## 11. Layout — Extended (6 widgets)
 
-- [ ] **IntrinsicWidth** — Sizes child to its intrinsic/natural width (useful for text-width columns)
-- [ ] **IntrinsicHeight** — Sizes child to its intrinsic/natural height
-- [ ] **OverflowBox** — Renders child beyond its own bounds, clipping or not
-- [ ] **LimitedBox** — Applies max-width/height only when unconstrained
-- [ ] **CustomMultiChildLayout** — Allows fine-grained multi-child positioning via layout delegates
-- [ ] **Flow** — A high-performance, transform-based layout for animated/overlapping children
+- [x] **IntrinsicWidth** — Sizes child to its intrinsic/natural width (useful for text-width columns)
+- [x] **IntrinsicHeight** — Sizes child to its intrinsic/natural height
+- [x] **OverflowBox** — Renders child beyond its own bounds, clipping or not
+- [x] **LimitedBox** — Applies max-width/height only when unconstrained
+- [x] **CustomMultiChildLayout** — Allows fine-grained multi-child positioning via layout delegates
+- [x] **Flow** — A high-performance, transform-based layout for animated/overlapping children
 
 ---
 
@@ -122,4 +122,4 @@
 | 20. Utility / Behavioral | 2 | **50** |
 
 > **Note**: All 50 entries are atomic/primitive widgets. None of them are simply "wrapping two existing widgets together."
-> **Prerequisite**: Before starting v0.2.0, complete the 7 pending v0.1.0 items: `VerticalDivider`, `Chip`, `Placeholder`, `ReorderableList`, `Form`, `FormField`, `Autocomplete`.
+

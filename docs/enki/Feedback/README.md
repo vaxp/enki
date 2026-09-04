@@ -2,7 +2,7 @@
 
 > Comprehensive system status indicators, determinate and indeterminate progress bars, circular progress rings, procedural spinners, notification centers, busy overlays, content-aware skeletons, tactile ink ripples, live beacon pulses, and animated count badges.
 
-The **Feedback** category provides graphical indicators and communication channels that keep users informed about application activities, long-running asynchronous tasks, system health, and background processes. Enki renders these indicators directly using hardware-accelerated Skia shaders, supporting smooth 600+ FPS rotations, multi-stop gradients, neon glow effects, and custom procedural SkSL shader injection.
+The **Feedback** category provides graphical indicators and communication channels that keep users informed about application activities, long-running asynchronous tasks, system health, and background processes. Enki renders these indicators directly using hardware-accelerated Skia shaders, supporting smooth  rotations, multi-stop gradients, neon glow effects, and custom procedural SkSL shader injection.
 
 ---
 

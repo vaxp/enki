@@ -305,6 +305,50 @@ test('test_floating_panel',
   ),
 )
 
+# ── Section 11: Layout — Extended ──────────────────────────────
+test('test_intrinsic_width',
+  executable('test_intrinsic_width',
+    'widgets/test_intrinsic_width.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_intrinsic_height',
+  executable('test_intrinsic_height',
+    'widgets/test_intrinsic_height.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_overflow_box',
+  executable('test_overflow_box',
+    'widgets/test_overflow_box.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_limited_box',
+  executable('test_limited_box',
+    'widgets/test_limited_box.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_custom_multi_child_layout',
+  executable('test_custom_multi_child_layout',
+    'widgets/test_custom_multi_child_layout.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_flow',
+  executable('test_flow',
+    'widgets/test_flow.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+
 
 
 

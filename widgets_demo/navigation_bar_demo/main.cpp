@@ -50,7 +50,7 @@ class NavigationBarDemoState : public State {
     NavItemLayout     current_layout_    = NavItemLayout::Vertical;
     bool              show_badges_       = true;
     bool              glass_effect_      = true;
-    std::string       status_hud_        = "Ready. Tap any navigation item to test 600+ FPS sliding indicator.";
+    std::string       status_hud_        = "Ready. Tap any navigation item to test  sliding indicator.";
 
 public:
     WidgetPtr build(BuildContext& ctx) override {

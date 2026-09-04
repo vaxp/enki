@@ -2,7 +2,7 @@
 
 > High-performance layout containers, virtualized lists, responsive grids, expandable tree hierarchies, data tables, drag-and-drop lists, and coordinated sliver viewports for desktop applications.
 
-The **Scrolling / Lists** category provides structural containers for displaying datasets that exceed available screen real estate. Powered by the **Anu Layout Engine** (`Overflow::Scroll`) and hardware-accelerated **Skia 2D rendering** with automatic subpixel clipping, every component in this category is built for 600+ FPS responsiveness with full mouse wheel, trackpad pan, and touch gesture support.
+The **Scrolling / Lists** category provides structural containers for displaying datasets that exceed available screen real estate. Powered by the **Anu Layout Engine** (`Overflow::Scroll`) and hardware-accelerated **Skia 2D rendering** with automatic subpixel clipping, every component in this category is built for  responsiveness with full mouse wheel, trackpad pan, and touch gesture support.
 
 ---
 

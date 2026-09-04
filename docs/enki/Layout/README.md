@@ -31,6 +31,21 @@ The Layout category comprises 16 foundational widgets:
 
 ---
 
+## Extended Layout Widgets (Section 11 • Roadmap v0.2.0)
+
+Six advanced atomic layout widgets providing fine-grained dimensional control, intrinsic measurements, custom multi-child positioning, and zero-reflow matrix transformations:
+
+| # | Widget | Primary Type / Helper | Header | Description |
+|---|---|---|---|---|
+| 17 | [**IntrinsicWidth**](./intrinsic_width.md) | `intrinsicWidth(...)`, `struct IntrinsicWidthProps` | `<enki/widgets/intrinsic_width.hpp>` | Sizes child to its natural intrinsic width with optional step quantization. |
+| 18 | [**IntrinsicHeight**](./intrinsic_height.md) | `intrinsicHeight(...)`, `struct IntrinsicHeightProps` | `<enki/widgets/intrinsic_height.hpp>` | Sizes child to its natural intrinsic height, aligning vertical dividers and cards. |
+| 19 | [**OverflowBox**](./overflow_box.md) | `overflowBox(...)`, `struct OverflowBoxProps` | `<enki/widgets/overflow_box.hpp>` | Renders child beyond parent boundaries with 9-anchor alignment and clipping options. |
+| 20 | [**LimitedBox**](./limited_box.md) | `limitedBox(...)`, `struct LimitedBoxProps` | `<enki/widgets/limited_box.hpp>` | Clamps width or height only when incoming parent constraints are unbounded. |
+| 21 | [**CustomMultiChildLayout**](./custom_multi_child_layout.md) | `customMultiChildLayout(...)`, `MultiChildLayoutDelegate` | `<enki/widgets/custom_multi_child_layout.hpp>` | Custom multi-child positioning via layout delegates and string IDs (`layoutId`). |
+| 22 | [**Flow**](./flow.md) | `flow(...)`, `FlowDelegate`, `Matrix4` | `<enki/widgets/flow.hpp>` | Ultra high-performance transform-based layout with zero-reflow paint passes (FPS). |
+
+---
+
 ## Core Layout Architecture
 
 ### 1. Three-Tree Architecture

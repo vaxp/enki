@@ -149,6 +149,80 @@ struct Rect {
 };
 
 // ============================================================
+// Box Constraints
+// ============================================================
+struct BoxConstraints {
+    float min_width  = 0.0f;
+    float max_width  = std::numeric_limits<float>::infinity();
+    float min_height = 0.0f;
+    float max_height = std::numeric_limits<float>::infinity();
+
+    constexpr BoxConstraints() = default;
+    constexpr BoxConstraints(float min_w, float max_w, float min_h, float max_h)
+        : min_width(min_w), max_width(max_w), min_height(min_h), max_height(max_h) {}
+
+    static constexpr BoxConstraints tight(Size size) {
+        return {size.width, size.width, size.height, size.height};
+    }
+    static constexpr BoxConstraints tightFor(std::optional<float> width = std::nullopt,
+                                            std::optional<float> height = std::nullopt) {
+        return {
+            width.value_or(0.0f),
+            width.value_or(std::numeric_limits<float>::infinity()),
+            height.value_or(0.0f),
+            height.value_or(std::numeric_limits<float>::infinity())
+        };
+    }
+    static constexpr BoxConstraints loose(Size size) {
+        return {0.0f, size.width, 0.0f, size.height};
+    }
+    static constexpr BoxConstraints expand(float width = std::numeric_limits<float>::infinity(),
+                                          float height = std::numeric_limits<float>::infinity()) {
+        return {width, width, height, height};
+    }
+
+    [[nodiscard]] constexpr bool isTight() const {
+        return min_width >= max_width && min_height >= max_height;
+    }
+    [[nodiscard]] constexpr bool hasBoundedWidth() const {
+        return max_width < std::numeric_limits<float>::infinity();
+    }
+    [[nodiscard]] constexpr bool hasBoundedHeight() const {
+        return max_height < std::numeric_limits<float>::infinity();
+    }
+    [[nodiscard]] constexpr bool hasInfiniteWidth() const {
+        return min_width >= std::numeric_limits<float>::infinity();
+    }
+    [[nodiscard]] constexpr bool hasInfiniteHeight() const {
+        return min_height >= std::numeric_limits<float>::infinity();
+    }
+
+    [[nodiscard]] constexpr Size constrain(Size size) const {
+        return {
+            std::clamp(size.width, min_width, max_width),
+            std::clamp(size.height, min_height, max_height)
+        };
+    }
+    [[nodiscard]] constexpr float constrainWidth(float width = 0.0f) const {
+        return std::clamp(width, min_width, max_width);
+    }
+    [[nodiscard]] constexpr float constrainHeight(float height = 0.0f) const {
+        return std::clamp(height, min_height, max_height);
+    }
+    [[nodiscard]] constexpr Size biggest() const {
+        return {
+            hasBoundedWidth() ? max_width : 0.0f,
+            hasBoundedHeight() ? max_height : 0.0f
+        };
+    }
+    [[nodiscard]] constexpr Size smallest() const {
+        return {min_width, min_height};
+    }
+
+    constexpr bool operator==(const BoxConstraints&) const = default;
+};
+
+// ============================================================
 // Color (ARGB 32-bit)
 // ============================================================
 using Color = uint32_t;
