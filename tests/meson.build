@@ -291,5 +291,22 @@ test('test_rich_inputs',
   ),
 )
 
+test('test_spotlight',
+  executable('test_spotlight',
+    'widgets/test_spotlight.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+test('test_floating_panel',
+  executable('test_floating_panel',
+    'widgets/test_floating_panel.cpp',
+    dependencies : test_deps,
+  ),
+)
+
+
+
+
 
 
