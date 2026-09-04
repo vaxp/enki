@@ -305,6 +305,13 @@ test('test_floating_panel',
   ),
 )
 
+test('test_command_palette',
+  executable('test_command_palette',
+    'widgets/test_command_palette.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 # ── Section 11: Layout — Extended ──────────────────────────────
 test('test_intrinsic_width',
   executable('test_intrinsic_width',

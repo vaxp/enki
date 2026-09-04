@@ -93,7 +93,7 @@
 
 ## 19. Overlay & Popup — Extended (3 widgets)
 
-- [ ] **CommandPalette** — Keyboard-driven fuzzy-search command launcher overlay (Ctrl+K style)
+- [x] **CommandPalette** — Keyboard-driven fuzzy-search command launcher overlay (Ctrl+K style)
 - [x] **Spotlight** — Full-screen dimmed overlay with a highlighted "spotlight" region around a widget
 - [x] **FloatingPanel** — Draggable, resizable floating window rendered above the main widget tree
 

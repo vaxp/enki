@@ -106,6 +106,7 @@ subdir('file_drop_zone_demo')
 # ── Section 19: Overlay & Popup Extended Demos ─────────────────
 subdir('spotlight_demo')
 subdir('floating_panel_demo')
+subdir('command_palette_demo')
 
 # ── Section 11: Layout — Extended Demos ────────────────────────
 subdir('intrinsic_width_demo')

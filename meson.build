@@ -359,6 +359,7 @@ enki_sources = files(
   'src/widgets/window_frame.cpp',
   'src/widgets/spotlight.cpp',
   'src/widgets/floating_panel.cpp',
+  'src/widgets/command_palette.cpp',
 
   # Layout — Extended (Roadmap v0.2.0 Section 11)
   'src/widgets/intrinsic_width.cpp',
