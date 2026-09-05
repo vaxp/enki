@@ -374,6 +374,115 @@ void test_property_leakage_and_reconciliation() {
     std::cout << "  ✓ Property leakage prevention & reconciliation passed." << std::endl;
 }
 
+void test_container_shaders() {
+    std::cout << "Testing Container SkSL Shaders..." << std::endl;
+
+    std::string bg_shader_code = R"(
+        uniform float time;
+        uniform vec2 resolution;
+        vec4 main(vec2 fragCoord) {
+            vec2 uv = fragCoord / resolution;
+            return vec4(uv.x, uv.y, 0.5, 1.0);
+        }
+    )";
+
+    std::string border_shader_code = R"(
+        uniform vec2 resolution;
+        vec4 main(vec2 fragCoord) {
+            return vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    )";
+
+    auto c = container({
+        .background_shader = bg_shader_code,
+        .border_shader = border_shader_code,
+        .width = 200_px,
+        .height = 100_px,
+    });
+
+    assert(c->decoration.background_shader == bg_shader_code);
+    assert(c->decoration.border_shader == border_shader_code);
+    // Border should default to 1.0f width when border_shader was provided without explicit border
+    assert(c->decoration.border.has_value());
+    assert(c->decoration.border->width == 1.0f);
+
+    auto el = c->createElement();
+    el->mount(nullptr, 0);
+    auto* rdb = dynamic_cast<RenderDecoratedBox*>(el->findRenderObject());
+    assert(rdb != nullptr);
+    assert(rdb->decoration().background_shader == bg_shader_code);
+    assert(rdb->decoration().border_shader == border_shader_code);
+
+    // Also test Container struct syntax
+    Container c_decl = {
+        .border = Border(0xFF00FF00, 3.0f),
+        .background_shader = bg_shader_code,
+        .border_shader = border_shader_code,
+    };
+    WidgetPtr w = c_decl;
+    auto c_w = std::dynamic_pointer_cast<ContainerWidget>(w);
+    assert(c_w != nullptr);
+    assert(c_w->decoration.border->width == 3.0f);
+    assert(c_w->decoration.border->color == 0xFF00FF00);
+    assert(c_w->decoration.background_shader == bg_shader_code);
+    assert(c_w->decoration.border_shader == border_shader_code);
+
+    std::cout << "  ✓ Container SkSL shaders passed." << std::endl;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Test 10: Direct SVG Vector Injection (background_svg & border_svg)
+// ════════════════════════════════════════════════════════════════
+void test_container_svg() {
+    std::cout << "Testing Direct SVG Vector Injection..." << std::endl;
+
+    const std::string bg_svg_xml = R"(
+        <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="#38BDF8" stroke="#0284C7" stroke-width="3"/>
+        </svg>
+    )";
+
+    const std::string border_svg_path = "M 0 15 L 15 0 H 85 L 100 15 V 85 L 85 100 H 15 L 0 85 Z";
+
+    auto c = container({
+        .background_svg = bg_svg_xml,
+        .border_svg = border_svg_path,
+        .svg_fit = SvgFit::Contain,
+        .svg_slice = SvgSlice::all(15.0f),
+        .width = 200_px,
+        .height = 200_px,
+    });
+
+    assert(c->decoration.background_svg == bg_svg_xml);
+    assert(c->decoration.border_svg == border_svg_path);
+    assert(c->decoration.svg_fit == SvgFit::Contain);
+    assert(c->decoration.svg_slice.has_value());
+    assert(c->decoration.svg_slice->top == 15.0f);
+    assert(c->decoration.border.has_value());
+
+    auto el = c->createElement();
+    el->mount(nullptr, 0);
+    auto* rdb = dynamic_cast<RenderDecoratedBox*>(el->findRenderObject());
+    assert(rdb != nullptr);
+    assert(rdb->decoration().background_svg == bg_svg_xml);
+    assert(rdb->decoration().border_svg == border_svg_path);
+
+    // Test declarative Container struct syntax
+    Container c_decl = {
+        .background_svg = bg_svg_xml,
+        .border_svg = border_svg_path,
+        .svg_fit = SvgFit::Cover,
+    };
+    WidgetPtr w = c_decl;
+    auto c_w = std::dynamic_pointer_cast<ContainerWidget>(w);
+    assert(c_w != nullptr);
+    assert(c_w->decoration.background_svg == bg_svg_xml);
+    assert(c_w->decoration.border_svg == border_svg_path);
+    assert(c_w->decoration.svg_fit == SvgFit::Cover);
+
+    std::cout << "  ✓ Direct SVG Vector Injection passed." << std::endl;
+}
+
 // ════════════════════════════════════════════════════════════════
 // Main Test Runner
 // ════════════════════════════════════════════════════════════════
@@ -390,6 +499,8 @@ int main() {
     test_hit_testing();
     test_painting_pipeline();
     test_property_leakage_and_reconciliation();
+    test_container_shaders();
+    test_container_svg();
 
     std::cout << "========================================" << std::endl;
     std::cout << "All Container Tests Passed Successfully!" << std::endl;

@@ -115,6 +115,7 @@ subdir('overflow_box_demo')
 subdir('limited_box_demo')
 subdir('custom_multi_child_layout_demo')
 subdir('flow_demo')
+subdir('container_demo')
 
 
 

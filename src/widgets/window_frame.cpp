@@ -141,15 +141,31 @@ public:
         // Visual frame styling
         float radius = is_maximized_ ? 0.0f : p.border_radius;
         std::optional<Border> frame_border = std::nullopt;
-        if (!is_maximized_ && p.border_width > 0.0f) {
-            frame_border = Border(p.border_color, p.border_width);
+        if (!is_maximized_ && (p.border_width > 0.0f || !p.border_shader.empty() || !p.border_svg.empty())) {
+            float bw = p.border_width > 0.0f ? p.border_width : 2.0f;
+            frame_border = Border(p.border_color, bw);
         }
 
+        std::string cur_border_shader = "";
+        if (!is_maximized_) {
+            if (!is_focused_ && !p.inactive_border_shader.empty()) {
+                cur_border_shader = p.inactive_border_shader;
+            } else {
+                cur_border_shader = p.border_shader;
+            }
+        }
+
+        std::string cur_border_svg = (!is_maximized_ ? p.border_svg : "");
         auto frame_body = container(ContainerProps{
             .color = p.background_color,
             .border_radius = BorderRadius::circular(radius),
             .border = frame_border,
             .clip_content = true,
+            .background_shader = (!is_maximized_ ? p.background_shader : ""),
+            .border_shader = std::move(cur_border_shader),
+            .background_svg = (!is_maximized_ ? p.background_svg : ""),
+            .border_svg = std::move(cur_border_svg),
+            .svg_slice = p.border_svg_slice,
             .width = StyleValue::percent(100.0f),
             .height = StyleValue::percent(100.0f),
             .child = window_column,

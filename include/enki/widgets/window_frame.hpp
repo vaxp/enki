@@ -16,6 +16,7 @@
 #include "enki/rendering/color.hpp"
 #include "enki/platform/window.hpp"
 #include "enki/widgets/titlebar.hpp"
+#include "enki/rendering/svg.hpp"
 #include <string>
 #include <memory>
 
@@ -36,6 +37,12 @@ struct WindowFrameProps {
     Color border_color = 0x26FFFFFF;            ///< Subtle outer window border
     float border_width = 1.0f;                  ///< Border stroke width
     Color background_color = 0xFF0F1117;        ///< Window content background color
+    std::string background_shader = "";         ///< SkSL background shader for entire window frame
+    std::string border_shader = "";             ///< SkSL border shader for outer window frame
+    std::string inactive_border_shader = "";    ///< Optional SkSL border shader when window is inactive
+    std::string background_svg = "";            ///< Custom SVG background for window body
+    std::string border_svg = "";                ///< Custom SVG border for outer window frame
+    std::optional<SvgSlice> border_svg_slice = std::nullopt; ///< Optional 9-slice insets for SVG border
     std::optional<Color> titlebar_background_color = std::nullopt;          ///< Custom active titlebar background color
     std::optional<Color> titlebar_inactive_background_color = std::nullopt; ///< Custom inactive titlebar background color
     TitleBarStyle titlebar_style = TitleBarStyle::VAXPOS;                  ///< Titlebar style (Default or VAXPOS)

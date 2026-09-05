@@ -277,6 +277,7 @@ enki_sources = files(
   'src/rendering/color.cpp',
   'src/rendering/path.cpp',
   'src/rendering/image.cpp',
+  'src/rendering/svg.cpp',
   'src/rendering/font_manager.cpp',
 
   # Widget Tree
