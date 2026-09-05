@@ -262,9 +262,10 @@ struct RenderParagraph::Impl {
     }
 
     void layout(float width) {
-        if (paragraph && (current_layout_width != width || width <= 0.0f)) {
-            paragraph->layout(std::max(0.0f, width));
-            current_layout_width = width;
+        float effective_width = std::max(0.0f, width);
+        if (paragraph && current_layout_width != effective_width) {
+            paragraph->layout(effective_width);
+            current_layout_width = effective_width;
         }
     }
 };
@@ -292,6 +293,9 @@ RenderParagraph::RenderParagraph(std::shared_ptr<InlineSpan> span,
     ANUNodeSetContext(anuNode(), this);
     ANUNodeSetMeasureFunc(anuNode(), &RenderParagraph::measureText);
     rebuildParagraph();
+    if (impl_) {
+        text_data_ = impl_->full_text;
+    }
 }
 
 RenderParagraph::~RenderParagraph() {
@@ -299,8 +303,8 @@ RenderParagraph::~RenderParagraph() {
     ANUNodeSetContext(anuNode(), nullptr);
 }
 
-void RenderParagraph::setText(std::string data,
-                              TextStyle style,
+void RenderParagraph::setText(const std::string& data,
+                              const TextStyle& style,
                               TextAlign align,
                               TextDirection dir,
                               TextOverflow overflow,
@@ -333,8 +337,8 @@ void RenderParagraph::setText(std::string data,
                            max_lines_ != maxLines ||
                            soft_wrap_ != softWrap);
 
-    text_data_ = std::move(data);
-    default_style_ = std::move(style);
+    text_data_ = data;
+    default_style_ = style;
     text_align_ = align;
     text_direction_ = dir;
     overflow_ = overflow;

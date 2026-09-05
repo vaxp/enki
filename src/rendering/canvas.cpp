@@ -37,11 +37,25 @@ sk_sp<SkFontMgr> getGlobalFontMgr() {
 }
 
 sk_sp<SkTypeface> getTypeface(const char* family, bool bold) {
+    static sk_sp<SkTypeface> s_default_regular = nullptr;
+    static sk_sp<SkTypeface> s_default_bold = nullptr;
+
+    const bool is_default = (!family || family[0] == '\0' || strcmp(family, "default") == 0);
+    if (is_default) {
+        if (bold && s_default_bold) return s_default_bold;
+        if (!bold && s_default_regular) return s_default_regular;
+    }
+
     static std::unordered_map<std::string, sk_sp<SkTypeface>> s_cache;
-    std::string key = (family ? family : "default") + std::string(bold ? ":bold" : ":normal");
+    std::string key = (family ? family : "default");
+    key += (bold ? ":bold" : ":normal");
     
     auto it = s_cache.find(key);
     if (it != s_cache.end()) {
+        if (is_default) {
+            if (bold) s_default_bold = it->second;
+            else s_default_regular = it->second;
+        }
         return it->second;
     }
 
@@ -70,6 +84,10 @@ sk_sp<SkTypeface> getTypeface(const char* family, bool bold) {
     }
 
     s_cache[key] = result;
+    if (is_default) {
+        if (bold) s_default_bold = result;
+        else s_default_regular = result;
+    }
     return result;
 }
 

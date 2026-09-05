@@ -7,6 +7,8 @@
 #include <include/effects/SkGradientShader.h>
 #include <include/effects/SkImageFilters.h>
 #include <vector>
+#include <unordered_map>
+#include <cstdint>
 
 namespace enki {
 
@@ -36,15 +38,24 @@ private:
 
 Paint::Paint() = default;
 
+// ════════════════════════════════════════════════════════════════
+// Gradient Implementations
+// ════════════════════════════════════════════════════════════════
+
 std::shared_ptr<Shader> Gradient::linear(
-    Point start, Point end,
+    Point start,
+    Point end,
     const std::vector<Color>& colors,
-    const std::vector<float>& positions
+    const std::vector<float>& stops
 ) {
     if (colors.empty()) return nullptr;
 
-    SkPoint pts[2] = {SkPoint::Make(start.x, start.y), SkPoint::Make(end.x, end.y)};
-    const SkScalar* pos_ptr = (positions.size() == colors.size()) ? positions.data() : nullptr;
+    SkPoint pts[2] = {
+        SkPoint::Make(start.x, start.y),
+        SkPoint::Make(end.x, end.y)
+    };
+
+    const float* pos_ptr = stops.empty() ? nullptr : stops.data();
 
     auto sk_shader = SkGradientShader::MakeLinear(
         pts,
@@ -57,14 +68,15 @@ std::shared_ptr<Shader> Gradient::linear(
 }
 
 std::shared_ptr<Shader> Gradient::radial(
-    Point center, float radius,
+    Point center,
+    float radius,
     const std::vector<Color>& colors,
-    const std::vector<float>& positions
+    const std::vector<float>& stops
 ) {
     if (colors.empty() || radius <= 0.0f) return nullptr;
 
     SkPoint c = SkPoint::Make(center.x, center.y);
-    const SkScalar* pos_ptr = (positions.size() == colors.size()) ? positions.data() : nullptr;
+    const float* pos_ptr = stops.empty() ? nullptr : stops.data();
 
     auto sk_shader = SkGradientShader::MakeRadial(
         c,
@@ -78,8 +90,27 @@ std::shared_ptr<Shader> Gradient::radial(
 }
 
 std::shared_ptr<ImageFilter> ImageFilter::blur(float sigmaX, float sigmaY) {
+    struct BlurKey {
+        float x, y;
+        bool operator==(const BlurKey& o) const noexcept { return x == o.x && y == o.y; }
+    };
+    struct BlurHash {
+        size_t operator()(const BlurKey& k) const noexcept {
+            return std::hash<float>()(k.x) ^ (std::hash<float>()(k.y) << 1);
+        }
+    };
+    static std::unordered_map<BlurKey, std::shared_ptr<ImageFilter>, BlurHash> s_blur_cache;
+
+    BlurKey key{sigmaX, sigmaY};
+    auto it = s_blur_cache.find(key);
+    if (it != s_blur_cache.end()) {
+        return it->second;
+    }
+
     auto filter = SkImageFilters::Blur(sigmaX, sigmaY, nullptr);
-    return std::make_shared<SkiaImageFilterWrapper>(std::move(filter));
+    auto res = std::make_shared<SkiaImageFilterWrapper>(std::move(filter));
+    s_blur_cache[key] = res;
+    return res;
 }
 
 std::shared_ptr<ColorFilter> ColorFilter::mode(Color color, BlendMode mode) {

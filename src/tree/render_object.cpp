@@ -77,14 +77,11 @@ void RenderObject::markNeedsPaint() {
 }
 
 bool RenderObject::subtreeNeedsPaint() const {
-    if (needs_paint_) return true;
-    for (auto* child : children_) {
-        if (child->subtreeNeedsPaint()) return true;
-    }
-    return false;
+    return needs_paint_;
 }
 
 void RenderObject::clearPaintFlag() {
+    if (!needs_paint_) return;
     needs_paint_ = false;
     for (auto* child : children_) {
         child->clearPaintFlag();
