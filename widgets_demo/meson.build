@@ -116,6 +116,7 @@ subdir('limited_box_demo')
 subdir('custom_multi_child_layout_demo')
 subdir('flow_demo')
 subdir('container_demo')
+subdir('animation_suite_demo')
 
 
 
