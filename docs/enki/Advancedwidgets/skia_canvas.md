@@ -13,7 +13,7 @@
 
 ## Overview
 
-`SkiaCanvas` is the atomic 2D custom graphics widget in ENKI (equivalent to Flutter's `CustomPaint` / HTML5 Canvas). It bridges declarative UI construction with raw, GPU-accelerated immediate-mode rendering powered by Google Skia.
+`SkiaCanvas` is the atomic 2D custom graphics widget in ENKI (equivalent to   's `CustomPaint` / HTML5 Canvas). It bridges declarative UI construction with raw, GPU-accelerated immediate-mode rendering powered by Google Skia.
 
 ### Architectural Highlights
 

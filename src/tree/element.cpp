@@ -225,6 +225,11 @@ void BuildOwner::buildScope(Element* root) {
 StatelessElement::StatelessElement(WidgetPtr widget)
     : Element(std::move(widget)) {}
 
+void StatelessElement::mount(Element* parent, size_t slot) {
+    Element::mount(parent, slot);
+    rebuild(true);
+}
+
 void StatelessElement::update(WidgetPtr newWidget) {
     Element::update(std::move(newWidget));
     rebuild(true);
@@ -245,9 +250,9 @@ void StatelessElement::performRebuild() {
     BuildContext ctx(this);
     WidgetPtr built = slw->build(ctx);
 
-    // Reconcile the single child
+    // Reconcile the single child, preserving component slot in ancestor RenderObject
     Element* old_child = child_.get();
-    Element* new_child = updateChild(old_child, std::move(built), 0);
+    Element* new_child = updateChild(old_child, std::move(built), slot_);
 
     if (new_child != old_child) {
         child_.reset(new_child);
@@ -285,6 +290,7 @@ void StatefulElement::mount(Element* parent, size_t slot) {
     // Initialize the state
     state_->initState();
     state_->didChangeDependencies();
+    rebuild(true);
 }
 
 void StatefulElement::unmount() {
@@ -316,7 +322,7 @@ void StatefulElement::performRebuild() {
     WidgetPtr built = state_->build(ctx);
 
     Element* old_child = child_.get();
-    Element* new_child = updateChild(old_child, std::move(built), 0);
+    Element* new_child = updateChild(old_child, std::move(built), slot_);
 
     if (new_child != old_child) {
         child_.reset(new_child);
@@ -389,7 +395,8 @@ void RenderObjectElement::attachRenderObject() {
 
     RenderObject* parent_ro = findAncestorRenderObject();
     if (parent_ro) {
-        parent_ro->addChild(render_object_.get());
+        size_t idx = std::min(slot_, parent_ro->children().size());
+        parent_ro->insertChild(render_object_.get(), idx);
     }
 }
 
@@ -620,6 +627,14 @@ void MultiChildRenderObjectElement::updateChildren(
         old_child->rebuild(true);
         old_child->updateSlot(i);
         new_children[i] = std::move(children_[i]);
+    }
+
+    // Deactivate unmatched unkeyed old children so their RenderObjects are detached before inflating replacements
+    for (size_t i = old_top; i <= old_bottom && i < old_count; ++i) {
+        if (children_[i] && (!children_[i]->widget()->key.hasValue() || old_keyed.find(children_[i]->widget()->key) == old_keyed.end())) {
+            deactivateChild(children_[i].get());
+            children_[i].reset();
+        }
     }
 
     // Handle the middle section (new_top..new_bottom)

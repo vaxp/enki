@@ -147,7 +147,7 @@ public:
 private:
     /// Find the nearest BlocProvider<B> in the ancestor tree.
     static BlocProvider<B>* findProvider(BuildContext& ctx) {
-        return ctx.findAncestorWidgetOfType<BlocProvider<B>>();
+        return ctx.element() ? ctx.element()->findAncestorWidgetOfType<BlocProvider<B>>() : nullptr;
     }
 
     CreateFn create_;                  ///< Factory (for "create" mode).
