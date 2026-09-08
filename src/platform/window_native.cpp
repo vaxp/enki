@@ -203,6 +203,10 @@ void Window::setAlwaysOnTop(bool t) {
     if (impl_->x11) impl_->x11->setAlwaysOnTop(t);
 }
 
+void Window::setBlurBehind(bool enable) {
+    if (impl_->x11) impl_->x11->setBlurBehind(enable);
+}
+
 // ── Accessors ───────────────────────────────────────────────────
 Size Window::getSize() const {
     if (impl_->x11) return impl_->x11->getSize();
