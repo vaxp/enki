@@ -7,6 +7,7 @@
 
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#include <X11/Xutil.h>
 #if defined(ENKI_HAS_XRANDR)
 #include <X11/extensions/Xrandr.h>
 #endif
@@ -195,7 +196,7 @@ bool X11PlatformBackend::init() {
         eglBindAPI(EGL_OPENGL_ES_API);
     }
 
-    // 4. Choose EGL config (RGBA8 + stencil8)
+    // 4. Choose EGL config (RGBA8 + stencil8) with preference for 32-bit TrueColor visual (ARGB for transparency)
     const EGLint attrs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_RED_SIZE,   8, EGL_GREEN_SIZE, 8,
@@ -203,15 +204,48 @@ bool X11PlatformBackend::init() {
         EGL_STENCIL_SIZE, 8,
         EGL_NONE
     };
-    EGLint n = 0;
-    if (!eglChooseConfig(egl_display_, attrs, &egl_config_, 1, &n) || n == 0) {
+
+    auto select_best_config = [&](const EGLint* attrib_list) -> EGLConfig {
+        EGLint num_configs = 0;
+        if (!eglChooseConfig(egl_display_, attrib_list, nullptr, 0, &num_configs) || num_configs <= 0) {
+            return nullptr;
+        }
+        std::vector<EGLConfig> configs(num_configs);
+        if (!eglChooseConfig(egl_display_, attrib_list, configs.data(), num_configs, &num_configs) || num_configs <= 0) {
+            return nullptr;
+        }
+
+        // Search for a TrueColor visual with depth 32 (ARGB) for compositing / transparency support
+        for (EGLint i = 0; i < num_configs; ++i) {
+            EGLint visual_id = 0;
+            if (eglGetConfigAttrib(egl_display_, configs[i], EGL_NATIVE_VISUAL_ID, &visual_id) && visual_id != 0) {
+                XVisualInfo tmpl{};
+                tmpl.visualid = visual_id;
+                int n_vis = 0;
+                XVisualInfo* list = XGetVisualInfo(display_, VisualIDMask, &tmpl, &n_vis);
+                if (list && n_vis > 0) {
+                    bool is_32bit = (list[0].depth == 32 && list[0].c_class == TrueColor);
+                    XFree(list);
+                    if (is_32bit) {
+                        return configs[i];
+                    }
+                }
+            }
+        }
+        // Fallback to first matching config if no 32-bit visual is found
+        return configs[0];
+    };
+
+    egl_config_ = select_best_config(attrs);
+    if (!egl_config_) {
         const EGLint fallback[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8,
             EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8,
             EGL_NONE
         };
-        if (!eglChooseConfig(egl_display_, fallback, &egl_config_, 1, &n) || n == 0) {
+        egl_config_ = select_best_config(fallback);
+        if (!egl_config_) {
             std::cerr << "[ENKI X11] No suitable EGL config\n";
             return false;
         }
