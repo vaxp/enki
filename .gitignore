@@ -17,8 +17,8 @@ compile_commands.json
 *.p/
 
 # CEF Binary Distributions (Heavy binary assets - download on setup)
-web_technology/cef_binary/
-web_technology/cef_binary/cef_binary_*/build/
+modules/web_technology/cef_binary/
+modules/web_technology/cef_binary/cef_binary_*/build/
 *.tar.bz2
 *.tar.gz
 *.tar.xz

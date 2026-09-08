@@ -579,8 +579,7 @@ int main() {
     config.resizable   = true;
     config.enable_csd  = true;
     config.app_id      = "org.enki.container_demo";
-    config.vsync       = false;
-    config.target_fps  = 0;
+    config.vsync       = true;
     config.show_performance_overlay = false;
     config.clear_color = 0x0000004D;
 
