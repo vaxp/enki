@@ -188,6 +188,7 @@ public:
     void* getEGLContext() const;
     void* getWaylandBackend() const;
     void* getX11Backend() const;
+    void* getWin32Backend() const;
     [[nodiscard]] bool isWayland() const;
 
     /// Register/unregister active window for event dispatch

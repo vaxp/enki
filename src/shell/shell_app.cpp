@@ -10,9 +10,21 @@
 #include <include/gpu/GrDirectContext.h>
 #include <include/gpu/gl/GrGLInterface.h>
 #include <include/gpu/gl/GrGLAssembleInterface.h>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <GL/gl.h>
+#else
 #include <dlfcn.h>
 #include <EGL/egl.h>
 #include <GL/gl.h>
+#endif
 
 #include <iostream>
 #include <chrono>
@@ -128,6 +140,21 @@ struct ShellApp::Impl {
 
         host->makeCurrent();
 
+#if defined(_WIN32)
+        sk_sp<const GrGLInterface> gl_interface = GrGLMakeNativeInterface();
+        if (!gl_interface) {
+            std::cerr << "[ENKI ShellApp] Failed to create Skia Native GL Interface on Windows\n";
+            return false;
+        }
+
+        gr_context = GrDirectContext::MakeGL(gl_interface);
+        if (!gr_context) {
+            std::cerr << "[ENKI ShellApp] Failed to create GrDirectContext on Windows\n";
+            return false;
+        }
+
+        return true;
+#else
         void* libgl = nullptr;
         if (!libgl) libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
         if (!libgl) libgl = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
@@ -176,6 +203,7 @@ struct ShellApp::Impl {
         }
 
         return true;
+#endif
     }
 };
 
@@ -240,6 +268,9 @@ SurfaceHost* ShellApp::addWindow(WindowConfig config, WidgetPtr root_widget) {
 
 SurfaceHost* ShellApp::addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget) {
     config.mode = WindowMode::Popup;
+    if (!parent && !impl_->surfaces.empty()) {
+        parent = impl_->surfaces.front().get();
+    }
     config.parent_window = parent ? parent->getWindow() : nullptr;
     config.parent_layer = parent ? parent->getLayerSurface() : nullptr;
     // Layer surfaces handles popup internally via wl_surface for now or we fallback to absolute.

@@ -6,6 +6,20 @@
 #include <cctype>
 #include <cstring>
 #include <cstdio>
+#include <filesystem>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
+
 
 namespace enki {
 
@@ -100,4 +114,66 @@ std::string toUpper(std::string_view str) {
     return result;
 }
 
+// ============================================================
+// Asset Path Resolution
+// ============================================================
+
+std::string resolveAssetPath(std::string_view relative_path) {
+    if (relative_path.empty()) return {};
+
+    std::filesystem::path p(relative_path);
+    std::error_code ec;
+
+    // 1. Direct match (current working directory or absolute path)
+    if (std::filesystem::exists(p, ec)) {
+        auto canon = std::filesystem::canonical(p, ec);
+        return ec ? p.string() : canon.string();
+    }
+
+    // 2. Executable location hierarchy
+    std::filesystem::path exe_dir;
+#if defined(_WIN32)
+    wchar_t buf[MAX_PATH] = {0};
+    if (GetModuleFileNameW(nullptr, buf, MAX_PATH)) {
+        exe_dir = std::filesystem::path(buf).parent_path();
+    }
+#elif defined(__linux__)
+    char buf[1024] = {0};
+    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+    if (len > 0) {
+        exe_dir = std::filesystem::path(std::string(buf, len)).parent_path();
+    }
+#endif
+
+    if (!exe_dir.empty()) {
+        std::filesystem::path cur = exe_dir;
+        for (int i = 0; i < 6; ++i) {
+            std::filesystem::path candidate = cur / p;
+            if (std::filesystem::exists(candidate, ec)) {
+                auto canon = std::filesystem::canonical(candidate, ec);
+                return ec ? candidate.string() : canon.string();
+            }
+            if (!cur.has_parent_path() || cur == cur.parent_path()) break;
+            cur = cur.parent_path();
+        }
+    }
+
+    // 3. Fallback: traverse up from current working directory
+    std::filesystem::path cur_cwd = std::filesystem::current_path(ec);
+    if (!ec) {
+        for (int i = 0; i < 5; ++i) {
+            std::filesystem::path candidate = cur_cwd / p;
+            if (std::filesystem::exists(candidate, ec)) {
+                auto canon = std::filesystem::canonical(candidate, ec);
+                return ec ? candidate.string() : canon.string();
+            }
+            if (!cur_cwd.has_parent_path() || cur_cwd == cur_cwd.parent_path()) break;
+            cur_cwd = cur_cwd.parent_path();
+        }
+    }
+
+    return std::string(relative_path);
+}
+
 }  // namespace enki
+

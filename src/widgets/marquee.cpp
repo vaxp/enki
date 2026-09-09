@@ -10,7 +10,11 @@
 #include <include/core/SkColor.h>
 #include <include/core/SkFontStyle.h>
 #include <include/core/SkFontMgr.h>
+#if defined(_WIN32)
+#include <include/ports/SkTypeface_win.h>
+#else
 #include <include/ports/SkFontMgr_fontconfig.h>
+#endif
 #include <modules/skparagraph/include/ParagraphBuilder.h>
 #include <modules/skparagraph/include/Paragraph.h>
 #include <modules/skparagraph/include/ParagraphStyle.h>
@@ -29,8 +33,13 @@ namespace {
 
 sk_sp<SkFontMgr> getSharedFontMgr() {
     static sk_sp<SkFontMgr> s_mgr = []() {
-        auto m = SkFontMgr_New_FontConfig(nullptr);
+        sk_sp<SkFontMgr> m = nullptr;
+#if defined(_WIN32)
+        m = SkFontMgr_New_DirectWrite();
+#else
+        m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
+#endif
         return m;
     }();
     return s_mgr;
@@ -39,7 +48,11 @@ sk_sp<SkFontMgr> getSharedFontMgr() {
 sk_sp<skia::textlayout::FontCollection> getSharedFontCollection() {
     static sk_sp<skia::textlayout::FontCollection> s_fc = []() {
         auto fc = sk_make_sp<skia::textlayout::FontCollection>();
+#if defined(_WIN32)
+        fc->setDefaultFontManager(getSharedFontMgr(), "Segoe UI");
+#else
         fc->setDefaultFontManager(getSharedFontMgr());
+#endif
         fc->enableFontFallback();
         return fc;
     }();

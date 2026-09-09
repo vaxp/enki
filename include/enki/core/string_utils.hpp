@@ -67,4 +67,13 @@ std::string toLower(std::string_view str);
 /// Convert a string to uppercase (ASCII only).
 std::string toUpper(std::string_view str);
 
+// ============================================================
+// Asset Path Resolution
+// ============================================================
+
+/// Resolve a relative asset path (e.g. "assets/fonts/font.ttf") by checking
+/// the current working directory, executable location, and their parent hierarchies.
+std::string resolveAssetPath(std::string_view relative_path);
+
 }  // namespace enki
+

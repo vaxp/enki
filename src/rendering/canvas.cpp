@@ -9,7 +9,11 @@
 #include <include/core/SkFont.h>
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFontMgr.h>
+#if defined(_WIN32)
+#include <include/ports/SkTypeface_win.h>
+#else
 #include <include/ports/SkFontMgr_fontconfig.h>
+#endif
 #include <include/core/SkTextBlob.h>
 #include <include/effects/SkImageFilters.h>
 #include <include/core/SkBlendMode.h>
@@ -26,12 +30,16 @@ namespace enki {
 
 namespace {
 
-// Global Font Manager singleton for Linux
+// Global Font Manager singleton
 sk_sp<SkFontMgr> getGlobalFontMgr() {
     static sk_sp<SkFontMgr> mgr = []() {
+#if defined(_WIN32)
+        return SkFontMgr_New_DirectWrite();
+#else
         auto m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
         return m;
+#endif
     }();
     return mgr;
 }
@@ -70,6 +78,11 @@ sk_sp<SkTypeface> getTypeface(const char* family, bool bold) {
             }
         }
         if (!result) {
+#if defined(_WIN32)
+            if (auto tf = mgr->matchFamilyStyle("Segoe UI", style)) result = sk_sp<SkTypeface>(tf);
+            else if (auto tf = mgr->matchFamilyStyle("Arial", style)) result = sk_sp<SkTypeface>(tf);
+            else
+#endif
             if (auto tf = mgr->matchFamilyStyle("Inter", style)) result = sk_sp<SkTypeface>(tf);
             else if (auto tf = mgr->matchFamilyStyle("Roboto", style)) result = sk_sp<SkTypeface>(tf);
             else if (auto tf = mgr->matchFamilyStyle("Ubuntu", style)) result = sk_sp<SkTypeface>(tf);

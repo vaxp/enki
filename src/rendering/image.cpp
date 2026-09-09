@@ -2,6 +2,7 @@
 /// @brief Image implementation using Skia.
 
 #include "enki/rendering/image.hpp"
+#include "enki/core/string_utils.hpp"
 #include <include/core/SkImage.h>
 #include <include/core/SkData.h>
 #include <include/core/SkStream.h>
@@ -16,7 +17,8 @@ Image::Image() : impl_(std::make_unique<Impl>()) {}
 Image::~Image() = default;
 
 Result<std::shared_ptr<Image>> Image::loadFromFile(std::string_view path) {
-    auto data = SkData::MakeFromFileName(std::string(path).c_str());
+    std::string resolved = resolveAssetPath(path);
+    auto data = SkData::MakeFromFileName(resolved.c_str());
     if (!data) {
         return Result<std::shared_ptr<Image>>::err(
             ErrorCode::IOError, "Failed to read image file: " + std::string(path));

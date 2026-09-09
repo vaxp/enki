@@ -7,7 +7,22 @@
 #include <include/gpu/GrDirectContext.h>
 #include <include/gpu/GrBackendSurface.h>
 #include <include/gpu/gl/GrGLTypes.h>
+
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
 #include <GL/gl.h>
+
+#ifndef GL_FRAMEBUFFER_BINDING
+#define GL_FRAMEBUFFER_BINDING 0x8CA6
+#endif
 
 #include <iostream>
 #include <algorithm>

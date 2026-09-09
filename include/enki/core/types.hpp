@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <cmath>
+#include <algorithm>
 #include <string_view>
 #include <string>
 #include <memory>

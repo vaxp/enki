@@ -1,6 +1,14 @@
 # Widgets Demo
 demo_deps = [enki_dep]
 
+if is_windows
+  configure_file(
+    input: meson.project_source_root() / 'core/Skia-Windows/out/Release-x64/icudtl.dat',
+    output: 'icudtl.dat',
+    copy: true
+  )
+endif
+
 executable('widgets_demo',
   'main.cpp',
   dependencies : demo_deps,
@@ -89,8 +97,8 @@ subdir('utility_demo')
 subdir('typography_demo')
 subdir('lottie_demo')
 subdir('skia_canvas_demo')
-subdir('audio_waveform_demo')
-subdir('video_player_demo')
+# subdir('audio_waveform_demo') # Disabled per user request (requires PulseAudio)
+# subdir('video_player_demo')   # Disabled per user request (requires FFmpeg)
 subdir('rich_inputs_demo')
 
 # ── Section 15: Standalone Rich Input Demos ───────────────────

@@ -2,6 +2,7 @@
 /// @brief Implementation of the Icon widget.
 
 #include "enki/widgets/icon.hpp"
+#include "enki/core/string_utils.hpp"
 #include "enki/rendering/canvas.hpp"
 #include "enki/rendering/font_manager.hpp"
 #include "include/utils/SkParsePath.h"
@@ -83,14 +84,33 @@ void RenderIcon::rebuildSvgPath() {
 }
 
 void RenderIcon::rebuildFontCache() {
-    sk_sp<SkFontMgr> mgr = SkFontMgr::RefDefault();
-    cached_typeface_ = sk_sp<SkTypeface>(
-        mgr->matchFamilyStyle(data_.font_family.c_str(), SkFontStyle::Normal()));
+    static sk_sp<SkTypeface> s_material_icons_typeface = nullptr;
 
-    if (!cached_typeface_ && data_.font_family == "Material Icons") {
-        cached_typeface_ = SkTypeface::MakeFromFile("assets/fonts/MaterialIcons-Regular.ttf");
+    if (data_.font_family == "Material Icons") {
+        if (!s_material_icons_typeface) {
+            std::string font_path = resolveAssetPath("assets/fonts/MaterialIcons-Regular.ttf");
+            s_material_icons_typeface = SkTypeface::MakeFromFile(font_path.c_str());
+            if (s_material_icons_typeface) {
+                FontManager::loadFont(font_path, "Material Icons");
+            } else {
+                std::cerr << "[RenderIcon] Warning: Could not load Material Icons from: " << font_path << "\n";
+            }
+        }
+        cached_typeface_ = s_material_icons_typeface;
+    } else {
+        sk_sp<SkFontMgr> mgr = SkFontMgr::RefDefault();
+        cached_typeface_ = sk_sp<SkTypeface>(
+            mgr->matchFamilyStyle(data_.font_family.c_str(), SkFontStyle::Normal()));
+
+        if (!cached_typeface_) {
+            std::string candidate = "assets/fonts/" + data_.font_family + ".ttf";
+            std::string font_path = resolveAssetPath(candidate);
+            cached_typeface_ = SkTypeface::MakeFromFile(font_path.c_str());
+        }
     }
+
     if (!cached_typeface_) {
+        sk_sp<SkFontMgr> mgr = SkFontMgr::RefDefault();
         cached_typeface_ = sk_sp<SkTypeface>(mgr->legacyMakeTypeface(nullptr, SkFontStyle::Normal()));
     }
 
