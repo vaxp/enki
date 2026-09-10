@@ -545,42 +545,24 @@ public:
     std::string_view typeName() const override { return "CounterApp"; }
 };
 
-#ifdef __ANDROID__
-extern "C" int enki_android_main() {
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Application entry point
+// On Android : enki/app/main.hpp renames this to enki_user_main(), which the
+//              framework's enki_android_main() calls after NativeWindow setup.
+// On Desktop : the OS calls int main() directly — no bridging needed.
+// ─────────────────────────────────────────────────────────────────────────────
+int main() {
     AppConfig config;
     config.title       = "ENKI Counter";
+    config.app_id      = "org.enki.cubit_counter";
     config.width       = 520;
     config.height      = 640;
     config.resizable   = false;
     config.enable_csd  = false;
-    config.app_id      = "org.enki.cubit_counter";
     config.vsync       = true;
-    config.target_fps  = 60;
-    config.show_performance_overlay = false;
+    config.show_performance_overlay = true;
     config.clear_color = 0xFF0B0F19;
 
     return runApp(std::make_shared<CounterApp>(), config);
 }
-#else
-int main() {
-    std::cout << "======================================================\n";
-    std::cout << "  ENKI Engine — Cubit Counter Showcase App            \n";
-    std::cout << "  Granular Reactivity & Element Tree Verification     \n";
-    std::cout << "======================================================\n";
-
-    AppConfig config;
-    config.title       = "   Demo Home Page (Cubit)";
-    config.width       = 520;
-    config.height      = 640;
-    config.resizable   = true;
-    config.enable_csd  = true;
-    config.app_id      = "org.enki.cubit_counter";
-    config.vsync       = true;
-    config.target_fps  = 60;
-    config.show_performance_overlay = false;
-    config.clear_color = 0xFF0B0F19;
-
-    return runApp(std::make_shared<CounterApp>(), config);
-}
-#endif
