@@ -14,9 +14,19 @@ if is_windows
   )
 endif
 
-enki_counter_exe = executable('enki_counter',
-  sources: counter_sources,
-  dependencies: [enki_dep],
-  install: true,
-)
+if is_android
+  enki_counter_lib = shared_library('enki_counter',
+    sources: counter_sources,
+    dependencies: [enki_dep],
+    name_prefix: 'lib',
+    link_args: ['-u', 'ANativeActivity_onCreate'],
+    install: true,
+  )
+else
+  enki_counter_exe = executable('enki_counter',
+    sources: counter_sources,
+    dependencies: [enki_dep],
+    install: true,
+  )
+endif
 

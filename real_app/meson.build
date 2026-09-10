@@ -2,5 +2,7 @@
 # ENKI Framework — Real Applications Directory
 # ============================================================
 
-subdir('calculator')
+if not is_android
+  subdir('calculator')
+endif
 subdir('counter')

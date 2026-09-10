@@ -11,7 +11,11 @@
 #include <include/gpu/gl/GrGLInterface.h>
 #include <include/gpu/gl/GrGLAssembleInterface.h>
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <dlfcn.h>
+#include <EGL/egl.h>
+#include <GLES3/gl3.h>
+#elif defined(_WIN32)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif

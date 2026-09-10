@@ -4,7 +4,9 @@
 #include <include/core/SkTypeface.h>
 #include <modules/skparagraph/include/FontCollection.h>
 #include <modules/skparagraph/include/TypefaceFontProvider.h>
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <include/ports/SkFontMgr_android.h>
+#elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
 #endif
 
@@ -17,7 +19,9 @@ namespace {
     void initFontCollection() {
         if (!g_font_collection) {
             g_font_collection = sk_make_sp<skia::textlayout::FontCollection>();
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+            g_font_collection->setDefaultFontManager(SkFontMgr_New_Android(nullptr), "Roboto");
+#elif defined(_WIN32)
             g_font_collection->setDefaultFontManager(SkFontMgr_New_DirectWrite(), "Segoe UI");
 #else
             g_font_collection->setDefaultFontManager(SkFontMgr::RefDefault());

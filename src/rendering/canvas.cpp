@@ -9,7 +9,9 @@
 #include <include/core/SkFont.h>
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFontMgr.h>
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+#include <include/ports/SkFontMgr_android.h>
+#elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
@@ -33,7 +35,11 @@ namespace {
 // Global Font Manager singleton
 sk_sp<SkFontMgr> getGlobalFontMgr() {
     static sk_sp<SkFontMgr> mgr = []() {
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+        auto m = SkFontMgr_New_Android(nullptr);
+        if (!m) m = SkFontMgr::RefDefault();
+        return m;
+#elif defined(_WIN32)
         return SkFontMgr_New_DirectWrite();
 #else
         auto m = SkFontMgr_New_FontConfig(nullptr);
