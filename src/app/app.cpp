@@ -78,6 +78,25 @@ struct App::Impl {
 
     // Loop control
     bool quit_requested = false;
+    bool force_repaint  = false;
+
+    void invalidateSurface() {
+        cached_surface.reset();
+        cached_canvas.reset();
+        cached_sk_canvas_ptr = nullptr;
+        cached_w = 0;
+        cached_h = 0;
+        force_repaint = true;
+        if (gr_context) {
+            gr_context->resetContext();
+        }
+        if (root_element) {
+            if (auto* root_ro = root_element->findRenderObject()) {
+                root_ro->markNeedsLayout();
+                root_ro->markNeedsPaint();
+            }
+        }
+    }
 
     // Multi-surface / Popups owned by App
     std::vector<std::unique_ptr<SurfaceHost>> surfaces;
@@ -133,10 +152,15 @@ struct App::Impl {
         win_cfg.resizable = config.resizable;
         win_cfg.vsync     = config.vsync;
         win_cfg.mode        = config.window_mode;
-        win_cfg.csd         = config.enable_csd;
         win_cfg.app_id      = config.app_id;
         win_cfg.blur        = config.enable_blur;
+#if defined(__ANDROID__)
+        win_cfg.csd         = false; // Mobile platforms do not have desktop CSD
+        win_cfg.transparent = (((config.clear_color >> 24) & 0xFF) < 0xFF);
+#else
+        win_cfg.csd         = config.enable_csd;
         win_cfg.transparent = (((config.clear_color >> 24) & 0xFF) < 0xFF) || config.enable_csd;
+#endif
 
         auto result = Window::create(*platform, win_cfg);
         if (!result.isOk()) return false;
@@ -146,6 +170,31 @@ struct App::Impl {
         // Connect quit signals
         window->onClose().connect([this]()  { quit_requested = true; });
         platform->onQuit().connect([this]() { quit_requested = true; });
+
+        // Surface lifecycle & invalidation connections
+        window->onSurfaceRecreated().connect([this]() {
+            invalidateSurface();
+        });
+        window->onSurfaceDestroyed().connect([this]() {
+            cached_surface.reset();
+            cached_canvas.reset();
+            cached_sk_canvas_ptr = nullptr;
+            cached_w = 0;
+            cached_h = 0;
+        });
+        window->onResize().connect([this](int, int) {
+            invalidateSurface();
+        });
+        window->onFocus().connect([this](bool focused) {
+            if (focused) {
+                force_repaint = true;
+                if (root_element) {
+                    if (auto* root_ro = root_element->findRenderObject()) {
+                        root_ro->markNeedsPaint();
+                    }
+                }
+            }
+        });
 
         // Targeted event routing for multi-surface / popups
         platform->onTargetedMouseDown().connect([this](void* handle, float x, float y, int btn) {
@@ -214,7 +263,9 @@ struct App::Impl {
         platform->onMouseDown().connect([this](float x, float y, int btn) {
             if (active_popup_host) return;  // popup takes priority
 #if defined(__ANDROID__)
-            dispatchPointerDown(x, y, btn);
+            float dpi = window ? window->getDpiScale() : 1.0f;
+            if (dpi <= 0.0f) dpi = 1.0f;
+            dispatchPointerDown(x / dpi, y / dpi, btn);
 #endif
         });
 
@@ -224,14 +275,18 @@ struct App::Impl {
                 return;
             }
 #if defined(__ANDROID__)
-            dispatchPointerUp(x, y, btn);
+            float dpi = window ? window->getDpiScale() : 1.0f;
+            if (dpi <= 0.0f) dpi = 1.0f;
+            dispatchPointerUp(x / dpi, y / dpi, btn);
 #endif
         });
 
         platform->onMouseMove().connect([this](float x, float y) {
 #if defined(__ANDROID__)
             if (!active_popup_host) {
-                dispatchPointerMove(x, y);
+                float dpi = window ? window->getDpiScale() : 1.0f;
+                if (dpi <= 0.0f) dpi = 1.0f;
+                dispatchPointerMove(x / dpi, y / dpi);
             }
 #endif
             // On X11/Wayland: already handled by onTargetedMouseMove
@@ -530,12 +585,19 @@ struct App::Impl {
         auto s = window->getDrawableSize();
         if (s.width <= 0 || s.height <= 0) return false;
 
+        // Ensure current window context is active before doing any GL/Skia work
+        window->makeCurrent();
+
         int w = static_cast<int>(s.width);
         int h = static_cast<int>(s.height);
 
-        // ── Recreate surface on resize ──────────────────────────
+        // ── Recreate surface on resize or invalidation ──────────
         bool surface_resized = false;
         if (!cached_surface || cached_w != w || cached_h != h) {
+            if (gr_context) {
+                gr_context->resetContext();
+            }
+
             GrGLFramebufferInfo fbInfo;
             fbInfo.fFBOID  = 0;
             fbInfo.fFormat = 0x8058; // GL_RGBA8
@@ -565,7 +627,12 @@ struct App::Impl {
             }
         }
 
-        if (!cached_surface) return false;
+        if (!cached_surface) {
+#if defined(__ANDROID__)
+            __android_log_print(ANDROID_LOG_ERROR, "enki", "renderFrame: cached_surface is NULL!");
+#endif
+            return false;
+        }
 
         SkCanvas* sk_canvas = cached_surface->getCanvas();
 
@@ -589,11 +656,16 @@ struct App::Impl {
 
         auto* root_ro = root_element->findRenderObject();
 
+        float dpi = window->getDpiScale();
+        if (dpi <= 0.0f) dpi = 1.0f;
+        float logical_w = s.width / dpi;
+        float logical_h = s.height / dpi;
+
         // ── Phase 3: Layout ──────────────────────────────────────
         bool did_layout = false;
         auto layout_start = Clock::now();
         if (root_ro && root_ro->needsLayout()) {
-            root_ro->layout(s.width, s.height);
+            root_ro->layout(logical_w, logical_h);
             did_layout = true;
         }
         auto layout_end = Clock::now();
@@ -607,12 +679,15 @@ struct App::Impl {
         //   • active tickers are running (animations in flight)
         //   • layout was recalculated (size/position changed)
         //   • any render object flagged itself as needing repaint
-        //   • surface was resized
+        //   • surface was resized or invalidated
+        //   • force_repaint was requested (e.g. app returned to foreground)
         bool scene_dirty = (stats.dirty_elements > 0)
                         || (stats.active_tickers > 0)
                         || did_layout
                         || (root_ro && root_ro->subtreeNeedsPaint())
-                        || surface_resized;
+                        || surface_resized
+                        || force_repaint;
+        force_repaint = false;
 
         double paint_ms = 0.0;
         double gpu_flush_ms = 0.0;
@@ -626,8 +701,13 @@ struct App::Impl {
                 (cc >> 24) & 0xFF, (cc >> 16) & 0xFF,
                 (cc >>  8) & 0xFF, (cc >>  0) & 0xFF));
 
+            sk_canvas->save();
+            if (std::abs(dpi - 1.0f) > 0.001f) {
+                sk_canvas->scale(dpi, dpi);
+            }
+
             PaintContext pctx{*cached_canvas, Point{0, 0},
-                              Rect{0, 0, s.width, s.height}, 1.0f};
+                              Rect{0, 0, logical_w, logical_h}, 1.0f};
             auto paint_start = Clock::now();
             root_ro->paint(pctx);
             auto paint_end = Clock::now();
@@ -637,8 +717,10 @@ struct App::Impl {
             root_ro->clearPaintFlag();
 
             if (config.show_performance_overlay) {
-                drawPerformanceOverlay(*cached_canvas, s);
+                drawPerformanceOverlay(*cached_canvas, Size{logical_w, logical_h});
             }
+
+            sk_canvas->restore();
 
             // ── Phase 5: GPU flush ───────────────────────────────
             auto gpu_start = Clock::now();
@@ -1071,5 +1153,11 @@ int runApp(WidgetPtr root_widget, AppConfig config) {
     }
     return result.value()->run();
 }
+
+#if !defined(__ANDROID__)
+Size getScreenSize() {
+    return {0.0f, 0.0f};
+}
+#endif
 
 }  // namespace enki

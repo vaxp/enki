@@ -8,6 +8,7 @@
 #include "enki/widgets/container.hpp"
 #include "enki/widgets/flexbox.hpp"
 #include "enki/widgets/stack.hpp"
+#include "enki/widgets/safe_area.hpp"
 #include "enki/app/app.hpp"
 #include "enki/state/state.hpp"
 
@@ -100,6 +101,7 @@ public:
         const auto& p = wf->props;
         Window* win = window_;
 
+#if !defined(__ANDROID__)
         // 1. TitleBar
         WidgetPtr tb = p.titlebar;
         if (!tb) {
@@ -131,12 +133,19 @@ public:
             col_children.push_back(expanded(p.content));
         }
 
-        auto window_column = column(ColumnProps{
+        auto inner_content = column(ColumnProps{
             .flex_direction = FlexDirection::Column,
             .width = StyleValue::percent(100.0f),
             .height = StyleValue::percent(100.0f),
             .children = std::move(col_children),
         });
+#else
+        // On Android: no desktop CSD titlebar. Inset content via safeArea
+        WidgetPtr inner_content = p.content ? safeArea(p.content) : safeArea(container(ContainerProps{
+            .width  = StyleValue::percent(100.0f),
+            .height = StyleValue::percent(100.0f),
+        }));
+#endif
 
         // Visual frame styling
         float radius = is_maximized_ ? 0.0f : p.border_radius;
@@ -168,8 +177,13 @@ public:
             .svg_slice = p.border_svg_slice,
             .width = StyleValue::percent(100.0f),
             .height = StyleValue::percent(100.0f),
-            .child = window_column,
+            .child = inner_content,
         });
+
+#if defined(__ANDROID__)
+        // On Android: no desktop window resize handles
+        return frame_body;
+#endif
 
         // 3. Assemble Stack (ALWAYS returns StackWidget to prevent widget tree disposal on maximize/restore)
         std::vector<WidgetPtr> stack_children;

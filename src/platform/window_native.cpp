@@ -82,6 +82,12 @@ struct Window::Impl {
         android_surface->onClose().connect([this]() {
             if (window) window->onClose().emit();
         });
+        android_surface->onSurfaceRecreated().connect([this]() {
+            if (window) window->onSurfaceRecreated().emit();
+        });
+        android_surface->onSurfaceDestroyed().connect([this]() {
+            if (window) window->onSurfaceDestroyed().emit();
+        });
         current_width  = cfg.width;
         current_height = cfg.height;
         return true;

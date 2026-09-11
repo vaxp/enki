@@ -59,7 +59,10 @@ def main():
         <activity
             android:name="android.app.NativeActivity"
             android:label="ENKI Counter"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTask"
+            android:clearTaskOnLaunch="false"
+            android:alwaysRetainTaskState="true"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:exported="true">
             <meta-data
                 android:name="android.app.lib_name"

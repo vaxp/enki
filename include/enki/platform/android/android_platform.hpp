@@ -150,57 +150,98 @@ public:
     // ── Display metrics ──────────────────────────────────────────
     [[nodiscard]] float getDpiScale() const { return dpi_scale_; }
 
+    // ── Safe Area ────────────────────────────────────────────────
+    /// Returns the system safe area insets in logical dp units.
+    /// On Android this queries status_bar_height and navigation_bar_height
+    /// from system resources via JNI, with sensible fallbacks.
+    [[nodiscard]] EdgeInsets getSafeAreaInsets() const;
+
 private:
-    Platform*       owner_    = nullptr;
+    Platform*        owner_    = nullptr;
     ANativeActivity* activity_ = nullptr;
     ALooper*         looper_   = nullptr;
     AConfiguration*  config_   = nullptr;
-    AInputQueue*     input_queue_ = nullptr;
-    ANativeWindow*   current_native_window_ = nullptr;
+    ANativeWindow*   current_native_window_ = nullptr;  ///< engine-thread-only after init
 
-    // EGL shared context
+    // EGL shared context (engine-thread-only)
     EGLDisplay egl_display_ = EGL_NO_DISPLAY;
     EGLConfig  egl_config_  = nullptr;
     EGLContext egl_context_ = EGL_NO_CONTEXT;
 
     // Display info
-    float dpi_scale_ = 1.0f;
+    float dpi_scale_     = 1.0f;
     int   screen_width_  = 0;
     int   screen_height_ = 0;
 
     // Clipboard fallback buffer
     mutable ClipboardData clipboard_buffer_;
 
-    // Registered surfaces (usually just one)
+    // ── Registered surfaces (protected by surfaces_mutex_) ────────
     std::unordered_set<AndroidSurface*> surfaces_;
 
-    std::atomic<bool> quit_requested_{ false };
-    bool paused_ = false;
-    bool activated_ = false;
+    // ── Input queue (protected by input_queue_mutex_) ─────────────
+    AInputQueue* input_queue_ = nullptr;
 
-    // Output representing the device screen
+    // ── Thread-safe runtime state ──────────────────────────────────
+    //    Written by UI thread, read by engine thread.
+    std::atomic<bool> quit_requested_{ false };
+    std::atomic<bool> paused_        { false };
+    /// true iff an EGL surface is currently valid and renderable.
+    std::atomic<bool> has_window_    { false };
+
+    // ── Deferred window events ─────────────────────────────────────
+    // NativeActivity lifecycle callbacks arrive on the UI thread, but all
+    // EGL surface operations MUST happen on the engine (GL) thread.
+    // The UI thread queues events here; the engine processes them in
+    // processPendingWindowEvents() at the top of each pollEvents() call.
+    std::atomic<bool> needs_processing_{ false };
+    std::mutex        window_event_mutex_;
+    bool              window_destroy_pending_ = false;
+    ANativeWindow*    window_create_pending_  = nullptr;
+
+    // ── Synchronisation primitives ─────────────────────────────────
+    mutable std::mutex      surfaces_mutex_;           ///< guards surfaces_ set
+    std::mutex              input_queue_mutex_;        ///< guards input_queue_
+    std::mutex              state_mutex_;              ///< paired with state_cv_
+    std::condition_variable state_cv_;                 ///< wakes engine thread on new events
+    std::mutex              window_destroy_ack_mutex_; ///< guards window_destroy_ack_cv_
+    std::condition_variable window_destroy_ack_cv_;    ///< signals UI thread when engine freed surface
+
+    // ── Output representing the device screen ─────────────────────
     class AndroidOutput;
     std::shared_ptr<AndroidOutput> primary_output_;
 
-    // ── EGL initialisation ───────────────────────────────────────
+    // ── Safe area insets cache ─────────────────────────────────────
+    mutable std::mutex        insets_mutex_;
+    mutable EdgeInsets        cached_insets_;
+    mutable std::atomic<bool> insets_dirty_{ true };
+
+    // ── EGL initialisation (engine thread) ───────────────────────
     bool initEGL();
     void destroyEGL();
 
-    // ── Input processing ─────────────────────────────────────────
+    // ── Deferred window lifecycle (engine thread) ─────────────────
+    /// Process any window-created / window-destroyed events queued by the UI thread.
+    /// Must be called from the engine thread so EGL ops run on the correct thread.
+    void processPendingWindowEvents();
+
+    // ── Input processing (engine thread) ─────────────────────────
     void processInputQueue();
     void handleInputEvent(AInputEvent* event);
     void handleTouchEvent(AInputEvent* event);
     void handleKeyEvent(AInputEvent* event);
 
-    // ── JNI helpers ──────────────────────────────────────────────
+    // ── JNI helpers ───────────────────────────────────────────────
     std::string jniGetClipboardText() const;
     void        jniSetClipboardText(std::string_view text) const;
 
-    // ── ALooper pipe for wakeup ──────────────────────────────────
-    int pipe_read_fd_  = -1;
-    int pipe_write_fd_ = -1;
+    // ── ALooper pipe for wakeup ───────────────────────────────────
+    int  pipe_read_fd_  = -1;
+    int  pipe_write_fd_ = -1;
     void createWakeupPipe();
     void destroyWakeupPipe();
+    /// Write a byte to the wakeup pipe so ALooper_pollOnce / state_cv_ wakes up.
+    void wakeupLooper();
     static int looperCallback(int fd, int events, void* data);
 };
 

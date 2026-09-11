@@ -422,6 +422,13 @@ void* Platform::getEGLContext() const {
 #endif
 }
 
+EdgeInsets Platform::getSafeAreaInsets() const {
+#if defined(__ANDROID__)
+    if (impl_->android_backend) return impl_->android_backend->getSafeAreaInsets();
+#endif
+    return {};  // Desktop: no safe area insets
+}
+
 bool  Platform::isWayland()        const { return impl_->isWayland(); }
 bool  Platform::isAndroid()        const { return impl_->isAndroid(); }
 
