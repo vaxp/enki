@@ -10,7 +10,13 @@
 fs = import('fs')
 cef_root = get_option('cef_root')
 
-local_cef_rel = 'cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal'
+is_windows = host_machine.system() == 'windows'
+
+if is_windows
+  local_cef_rel = 'cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_windows64_minimal'
+else
+  local_cef_rel = 'cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal'
+endif
 local_cef_abs = meson.current_source_dir() / local_cef_rel
 
 # Auto-detect local prebuilt folder if cef_root is not explicitly provided
@@ -45,6 +51,7 @@ else
   # cef_dll_wrapper is built from source alongside CEF.
   cef_dll_wrapper = cpp.find_library('cef_dll_wrapper',
     dirs    : [
+      cef_root / 'Release',
       cef_root / 'build' / 'libcef_dll_wrapper',
       cef_root / 'libcef_dll_wrapper',
     ],
@@ -82,6 +89,17 @@ if cef_dll_wrapper.found()
   web_deps += cef_dll_wrapper
 endif
 
+if is_windows
+  web_sources += files('host/NativeAPIs_win.cpp')
+  web_deps += [
+    cpp.find_library('user32', required: true),
+    cpp.find_library('shell32', required: true),
+    cpp.find_library('comdlg32', required: true),
+    cpp.find_library('advapi32', required: true),
+    cpp.find_library('ole32', required: true),
+  ]
+endif
+
 web_technology_lib = static_library('enki_web',
   web_sources,
 
@@ -102,6 +120,7 @@ web_technology_lib = static_library('enki_web',
 web_technology_dep = declare_dependency(
   link_with           : web_technology_lib,
   include_directories : include_directories('include'),
+  dependencies        : web_deps,
   compile_args        : ['-DENKI_HAS_WEBVIEW=1'],
 )
 

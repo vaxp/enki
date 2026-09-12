@@ -7,13 +7,24 @@
 #include <iostream>
 #include <filesystem>
 
+#include <string_view>
+
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[])
 {
+    // Fast check: if this process is invoked as a CEF child subprocess,
+    // immediately delegate to EnkiWebHost (which calls CefExecuteProcess) and exit.
+    for (int i = 1; i < argc; ++i) {
+        if (argv[i] && std::string_view(argv[i]).starts_with("--type=")) {
+            enki::web::EnkiWebHost host(argc, argv);
+            return 0;
+        }
+    }
+
     std::cout << "========================================\n";
     std::cout << "    Enki Web Host (Electron Alternative)\n";
-    std::cout << "========================================\n";
+    std::cout << "========================================\n" << std::flush;
 
     enki::web::EnkiWebHost host(argc, argv);
 

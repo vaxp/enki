@@ -16,8 +16,10 @@
 
 namespace enki::win32 {
 
-static const wchar_t* kWindowClass = L"EnkiWin32WindowClass";
-static bool g_class_registered = false;
+static const wchar_t* kWindowClass      = L"EnkiWin32WindowClass";
+static const wchar_t* kPopupWindowClass = L"EnkiWin32PopupWindowClass";
+static bool g_class_registered       = false;
+static bool g_popup_class_registered = false;
 static HGLRC g_shared_hglrc = nullptr;
 static int   g_hglrc_ref_count = 0;
 
@@ -52,10 +54,11 @@ bool Win32Window::init(const WindowConfig& config) {
     config_ = config;
     HINSTANCE hInst = GetModuleHandleW(nullptr);
 
+    // Register standard window class without CS_DROPSHADOW (DWM handles shadows natively)
     if (!g_class_registered) {
         WNDCLASSEXW wc{};
         wc.cbSize        = sizeof(WNDCLASSEXW);
-        wc.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW | CS_DROPSHADOW;
+        wc.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc   = staticWndProc;
         wc.hInstance     = hInst;
         wc.hCursor       = LoadCursorA(nullptr, IDC_ARROW);
@@ -68,10 +71,27 @@ bool Win32Window::init(const WindowConfig& config) {
         g_class_registered = true;
     }
 
+    // Register dedicated popup class for borderless transient menus/popups
+    if (config.mode == WindowMode::Popup && !g_popup_class_registered) {
+        WNDCLASSEXW wc{};
+        wc.cbSize        = sizeof(WNDCLASSEXW);
+        wc.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc   = staticWndProc;
+        wc.hInstance     = hInst;
+        wc.hCursor       = LoadCursorA(nullptr, IDC_ARROW);
+        wc.lpszClassName = kPopupWindowClass;
+
+        if (!RegisterClassExW(&wc)) {
+            std::cerr << "[ENKI Win32Window] Failed to register popup window class\n";
+            return false;
+        }
+        g_popup_class_registered = true;
+    }
+
     current_width_  = config.width > 0 ? config.width : 1280;
     current_height_ = config.height > 0 ? config.height : 800;
 
-    DWORD style = WS_OVERLAPPEDWINDOW;
+    DWORD style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     DWORD exStyle = WS_EX_APPWINDOW;
 
     if (config.mode == WindowMode::Popup) {
@@ -81,6 +101,11 @@ bool Win32Window::init(const WindowConfig& config) {
     } else if (config.borderless || config.csd) {
         // Modern frameless window with resize border, minimize/maximize and clipping
         style = WS_POPUP | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+    } else {
+        // Standard native decorated window: respect resizable flag
+        if (!config.resizable) {
+            style &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+        }
     }
     if (config.always_on_top && config.mode != WindowMode::Popup) {
         exStyle |= WS_EX_TOPMOST;
@@ -88,7 +113,17 @@ bool Win32Window::init(const WindowConfig& config) {
 
     RECT wr = { 0, 0, current_width_, current_height_ };
     if (!(config.borderless || config.csd || config.mode == WindowMode::Popup)) {
-        AdjustWindowRectEx(&wr, style, FALSE, exStyle);
+        HMODULE user32 = GetModuleHandleW(L"user32.dll");
+        typedef BOOL (WINAPI *AdjustWindowRectExForDpiProc)(LPRECT, DWORD, BOOL, DWORD, UINT);
+        auto adjustDpi = (AdjustWindowRectExForDpiProc)GetProcAddress(user32, "AdjustWindowRectExForDpi");
+        if (adjustDpi) {
+            typedef UINT (WINAPI *GetDpiForSystemProc)();
+            auto getDpiSys = (GetDpiForSystemProc)GetProcAddress(user32, "GetDpiForSystem");
+            UINT dpiSys = getDpiSys ? getDpiSys() : 96;
+            adjustDpi(&wr, style, FALSE, exStyle, dpiSys);
+        } else {
+            AdjustWindowRectEx(&wr, style, FALSE, exStyle);
+        }
     }
 
     int win_w = wr.right - wr.left;
@@ -121,10 +156,11 @@ bool Win32Window::init(const WindowConfig& config) {
     }
 
     std::wstring wideTitle = utf8ToWide(config.title);
+    const wchar_t* targetClass = (config.mode == WindowMode::Popup) ? kPopupWindowClass : kWindowClass;
 
     hwnd_ = CreateWindowExW(
         exStyle,
-        kWindowClass,
+        targetClass,
         wideTitle.c_str(),
         style,
         pos_x, pos_y,
@@ -196,13 +232,26 @@ bool Win32Window::init(const WindowConfig& config) {
     // Windows Dark Mode & DWM styling
     BOOL darkMode = TRUE;
     DwmSetWindowAttribute(hwnd_, DWMWA_USE_IMMERSIVE_DARK_MODE, &darkMode, sizeof(darkMode));
+    DwmSetWindowAttribute(hwnd_, 19 /* DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 */, &darkMode, sizeof(darkMode));
+
+    // Windows 11 rounded window corners (Build 22000+) - for top-level windows only
+    #ifndef DWMWA_WINDOW_CORNER_PREFERENCE
+    #define DWMWA_WINDOW_CORNER_PREFERENCE 33
+    #endif
+    #ifndef DWMWCP_ROUND
+    #define DWMWCP_ROUND 2
+    #endif
+    if (config.mode != WindowMode::Popup) {
+        DWORD cornerPref = DWMWCP_ROUND;
+        DwmSetWindowAttribute(hwnd_, DWMWA_WINDOW_CORNER_PREFERENCE, &cornerPref, sizeof(cornerPref));
+    }
 
     if (config.borderless || config.csd) {
         SetWindowPos(hwnd_, nullptr, 0, 0, 0, 0,
                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
 
-    if (config.blur && config.mode != WindowMode::Popup) {
+    if (config.blur && (config.csd || config.borderless) && config.mode != WindowMode::Popup) {
         setBlurBehind(true);
     }
 
@@ -239,6 +288,15 @@ void Win32Window::setupDpi() {
 }
 
 void Win32Window::destroy() {
+    is_destroying_ = true;
+
+    // Disconnect all signals before window teardown to prevent re-entrant callbacks
+    on_close_.disconnectAll();
+    on_resize_.disconnectAll();
+    on_focus_.disconnectAll();
+    on_maximized_.disconnectAll();
+    on_state_changed_.disconnectAll();
+
     if (hglrc_) {
         if (wglGetCurrentContext() == hglrc_ && wglGetCurrentDC() == hdc_) {
             wglMakeCurrent(nullptr, nullptr);
@@ -256,8 +314,9 @@ void Win32Window::destroy() {
         hdc_ = nullptr;
     }
     if (hwnd_) {
-        DestroyWindow(hwnd_);
+        HWND h = hwnd_;
         hwnd_ = nullptr;
+        DestroyWindow(h);
     }
 }
 
@@ -296,6 +355,9 @@ void Win32Window::setBorderless(bool borderless) {
     if (!hwnd_) return;
     config_.borderless = borderless;
     DWORD style = borderless ? (WS_POPUP | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX) : WS_OVERLAPPEDWINDOW;
+    if (!borderless && !config_.resizable) {
+        style &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+    }
     SetWindowLongW(hwnd_, GWL_STYLE, style);
     SetWindowPos(hwnd_, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
@@ -355,6 +417,9 @@ void Win32Window::applyBlurBehind(bool enable) {
 }
 
 void Win32Window::setBlurBehind(bool enable) {
+    if (enable && !(config_.csd || config_.borderless)) {
+        enable = false;
+    }
     blur_enabled_ = enable;
     if (!in_size_move_) {
         applyBlurBehind(enable);
@@ -476,11 +541,15 @@ void Win32Window::setWindowGeometry(int x, int y, int width, int height) {
 // ── Window Message Loop Handler ────────────────────────────────────
 
 LRESULT Win32Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (is_destroying_) {
+        return DefWindowProcW(hwnd_, msg, wParam, lParam);
+    }
+
     auto* plat = backend_.getOwner();
 
     switch (msg) {
         case WM_GETMINMAXINFO: {
-            if (config_.mode != WindowMode::Popup && !is_fullscreen_) {
+            if ((config_.borderless || config_.csd) && config_.mode != WindowMode::Popup && !is_fullscreen_) {
                 auto* mmi = reinterpret_cast<MINMAXINFO*>(lParam);
                 HMONITOR hMon = MonitorFromWindow(hwnd_, MONITOR_DEFAULTTONEAREST);
                 MONITORINFO mi{ sizeof(MONITORINFO) };
@@ -491,6 +560,20 @@ LRESULT Win32Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
                     mmi->ptMaxSize.y     = mi.rcWork.bottom - mi.rcWork.top;
                     mmi->ptMaxTrackSize.x = mmi->ptMaxSize.x;
                     mmi->ptMaxTrackSize.y = mmi->ptMaxSize.y;
+                }
+                return 0;
+            }
+
+            if (config_.min_width > 0 || config_.min_height > 0 || !config_.resizable) {
+                auto* mmi = reinterpret_cast<MINMAXINFO*>(lParam);
+                if (!config_.resizable) {
+                    mmi->ptMinTrackSize.x = current_width_;
+                    mmi->ptMinTrackSize.y = current_height_;
+                    mmi->ptMaxTrackSize.x = current_width_;
+                    mmi->ptMaxTrackSize.y = current_height_;
+                } else {
+                    if (config_.min_width > 0)  mmi->ptMinTrackSize.x = config_.min_width;
+                    if (config_.min_height > 0) mmi->ptMinTrackSize.y = config_.min_height;
                 }
                 return 0;
             }
@@ -554,6 +637,10 @@ LRESULT Win32Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
 
         case WM_CLOSE: {
             on_close_.emit();
+            return 0;
+        }
+
+        case WM_DESTROY: {
             return 0;
         }
 

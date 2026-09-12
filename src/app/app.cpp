@@ -100,7 +100,20 @@ struct App::Impl {
 
     // Multi-surface / Popups owned by App
     std::vector<std::unique_ptr<SurfaceHost>> surfaces;
+    std::vector<std::unique_ptr<SurfaceHost>> pending_remove_surfaces;
     SurfaceHost* active_popup_host = nullptr;
+
+    void drainPendingSurfaces() {
+        if (!pending_remove_surfaces.empty()) {
+            pending_remove_surfaces.clear();
+            if (window) {
+                window->makeCurrent();
+            }
+            if (gr_context) {
+                gr_context->resetContext();
+            }
+        }
+    }
 
     SurfaceHost* findSurfaceForHandle(void* handle) {
         if (!handle) return nullptr;
@@ -157,6 +170,11 @@ struct App::Impl {
 #if defined(__ANDROID__)
         win_cfg.csd         = false; // Mobile platforms do not have desktop CSD
         win_cfg.transparent = (((config.clear_color >> 24) & 0xFF) < 0xFF);
+#elif defined(_WIN32)
+        win_cfg.csd         = config.enable_csd;
+        // On Windows: transparency and blur are linked strictly to CSD being enabled
+        win_cfg.transparent = config.enable_csd && ((((config.clear_color >> 24) & 0xFF) < 0xFF) || config.enable_csd);
+        win_cfg.blur        = config.enable_csd && config.enable_blur;
 #else
         win_cfg.csd         = config.enable_csd;
         win_cfg.transparent = (((config.clear_color >> 24) & 0xFF) < 0xFF) || config.enable_csd;
@@ -208,6 +226,8 @@ struct App::Impl {
                         if (active_popup_host == surfaces[i].get()) {
                             active_popup_host = nullptr;
                         }
+                        surfaces[i]->onClose().emit();
+                        pending_remove_surfaces.push_back(std::move(surfaces[i]));
                         surfaces.erase(surfaces.begin() + i);
                     }
                 }
@@ -696,7 +716,15 @@ struct App::Impl {
 
         if (scene_dirty && root_ro) {
             // ── Phase 4: Clear background + Paint ───────────────
+#if defined(_WIN32)
+            Color cc = config.clear_color;
+            if (!config.enable_csd) {
+                // Force full opacity on native decorated Windows windows
+                cc |= 0xFF000000;
+            }
+#else
             const Color cc = config.clear_color;
+#endif
             sk_canvas->clear(SkColorSetARGB(
                 (cc >> 24) & 0xFF, (cc >> 16) & 0xFF,
                 (cc >>  8) & 0xFF, (cc >>  0) & 0xFF));
@@ -1022,6 +1050,8 @@ void App::removeSurface(SurfaceHost* host) {
     auto it = std::find_if(impl_->surfaces.begin(), impl_->surfaces.end(),
                            [host](const std::unique_ptr<SurfaceHost>& h) { return h.get() == host; });
     if (it != impl_->surfaces.end()) {
+        (*it)->onClose().emit();
+        impl_->pending_remove_surfaces.push_back(std::move(*it));
         impl_->surfaces.erase(it);
     }
     if (impl_->window) {
@@ -1084,10 +1114,13 @@ int App::run() {
 
     while (!impl.quit_requested) {
         // 1. Poll platform events
-        if (!impl.platform->pollEvents()) {
+        if (!impl.platform->pollEvents() || impl.quit_requested) {
             impl.quit_requested = true;
             break;
         }
+
+        // Drain any surfaces closed during event processing safely
+        impl.drainPendingSurfaces();
 
         // 2. Tick active pointers / gesture timers
         impl.tickPointer();
@@ -1117,6 +1150,7 @@ int App::run() {
         }
 
         // 5. Cap to target FPS or pace idle
+        impl.drainPendingSurfaces();
         impl.capFrameRate(main_rendered || secondary_rendered);
     }
 

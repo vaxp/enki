@@ -53,9 +53,13 @@ public:
 
     // ── X11 → Windows VK key code mapping ─────────────────────
     // CEF uses Windows virtual-key codes even on Linux.
-
+#if !defined(_WIN32)
     /// Map an X11 keysym to a Windows VK code for CEF.
     static int xKeysymToWindowsVK(unsigned int keysym);
+#else
+    /// On Windows, key codes are already native Windows VK codes.
+    static int xKeysymToWindowsVK(unsigned int keysym) { return static_cast<int>(keysym); }
+#endif
 
 private:
     InputForwarder() = delete;

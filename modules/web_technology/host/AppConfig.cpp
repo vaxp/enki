@@ -160,7 +160,18 @@ std::string AppConfig::entry_url() const
 
     // مسار نسبي → file:// URL
     fs::path full = fs::path(app_root) / entry;
-    return "file://" + fs::absolute(full).string();
+    std::string s = fs::absolute(full).string();
+#if defined(_WIN32)
+    for (char& c : s) {
+        if (c == '\\') c = '/';
+    }
+    if (!s.empty() && s[0] != '/') {
+        return "file:///" + s;
+    }
+    return "file://" + s;
+#else
+    return "file://" + s;
+#endif
 }
 
 } // namespace enki::web

@@ -29,6 +29,7 @@ void EnkiCefApp::OnBeforeCommandLineProcessing(
     cmd->AppendSwitch("disable-pdf-extension");
 
     // ── Platform / Ozone Detection (Linux) ─────────────────────
+#if !defined(_WIN32)
     // Under pure X11 sessions (when WAYLAND_DISPLAY is not set), explicitly configure
     // Ozone to use the X11 platform backend.
     const char* wayland_display = getenv("WAYLAND_DISPLAY");
@@ -37,6 +38,7 @@ void EnkiCefApp::OnBeforeCommandLineProcessing(
             cmd->AppendSwitchWithValue("ozone-platform", "x11");
         }
     }
+#endif
 
     // ── GPU / Rendering Stability ───────────────────────────────
     cmd->AppendSwitch("enable-begin-frame-scheduling");

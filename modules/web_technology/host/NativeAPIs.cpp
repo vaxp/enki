@@ -11,10 +11,12 @@
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
+#if !defined(_WIN32)
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
 #include <pwd.h>
+#endif
 #include <regex>
 
 namespace fs = std::filesystem;
@@ -182,6 +184,7 @@ void FileSystemAPI::register_functions(IWebViewBackend& backend) {
     )js");
 }
 
+#if !defined(_WIN32)
 // ════════════════════════════════════════════════════════════════
 // DialogAPI
 // ════════════════════════════════════════════════════════════════
@@ -247,6 +250,7 @@ void DialogAPI::register_functions(IWebViewBackend& backend) {
         };
     )js");
 }
+#endif // !defined(_WIN32)
 
 // ════════════════════════════════════════════════════════════════
 // WindowAPI
@@ -271,6 +275,7 @@ void WindowAPI::register_functions(IWebViewBackend& backend) {
     )js");
 }
 
+#if !defined(_WIN32)
 // ════════════════════════════════════════════════════════════════
 // NotificationAPI
 // ════════════════════════════════════════════════════════════════
@@ -407,6 +412,7 @@ void SystemAPI::register_functions(IWebViewBackend& backend) {
         };
     )js");
 }
+#endif // !defined(_WIN32)
 
 // ════════════════════════════════════════════════════════════════
 // PathAPI
@@ -433,7 +439,7 @@ void PathAPI::register_functions(IWebViewBackend& backend) {
                 var idx = p.lastIndexOf('.');
                 return idx === -1 ? '' : p.substr(idx);
             },
-            isAbsolute: function(p) { return p.startsWith('/'); }
+            isAbsolute: function(p) { return p.startsWith('/') || /^[a-zA-Z]:[\\\/]/.test(p); }
         };
     )js");
 }

@@ -70,6 +70,7 @@ std::shared_ptr<NativePopup> NativePopup::show(
     win_cfg.override_redirect = true;
     win_cfg.resizable         = false;
     win_cfg.transparent       = true;
+    win_cfg.mode              = WindowMode::Popup;
 
     SurfaceHost* host = shell_app ? shell_app->addPopup(parent_host, win_cfg, content)
                                   : main_app->addPopup(parent_host, win_cfg, content);
@@ -81,6 +82,18 @@ std::shared_ptr<NativePopup> NativePopup::show(
 
     host->setAutoDismiss(options.auto_dismiss);
     popup->host_ = host;
+
+    std::weak_ptr<NativePopup> weak_popup = popup;
+    host->onClose().connect([weak_popup]() {
+        if (auto p = weak_popup.lock()) {
+            p->host_ = nullptr;
+            if (p->options_.on_close) {
+                auto cb = std::move(p->options_.on_close);
+                cb();
+            }
+        }
+    });
+
     return popup;
 }
 

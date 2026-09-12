@@ -13,6 +13,11 @@
 #include <filesystem>
 #include <iostream>
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 namespace enki::web {
 namespace fs = ::std::filesystem;
 
@@ -41,8 +46,12 @@ bool CefGlobal::ensure_initialized(int argc, char* argv[], const std::string& su
     if (initialized_.load(std::memory_order_acquire)) return true;
     if (shutdown_called_.load()) return false;
 
-    // Pass real argc / argv to Chromium
+    // Pass real argc / argv to Chromium (or hInstance on Windows)
+#if defined(_WIN32)
+    CefMainArgs main_args(::GetModuleHandleW(nullptr));
+#else
     CefMainArgs main_args(argc, argv);
+#endif
 
     CefSettings settings;
     settings.no_sandbox              = true;
@@ -52,12 +61,37 @@ bool CefGlobal::ensure_initialized(int argc, char* argv[], const std::string& su
     settings.multi_threaded_message_loop  = false;
     settings.command_line_args_disabled   = false;
 
+    // ── Locate Application & Executable Directory ──
+    fs::path exe_dir;
+#if defined(_WIN32)
+    wchar_t exe_buf[MAX_PATH] = {0};
+    if (GetModuleFileNameW(nullptr, exe_buf, MAX_PATH) > 0) {
+        exe_dir = fs::path(exe_buf).parent_path();
+    }
+#else
+    std::error_code ec_exe;
+    exe_dir = fs::canonical("/proc/self/exe", ec_exe).parent_path();
+#endif
+
     // ── Locate CEF Resources and Locales ──
-    std::vector<fs::path> res_candidates = {
-        "web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources",
-        "../web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources",
-        "/home/x/Work/enki/web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources"
-    };
+    std::vector<fs::path> res_candidates;
+    if (!exe_dir.empty()) {
+        res_candidates.push_back(exe_dir);
+        res_candidates.push_back(exe_dir / "Resources");
+    }
+#if defined(_WIN32)
+    res_candidates.push_back("modules/web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_windows64_minimal/Resources");
+    res_candidates.push_back("../modules/web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_windows64_minimal/Resources");
+    res_candidates.push_back("web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_windows64_minimal/Resources");
+    res_candidates.push_back("Resources");
+    res_candidates.push_back(".");
+#else
+    res_candidates.push_back("modules/web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources");
+    res_candidates.push_back("../modules/web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources");
+    res_candidates.push_back("web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources");
+    res_candidates.push_back("../web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources");
+    res_candidates.push_back("/home/x/Work/enki/web_technology/cef_binary/cef_binary_144.0.34+g8fc21c8+chromium-144.0.7559.261_linux64_minimal/Resources");
+#endif
 
     for (const auto& p : res_candidates) {
         if (fs::exists(p / "icudtl.dat")) {
@@ -73,23 +107,48 @@ bool CefGlobal::ensure_initialized(int argc, char* argv[], const std::string& su
     if (!subprocess_path.empty()) {
         CefString(&settings.browser_subprocess_path) = subprocess_path;
     } else {
-        std::vector<fs::path> sub_candidates = {
-            "build_web_test/web_technology/subprocess/enki_cef_subprocess",
-            "../build_web_test/web_technology/subprocess/enki_cef_subprocess",
-            "web_technology/subprocess/enki_cef_subprocess",
-            "enki_cef_subprocess"
-        };
+        std::vector<fs::path> sub_candidates;
+
+        const std::string sub_name =
+#if defined(_WIN32)
+            "enki_cef_subprocess.exe";
+#else
+            "enki_cef_subprocess";
+#endif
+
+        if (!exe_dir.empty()) {
+            sub_candidates.push_back(exe_dir / sub_name);
+            sub_candidates.push_back(exe_dir / ".." / "modules" / "web_technology" / "subprocess" / sub_name);
+            sub_candidates.push_back(exe_dir / ".." / ".." / "modules" / "web_technology" / "subprocess" / sub_name);
+            sub_candidates.push_back(exe_dir / "modules" / "web_technology" / "subprocess" / sub_name);
+        }
+
+        sub_candidates.push_back(fs::path("build-Win") / "examples" / sub_name);
+        sub_candidates.push_back(fs::path("build-Win") / "modules" / "web_technology" / "subprocess" / sub_name);
+        sub_candidates.push_back(fs::path("build_web") / "modules" / "web_technology" / "subprocess" / sub_name);
+        sub_candidates.push_back(fs::path("build") / "modules" / "web_technology" / "subprocess" / sub_name);
+        sub_candidates.push_back(fs::path("modules") / "web_technology" / "subprocess" / sub_name);
+        sub_candidates.push_back(sub_name);
+
         for (const auto& sp : sub_candidates) {
-            if (fs::exists(sp)) {
-                CefString(&settings.browser_subprocess_path) = fs::absolute(sp).string();
+            std::error_code err;
+            if (fs::exists(sp, err)) {
+                std::string abs_path = fs::absolute(sp).string();
+                CefString(&settings.browser_subprocess_path) = abs_path;
+                std::cout << "[EnkiWebHost] Subprocess helper configured: " << abs_path << "\n";
                 break;
             }
         }
     }
 
     // ── Cache Path ──
+#if defined(_WIN32)
+    const char* localappdata = getenv("LOCALAPPDATA");
+    std::string cache_dir = localappdata ? (std::string(localappdata) + "\\enki_web_cache") : "enki_web_cache";
+#else
     const char* home = getenv("HOME");
     std::string cache_dir = home ? (std::string(home) + "/.cache/enki_web") : "/tmp/enki_web_cache";
+#endif
     try { fs::create_directories(cache_dir); } catch (...) {}
     CefString(&settings.root_cache_path) = cache_dir;
     CefString(&settings.cache_path)      = cache_dir;
@@ -221,15 +280,30 @@ void CefBridge::create_browser(const BackendConfig& cfg)
         // Let CEF create and manage its native top-level window directly.
         // Use Alloy style to render pure web content without the Chromium browser UI
         // (no tabs, address bar, or navigation buttons — like Electron/Tauri).
+#if defined(_WIN32)
+        std::string wtitle = cfg.window_title.empty() ? "Enki Web Host" : cfg.window_title;
+        CefString wname(wtitle);
+        window_info.SetAsPopup(nullptr, wname);
+        window_info.bounds.x      = CW_USEDEFAULT;
+        window_info.bounds.y      = CW_USEDEFAULT;
+        window_info.bounds.width  = cfg.width;
+        window_info.bounds.height = cfg.height;
+        window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
+#else
         window_info.bounds.x      = 0;
         window_info.bounds.y      = 0;
         window_info.bounds.width  = cfg.width;
         window_info.bounds.height = cfg.height;
         CefString(&window_info.window_name) = cfg.window_title.empty() ? "Enki Web Host" : cfg.window_title;
         window_info.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
+#endif
     } else {
         // ── Offscreen (OSR) — for Enki Canvas embedding ───────
+#if defined(_WIN32)
+        window_info.SetAsWindowless(nullptr);
+#else
         window_info.SetAsWindowless(0);
+#endif
     }
 
     CefBrowserSettings browser_settings;

@@ -93,11 +93,27 @@ elif is_windows
 
   pulse_dep        = dependency('libpulse',        required : false)
   pulse_simple_dep = dependency('libpulse-simple', required : false)
-  avcodec_dep      = dependency('libavcodec',      required : false)
-  avformat_dep     = dependency('libavformat',     required : false)
-  avutil_dep       = dependency('libavutil',       required : false)
-  swscale_dep      = dependency('libswscale',      required : false)
-  swresample_dep   = dependency('libswresample',   required : false)
+  ffmpeg_win_dir = meson.current_source_dir() + '/core/ffmpeg-windows/lib'
+  ffmpeg_inc_dir = include_directories('core/ffmpeg-windows/include')
+  avcodec_lib    = cpp.find_library('avcodec',    dirs : [ffmpeg_win_dir], required : false)
+  avformat_lib   = cpp.find_library('avformat',   dirs : [ffmpeg_win_dir], required : false)
+  avutil_lib     = cpp.find_library('avutil',     dirs : [ffmpeg_win_dir], required : false)
+  swscale_lib    = cpp.find_library('swscale',    dirs : [ffmpeg_win_dir], required : false)
+  swresample_lib = cpp.find_library('swresample', dirs : [ffmpeg_win_dir], required : false)
+
+  if avcodec_lib.found()
+    avcodec_dep    = declare_dependency(dependencies : avcodec_lib, include_directories : ffmpeg_inc_dir)
+    avformat_dep   = declare_dependency(dependencies : avformat_lib, include_directories : ffmpeg_inc_dir)
+    avutil_dep     = declare_dependency(dependencies : avutil_lib, include_directories : ffmpeg_inc_dir)
+    swscale_dep    = declare_dependency(dependencies : swscale_lib, include_directories : ffmpeg_inc_dir)
+    swresample_dep = declare_dependency(dependencies : swresample_lib, include_directories : ffmpeg_inc_dir)
+  else
+    avcodec_dep    = dependency('', required : false)
+    avformat_dep   = dependency('', required : false)
+    avutil_dep     = dependency('', required : false)
+    swscale_dep    = dependency('', required : false)
+    swresample_dep = dependency('', required : false)
+  endif
   va_dep           = dependency('libva',           required : false)
   va_drm_dep       = dependency('libva-drm',       required : false)
   protocol_dep     = declare_dependency()
@@ -244,6 +260,14 @@ elif is_windows
   run_command(
     'cmd', '/c',
     'copy /Y "' + icu_dat_src + '" "' + meson.current_build_dir() + '\\icudtl.dat"',
+    check : false,
+  )
+
+  # ── FFmpeg DLLs required by enki_video / video_player_demo ────────────────
+  ffmpeg_dll_src = meson.current_source_dir() + '\\core\\ffmpeg-windows\\bin\\*.dll'
+  run_command(
+    'cmd', '/c',
+    'copy /Y "' + ffmpeg_dll_src + '" "' + meson.current_build_dir() + '\\"',
     check : false,
   )
 else
@@ -599,7 +623,7 @@ endif
 # ============================================================
 # Audio Subsystem (Capture & FFT DSP Analyzer)
 # ============================================================
-if pulse_dep.found()
+if pulse_dep.found() or host_machine.system() == 'windows'
   subdir('modules/audio')
   enki_deps += audio_dep
   enki_sources += files('src/widgets/audio_waveform.cpp')

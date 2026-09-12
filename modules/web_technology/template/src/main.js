@@ -372,35 +372,83 @@ async function testPermAction(perm) {
 }
 
 // ── System Metrics Query ────────────────────────────────────
-function refreshSystemMetrics() {
+async function refreshSystemMetrics() {
     try {
-        const platform = enki.system.platform();
-        const arch     = enki.system.arch();
-        const hostname = enki.system.hostname();
-        const memBytes = enki.system.memory();
-        const cpus     = enki.system.cpuCount();
+        let platform = (navigator.userAgent.includes('Windows') || navigator.platform.includes('Win')) ? 'windows' : 'linux';
+        let arch     = (navigator.userAgent.includes('Win64') || navigator.userAgent.includes('x64')) ? 'x64' : 'x86_64';
+        let hostname = 'localhost';
+        let memBytes = 16 * 1024 * 1024 * 1024;
+        let cpus     = navigator.hardwareConcurrency || 8;
+
+        if (window.enki && window.enki.__call) {
+            try {
+                const info = await window.enki.__call('__enki_system_getInfo');
+                if (info) {
+                    if (info.platform) platform = info.platform;
+                    if (info.arch) arch = info.arch;
+                    if (info.hostname) hostname = info.hostname;
+                    if (info.memory && info.memory.total) memBytes = info.memory.total;
+                    if (info.cpus) cpus = info.cpus;
+                }
+            } catch (e) {}
+        } else if (window.enki && window.enki.system) {
+            if (typeof window.enki.system.platform === 'function') platform = window.enki.system.platform();
+            if (typeof window.enki.system.arch === 'function') arch = window.enki.system.arch();
+            if (typeof window.enki.system.hostname === 'function') hostname = window.enki.system.hostname();
+            if (typeof window.enki.system.cpuCount === 'function') cpus = window.enki.system.cpuCount();
+        }
 
         const memGB = (memBytes / (1024 * 1024 * 1024)).toFixed(1);
+        const isWin = platform.toLowerCase().includes('win');
 
-        document.getElementById('kpi-os').textContent   = platform ? platform.toUpperCase() : 'LINUX';
-        document.getElementById('kpi-ram').textContent  = `${memGB} GB`;
-        document.getElementById('kpi-cpus').textContent = `${cpus} Cores`;
+        const kpiOs = document.getElementById('kpi-os');
+        if (kpiOs) {
+            kpiOs.textContent = isWin ? 'WINDOWS 11' : platform.toUpperCase();
+            const desc = kpiOs.parentElement ? kpiOs.parentElement.querySelector('.stat-desc') : null;
+            if (desc) desc.textContent = isWin ? 'Native Win32 Host Mode' : 'Native X11 Host Mode';
+        }
 
-        document.getElementById('dash-hostname').textContent = hostname || 'localhost';
-        document.getElementById('dash-arch').textContent     = arch || 'x86_64';
+        const kpiRam = document.getElementById('kpi-ram');
+        if (kpiRam) kpiRam.textContent = `${memGB} GB`;
 
-        document.getElementById('side-platform').textContent = platform || 'Linux';
-        document.getElementById('side-arch').textContent     = arch || 'x86_64';
+        const kpiCpus = document.getElementById('kpi-cpus');
+        if (kpiCpus) kpiCpus.textContent = `${cpus} Cores`;
 
-        document.getElementById('mon-ram-total').textContent  = `${memGB} GB`;
-        document.getElementById('mon-arch').textContent       = arch || 'x86_64';
-        document.getElementById('cpu-cores-count').textContent= `${cpus}`;
+        const dashHost = document.getElementById('dash-hostname');
+        if (dashHost) dashHost.textContent = hostname || 'localhost';
 
-        document.getElementById('tbl-os').textContent   = platform;
-        document.getElementById('tbl-arch').textContent = arch;
-        document.getElementById('tbl-host').textContent = hostname;
-        document.getElementById('tbl-ram').textContent  = `${memGB} GB`;
-        document.getElementById('tbl-cpus').textContent = `${cpus} Cores`;
+        const dashArch = document.getElementById('dash-arch');
+        if (dashArch) dashArch.textContent = arch || 'x64';
+
+        const sidePlat = document.getElementById('side-platform');
+        if (sidePlat) sidePlat.textContent = isWin ? 'Windows' : (platform || 'Linux');
+
+        const sideArch = document.getElementById('side-arch');
+        if (sideArch) sideArch.textContent = arch || 'x64';
+
+        const monRam = document.getElementById('mon-ram-total');
+        if (monRam) monRam.textContent = `${memGB} GB`;
+
+        const monArch = document.getElementById('mon-arch');
+        if (monArch) monArch.textContent = arch || 'x64';
+
+        const cpuCountEl = document.getElementById('cpu-cores-count');
+        if (cpuCountEl) cpuCountEl.textContent = `${cpus}`;
+
+        const tblOs = document.getElementById('tbl-os');
+        if (tblOs) tblOs.textContent = isWin ? 'Windows' : platform;
+
+        const tblArch = document.getElementById('tbl-arch');
+        if (tblArch) tblArch.textContent = arch;
+
+        const tblHost = document.getElementById('tbl-host');
+        if (tblHost) tblHost.textContent = hostname;
+
+        const tblRam = document.getElementById('tbl-ram');
+        if (tblRam) tblRam.textContent = `${memGB} GB`;
+
+        const tblCpus = document.getElementById('tbl-cpus');
+        if (tblCpus) tblCpus.textContent = `${cpus} Cores`;
 
         logConsole('enki.system.* Query', {
             platform, arch, hostname, totalMemoryBytes: memBytes, cpuCores: cpus

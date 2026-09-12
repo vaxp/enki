@@ -9,7 +9,9 @@
 #include "InputForwarder.hpp"
 #include <include/cef_browser.h>
 #include <include/cef_base.h>
+#if !defined(_WIN32)
 #include <X11/keysym.h>
+#endif
 
 namespace enki::web {
 
@@ -125,6 +127,7 @@ cef_mouse_button_type_t InputForwarder::toCefButton(WebMouseButton btn)
     }
 }
 
+#if !defined(_WIN32)
 // ── X11 keysym → Windows VK ────────────────────────────────────
 
 int InputForwarder::xKeysymToWindowsVK(unsigned int ks)
@@ -163,5 +166,6 @@ int InputForwarder::xKeysymToWindowsVK(unsigned int ks)
             return 0;
     }
 }
+#endif // !defined(_WIN32)
 
 } // namespace enki::web

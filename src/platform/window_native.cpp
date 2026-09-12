@@ -103,6 +103,9 @@ struct Window::Impl {
             win32_window.reset();
             return false;
         }
+        win32_window->onClose().connect([this]() {
+            if (window) window->onClose().emit();
+        });
         win32_window->onFocus().connect([this](bool f) {
             if (window) window->onFocus().emit(f);
         });

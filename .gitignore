@@ -16,9 +16,10 @@ meson-logs/
 compile_commands.json
 *.p/
 
-# CEF Binary Distributions (Heavy binary assets - download on setup)
+# CEF & FFmpeg Binary Distributions (Heavy binary assets - download on setup)
 modules/web_technology/cef_binary/
 modules/web_technology/cef_binary/cef_binary_*/build/
+core/ffmpeg-windows/
 *.tar.bz2
 *.tar.gz
 *.tar.xz
@@ -35,6 +36,8 @@ modules/web_technology/cef_binary/cef_binary_*/build/
 
 # Runtime Caches & Temporary Files
 .cache/
+scratch/
+cef_b/
 *.log
 *.tmp
 *.swp

@@ -558,22 +558,12 @@ int main() {
     config.app_id      = "org.enki.cubit_counter";
     config.vsync       = true;
     config.show_performance_overlay = true;
-    config.clear_color = 0xFF0B0F19;
+    config.width       = 460;
+    config.height      = 720;
+    config.resizable   = true;
+    config.enable_csd  = true; // Enable Client-Side Decorations
+    config.clear_color = 0x0000004D; // Translucent dark glass native surface
 
-    auto screen = enki::getScreenSize();
-    if (screen.width > 0 && screen.height > 0) {
-        // Mobile / Android: adapt to native screen dimensions
-        config.width       = static_cast<int>(screen.width);
-        config.height      = static_cast<int>(screen.height);
-        config.resizable   = false;
-        config.enable_csd  = false;
-    } else {
-        // Desktop default window size
-        config.width       = 520;
-        config.height      = 640;
-        config.resizable   = false;
-        config.enable_csd  = false;
-    }
 
     return runApp(std::make_shared<CounterApp>(), config);
 }
