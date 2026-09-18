@@ -206,9 +206,11 @@ public:
     void* getWin32Backend() const;
     void* getAndroidBackend() const;  ///< Returns AndroidPlatformBackend* when compiled for Android, nullptr otherwise.
     void* getDRMBackend() const;      ///< Returns DRMPlatformBackend* when compiled for DRM, nullptr otherwise.
+    void* getWasmBackend() const;     ///< Returns WasmPlatformBackend* when compiled for WebAssembly, nullptr otherwise.
     [[nodiscard]] bool isWayland() const;
     [[nodiscard]] bool isAndroid() const;  ///< Returns true when running on Android.
     [[nodiscard]] bool isDRM() const;      ///< Returns true when running on DRM/KMS.
+    [[nodiscard]] bool isWasm() const;     ///< Returns true when running on WebAssembly/Emscripten.
 
     /// Register/unregister active window for event dispatch
     void registerWindow(Window* win);

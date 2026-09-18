@@ -34,6 +34,15 @@ core/ffmpeg-windows/
 *.dll
 *.exe
 
+# Whitelist Prebuilt Skia Release Binaries
+!core/skia/out/
+!core/skia/out/Release-wasm/
+!core/skia/out/Release-wasm/*.a
+!core/skia/out/Release-x64/*.a
+!core/Skia-Windows/out/
+!core/Skia-Windows/out/Release-x64/
+!core/Skia-Windows/out/Release-x64/*
+
 # Runtime Caches & Temporary Files
 .cache/
 scratch/

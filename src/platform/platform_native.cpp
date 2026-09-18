@@ -9,6 +9,8 @@
 #include "enki/platform/android/android_platform.hpp"
 #elif defined(_WIN32)
 #include "enki/platform/windows/win32_platform.hpp"
+#elif defined(__EMSCRIPTEN__)
+#include "enki/platform/wasm/wasm_platform.hpp"
 #else
 #include "enki/platform/x11/x11_platform.hpp"
 #if defined(ENKI_HAS_WAYLAND)
@@ -48,6 +50,8 @@ struct Platform::Impl {
     std::unique_ptr<android::AndroidPlatformBackend> android_backend;
 #elif defined(_WIN32)
     std::unique_ptr<win32::Win32PlatformBackend> win32;
+#elif defined(__EMSCRIPTEN__)
+    std::unique_ptr<wasm::WasmPlatformBackend> wasm_backend;
 #else
     std::unique_ptr<wayland::WaylandPlatformBackend> wayland;
     std::unique_ptr<x11::X11PlatformBackend>         x11;
@@ -83,6 +87,13 @@ struct Platform::Impl {
         win32 = std::make_unique<win32::Win32PlatformBackend>(owner);
         if (!win32->init()) {
             win32.reset();
+            return false;
+        }
+        return true;
+#elif defined(__EMSCRIPTEN__)
+        wasm_backend = std::make_unique<wasm::WasmPlatformBackend>(owner);
+        if (!wasm_backend->init()) {
+            wasm_backend.reset();
             return false;
         }
         return true;
@@ -154,6 +165,8 @@ struct Platform::Impl {
         if (android_backend) { android_backend->shutdown(); android_backend.reset(); }
 #elif defined(_WIN32)
         if (win32)   { win32->shutdown();   win32.reset(); }
+#elif defined(__EMSCRIPTEN__)
+        if (wasm_backend) { wasm_backend->shutdown(); wasm_backend.reset(); }
 #else
         if (wayland) { wayland->shutdown(); wayland.reset(); }
         if (x11)     { x11->shutdown();     x11.reset(); }
@@ -164,7 +177,7 @@ struct Platform::Impl {
     }
 
     bool isWayland() const {
-#if defined(__ANDROID__) || defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
         return false;
 #else
         return wayland != nullptr;
@@ -180,10 +193,18 @@ struct Platform::Impl {
     }
 
     bool isDRM() const {
-#if defined(__ANDROID__) || defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
         return false;
 #elif defined(ENKI_HAS_DRM)
         return drm != nullptr;
+#else
+        return false;
+#endif
+    }
+
+    bool isWasm() const {
+#if defined(__EMSCRIPTEN__)
+        return wasm_backend != nullptr;
 #else
         return false;
 #endif
@@ -227,6 +248,9 @@ bool Platform::pollEvents() {
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->pollEvents();
     return false;
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->pollEvents();
+    return false;
 #else
     if (impl_->wayland) return impl_->wayland->pollEvents();
     if (impl_->x11)     return impl_->x11->pollEvents();
@@ -245,6 +269,8 @@ void Platform::registerWindow(Window* w) {
     // Android has no per-window registration in the backend
 #elif defined(_WIN32)
     if (impl_->win32) impl_->win32->registerWindow(w);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) impl_->wasm_backend->registerWindow(w);
 #else
     if (impl_->x11) impl_->x11->registerWindow(w);
 #if defined(ENKI_HAS_DRM)
@@ -260,6 +286,8 @@ void Platform::unregisterWindow(Window* w) {
     // Android has no per-window registration in the backend
 #elif defined(_WIN32)
     if (impl_->win32) impl_->win32->unregisterWindow(w);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) impl_->wasm_backend->unregisterWindow(w);
 #else
     if (impl_->x11) impl_->x11->unregisterWindow(w);
 #if defined(ENKI_HAS_DRM)
@@ -280,6 +308,8 @@ std::string Platform::getClipboardText(ClipboardType type) const {
     if (impl_->android_backend) return impl_->android_backend->getClipboardText(type);
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardText(type);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getClipboardText(type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardData(type).getText();
     if (impl_->x11)     return impl_->x11->getClipboardText(type);
@@ -293,6 +323,8 @@ void Platform::setClipboardData(const ClipboardData& data, ClipboardType type) {
     if (impl_->android_backend) impl_->android_backend->setClipboardData(data, type);
 #elif defined(_WIN32)
     if (impl_->win32) impl_->win32->setClipboardData(data, type);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) impl_->wasm_backend->setClipboardData(data, type);
 #else
     if (impl_->wayland) impl_->wayland->setClipboardData(data, type);
     if (impl_->x11)     impl_->x11->setClipboardData(data, type);
@@ -304,6 +336,8 @@ ClipboardData Platform::getClipboardData(ClipboardType type) const {
     if (impl_->android_backend) return impl_->android_backend->getClipboardData(type);
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardData(type);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getClipboardData(type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardData(type);
     if (impl_->x11)     return impl_->x11->getClipboardData(type);
@@ -318,6 +352,8 @@ std::vector<uint8_t> Platform::getClipboardDataForMime(std::string_view mime_typ
     if (impl_->android_backend) return impl_->android_backend->getClipboardDataForMime(mime_type, type);
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardDataForMime(mime_type, type);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getClipboardDataForMime(mime_type, type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardDataForMime(mime_type, type);
     if (impl_->x11)     return impl_->x11->getClipboardDataForMime(mime_type, type);
@@ -330,6 +366,8 @@ std::vector<std::string> Platform::getClipboardFormats(ClipboardType type) const
     if (impl_->android_backend) return impl_->android_backend->getClipboardFormats(type);
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getClipboardFormats(type);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getClipboardFormats(type);
 #else
     if (impl_->wayland) return impl_->wayland->getClipboardFormats(type);
     if (impl_->x11)     return impl_->x11->getClipboardFormats(type);
@@ -342,6 +380,8 @@ bool Platform::hasClipboardFormat(std::string_view mime_type, ClipboardType type
     if (impl_->android_backend) return impl_->android_backend->hasClipboardFormat(mime_type, type);
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->hasClipboardFormat(mime_type, type);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->hasClipboardFormat(mime_type, type);
 #else
     if (impl_->wayland) return impl_->wayland->hasClipboardFormat(mime_type, type);
     if (impl_->x11)     return impl_->x11->hasClipboardFormat(mime_type, type);
@@ -351,8 +391,8 @@ bool Platform::hasClipboardFormat(std::string_view mime_type, ClipboardType type
 
 // ── Drag & Drop Subsystem ────────────────────────────────────
 bool Platform::startDrag(const DragData& data, DragAction actions) {
-#if defined(__ANDROID__)
-    return false;  // DnD not supported on Android
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+    return false;  // DnD not supported on Android/Wasm
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->startDrag(data, actions);
 #else
@@ -364,8 +404,8 @@ bool Platform::startDrag(const DragData& data, DragAction actions) {
 
 // ── Foreign Toplevel Subsystem ───────────────────────────────
 std::vector<std::shared_ptr<ToplevelWindow>> Platform::getToplevels() const {
-#if defined(__ANDROID__)
-    return {};  // No window manager on Android
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+    return {};  // No foreign window manager on Android/Wasm
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getToplevels();
 #else
@@ -376,8 +416,8 @@ std::vector<std::shared_ptr<ToplevelWindow>> Platform::getToplevels() const {
 }
 
 std::shared_ptr<ToplevelWindow> Platform::getActiveToplevel() const {
-#if defined(__ANDROID__)
-    return nullptr;  // No window manager on Android
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+    return nullptr;  // No foreign window manager on Android/Wasm
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getActiveToplevel();
 #else
@@ -393,6 +433,8 @@ std::vector<std::shared_ptr<Output>> Platform::getOutputs() const {
     if (impl_->android_backend) return impl_->android_backend->getOutputs();
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getOutputs();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getOutputs();
 #else
     if (impl_->wayland) return impl_->wayland->getOutputs();
     if (impl_->x11)     return impl_->x11->getOutputs();
@@ -408,6 +450,8 @@ std::shared_ptr<Output> Platform::getOutputByName(std::string_view name) const {
     if (impl_->android_backend) return impl_->android_backend->getOutputByName(name);
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getOutputByName(name);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getOutputByName(name);
 #else
     if (impl_->wayland) return impl_->wayland->getOutputByName(name);
     if (impl_->x11)     return impl_->x11->getOutputByName(name);
@@ -423,6 +467,8 @@ std::shared_ptr<Output> Platform::getPrimaryOutput() const {
     if (impl_->android_backend) return impl_->android_backend->getPrimaryOutput();
 #elif defined(_WIN32)
     if (impl_->win32) return impl_->win32->getPrimaryOutput();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) return impl_->wasm_backend->getPrimaryOutput();
 #else
     if (impl_->wayland) return impl_->wayland->getPrimaryOutput();
     if (impl_->x11)     return impl_->x11->getPrimaryOutput();
@@ -439,6 +485,8 @@ void Platform::setCursor(SystemCursor cursor) {
     // No cursor on Android — silently ignore
 #elif defined(_WIN32)
     if (impl_->win32) impl_->win32->setCursor(cursor);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_backend) impl_->wasm_backend->setCursor(cursor);
 #else
     if (impl_->wayland) impl_->wayland->setCursor(cursor);
     if (impl_->x11)     impl_->x11->setCursor(cursor);
@@ -456,7 +504,7 @@ double Platform::getTime() const {
 
 // ── Backend accessors ─────────────────────────────────────────────
 void* Platform::getNativeDisplay() const {
-#if defined(__ANDROID__) || defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getDisplay();
@@ -468,7 +516,7 @@ void* Platform::getEGLDisplay() const {
 #if defined(__ANDROID__)
     if (impl_->android_backend) return (void*)impl_->android_backend->getEGLDisplay();
     return nullptr;
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLDisplay();
@@ -483,7 +531,7 @@ void* Platform::getEGLConfig() const {
 #if defined(__ANDROID__)
     if (impl_->android_backend) return (void*)impl_->android_backend->getEGLConfig();
     return nullptr;
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLConfig();
@@ -498,7 +546,7 @@ void* Platform::getEGLContext() const {
 #if defined(__ANDROID__)
     if (impl_->android_backend) return (void*)impl_->android_backend->getEGLContext();
     return nullptr;
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     if (impl_->wayland) return (void*)impl_->wayland->getEGLContext();
@@ -520,6 +568,7 @@ EdgeInsets Platform::getSafeAreaInsets() const {
 bool  Platform::isWayland()        const { return impl_->isWayland(); }
 bool  Platform::isAndroid()        const { return impl_->isAndroid(); }
 bool  Platform::isDRM()            const { return impl_->isDRM(); }
+bool  Platform::isWasm()           const { return impl_->isWasm(); }
 
 void* Platform::getDRMBackend() const {
 #if defined(ENKI_HAS_DRM)
@@ -536,15 +585,23 @@ void* Platform::getAndroidBackend() const {
     return nullptr;
 #endif
 }
+
+void* Platform::getWasmBackend() const {
+#if defined(__EMSCRIPTEN__)
+    return (void*)impl_->wasm_backend.get();
+#else
+    return nullptr;
+#endif
+}
 void* Platform::getWaylandBackend() const {
-#if defined(__ANDROID__) || defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     return (void*)impl_->wayland.get();
 #endif
 }
 void* Platform::getX11Backend()    const {
-#if defined(__ANDROID__) || defined(_WIN32)
+#if defined(__ANDROID__) || defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     return (void*)impl_->x11.get();

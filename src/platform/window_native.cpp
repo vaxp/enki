@@ -12,6 +12,9 @@
 #elif defined(_WIN32)
 #include "enki/platform/windows/win32_window.hpp"
 #include "enki/platform/windows/win32_platform.hpp"
+#elif defined(__EMSCRIPTEN__)
+#include "enki/platform/wasm/wasm_window.hpp"
+#include "enki/platform/wasm/wasm_platform.hpp"
 #else
 #include "enki/platform/x11/x11_platform.hpp"
 #include "enki/platform/x11/x11_window.hpp"
@@ -43,6 +46,8 @@ struct Window::Impl {
     std::unique_ptr<android::AndroidSurface> android_surface;
 #elif defined(_WIN32)
     std::unique_ptr<win32::Win32Window>           win32_window;
+#elif defined(__EMSCRIPTEN__)
+    std::unique_ptr<wasm::WasmWindow>             wasm_window;
 #else
     std::unique_ptr<x11::X11Window>               x11;
 #if defined(ENKI_HAS_WAYLAND)
@@ -129,6 +134,38 @@ struct Window::Impl {
         });
         current_width  = cfg.width;
         current_height = cfg.height;
+        return true;
+#elif defined(__EMSCRIPTEN__)
+        auto* wb = static_cast<wasm::WasmPlatformBackend*>(plat.getWasmBackend());
+        if (!wb) {
+            std::cerr << "[ENKI Window] Wasm backend unavailable\n";
+            return false;
+        }
+
+        wasm_window = std::make_unique<wasm::WasmWindow>(*wb);
+        if (!wasm_window->init(cfg)) {
+            wasm_window.reset();
+            return false;
+        }
+        wasm_window->onClose().connect([this]() {
+            if (window) window->onClose().emit();
+        });
+        wasm_window->onFocus().connect([this](bool f) {
+            if (window) window->onFocus().emit(f);
+        });
+        wasm_window->onMaximized().connect([this](bool m) {
+            if (window) window->onMaximized().emit(m);
+        });
+        wasm_window->onStateChanged().connect([this](WindowState s) {
+            if (window) window->onStateChanged().emit(s);
+        });
+        wasm_window->onResize().connect([this](int w, int h) {
+            current_width  = w;
+            current_height = h;
+            if (window) window->onResize().emit(w, h);
+        });
+        current_width  = static_cast<int>(wasm_window->getSize().width);
+        current_height = static_cast<int>(wasm_window->getSize().height);
         return true;
 #else
 #if defined(ENKI_HAS_WAYLAND)
@@ -265,6 +302,8 @@ struct Window::Impl {
         if (android_surface) { android_surface.reset(); }
 #elif defined(_WIN32)
         if (win32_window) { win32_window.reset(); }
+#elif defined(__EMSCRIPTEN__)
+        if (wasm_window) { wasm_window.reset(); }
 #else
         if (x11) { x11.reset(); }
 #if defined(ENKI_HAS_WAYLAND)
@@ -313,6 +352,8 @@ void Window::setTitle(std::string_view title) {
     if (impl_->android_surface) impl_->android_surface->setTitle(title);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setTitle(title);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setTitle(title);
 #else
     if (impl_->x11) impl_->x11->setTitle(title);
 #if defined(ENKI_HAS_WAYLAND)
@@ -329,6 +370,8 @@ void Window::setSize(int w, int h) {
     if (impl_->android_surface) impl_->android_surface->setSize(w, h);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setSize(w, h);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setSize(w, h);
 #else
     if (impl_->x11) impl_->x11->setSize(w, h);
 #if defined(ENKI_HAS_WAYLAND)
@@ -348,6 +391,8 @@ void Window::setPosition(int x, int y) {
     if (impl_->android_surface) impl_->android_surface->setPosition(x, y);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setPosition(x, y);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setPosition(x, y);
 #else
     if (impl_->x11) impl_->x11->setPosition(x, y);
 #if defined(ENKI_HAS_WAYLAND)
@@ -364,6 +409,8 @@ void Window::setBorderless(bool b) {
     if (impl_->android_surface) impl_->android_surface->setBorderless(b);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setBorderless(b);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setBorderless(b);
 #else
     if (impl_->x11) impl_->x11->setBorderless(b);
 #endif
@@ -374,6 +421,8 @@ void Window::setAlwaysOnTop(bool t) {
     if (impl_->android_surface) impl_->android_surface->setAlwaysOnTop(t);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setAlwaysOnTop(t);
+#elif defined(__EMSCRIPTEN__)
+    // Not applicable in web browser
 #else
     if (impl_->x11) impl_->x11->setAlwaysOnTop(t);
 #endif
@@ -384,6 +433,8 @@ void Window::setBlurBehind(bool enable) {
     if (impl_->android_surface) impl_->android_surface->setBlurBehind(enable);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setBlurBehind(enable);
+#elif defined(__EMSCRIPTEN__)
+    // Not applicable in web browser
 #else
     if (impl_->x11) impl_->x11->setBlurBehind(enable);
 #endif
@@ -395,6 +446,8 @@ Size Window::getSize() const {
     if (impl_->android_surface) return impl_->android_surface->getSize();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getSize();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->getSize();
 #else
     if (impl_->x11) return impl_->x11->getSize();
 #if defined(ENKI_HAS_WAYLAND)
@@ -413,6 +466,8 @@ Size Window::getDrawableSize() const {
     if (impl_->android_surface) return impl_->android_surface->getDrawableSize();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getDrawableSize();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->getDrawableSize();
 #else
     if (impl_->x11) return impl_->x11->getDrawableSize();
 #if defined(ENKI_HAS_WAYLAND)
@@ -431,6 +486,8 @@ float Window::getDpiScale() const {
     if (impl_->android_surface) return impl_->android_surface->getDpiScale();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getDpiScale();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->getDpiScale();
 #else
     if (impl_->x11) return impl_->x11->getDpiScale();
 #if defined(ENKI_HAS_WAYLAND)
@@ -449,6 +506,8 @@ void Window::makeCurrent() {
     if (impl_->android_surface) impl_->android_surface->makeCurrent();
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->makeCurrent();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->makeCurrent();
 #else
     if (impl_->x11) impl_->x11->makeCurrent();
 #if defined(ENKI_HAS_WAYLAND)
@@ -466,6 +525,8 @@ void Window::swapBuffers() {
     if (impl_->android_surface) impl_->android_surface->swapBuffers();
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->swapBuffers();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->swapBuffers();
 #else
     if (impl_->x11) impl_->x11->swapBuffers();
 #if defined(ENKI_HAS_WAYLAND)
@@ -483,6 +544,8 @@ void* Window::getNativeHandle() const {
     if (impl_->android_surface) return impl_->android_surface->getNativeHandle();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getNativeHandle();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->getNativeHandle();
 #else
     if (impl_->x11) return impl_->x11->getNativeHandle();
 #if defined(ENKI_HAS_WAYLAND)
@@ -500,7 +563,7 @@ void* Window::getEGLSurface() const {
 #if defined(__ANDROID__)
     if (impl_->android_surface) return impl_->android_surface->getEGLSurface();
     return nullptr;
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     if (impl_->x11) return impl_->x11->getEGLSurface();
@@ -522,6 +585,9 @@ void* Window::getEGLContext() const {
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getEGLContext();
     return nullptr;
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->getEGLContext();
+    return nullptr;
 #else
     if (impl_->x11) return impl_->x11->getEGLContext();
 #if defined(ENKI_HAS_WAYLAND)
@@ -540,6 +606,8 @@ void* Window::getBackendWindow() const {
     if (impl_->android_surface) return impl_->android_surface.get();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window.get();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window.get();
 #else
     if (impl_->x11) return impl_->x11.get();
 #if defined(ENKI_HAS_WAYLAND)
@@ -566,6 +634,8 @@ void Window::beginMove(float local_x, float local_y, int button) {
     if (impl_->android_surface) impl_->android_surface->beginMove(local_x, local_y, button);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->beginMove(local_x, local_y, button);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->beginMove(local_x, local_y, button);
 #else
     if (impl_->x11) impl_->x11->beginMove(local_x, local_y, button);
 #if defined(ENKI_HAS_WAYLAND)
@@ -579,6 +649,8 @@ void Window::beginResize(WindowEdge edge, float local_x, float local_y, int butt
     if (impl_->android_surface) impl_->android_surface->beginResize(edge, local_x, local_y, button);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->beginResize(edge, local_x, local_y, button);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->beginResize(edge, local_x, local_y, button);
 #else
     if (impl_->x11) impl_->x11->beginResize(edge, local_x, local_y, button);
 #if defined(ENKI_HAS_WAYLAND)
@@ -592,6 +664,8 @@ void Window::setMaximized(bool max) {
     if (impl_->android_surface) impl_->android_surface->setMaximized(max);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setMaximized(max);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setMaximized(max);
 #else
     if (impl_->x11) impl_->x11->setMaximized(max);
 #if defined(ENKI_HAS_WAYLAND)
@@ -605,6 +679,8 @@ void Window::setMinimized(bool min) {
     if (impl_->android_surface) impl_->android_surface->setMinimized(min);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setMinimized(min);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setMinimized(min);
 #else
     if (impl_->x11) impl_->x11->setMinimized(min);
 #if defined(ENKI_HAS_WAYLAND)
@@ -618,6 +694,8 @@ void Window::setFullscreen(bool full) {
     if (impl_->android_surface) impl_->android_surface->setFullscreen(full);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setFullscreen(full);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setFullscreen(full);
 #else
     if (impl_->x11) impl_->x11->setFullscreen(full);
 #if defined(ENKI_HAS_WAYLAND)
@@ -631,6 +709,8 @@ void Window::toggleMaximize() {
     if (impl_->android_surface) impl_->android_surface->toggleMaximize();
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->toggleMaximize();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->toggleMaximize();
 #else
     if (impl_->x11) impl_->x11->toggleMaximize();
 #if defined(ENKI_HAS_WAYLAND)
@@ -644,6 +724,8 @@ void Window::showWindowMenu(float local_x, float local_y, int button) {
     if (impl_->android_surface) impl_->android_surface->showWindowMenu(local_x, local_y, button);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->showWindowMenu(local_x, local_y, button);
+#elif defined(__EMSCRIPTEN__)
+    // Not applicable
 #else
     if (impl_->x11) impl_->x11->showWindowMenu(local_x, local_y, button);
 #if defined(ENKI_HAS_WAYLAND)
@@ -657,6 +739,8 @@ void Window::setDecorated(bool decorated) {
     if (impl_->android_surface) impl_->android_surface->setDecorated(decorated);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setDecorated(decorated);
+#elif defined(__EMSCRIPTEN__)
+    // Not applicable in canvas
 #else
     if (impl_->x11) impl_->x11->setDecorated(decorated);
 #if defined(ENKI_HAS_WAYLAND)
@@ -670,6 +754,8 @@ void Window::setWindowGeometry(int x, int y, int width, int height) {
     if (impl_->android_surface) impl_->android_surface->setWindowGeometry(x, y, width, height);
 #elif defined(_WIN32)
     if (impl_->win32_window) impl_->win32_window->setWindowGeometry(x, y, width, height);
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) impl_->wasm_window->setSize(width, height);
 #else
     if (impl_->x11) impl_->x11->setWindowGeometry(x, y, width, height);
 #if defined(ENKI_HAS_WAYLAND)
@@ -683,6 +769,8 @@ bool Window::isMaximized() const {
     if (impl_->android_surface) return impl_->android_surface->isMaximized();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isMaximized();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->isMaximized();
 #else
     if (impl_->x11) return impl_->x11->isMaximized();
 #if defined(ENKI_HAS_WAYLAND)
@@ -700,6 +788,8 @@ bool Window::isMinimized() const {
     if (impl_->android_surface) return impl_->android_surface->isMinimized();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isMinimized();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->isMinimized();
 #else
     if (impl_->x11) return impl_->x11->isMinimized();
 #if defined(ENKI_HAS_WAYLAND)
@@ -717,6 +807,8 @@ bool Window::isFullscreen() const {
     if (impl_->android_surface) return impl_->android_surface->isFullscreen();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isFullscreen();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->isFullscreen();
 #else
     if (impl_->x11) return impl_->x11->isFullscreen();
 #if defined(ENKI_HAS_WAYLAND)
@@ -734,6 +826,8 @@ bool Window::isActivated() const {
     if (impl_->android_surface) return impl_->android_surface->isActivated();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->isActivated();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->isActivated();
 #else
     if (impl_->x11) return impl_->x11->isActivated();
 #if defined(ENKI_HAS_WAYLAND)
@@ -751,6 +845,8 @@ WindowState Window::getWindowState() const {
     if (impl_->android_surface) return impl_->android_surface->getWindowState();
 #elif defined(_WIN32)
     if (impl_->win32_window) return impl_->win32_window->getWindowState();
+#elif defined(__EMSCRIPTEN__)
+    if (impl_->wasm_window) return impl_->wasm_window->getWindowState();
 #else
     if (impl_->x11) return impl_->x11->getWindowState();
 #if defined(ENKI_HAS_WAYLAND)

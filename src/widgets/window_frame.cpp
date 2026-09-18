@@ -99,6 +99,10 @@ public:
     WidgetPtr build(BuildContext& /*ctx*/) override {
         const auto* wf = static_cast<const WindowFrame*>(widget());
         const auto& p = wf->props;
+#if defined(__EMSCRIPTEN__)
+        // On WebAssembly: browser window provides frame & viewport, return content directly
+        return p.content ? p.content : container();
+#endif
         Window* win = window_;
 
 #if !defined(__ANDROID__)

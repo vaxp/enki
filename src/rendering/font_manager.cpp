@@ -2,6 +2,7 @@
 #include "enki/core/string_utils.hpp"
 #include <include/core/SkFontMgr.h>
 #include <include/core/SkTypeface.h>
+#include <include/core/SkData.h>
 #include <modules/skparagraph/include/FontCollection.h>
 #include <modules/skparagraph/include/TypefaceFontProvider.h>
 #if defined(__ANDROID__)
@@ -23,6 +24,8 @@ namespace {
             g_font_collection->setDefaultFontManager(SkFontMgr_New_Android(nullptr), "Roboto");
 #elif defined(_WIN32)
             g_font_collection->setDefaultFontManager(SkFontMgr_New_DirectWrite(), "Segoe UI");
+#elif defined(__EMSCRIPTEN__)
+            g_font_collection->setDefaultFontManager(SkFontMgr::RefDefault(), "sans-serif");
 #else
             g_font_collection->setDefaultFontManager(SkFontMgr::RefDefault());
 #endif
@@ -39,6 +42,19 @@ bool FontManager::loadFont(const std::string& path, const std::string& alias) {
     initFontCollection();
     std::string resolved = resolveAssetPath(path);
     sk_sp<SkTypeface> typeface = SkTypeface::MakeFromFile(resolved.c_str());
+    if (!typeface) {
+        return false;
+    }
+    g_custom_font_provider->registerTypeface(std::move(typeface), SkString(alias.c_str()));
+    return true;
+}
+
+bool FontManager::loadFontFromMemory(const void* data, size_t size, const std::string& alias) {
+    if (!data || size == 0) return false;
+    initFontCollection();
+    sk_sp<SkData> sk_data = SkData::MakeWithCopy(data, size);
+    if (!sk_data) return false;
+    sk_sp<SkTypeface> typeface = SkTypeface::MakeFromData(std::move(sk_data));
     if (!typeface) {
         return false;
     }

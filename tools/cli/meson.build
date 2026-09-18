@@ -1,6 +1,15 @@
 # ============================================================
-# ENKI Native CLI Tool Build Target
+# ENKI Native CLI Tool — Standalone Project
 # ============================================================
+
+project('enki-cli', 'cpp',
+  version: '0.1.0',
+  default_options: [
+    'cpp_std=c++20',
+    'warning_level=2',
+    'b_ndebug=if-release'
+  ]
+)
 
 cli_sources = files(
   'src/main.cpp',

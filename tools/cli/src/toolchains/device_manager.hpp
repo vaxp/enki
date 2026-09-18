@@ -12,6 +12,7 @@ namespace enki::cli {
 
 enum class DeviceType {
     Desktop,
+    WebBrowser,
     AndroidEmulator,
     AndroidPhysical
 };
@@ -74,6 +75,15 @@ public:
             .is_default = false
         });
 #endif
+
+        // 2. Web Browser (WebAssembly) target
+        devices.push_back({
+            .id = "wasm",
+            .name = "Web Browser (WebAssembly / WebGL 2.0)",
+            .type = DeviceType::WebBrowser,
+            .status = "ready",
+            .is_default = false
+        });
 
         // 2. Query ADB devices if ADB exists
         if (!android_tc.adb_path.empty()) {

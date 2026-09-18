@@ -526,9 +526,6 @@ public:
             std::make_shared<CounterPage>()
         );
 
-#ifdef __ANDROID__
-        return page;
-#else
         return windowFrame(WindowFrameProps{
             .content = page,
             .title = "   Demo Home Page (Cubit)",
@@ -540,7 +537,6 @@ public:
             .titlebar_inactive_background_color = 0xFF1E293B,
             .titlebar_style = TitleBarStyle::VAXPOS,
         });
-#endif
     }
     std::string_view typeName() const override { return "CounterApp"; }
 };
@@ -557,11 +553,11 @@ int main() {
     config.title       = "ENKI Counter";
     config.app_id      = "org.enki.cubit_counter";
     config.vsync       = true;
-    config.show_performance_overlay = true;
+    config.show_performance_overlay = false;
+    config.enable_csd  = true; // Enable Client-Side Decorations
     config.width       = 460;
     config.height      = 720;
     config.resizable   = true;
-    config.enable_csd  = true; // Enable Client-Side Decorations
     config.clear_color = 0x0000004D; // Translucent dark glass native surface
 
 

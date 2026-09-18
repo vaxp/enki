@@ -18,6 +18,8 @@
 #include <include/ports/SkFontMgr_android.h>
 #elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
+#elif defined(__EMSCRIPTEN__)
+// Emscripten uses custom memory fonts or SkFontMgr::RefDefault()
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
 #endif
@@ -43,6 +45,8 @@ sk_sp<SkFontMgr> getLottieFontMgr() {
         return m;
 #elif defined(_WIN32)
         return SkFontMgr_New_DirectWrite();
+#elif defined(__EMSCRIPTEN__)
+        return SkFontMgr::RefDefault();
 #else
         auto m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();

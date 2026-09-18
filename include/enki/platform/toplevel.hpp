@@ -28,6 +28,10 @@ inline WindowState operator&(WindowState a, WindowState b) {
     return static_cast<WindowState>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
 
+inline WindowState operator~(WindowState a) {
+    return static_cast<WindowState>(~static_cast<uint32_t>(a));
+}
+
 inline WindowState& operator|=(WindowState& a, WindowState b) {
     a = a | b;
     return a;

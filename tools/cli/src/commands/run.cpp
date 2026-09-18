@@ -4,7 +4,9 @@
 #include "core/process.hpp"
 #include "toolchains/msvc_detector.hpp"
 #include "toolchains/android_detector.hpp"
+#include "toolchains/wasm_detector.hpp"
 #include "packaging/android_packager.hpp"
+#include "packaging/web_packager.hpp"
 
 namespace enki::cli {
 
@@ -18,6 +20,8 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == "android" || args[i] == "--android") {
             target = "android";
+        } else if (args[i] == "wasm" || args[i] == "--wasm" || args[i] == "web" || args[i] == "--web") {
+            target = "wasm";
         } else if (args[i] == "desktop" || args[i] == "--desktop" || args[i] == "windows" || args[i] == "linux") {
             target = "desktop";
         } else if (args[i] == "drm" || args[i] == "--drm" || args[i] == "kms") {
@@ -32,6 +36,8 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
                 target = "drm";
             } else if (device_id == "desktop") {
                 target = "desktop";
+            } else if (device_id == "wasm" || device_id == "web") {
+                target = "wasm";
             } else {
                 target = "android";
             }
@@ -53,7 +59,7 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
         for (const auto& a : apps) {
             std::cout << "  • " << Terminal::style(a.name, Color::BrightCyan) << " (" << a.title << ")\n";
         }
-        std::cout << "\nUsage: enki run <app_name> [desktop|drm|wayland|x11|android]\n";
+        std::cout << "\nUsage: enki run <app_name> [desktop|drm|wayland|x11|android|wasm]\n";
         return 1;
     }
 
@@ -67,6 +73,7 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
     Terminal::banner();
     std::string target_label = "Desktop";
     if (target == "android") target_label = "Android";
+    else if (target == "wasm") target_label = "WebAssembly (Web Browser)";
     else if (target == "drm") target_label = "Linux DRM/KMS (Direct Scanout)";
     else if (target == "wayland") target_label = "Linux Wayland";
     else if (target == "x11") target_label = "Linux X11";
@@ -74,7 +81,17 @@ int RunCommand::execute(const fs::path& repo_root, const std::vector<std::string
     Terminal::header("Running " + app.title + " on " + target_label);
     std::cout << "\n";
 
-    if (target == "android") {
+    if (target == "wasm") {
+        auto wasm_tc = WasmDetector::detect(repo_root);
+        if (!wasm_tc.found) {
+            Terminal::fail("WebAssembly Toolchain Incomplete", "Emscripten SDK (emcc/em++) not found. Run 'enki doctor' to diagnose missing tools.");
+            return 1;
+        }
+        if (WebPackager::buildAndServe(app, wasm_tc, repo_root)) {
+            return 0;
+        }
+        return 1;
+    } else if (target == "android") {
         auto android_tc = AndroidDetector::detect();
         if (!android_tc.found) {
             Terminal::fail("Android Toolchain Incomplete", "Run 'enki doctor' to diagnose missing tools.");

@@ -18,10 +18,12 @@
 #include <include/ports/SkFontMgr_android.h>
 #elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
+#elif defined(__EMSCRIPTEN__)
+// Emscripten uses custom memory fonts or SkFontMgr::RefDefault()
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
 #endif
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 #include <modules/skparagraph/include/ParagraphBuilder.h>
 #include <modules/skparagraph/include/Paragraph.h>
 #include <modules/skparagraph/include/ParagraphStyle.h>
@@ -29,6 +31,7 @@
 #include <modules/skparagraph/include/FontCollection.h>
 #include <modules/skparagraph/include/TextShadow.h>
 #include <modules/skparagraph/include/DartTypes.h>
+#include <modules/skparagraph/include/TypefaceFontProvider.h>
 #endif
 #include <layout_engine/Anu.h>
 #include <algorithm>
@@ -53,6 +56,8 @@ sk_sp<SkFontMgr> getTextFontMgr() {
         return m;
 #elif defined(_WIN32)
         return SkFontMgr_New_DirectWrite();
+#elif defined(__EMSCRIPTEN__)
+        return SkFontMgr::RefDefault();
 #else
         auto m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
@@ -62,7 +67,7 @@ sk_sp<SkFontMgr> getTextFontMgr() {
     return s_mgr;
 }
 
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 sk_sp<skia::textlayout::FontCollection> getSharedFontCollection() {
     static sk_sp<skia::textlayout::FontCollection> s_fc = []() {
         auto fc = sk_make_sp<skia::textlayout::FontCollection>();
@@ -82,7 +87,7 @@ inline SkColor toSkColor(Color c) {
     return static_cast<SkColor>(c);
 }
 
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 skia::textlayout::TextAlign toSkTextAlign(TextAlign align) {
     switch (align) {
         case TextAlign::Left:    return skia::textlayout::TextAlign::kLeft;
@@ -141,12 +146,22 @@ skia::textlayout::TextStyle toSkTextStyle(const TextStyle& s) {
         for (const auto& fam : s.font_families) {
             families.emplace_back(fam.c_str());
         }
+#if defined(__EMSCRIPTEN__)
+        families.emplace_back("sans-serif");
+#endif
         sk.setFontFamilies(families);
     }
 #if defined(_WIN32)
     else {
         std::vector<SkString> families;
         families.emplace_back("Segoe UI");
+        sk.setFontFamilies(families);
+    }
+#elif defined(__EMSCRIPTEN__)
+    else {
+        std::vector<SkString> families;
+        families.emplace_back("sans-serif");
+        families.emplace_back("default");
         sk.setFontFamilies(families);
     }
 #endif
@@ -194,7 +209,7 @@ TextStyle mergeStyles(const TextStyle& parent, const std::optional<TextStyle>& c
 // ParagraphBuilderContext Implementation
 // ════════════════════════════════════════════════════════════════
 
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 class ParagraphBuilderContext {
 public:
     struct SpanRange {
@@ -372,6 +387,22 @@ struct RenderParagraph::Impl {
                                        : SkFontStyle::kUpright_Slant;
         SkFontStyle fontStyle(static_cast<int>(style.font_weight), SkFontStyle::kNormal_Width, slant);
 
+#if defined(__EMSCRIPTEN__)
+        static sk_sp<SkTypeface> s_wasm_reg = nullptr;
+        static sk_sp<SkTypeface> s_wasm_bold = nullptr;
+        static bool s_wasm_init = false;
+        if (!s_wasm_init) {
+            s_wasm_init = true;
+            s_wasm_reg = SkTypeface::MakeFromFile("/assets/fonts/Enki-Regular.ttf");
+            s_wasm_bold = SkTypeface::MakeFromFile("/assets/fonts/Enki-Bold.ttf");
+        }
+        sk_sp<SkTypeface> tf = nullptr;
+        if (fontStyle.weight() >= SkFontStyle::kSemiBold_Weight && s_wasm_bold) {
+            tf = s_wasm_bold;
+        } else if (s_wasm_reg) {
+            tf = s_wasm_reg;
+        }
+#else
         auto mgr = getTextFontMgr();
         sk_sp<SkTypeface> tf;
         if (!style.font_family.empty() && mgr) {
@@ -387,6 +418,7 @@ struct RenderParagraph::Impl {
         if (!tf) {
             tf = SkTypeface::MakeDefault();
         }
+#endif
 
         font.setTypeface(tf);
         font.setSize(style.font_size > 0.0f ? style.font_size : 14.0f);
@@ -764,7 +796,7 @@ void RenderParagraph::setOnSelectionChanged(std::function<void(TextSelection)> c
 
 void RenderParagraph::selectAll() {
     if (!impl_) return;
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
     if (!impl_->paragraph) return;
 #endif
     const std::string& all_text = !text_data_.empty() ? text_data_ : impl_->full_text;
@@ -814,7 +846,7 @@ void RenderParagraph::layoutParagraph(float availableWidth) {
 }
 
 void* RenderParagraph::getNativeParagraph() const {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
     return nullptr;
 #else
     return impl_->paragraph.get();
@@ -830,7 +862,7 @@ ANUSize RenderParagraph::measureText(ANUNodeConstRef node,
     if (!self || !self->impl_) {
         return {0.0f, 0.0f};
     }
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
     if (!self->impl_->paragraph) {
         return {0.0f, 0.0f};
     }
@@ -847,7 +879,7 @@ ANUSize RenderParagraph::measureText(ANUNodeConstRef node,
 
     self->layoutParagraph(constraintWidth);
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
     float maxIntrinsicWidth = self->impl_->getMaxIntrinsicWidth();
     float longestLineWidth = self->impl_->getLongestLine();
     float measuredHeight = self->impl_->getHeight();
@@ -878,7 +910,7 @@ ANUSize RenderParagraph::measureText(ANUNodeConstRef node,
 void RenderParagraph::paint(PaintContext& ctx) {
     if (!impl_) return;
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
     layoutParagraph(size_.width);
     impl_->paint(ctx);
 #else
@@ -916,7 +948,7 @@ void RenderParagraph::paint(PaintContext& ctx) {
 #endif
 }
 
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 const TextSpan* findSpanAtPosition(const std::vector<ParagraphBuilderContext::SpanRange>& spans, size_t position) {
     for (const auto& range : spans) {
         if (position >= range.start && position < range.end) {
@@ -931,7 +963,7 @@ bool RenderParagraph::hitTestSelf(Point localPoint) const {
     if (localPoint.x >= 0 && localPoint.x <= size_.width &&
         localPoint.y >= 0 && localPoint.y <= size_.height) {
         if (selectable_) return true;
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
         if (impl_ && impl_->paragraph && !impl_->interactive_spans.empty()) {
             auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(localPoint.x, localPoint.y);
             const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
@@ -943,7 +975,7 @@ bool RenderParagraph::hitTestSelf(Point localPoint) const {
 }
 
 void RenderParagraph::handlePointerDown(const PointerEvent& e) {
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
     if (selectable_ && impl_ && impl_->paragraph) {
         layoutParagraph(size_.width);
         auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
@@ -987,7 +1019,7 @@ void RenderParagraph::handlePointerUp(const PointerEvent& e) {
     if (selectable_) {
         is_dragging_ = false;
     }
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
     if (!impl_ || !impl_->paragraph) return;
     auto pos = impl_->paragraph->getGlyphPositionAtCoordinate(e.localPosition.x, e.localPosition.y);
     const TextSpan* span = findSpanAtPosition(impl_->interactive_spans, pos.position);
@@ -998,7 +1030,7 @@ void RenderParagraph::handlePointerUp(const PointerEvent& e) {
 }
 
 void RenderParagraph::handlePointerMove(const PointerEvent& e) {
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
     if (!impl_ || !impl_->paragraph) return;
 
     if (selectable_ && is_dragging_) {

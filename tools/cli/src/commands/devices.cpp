@@ -32,6 +32,9 @@ int DevicesCommand::execute(const fs::path&, const std::vector<std::string>&) {
         if (dev.type == DeviceType::Desktop) {
             platform_str = "Desktop";
             status_color = Color::BrightGreen;
+        } else if (dev.type == DeviceType::WebBrowser) {
+            platform_str = "Web (Wasm)";
+            status_color = Color::BrightGreen;
         } else if (dev.type == DeviceType::AndroidEmulator) {
             platform_str = "Android (Emu)";
             status_color = (dev.status == "device") ? Color::BrightGreen : Color::Yellow;

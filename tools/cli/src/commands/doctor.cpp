@@ -2,6 +2,7 @@
 #include "toolchains/msvc_detector.hpp"
 #include "toolchains/linux_detector.hpp"
 #include "toolchains/android_detector.hpp"
+#include "toolchains/wasm_detector.hpp"
 #include "toolchains/device_manager.hpp"
 #include "core/terminal.hpp"
 #include "core/process.hpp"
@@ -121,21 +122,37 @@ int DoctorCommand::execute(const fs::path& repo_root, const std::vector<std::str
         Terminal::warn("Android NDK", "NDK not detected. Set ANDROID_NDK_HOME if building for Android.");
     }
 
+    // 5b. WebAssembly / Emscripten Toolchain
+    total++;
+    auto wasm_tc = WasmDetector::detect(repo_root);
+    if (wasm_tc.found) {
+        std::string info = wasm_tc.emcc_version.empty() ? "Emscripten SDK ready" : wasm_tc.emcc_version;
+        if (!wasm_tc.has_skia_wasm) {
+            info += " | Skia Wasm: missing core/skia/out/Release-wasm/libskia.a";
+            Terminal::warn("WebAssembly Toolchain", info);
+        } else {
+            Terminal::ok("WebAssembly Toolchain", info + " (Skia Wasm ready)");
+            passed++;
+        }
+    } else {
+        Terminal::warn("WebAssembly Toolchain", "Emscripten SDK not detected. Set EMSDK or install from https://emscripten.org");
+    }
+
     // 6. Connected Devices / Emulators
     total++;
     auto devices = DeviceManager::listDevices(android_tc);
     int android_count = 0;
     for (const auto& dev : devices) {
-        if (dev.type != DeviceType::Desktop) android_count++;
+        if (dev.type == DeviceType::AndroidEmulator || dev.type == DeviceType::AndroidPhysical) android_count++;
     }
 
     if (android_count > 0) {
-        std::string d_str = std::to_string(devices.size()) + " target(s) available (1 Desktop, "
+        std::string d_str = std::to_string(devices.size()) + " targets available (Desktop, Web Browser, "
             + std::to_string(android_count) + " Android device/emulator)";
         Terminal::ok("Target Devices", d_str);
         passed++;
     } else {
-        Terminal::ok("Target Devices", "Host Desktop available. (No Android devices connected)");
+        Terminal::ok("Target Devices", "Host Desktop & Web Browser available. (No Android devices connected)");
         passed++;
     }
 

@@ -37,6 +37,14 @@ public:
 #endif
     }
 
+    static void set(const std::string& key, const std::string& val) {
+#if defined(_WIN32)
+        _putenv_s(key.c_str(), val.c_str());
+#else
+        setenv(key.c_str(), val.c_str(), 1);
+#endif
+    }
+
     static std::string pathToUtf8(const fs::path& p) {
 #if defined(_WIN32)
         const std::wstring& wstr = p.native();

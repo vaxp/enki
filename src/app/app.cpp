@@ -30,6 +30,11 @@
 #endif
 #include <windows.h>
 #include <GL/gl.h>
+#elif defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#include <GLES3/gl3.h>
+extern "C" void* emscripten_GetProcAddress(const char* name);
 #else
 #include <dlfcn.h>
 #include <EGL/egl.h>
@@ -167,8 +172,8 @@ struct App::Impl {
         win_cfg.mode        = config.window_mode;
         win_cfg.app_id      = config.app_id;
         win_cfg.blur        = config.enable_blur;
-#if defined(__ANDROID__)
-        win_cfg.csd         = false; // Mobile platforms do not have desktop CSD
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+        win_cfg.csd         = false; // Mobile and Web platforms do not have desktop CSD
         win_cfg.transparent = (((config.clear_color >> 24) & 0xFF) < 0xFF);
 #elif defined(_WIN32)
         win_cfg.csd         = config.enable_csd;
@@ -278,7 +283,7 @@ struct App::Impl {
         });
 
         // Fallback global event connections.
-        // On Android there are no per-window handles, so touch events arrive here
+        // On Android and WebAssembly there are no per-window handles, so touch/mouse events arrive here
         // (not via onTargetedMouse*). We dispatch them directly.
         platform->onMouseDown().connect([this](float x, float y, int btn) {
             if (active_popup_host) return;  // popup takes priority
@@ -286,6 +291,8 @@ struct App::Impl {
             float dpi = window ? window->getDpiScale() : 1.0f;
             if (dpi <= 0.0f) dpi = 1.0f;
             dispatchPointerDown(x / dpi, y / dpi, btn);
+#elif defined(__EMSCRIPTEN__)
+            dispatchPointerDown(x, y, btn);
 #endif
         });
 
@@ -298,6 +305,8 @@ struct App::Impl {
             float dpi = window ? window->getDpiScale() : 1.0f;
             if (dpi <= 0.0f) dpi = 1.0f;
             dispatchPointerUp(x / dpi, y / dpi, btn);
+#elif defined(__EMSCRIPTEN__)
+            dispatchPointerUp(x, y, btn);
 #endif
         });
 
@@ -308,12 +317,16 @@ struct App::Impl {
                 if (dpi <= 0.0f) dpi = 1.0f;
                 dispatchPointerMove(x / dpi, y / dpi);
             }
+#elif defined(__EMSCRIPTEN__)
+            if (!active_popup_host) {
+                dispatchPointerMove(x, y);
+            }
 #endif
             // On X11/Wayland: already handled by onTargetedMouseMove
         });
 
         platform->onScroll().connect([this](float dx, float dy) {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
             if (!active_popup_host) {
                 dispatchScroll(dx, dy);
             }
@@ -363,6 +376,27 @@ struct App::Impl {
             return false;
         }
 
+        return true;
+#elif defined(__EMSCRIPTEN__)
+        sk_sp<const GrGLInterface> gl_interface = GrGLMakeNativeInterface();
+        if (!gl_interface) {
+            gl_interface = GrGLMakeAssembledGLESInterface(
+                nullptr,
+                [](void*, const char* name) -> GrGLFuncPtr {
+                    return reinterpret_cast<GrGLFuncPtr>(emscripten_GetProcAddress(name));
+                }
+            );
+        }
+        if (!gl_interface) {
+            std::cerr << "[ENKI] Failed to create Skia WebGL Interface on WebAssembly\n";
+            return false;
+        }
+
+        gr_context = GrDirectContext::MakeGL(gl_interface);
+        if (!gr_context) {
+            std::cerr << "[ENKI] GrDirectContext::MakeGL failed on WebAssembly\n";
+            return false;
+        }
         return true;
 #else
         // Strategy 1: Make assembled interface from loaded OpenGL libraries
@@ -987,6 +1021,64 @@ struct App::Impl {
         }
         last_frame_time = Clock::now();
     }
+
+    // ── Single Frame Step ───────────────────────────────────────
+    bool stepFrame() {
+        // 1. Poll platform events
+        if (!platform->pollEvents() || quit_requested) {
+            quit_requested = true;
+            return false;
+        }
+
+        // Drain any surfaces closed during event processing safely
+        drainPendingSurfaces();
+
+        // 2. Tick active pointers / gesture timers
+        tickPointer();
+
+        // 3. Render main frame
+        bool main_rendered = renderFrame();
+        bool secondary_rendered = false;
+
+        // 4. Update and render all active popup and secondary surfaces
+        for (size_t i = 0; i < surfaces.size(); ++i) {
+            auto& host = surfaces[i];
+            if (!host) continue;
+
+            host->rebuild();
+            host->layout();
+            host->paint(gr_context.get(), 0x00000000);
+            host->swapBuffers();
+            secondary_rendered = true;
+        }
+
+        // Restore main window context after rendering secondary surfaces
+        if (!surfaces.empty() && window) {
+            window->makeCurrent();
+            if (gr_context) {
+                gr_context->resetContext();
+            }
+        }
+
+        // 5. Cap to target FPS or pace idle (on native)
+        drainPendingSurfaces();
+#if defined(__EMSCRIPTEN__)
+        static bool s_first_frame_dismissed = false;
+        if (!s_first_frame_dismissed) {
+            s_first_frame_dismissed = true;
+            EM_ASM({
+                var overlay = document.getElementById("loading-overlay");
+                if (overlay) {
+                    overlay.style.opacity = "0";
+                    setTimeout(function() { overlay.style.display = "none"; }, 200);
+                }
+            });
+        }
+#else
+        capFrameRate(main_rendered || secondary_rendered);
+#endif
+        return true;
+    }
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -1075,6 +1167,10 @@ Result<std::unique_ptr<App>> App::create(WidgetPtr root_widget, AppConfig config
     auto app = std::unique_ptr<App>(new App());
     auto& impl = *app->impl_;
 
+#if defined(__EMSCRIPTEN__) || defined(__ANDROID__)
+    config.enable_csd = false; // Automatically bypass desktop CSD on WebAssembly & Mobile
+#endif
+
     impl.config      = config;
     impl.root_widget = std::move(root_widget);
 
@@ -1110,51 +1206,27 @@ Result<std::unique_ptr<App>> App::create(WidgetPtr root_widget, AppConfig config
 }
 
 int App::run() {
+#if defined(__EMSCRIPTEN__)
+    emscripten_set_main_loop_arg([](void* arg) {
+        auto* app = static_cast<App*>(arg);
+        if (!app->impl_->quit_requested) {
+            app->impl_->stepFrame();
+        } else {
+            emscripten_cancel_main_loop();
+        }
+    }, this, 0, false);
+    return 0;
+#else
     auto& impl = *impl_;
 
     while (!impl.quit_requested) {
-        // 1. Poll platform events
-        if (!impl.platform->pollEvents() || impl.quit_requested) {
-            impl.quit_requested = true;
+        if (!impl.stepFrame()) {
             break;
         }
-
-        // Drain any surfaces closed during event processing safely
-        impl.drainPendingSurfaces();
-
-        // 2. Tick active pointers / gesture timers
-        impl.tickPointer();
-
-        // 3. Render main frame
-        bool main_rendered = impl.renderFrame();
-        bool secondary_rendered = false;
-
-        // 4. Update and render all active popup and secondary surfaces
-        for (size_t i = 0; i < impl.surfaces.size(); ++i) {
-            auto& host = impl.surfaces[i];
-            if (!host) continue;
-
-            host->rebuild();
-            host->layout();
-            host->paint(impl.gr_context.get(), 0x00000000);
-            host->swapBuffers();
-            secondary_rendered = true;
-        }
-
-        // Restore main window context after rendering secondary surfaces
-        if (!impl.surfaces.empty() && impl.window) {
-            impl.window->makeCurrent();
-            if (impl.gr_context) {
-                impl.gr_context->resetContext();
-            }
-        }
-
-        // 5. Cap to target FPS or pace idle
-        impl.drainPendingSurfaces();
-        impl.capFrameRate(main_rendered || secondary_rendered);
     }
 
     return 0;
+#endif
 }
 
 void App::quit() { impl_->quit_requested = true; }
@@ -1185,7 +1257,13 @@ int runApp(WidgetPtr root_widget, AppConfig config) {
         std::cerr << "[ENKI App] Launch Error: " << result.error().message << "\n";
         return 1;
     }
+#if defined(__EMSCRIPTEN__)
+    static std::unique_ptr<App> s_wasm_app;
+    s_wasm_app = std::move(result.value());
+    return s_wasm_app->run();
+#else
     return result.value()->run();
+#endif
 }
 
 #if !defined(__ANDROID__)

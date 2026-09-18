@@ -21,6 +21,13 @@ public:
     /// @return true if successful.
     static bool loadFont(const std::string& path, const std::string& alias);
 
+    /// @brief Load a custom font from a raw memory buffer (ideal for WebAssembly / embedded assets).
+    /// @param data Pointer to font binary bytes.
+    /// @param size Size in bytes.
+    /// @param alias Name to use for the font family in TextStyle.
+    /// @return true if successful.
+    static bool loadFontFromMemory(const void* data, size_t size, const std::string& alias);
+
     /// @brief Get the global FontCollection used for SkParagraph.
     static sk_sp<skia::textlayout::FontCollection> getFontCollection();
 };

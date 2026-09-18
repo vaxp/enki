@@ -22,6 +22,27 @@ if is_android
     link_args: ['-u', 'ANativeActivity_onCreate'],
     install: true,
   )
+elif is_wasm
+  enki_counter_exe = executable('enki_counter',
+    sources: counter_sources,
+    dependencies: [enki_dep],
+    link_args: [
+      '-s', 'WASM=1',
+      '-s', 'USE_WEBGL2=1',
+      '-s', 'FULL_ES3=1',
+      '-s', 'ALLOW_MEMORY_GROWTH=1',
+      '-s', 'INITIAL_MEMORY=67108864',
+      '-s', 'STACK_SIZE=8388608',
+      '-s', 'NO_EXIT_RUNTIME=1',
+      '-s', 'USE_HARFBUZZ=1',
+      '-s', 'EMULATE_FUNCTION_POINTER_CASTS=1',
+      '-s', 'ASSERTIONS=2',
+      '-g2',
+      '--embed-file', meson.project_source_root() / 'assets/fonts@/assets/fonts',
+    ],
+    name_suffix: 'js',
+    install: true,
+  )
 else
   enki_counter_exe = executable('enki_counter',
     sources: counter_sources,

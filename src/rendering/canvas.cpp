@@ -13,6 +13,8 @@
 #include <include/ports/SkFontMgr_android.h>
 #elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
+#elif defined(__EMSCRIPTEN__)
+// Emscripten uses custom memory fonts or SkFontMgr::RefDefault()
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
 #endif
@@ -41,6 +43,8 @@ sk_sp<SkFontMgr> getGlobalFontMgr() {
         return m;
 #elif defined(_WIN32)
         return SkFontMgr_New_DirectWrite();
+#elif defined(__EMSCRIPTEN__)
+        return SkFontMgr::RefDefault();
 #else
         auto m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();
@@ -51,6 +55,20 @@ sk_sp<SkFontMgr> getGlobalFontMgr() {
 }
 
 sk_sp<SkTypeface> getTypeface(const char* family, bool bold) {
+#if defined(__EMSCRIPTEN__)
+    static sk_sp<SkTypeface> s_wasm_regular = nullptr;
+    static sk_sp<SkTypeface> s_wasm_bold = nullptr;
+    static bool s_wasm_fonts_loaded = false;
+    if (!s_wasm_fonts_loaded) {
+        s_wasm_fonts_loaded = true;
+        s_wasm_regular = SkTypeface::MakeFromFile("/assets/fonts/Enki-Regular.ttf");
+        s_wasm_bold = SkTypeface::MakeFromFile("/assets/fonts/Enki-Bold.ttf");
+    }
+    if (bold && s_wasm_bold) return s_wasm_bold;
+    if (!bold && s_wasm_regular) return s_wasm_regular;
+    if (s_wasm_regular) return s_wasm_regular;
+#endif
+
     static sk_sp<SkTypeface> s_default_regular = nullptr;
     static sk_sp<SkTypeface> s_default_bold = nullptr;
 

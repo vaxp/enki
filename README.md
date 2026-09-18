@@ -6,11 +6,17 @@ meson compile -C build
 meson install -C build
 ```
 
-For Linux:
-build\tools\cli\enki -h
-
-For Windows :
-build-Win\tools\cli\enki.exe -h
+### Build & Install ENKI CLI (Standalone)
+```sh
+cd tools/cli
+meson setup build --prefix=/usr --buildtype=release
+meson compile -C build
+sudo meson install -C build
+```
+Or run directly from repo root:
+```sh
+./enki -h
+```
 
 
 For Windows setup:

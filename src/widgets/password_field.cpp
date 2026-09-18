@@ -23,6 +23,8 @@
 #include <include/ports/SkFontMgr_android.h>
 #elif defined(_WIN32)
 #include <include/ports/SkTypeface_win.h>
+#elif defined(__EMSCRIPTEN__)
+// Emscripten uses custom memory fonts or SkFontMgr::RefDefault()
 #else
 #include <include/ports/SkFontMgr_fontconfig.h>
 #endif
@@ -51,6 +53,8 @@ static sk_sp<skia::textlayout::FontCollection> getPasswordFieldFontCollection() 
         if (!m) m = SkFontMgr::RefDefault();
 #elif defined(_WIN32)
         m = SkFontMgr_New_DirectWrite();
+#elif defined(__EMSCRIPTEN__)
+        m = SkFontMgr::RefDefault();
 #else
         m = SkFontMgr_New_FontConfig(nullptr);
         if (!m) m = SkFontMgr::RefDefault();

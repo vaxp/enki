@@ -6,14 +6,20 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLI_EXE="$SCRIPT_DIR/build/tools/cli/enki"
+CLI_EXE="$SCRIPT_DIR/tools/cli/build/enki"
 
+# 1. If 'enki' is installed globally in PATH, use it
+if command -v enki >/dev/null 2>&1; then
+    exec enki "$@"
+fi
+
+# 2. Otherwise build and run local standalone CLI
 if [ ! -f "$CLI_EXE" ]; then
     echo "[ENKI] Building CLI toolchain..."
-    if [ ! -d "$SCRIPT_DIR/build" ]; then
-        meson setup "$SCRIPT_DIR/build" "$SCRIPT_DIR"
+    if [ ! -d "$SCRIPT_DIR/tools/cli/build" ]; then
+        meson setup "$SCRIPT_DIR/tools/cli/build" "$SCRIPT_DIR/tools/cli"
     fi
-    ninja -C "$SCRIPT_DIR/build" tools/cli/enki
+    ninja -C "$SCRIPT_DIR/tools/cli/build"
 fi
 
 exec "$CLI_EXE" "$@"

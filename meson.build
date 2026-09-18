@@ -38,6 +38,7 @@ endif
 
 is_windows = host_machine.system() == 'windows'
 is_android = host_machine.system() == 'android'
+is_wasm    = host_machine.system() == 'emscripten'
 
 # ============================================================
 # Platform Dependencies
@@ -127,6 +128,25 @@ elif is_windows
   libudev_dep      = dependency('', required : false)
   has_drm          = false
   protocol_dep     = declare_dependency()
+elif is_wasm
+  wasm_deps = []
+  pulse_dep        = dependency('', required : false)
+  pulse_simple_dep = dependency('', required : false)
+  avcodec_dep      = dependency('', required : false)
+  avformat_dep     = dependency('', required : false)
+  avutil_dep       = dependency('', required : false)
+  swscale_dep      = dependency('', required : false)
+  swresample_dep   = dependency('', required : false)
+  va_dep           = dependency('', required : false)
+  va_drm_dep       = dependency('', required : false)
+  libdrm_dep       = dependency('', required : false)
+  gbm_dep          = dependency('', required : false)
+  libinput_dep     = dependency('', required : false)
+  libudev_dep      = dependency('', required : false)
+  has_drm          = false
+  protocol_dep     = declare_dependency()
+  wayland_scanner  = find_program('wayland-scanner', required : false)
+  wayland_client_dep = dependency('', required : false)
 else
   # Native Linux Dependencies (Zero SDL)
   x11_dep    = dependency('x11',     required : true)
@@ -173,6 +193,8 @@ enki_compile_args = ['-DENKI_HAS_ANU=1']
 if is_android
   enki_compile_args += '-DENKI_HAS_ANDROID=1'
   enki_compile_args += '-DENKI_PLATFORM_ANDROID=1'
+elif is_wasm
+  enki_compile_args += '-DENKI_HAS_WASM=1'
 elif not is_windows
   if wayland_client_dep.found()
     enki_compile_args += '-DENKI_HAS_WAYLAND=1'
@@ -188,7 +210,7 @@ endif
 add_project_arguments(enki_compile_args, language : 'cpp')
 
 # ── Protocol code generation ──────────────────────────────────────────────────
-if not is_windows and not is_android and wayland_scanner.found() and wayland_client_dep.found()
+if not is_windows and not is_android and not is_wasm and wayland_scanner.found() and wayland_client_dep.found()
   proto_c_sources = []
   proto_h_sources = []
 
@@ -291,6 +313,15 @@ elif is_windows
     'copy /Y "' + ffmpeg_dll_src + '" "' + meson.current_build_dir() + '\\"',
     check : false,
   )
+elif is_wasm
+  skia_wasm_dir = meson.current_source_dir() + '/core/skia/out/Release-wasm'
+  skia_dep        = cpp.find_library('skia',        dirs : [skia_wasm_dir], required : false)
+  skparagraph_dep = cpp.find_library('skparagraph', dirs : [skia_wasm_dir], required : false)
+  skshaper_dep    = cpp.find_library('skshaper',    dirs : [skia_wasm_dir], required : false)
+  skunicode_dep   = cpp.find_library('skunicode',   dirs : [skia_wasm_dir], required : false)
+  skottie_dep     = cpp.find_library('skottie',     dirs : [skia_wasm_dir], required : false)
+  sksg_dep        = cpp.find_library('sksg',        dirs : [skia_wasm_dir], required : false)
+  skresources_dep = cpp.find_library('skresources', dirs : [skia_wasm_dir], required : false)
 else
   skia_dep = cpp.find_library('skia', dirs : [meson.current_source_dir() + '/core/skia/out/Release-x64'], required : false)
   if not skia_dep.found()
@@ -305,8 +336,8 @@ else
 endif
 
 # System libraries required by Skia
-# Android: fontconfig not available; zlib is part of the NDK sysroot
-if is_windows or is_android
+# Android/Wasm: fontconfig not available; zlib is part of sysroot
+if is_windows or is_android or is_wasm
   fontconfig_dep = dependency('', required : false)
   zlib_dep = dependency('', required : false)
 else
@@ -324,6 +355,8 @@ if is_android
   enki_deps = android_deps
 elif is_windows
   enki_deps = windows_deps
+elif is_wasm
+  enki_deps = wasm_deps
 else
   enki_deps = [thread_dep, x11_dep, egl_dep, gl_dep]
 
@@ -437,6 +470,12 @@ elif is_windows
   platform_sources += files(
     'src/platform/windows/win32_platform.cpp',
     'src/platform/windows/win32_window.cpp',
+  )
+elif is_wasm
+  platform_sources += files(
+    'src/platform/wasm/wasm_platform.cpp',
+    'src/platform/wasm/wasm_window.cpp',
+    'src/platform/wasm/setjmp_compat.c',
   )
 else
   # X11 backend (always present on Linux)
@@ -717,21 +756,21 @@ install_subdir('include/enki', install_dir : get_option('includedir'))
 # ============================================================
 # Tests
 # ============================================================
-if get_option('build_tests') and not is_android
+if get_option('build_tests') and not is_android and not is_wasm
 #  subdir('tests')
 endif
 
 # ============================================================
 # Examples
 # ============================================================
-if get_option('build_examples') and not is_android
+if get_option('build_examples') and not is_android and not is_wasm
   subdir('examples')
 endif
 
 # ============================================================
 # Widgets Demo
 # ============================================================
-if get_option('build_widgets_demo') and not is_android
+if get_option('build_widgets_demo') and not is_android and not is_wasm
   subdir('widgets_demo')
 endif
 
@@ -740,9 +779,3 @@ endif
 # ============================================================
 subdir('real_app')
 
-# ============================================================
-# ENKI Native CLI Developer Tool
-# ============================================================
-if not is_android
-  subdir('tools/cli')
-endif
