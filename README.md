@@ -8,7 +8,7 @@
 
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=c%2B%2B&logoColor=white)
 ![Build](https://img.shields.io/badge/build-Meson%20%2B%20Ninja-39A0ED)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-Apache%202.0-green)
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20Android%20%7C%20WASM%20%7C%20DRM%2FKMS-8A2BE2)
 
@@ -48,11 +48,11 @@ ENKI combines a **three-tree reactive architecture** (Widget → Element → Ren
 | | |
 |---|---|
 | **Language** | C++20 (designated initializers, concepts, defaulted comparisons) |
-| **Rendering** | Skia (Ganesh / OpenGL ES) via native EGL / WGL contexts — no SDL, no GTK, no Qt |
+| **Rendering** | Skia (Ganesh / OpenGL ES) via native EGL / WGL contexts — zero external toolkit dependencies |
 | **Layout** | Anu — in-house Flexbox engine with pixel-grid snapping and layout caching |
 | **State** | `Cubit<S>` / `BlocProvider` / `BlocBuilder` / `BlocListener` with granular rebuilds |
 | **Build System** | Meson + Ninja, with cross-files for Android and WebAssembly |
-| **License** | MIT |
+| **License** | Apache 2.0 |
 
 ---
 
@@ -127,13 +127,13 @@ Real screenshots captured from the framework's own demos and applications (see [
 | Capability | What it means for your organization |
 |---|---|
 | **Truly native** | Compiled C++20, zero garbage collector, deterministic memory and sub-millisecond frame pacing. |
-| **Zero SDL / zero toolkit lock-in** | Direct platform backends (X11, Wayland, Win32, Android NDK, DRM/KMS) — a minimal, auditable dependency surface. |
+| **Zero external toolkit lock-in** | Direct platform backends (X11, Wayland, Win32, Android NDK, DRM/KMS) — a minimal, auditable dependency surface. |
 | **Declarative & reactive** | Widget composition with `StatelessWidget`, `StatefulWidget`, keys and an incremental reconciler. |
 | **Granular rebuilds** | Only the `BlocBuilder` subtree is rebuilt on state change — pages remain stateless and are built once. |
 | **One codebase, five targets** | Desktop, embedded kiosks, Android, and the web share the same widget code. |
 | **Desktop-shell capable** | Layer-shell, foreign-toplevel management, native popups, client-side decorations — build panels, docks and entire shells. |
 | **Rich media built in** | Lottie, SVG, FFmpeg/VA-API video, live audio spectrum, particle systems and path morphing. |
-| **Web-technology bridge** | Optional Chromium (CEF) host exposing a permission-gated `window.enki.*` API — an Electron-class runtime on ENKI's native stack. |
+| **Web-technology bridge** | Optional Chromium (CEF) host exposing a permission-gated `window.enki.*` API — a standalone desktop web runtime on ENKI's native stack. |
 | **First-class i18n & RTL** | Unicode CLDR plural rules (including 6-form Arabic), OS locale detection and live language switching. |
 | **Developer tooling** | A dedicated `enki` CLI for diagnostics, scaffolding, device discovery, run and packaging. |
 | **Testable** | Cubits and widget trees run headless — no display server, GL context or Skia needed for unit tests. |
@@ -530,7 +530,7 @@ Widget coverage tracking: [WIDGETS_ROADMAP.md](WIDGETS_ROADMAP.md).
 
 ## 17. License
 
-ENKI is released under the **MIT License**.
+ENKI is released under the **Apache License 2.0**. Copyright (c) Hussein Jaafar.
 
 <div align="center">
 
