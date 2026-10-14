@@ -1,7 +1,7 @@
 /// @file EnkiWebHost.cpp
 /// @brief تنفيذ EnkiWebHost — مشغّل تطبيقات الويب في Enki.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <web_technology/EnkiWebHost.hpp>
 #include <web_technology/NativeAPIs.hpp>

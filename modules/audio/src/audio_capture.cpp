@@ -1,6 +1,6 @@
 /// @file audio_capture.cpp
 /// @brief Native PulseAudio / PipeWire ultra-low-latency audio capture implementation.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "audio/audio_capture.hpp"
 

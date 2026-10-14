@@ -4,7 +4,7 @@
 /// Supports multi-edge/corner drag resizing, drag-to-move title bar, min/max constraints,
 /// minimize/maximize toggles, bottom-right grip handles, and ResizablePanelController.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

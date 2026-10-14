@@ -107,12 +107,15 @@ bool Win32Window::init(const WindowConfig& config) {
             style &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
         }
     }
-    if (config.always_on_top && config.mode != WindowMode::Popup) {
+    if ((config.always_on_top || config.mode == WindowMode::Flyout) && config.mode != WindowMode::Popup) {
         exStyle |= WS_EX_TOPMOST;
+    }
+    if (config.mode == WindowMode::Flyout) {
+        exStyle |= WS_EX_TOOLWINDOW;
     }
 
     RECT wr = { 0, 0, current_width_, current_height_ };
-    if (!(config.borderless || config.csd || config.mode == WindowMode::Popup)) {
+    if (!(config.borderless || config.csd || config.mode == WindowMode::Popup || config.mode == WindowMode::Flyout)) {
         HMODULE user32 = GetModuleHandleW(L"user32.dll");
         typedef BOOL (WINAPI *AdjustWindowRectExForDpiProc)(LPRECT, DWORD, BOOL, DWORD, UINT);
         auto adjustDpi = (AdjustWindowRectExForDpiProc)GetProcAddress(user32, "AdjustWindowRectExForDpi");
@@ -136,7 +139,7 @@ bool Win32Window::init(const WindowConfig& config) {
     if (config.parent_window) {
         parent_hwnd = static_cast<HWND>(config.parent_window->getNativeHandle());
     }
-    if (!parent_hwnd && config.mode == WindowMode::Popup) {
+    if (!parent_hwnd && (config.mode == WindowMode::Popup || config.mode == WindowMode::Flyout)) {
         parent_hwnd = GetActiveWindow();
     }
 
@@ -156,7 +159,7 @@ bool Win32Window::init(const WindowConfig& config) {
     }
 
     std::wstring wideTitle = utf8ToWide(config.title);
-    const wchar_t* targetClass = (config.mode == WindowMode::Popup) ? kPopupWindowClass : kWindowClass;
+    const wchar_t* targetClass = (config.mode == WindowMode::Popup || config.mode == WindowMode::Flyout) ? kPopupWindowClass : kWindowClass;
 
     hwnd_ = CreateWindowExW(
         exStyle,

@@ -55,4 +55,4 @@ nano my_app/enki.json
 
 ---
 
-*Enki Framework — MIT License*
+*Enki Framework — Apache 2.0 License*

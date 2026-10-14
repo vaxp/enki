@@ -8,7 +8,7 @@
 ///   - Layered overlay with configurable gradient scrim for readability over images.
 ///   - Full Anu-driven layout — children sized by Anu within the tile's Anu node.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

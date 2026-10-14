@@ -10,7 +10,7 @@
 ///   - Letting child content render at an arbitrary size without affecting parent's layout bounds.
 ///   - Controlled clipping or visible overflow of oversized artwork and interactive items.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

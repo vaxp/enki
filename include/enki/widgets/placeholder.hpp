@@ -4,7 +4,7 @@
 /// Supports Blueprint Crosshairs with real-time dimension tags, Animated Skeleton Shimmer loaders,
 /// Empty State Media Slots with dashed borders, and Pre-composed Skeleton Templates.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

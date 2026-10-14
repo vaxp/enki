@@ -8,7 +8,7 @@
 ///
 /// Pixel format: BGRA 32-bit (kBGRA_8888 in Skia terms).
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_render_handler.h>
 #include <web_technology/IWebViewBackend.hpp>

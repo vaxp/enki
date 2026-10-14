@@ -4,7 +4,7 @@
 /// Key translation reference:
 ///   https://source.chromium.org/chromium/chromium/src/+/main:ui/events/keycodes/
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "InputForwarder.hpp"
 #include <include/cef_browser.h>

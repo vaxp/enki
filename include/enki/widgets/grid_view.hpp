@@ -16,7 +16,7 @@
 ///   - padding around grid content.
 ///   - All layout via Anu — flex_wrap + flex_basis handle grid math.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

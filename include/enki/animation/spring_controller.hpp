@@ -6,7 +6,7 @@
 /// physics. Retargeting mid-animation preserves momentum without visual jarring.
 /// Automatically sleeps when kinetic energy settles (0% idle CPU).
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/animation/ticker.hpp"

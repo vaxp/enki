@@ -13,7 +13,7 @@
 /// JSBridge holds the browser reference and the registry of bound functions.
 /// EnkiCefClient dispatches "enki_js_call" messages to JSBridge::dispatch().
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_browser.h>
 #include <functional>

@@ -4,7 +4,7 @@
 /// يستخدم مكتبة JSON بسيطة مدمجة (nlohmann/json أو بديل خفيف).
 /// لتجنب dependency إضافية نستخدم محلل JSON بسيط مكتوب يدوياً.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <web_technology/EnkiWebHost.hpp>
 #include <fstream>

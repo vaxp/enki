@@ -8,7 +8,7 @@
 ///   - Built-in iconic shapes (Hamburger, Close, Play, Pause, Checkmark, Arrow).
 ///   - Direct Canvas rendering with auto-scaling to destination bounds.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/rendering/path.hpp"

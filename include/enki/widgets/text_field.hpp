@@ -8,7 +8,7 @@
 ///   - Clipboard copy/paste/cut integration.
 ///   - Auto-focus, cursor blinking, on_changed and on_submitted callbacks.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/text.hpp"
 #include "enki/widgets/gesture_detector.hpp"

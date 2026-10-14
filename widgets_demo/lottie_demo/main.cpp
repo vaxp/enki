@@ -7,7 +7,7 @@
 ///   - Zero unnecessary tree re-renders or cross-tab layout recalculations.
 ///   - Clean unmounting and disposal when switching tabs.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/app/app.hpp"
 #include "enki/widgets/lottie.hpp"

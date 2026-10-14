@@ -1,7 +1,7 @@
 /// @file state.cpp
 /// @brief State class implementation — widget state lifecycle management.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/state.hpp"
 #include "enki/tree/element.hpp"

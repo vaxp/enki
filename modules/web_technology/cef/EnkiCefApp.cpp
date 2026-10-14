@@ -1,7 +1,7 @@
 /// @file EnkiCefApp.cpp
 /// @brief Implementation of EnkiCefApp and EnkiSubprocessApp.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "EnkiCefApp.hpp"
 #include <include/cef_command_line.h>

@@ -1,6 +1,6 @@
 /// @file intrinsic_height.cpp
 /// @brief Implementation of IntrinsicHeight widget and RenderIntrinsicHeight.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/intrinsic_height.hpp"
 #include "enki/tree/render_object.hpp"

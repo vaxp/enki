@@ -1,5 +1,5 @@
 /// @file EnkiLifeSpanHandler.cpp
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "EnkiLifeSpanHandler.hpp"
 #include <include/cef_app.h>

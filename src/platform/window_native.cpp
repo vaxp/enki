@@ -176,15 +176,16 @@ struct Window::Impl {
                 return false;
             }
 
-            if (cfg.mode == WindowMode::LayerShell) {
+            if (cfg.mode == WindowMode::LayerShell || cfg.mode == WindowMode::Flyout) {
                 LayerSurfaceConfig lsc;
-                lsc.namespace_id   = "enki-window";
-                lsc.layer          = ShellLayer::Top;
-                lsc.anchor         = ShellAnchor::None;     // Floating window
+                lsc.namespace_id   = (cfg.mode == WindowMode::Flyout) ? "enki-flyout" : "enki-window";
+                lsc.layer          = cfg.layer;
+                lsc.anchor         = cfg.anchor;
+                lsc.margin         = cfg.margin;
                 lsc.width          = cfg.width;
                 lsc.height         = cfg.height;
-                lsc.exclusive_zone = 0;
-                lsc.keyboard_mode  = KeyboardMode::OnDemand;
+                lsc.exclusive_zone = (cfg.mode == WindowMode::Flyout) ? -1 : cfg.exclusive_zone;
+                lsc.keyboard_mode  = cfg.keyboard_mode;
                 lsc.transparent    = cfg.transparent;
                 lsc.vsync          = cfg.vsync;
 

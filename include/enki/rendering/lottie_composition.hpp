@@ -10,7 +10,7 @@
 ///   - Dynamic property overrides: layer recoloring, opacity tweaking, text replacement.
 ///   - Direct hardware-accelerated Skia GPU rendering.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/core/result.hpp"

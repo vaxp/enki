@@ -5,7 +5,7 @@
 /// Represents an IETF BCP 47 language tag (language, country, script) and
 /// determines right-to-left (RTL) directionality and native OS language querying.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <string>
 #include <string_view>

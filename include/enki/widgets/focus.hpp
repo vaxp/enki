@@ -3,7 +3,7 @@
 /// @brief Focus and FocusScope widgets for keyboard navigation & focus rings in ENKI Framework (Category 9. Gestures / Interaction).
 /// Supports FocusNode management, global FocusManager, Tab/Shift+Tab focus traversal, and visual focus halo indicators.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

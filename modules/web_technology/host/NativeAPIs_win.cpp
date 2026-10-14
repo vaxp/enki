@@ -1,6 +1,6 @@
 /// @file NativeAPIs_win.cpp
 /// @brief Windows-specific Native APIs for Enki Web Host (Clipboard, Shell, Dialog, SystemInfo).
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #if defined(_WIN32)
 

@@ -16,7 +16,7 @@
 ///   - OnPaint callbacks arrive on the CEF Renderer thread; the backend
 ///     copies the frame and signals the Enki thread via the paint callback.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "web_technology/WebViewFrame.hpp"
 #include "web_technology/WebViewEvent.hpp"

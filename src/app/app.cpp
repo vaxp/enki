@@ -1,5 +1,5 @@
 /// @file app.cpp
-/// @brief ENKI App lifecycle implementation with Native Platform (Zero SDL).
+/// @brief ENKI App lifecycle implementation with Native Platform  .
 
 #include "enki/app/app.hpp"
 #include "enki/shell/surface_host.hpp"
@@ -1112,6 +1112,29 @@ SurfaceHost* App::addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr r
     auto win_res = Window::create(*impl_->platform, config);
     if (!win_res.isOk()) {
         std::cerr << "[ENKI App] Failed to create Popup Window: " << win_res.error().message << "\n";
+        return nullptr;
+    }
+
+    auto host = std::make_unique<SurfaceHost>(std::move(win_res.value()), std::move(root_widget));
+    SurfaceHost* ptr = host.get();
+    impl_->surfaces.push_back(std::move(host));
+    return ptr;
+}
+
+SurfaceHost* App::addFlyout(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget) {
+    config.mode = WindowMode::Flyout;
+    config.parent_window = parent ? parent->getWindow() : impl_->window.get();
+    config.parent_layer = parent ? parent->getLayerSurface() : nullptr;
+    config.borderless = true;
+    config.always_on_top = true;
+    config.override_redirect = true;
+    config.resizable = false;
+    config.transparent = true;
+    config.exclusive_zone = -1;
+
+    auto win_res = Window::create(*impl_->platform, config);
+    if (!win_res.isOk()) {
+        std::cerr << "[ENKI App] Failed to create Flyout Window: " << win_res.error().message << "\n";
         return nullptr;
     }
 

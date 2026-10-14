@@ -5,7 +5,7 @@
 /// Supports full pluralization rules for Arabic (6 forms), English, Slavic,
 /// Asian, and Romance languages with C++20 designated initializers.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <string>
 #include <string_view>

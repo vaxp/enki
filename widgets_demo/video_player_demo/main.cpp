@@ -9,7 +9,7 @@
 ///   - Playback Speed Selector (0.5x, 1.0x, 1.5x, 2.0x)
 ///   - Full Client-Side Decorations with TitleBarStyle::VAXPOS
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/app/app.hpp"
 #include "enki/widgets/video_player.hpp"

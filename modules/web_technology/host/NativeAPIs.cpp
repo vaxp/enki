@@ -1,7 +1,7 @@
 /// @file NativeAPIs.cpp
 /// @brief Implementation of Built-in Native APIs for Enki Web Host.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <web_technology/NativeAPIs.hpp>
 #include <web_technology/IWebViewBackend.hpp>

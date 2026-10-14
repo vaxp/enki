@@ -4,7 +4,7 @@
 ///
 /// 100% C++20 Declarative Syntax with designated initializers.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

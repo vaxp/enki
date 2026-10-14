@@ -390,6 +390,13 @@ test('test_particle',
   ),
 )
 
+test('test_flyout',
+  executable('test_flyout',
+    'widgets/test_flyout.cpp',
+    dependencies : test_deps,
+  ),
+)
+
 
 
 

@@ -1,12 +1,13 @@
 #pragma once
 /// @file window.hpp
 /// @brief Native OS Window management with direct EGL + OpenGL + Skia context.
-/// Zero SDL dependency — pure native platform window.
+///    dependency — pure native platform window.
 
 #include "enki/core/types.hpp"
 #include "enki/core/result.hpp"
 #include "enki/core/signal.hpp"
 #include "enki/platform/platform.hpp"
+#include "enki/platform/layer_surface.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -18,6 +19,7 @@ enum class WindowMode {
     Normal,      ///< Standard application window (XDG Toplevel on Wayland, Normal window on X11).
     LayerShell,  ///< Desktop overlay surface (zwlr_layer_shell_v1).
     Popup,       ///< Child popup window (xdg_popup on Wayland, transient override-redirect on X11).
+    Flyout,      ///< Anchored shell drawer / flyout surface (Control Center, Notifications, System Trays).
 };
 
 /// Window creation configuration.
@@ -42,6 +44,13 @@ struct WindowConfig {
     WindowMode  mode         = WindowMode::Normal; ///< Standard window or layer surface overlay.
     class Window* parent_window = nullptr; ///< Parent window if mode == Popup
     class LayerSurface* parent_layer = nullptr; ///< Parent layer surface if mode == Popup
+
+    // ── Layer Shell & Flyout Anchoring Configuration ────────────
+    ShellLayer    layer          = ShellLayer::Top;
+    ShellAnchor   anchor         = static_cast<ShellAnchor>(0);
+    SurfaceMargin margin         = {};
+    int32_t       exclusive_zone = 0; ///< -1 for unreserved / floating flyouts, 0 for none, >0 for reserved docks
+    KeyboardMode  keyboard_mode  = static_cast<KeyboardMode>(0);
 };
 
 /// Represents a native window backed by EGL and OpenGL for Skia GPU rendering.

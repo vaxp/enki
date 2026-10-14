@@ -7,7 +7,7 @@
 ///   3. Pulse
 ///   4. CountBadge
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/feedback_status.hpp"
 #include "enki/widgets/container.hpp"

@@ -1,6 +1,6 @@
 /// @file audio_controller.cpp
 /// @brief High-level thread-safe controller connecting capture engine and FFT analyzer.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "audio/audio_controller.hpp"
 

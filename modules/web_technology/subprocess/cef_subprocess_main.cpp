@@ -10,7 +10,7 @@
 ///
 /// Usage: specified via CefSettings::browser_subprocess_path in CefBridge.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_app.h>
 #include "../cef/EnkiCefApp.hpp"

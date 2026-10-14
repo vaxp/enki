@@ -4,7 +4,7 @@
 /// Supports autoplay with pause-on-hover, infinite looping, swipe gestures,
 /// floating navigation arrows, animated dot indicators, and CarouselController.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

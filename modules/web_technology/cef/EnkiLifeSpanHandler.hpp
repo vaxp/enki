@@ -7,7 +7,7 @@
 /// is no native OS window to host them); this can be overridden via
 /// OnNewWindowCallback.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_life_span_handler.h>
 #include <web_technology/IWebViewBackend.hpp>

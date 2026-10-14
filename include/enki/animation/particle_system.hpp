@@ -8,7 +8,7 @@
 ///   - Built-in Presets: ConfettiBurst, NeonSparks, AmbientDust, SnowFall.
 ///   - Hardware-accelerated direct Skia batch rendering.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/rendering/color.hpp"

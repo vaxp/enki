@@ -10,7 +10,7 @@
 ///   - Intrinsic sizing & aspect-ratio measurement integration with Anu Flexbox.
 ///   - Color tinting with BlendMode and alpha opacity.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/rendering/image.hpp"

@@ -1,7 +1,7 @@
 #pragma once
 /// @file platform.hpp
 /// @brief Native Linux Platform subsystem (X11 / Wayland / EGL / Linux Native).
-/// Zero SDL dependency — pure native platform layer.
+///    dependency — pure native platform layer.
 
 #include "enki/core/types.hpp"
 #include "enki/core/result.hpp"

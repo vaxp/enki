@@ -1,7 +1,7 @@
 /// @file titlebar.cpp
 /// @brief Modern Client-Side Decoration (CSD) TitleBar implementation.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/titlebar.hpp"
 #include "enki/widgets/gesture_detector.hpp"

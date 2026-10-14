@@ -1,6 +1,6 @@
 /// @file limited_box.cpp
 /// @brief Implementation of LimitedBox widget and RenderLimitedBox.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/limited_box.hpp"
 #include "enki/tree/render_object.hpp"

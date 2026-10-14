@@ -1,7 +1,7 @@
 #pragma once
 /// @file video_decoder_win.hpp
 /// @brief Windows-specific hardware video decoding (D3D11VA / DXVA2) & WASAPI audio playback engine.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #if defined(_WIN32)
 

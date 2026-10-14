@@ -6,7 +6,7 @@
 /// sub-handlers (render, load, display, life-span, request, etc.).
 /// EnkiCefClient wires together all Enki-specific handlers.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_client.h>
 #include <include/cef_display_handler.h>

@@ -12,7 +12,7 @@
 ///   // or #include "enki.hpp"
 /// @endcode
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 // ════════════════════════════════════════════════════════════════
 // 1. Core & Foundation
@@ -132,6 +132,7 @@
 #include "enki/widgets/context_menu.hpp"
 #include "enki/widgets/popover.hpp"
 #include "enki/widgets/popup.hpp"
+#include "enki/widgets/flyout.hpp"
 #include "enki/widgets/dialog.hpp"
 #include "enki/widgets/bottom_sheet.hpp"
 #include "enki/widgets/drawer.hpp"

@@ -1,6 +1,6 @@
 /// @file video_player.cpp
 /// @brief Implementation of VideoPlayerWidget and RenderVideoPlayer.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/video_player.hpp"
 #include "enki/tree/render_object.hpp"

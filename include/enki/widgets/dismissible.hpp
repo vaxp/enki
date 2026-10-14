@@ -3,7 +3,7 @@
 /// @brief Dismissible widget for swipe-to-dismiss actions in ENKI Framework (Category 9. Gestures / Interaction).
 /// Supports horizontal/vertical swipe gestures, dual action backgrounds, and dismissal animation.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

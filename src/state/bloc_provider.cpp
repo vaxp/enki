@@ -5,7 +5,7 @@
 /// This file ensures the header compiles correctly and provides a home
 /// for future non-template utilities.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/bloc_provider.hpp"
 

@@ -4,7 +4,7 @@
 /// Supports 2D Saturation-Value Canvas, Hue & Alpha sliders, HEX/RGBA/HSV formats,
 /// Curated & Recent Palettes, Old/New preview, Input Dropdown and Inline modes, and ColorPickerController.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

@@ -2,7 +2,7 @@
 /// @file button.hpp
 /// @brief Advanced Button widget with Hover, Press, Ripple, and Shader Injection support.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

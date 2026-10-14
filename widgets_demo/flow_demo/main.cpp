@@ -7,7 +7,7 @@
 ///   3. Accurate hit testing through inverse matrix mapping.
 ///   4. Strict designated initializer syntax with unique Key on every element.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/app/app.hpp"
 #include "enki/widgets/flow.hpp"

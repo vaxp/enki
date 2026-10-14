@@ -5,7 +5,7 @@
 /// Provides cascading entrance animations for lists, grids, and dashboards.
 /// Includes IntervalCurve for mapping sub-windows of an animation progress.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/animation/curves.hpp"

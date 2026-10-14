@@ -1,7 +1,7 @@
 #pragma once
 /// @file video_decoder.hpp
 /// @brief Multi-threaded FFmpeg Demuxer & Decoder with Hardware Zero-Copy & PulseAudio Master Clock.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "video/video_types.hpp"
 

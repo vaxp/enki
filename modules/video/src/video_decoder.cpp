@@ -1,6 +1,6 @@
 /// @file video_decoder.cpp
 /// @brief Multi-threaded FFmpeg Demuxer, Hardware Zero-Copy & PulseAudio Master Clock Implementation.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "video/video_decoder.hpp"
 

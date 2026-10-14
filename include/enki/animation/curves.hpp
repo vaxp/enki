@@ -6,7 +6,7 @@
 /// end fast? Bounce? Overshoot? Each Curve is a pure function
 /// `double evaluate(double t)` where t ∈ [0, 1].
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <cmath>
 #include <functional>

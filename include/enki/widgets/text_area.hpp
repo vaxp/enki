@@ -2,7 +2,7 @@
 /// @file text_area.hpp
 /// @brief Advanced multi-line TextArea widget with line numbers, undo/redo, scrolling, and counters.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/text.hpp"
 #include "enki/widgets/gesture_detector.hpp"

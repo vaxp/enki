@@ -1,6 +1,6 @@
 /// @file audio_analyzer.cpp
 /// @brief Pure C++20 Fast Fourier Transform (FFT) and DSP Audio Analyzer.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "audio/audio_analyzer.hpp"
 #include <cmath>

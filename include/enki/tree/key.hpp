@@ -14,7 +14,7 @@
 ///   - String: String-based key for named/semantic identity.
 ///   - Unique: Auto-generated globally unique key (GlobalKey equivalent).
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <cstdint>
 #include <string>

@@ -5,7 +5,7 @@
 /// because it is a class template. This file provides any non-template
 /// utilities and ensures the translation unit is compiled.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/stream.hpp"
 

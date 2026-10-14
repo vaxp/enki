@@ -56,7 +56,7 @@
 ///   bloc.add(std::make_unique<IncrementEvent>());
 /// @endcode
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/cubit.hpp"
 #include <typeinfo>

@@ -8,7 +8,7 @@
 ///
 /// All translation happens in the static helper methods; no state is needed.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_browser.h>
 #include <include/cef_base.h>

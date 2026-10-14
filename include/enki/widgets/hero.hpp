@@ -8,7 +8,7 @@
 ///   - C++20 designated initializers: hero({ .tag = "item_1", .child = ... }).
 ///   - Support for custom flight shuttle builders and spring physics.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

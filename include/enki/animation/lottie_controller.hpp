@@ -9,7 +9,7 @@
 ///   - Per-frame Ticker integration with smooth sub-frame interpolation.
 ///   - Listeners for loop completion, end of animation, and marker entry.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/rendering/lottie_composition.hpp"

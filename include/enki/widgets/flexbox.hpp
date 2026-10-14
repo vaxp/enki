@@ -7,7 +7,7 @@
 ///   - All container and item flex properties (Direction, Wrap, Justify, Align, Gap, Insets, Constraints).
 ///   - Row, Column, FlexItem, Expanded, Flexible, Spacer semantic helpers.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

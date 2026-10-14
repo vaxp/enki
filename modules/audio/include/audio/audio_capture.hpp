@@ -4,7 +4,7 @@
 ///
 /// Uses native libpulse-simple for lightweight, ultra-low-latency real-time audio capture.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <vector>
 #include <string>

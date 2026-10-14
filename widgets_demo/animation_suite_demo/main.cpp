@@ -8,7 +8,7 @@
 ///   4. 2D GPU Skia Particle Physics System (Confetti, neon sparks, ambient dust, snowfall).
 ///   5. Hero & Shared Element Transitions (Coordinate tracking via RenderObject::globalBounds).
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/app/app.hpp"
 #include "enki/widgets/flexbox.hpp"

@@ -43,6 +43,7 @@ The **Native Popups** category represents one of Enki's most powerful desktop ca
 | 4 | [**Tooltip**](./tooltip.md) | `class Tooltip`, `tooltip()` | `<enki/widgets/tooltip.hpp>` | Floating tooltip card with auto-positioning, hover delays, and pointer tail arrows. |
 | 5 | [**Popover**](./popover.md) | `class Popover`, `popover()` | `<enki/widgets/popover.hpp>` | Interactive floating card with arrow pointer, anchored to any widget or trigger. |
 | 6 | [**FilePicker**](./file_picker.md) | `struct FilePicker`, `FilePicker::show` | `<enki/widgets/file_picker.hpp>` | Desktop filesystem browser for open file, open multiple, select folder, and save file. |
+| 7 | [**Flyout**](./flyout.md) | `struct Flyout`, `flyout()` | `<enki/widgets/flyout.hpp>` | Specialized layer drawer surface for Control Centers, Notification Drawers, and smart panel anchoring. |
 
 ---
 

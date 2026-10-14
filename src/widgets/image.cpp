@@ -1,6 +1,6 @@
 /// @file image.cpp
 /// @brief Implementation of ImageWidget, RenderImage, and ImageCache.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/image.hpp"
 #include "enki/rendering/canvas.hpp"

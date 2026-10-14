@@ -2,7 +2,7 @@
 /// @file font_manager.hpp
 /// @brief Manages custom font loading for SkParagraph.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <string>
 #include <memory>

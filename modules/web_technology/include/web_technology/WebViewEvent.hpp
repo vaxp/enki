@@ -6,7 +6,7 @@
 /// so that the web_technology subsystem has zero dependency on Enki Core headers.
 /// The InputForwarder translates enki::PointerEvent / enki::KeyEvent into these.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <cstdint>
 #include <string>

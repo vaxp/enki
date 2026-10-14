@@ -1,7 +1,7 @@
 /// @file EnkiRenderHandler.cpp
 /// @brief Offscreen Rendering (OSR) implementation.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "EnkiRenderHandler.hpp"
 

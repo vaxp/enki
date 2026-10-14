@@ -13,7 +13,7 @@
 /// In practice, a BuildContext IS an Element — but the interface restricts
 /// what the widget author can access for safety and encapsulation.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include <cassert>

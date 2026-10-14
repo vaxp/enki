@@ -4,7 +4,7 @@
 ///
 /// Implements TapGestureRecognizer, LongPressGestureRecognizer, and PanGestureRecognizer.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/gestures/gesture_types.hpp"
 #include <cmath>

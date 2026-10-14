@@ -2,7 +2,7 @@
 /// @file radio.hpp
 /// @brief Radio widget for single-choice selection.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

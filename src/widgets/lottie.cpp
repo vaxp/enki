@@ -1,6 +1,6 @@
 /// @file lottie.cpp
 /// @brief Implementation of Lottie widget, RenderLottie, and LottieState.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/lottie.hpp"
 #include "enki/widgets/gesture_detector.hpp"

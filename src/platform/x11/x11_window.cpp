@@ -114,7 +114,7 @@ bool X11Window::init(const WindowConfig& cfg) {
                             KeyReleaseMask | FocusChangeMask | PropertyChangeMask;
     unsigned long valuemask = CWColormap | CWBorderPixel | CWBackPixmap | CWBitGravity | CWEventMask;
 
-    if (cfg.override_redirect || cfg.mode == WindowMode::Popup) {
+    if (cfg.override_redirect || cfg.mode == WindowMode::Popup || cfg.mode == WindowMode::Flyout) {
         swa.override_redirect = True;
         valuemask |= CWOverrideRedirect;
     }
@@ -149,7 +149,7 @@ bool X11Window::init(const WindowConfig& cfg) {
 
     // Set _NET_WM_WINDOW_TYPE
     Atom net_wm_window_type = XInternAtom(display_, "_NET_WM_WINDOW_TYPE", False);
-    if (cfg.mode == WindowMode::Popup) {
+    if (cfg.mode == WindowMode::Popup || cfg.mode == WindowMode::Flyout) {
         Atom net_wm_window_type_popup = XInternAtom(display_, "_NET_WM_WINDOW_TYPE_POPUP_MENU", False);
         XChangeProperty(display_, x11_window_, net_wm_window_type, XA_ATOM, 32,
                         PropModeReplace, (unsigned char*)&net_wm_window_type_popup, 1);

@@ -1,7 +1,7 @@
 /// @file CefBridge.cpp
 /// @brief CefBridge — IWebViewBackend implementation + CefGlobal singleton.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "CefBridge.hpp"
 #include "InputForwarder.hpp"

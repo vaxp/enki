@@ -11,7 +11,7 @@
 ///   - Hover feedback on each tab.
 ///   - Badge support per tab item.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

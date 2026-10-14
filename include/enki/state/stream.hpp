@@ -25,7 +25,7 @@
 ///   counter.emit(2);  // prints "Counter: 2"
 /// @endcode
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include <functional>

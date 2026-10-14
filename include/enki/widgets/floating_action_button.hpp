@@ -2,7 +2,7 @@
 /// @file floating_action_button.hpp
 /// @brief FloatingActionButton (FAB) widget
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/button.hpp"
 

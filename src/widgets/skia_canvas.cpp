@@ -1,6 +1,6 @@
 /// @file skia_canvas.cpp
 /// @brief Implementation of SkiaCanvasWidget, RenderSkiaCanvas, and factory helpers.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/skia_canvas.hpp"
 #include "enki/tree/render_object.hpp"

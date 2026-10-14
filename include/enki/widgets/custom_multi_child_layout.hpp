@@ -15,7 +15,7 @@
 ///   - Functional delegate support via C++20 lambdas (layout_callback).
 ///   - Designated initializer support with CustomMultiChildLayoutProps.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

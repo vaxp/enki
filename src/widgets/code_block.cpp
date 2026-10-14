@@ -1,7 +1,7 @@
 /// @file code_block.cpp
 /// @brief CodeBlock Widget Implementation for ENKI Framework.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/code_block.hpp"
 #include "enki/widgets/flexbox.hpp"

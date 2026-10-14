@@ -4,7 +4,7 @@
 /// Supports Input Dropdown Popup and Inline modes, Single Date and Range selection,
 /// Year/Month fast jump grids, quick presets chips, min/max constraints, and DatePickerController.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

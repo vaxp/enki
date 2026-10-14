@@ -1,6 +1,6 @@
 /// @file audio_waveform.cpp
 /// @brief Implementation of AudioWaveformWidget and luxurious RenderAudioWaveform visualizers.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/audio_waveform.hpp"
 #include "enki/tree/render_object.hpp"

@@ -5,7 +5,7 @@
 /// Fully powered by Skia's SkParagraph engine and integrated with the Anu Flexbox layout
 /// engine for automatic intrinsic sizing, multi-line wrapping, ellipsis overflow, and rich formatting.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

@@ -4,7 +4,7 @@
 ///
 /// Serves as the primary bridge between background audio capture and ENKI's render loop.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "audio_capture.hpp"
 #include "audio_analyzer.hpp"

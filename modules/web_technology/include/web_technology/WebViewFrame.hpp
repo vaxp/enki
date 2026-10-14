@@ -6,7 +6,7 @@
 /// wraps that data so it can travel from the CEF thread to the Enki
 /// render thread without exposing any CEF types.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <cstdint>
 #include <vector>

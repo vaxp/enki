@@ -8,7 +8,7 @@
 ///   - Standard industry presets (bouncy, smooth, snappy, interactive, gentle).
 ///   - SpringCurve adapter enabling direct use with existing Curve APIs.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/animation/curves.hpp"
 #include <cmath>

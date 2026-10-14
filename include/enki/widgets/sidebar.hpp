@@ -13,7 +13,7 @@
 ///   - Configurable expanded/collapsed widths.
 ///   - Border between sidebar and body.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/tree/widget.hpp"
 #include "enki/tree/render_object.hpp"

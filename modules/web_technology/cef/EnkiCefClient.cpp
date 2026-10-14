@@ -1,5 +1,5 @@
 /// @file EnkiCefClient.cpp
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "EnkiCefClient.hpp"
 #include <include/cef_frame.h>

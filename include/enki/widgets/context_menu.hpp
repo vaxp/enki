@@ -6,7 +6,7 @@
 /// on secondary tap (right click) or long press, providing submenus,
 /// shortcuts, divider lines, and smart boundary fitting.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

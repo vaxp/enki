@@ -5,7 +5,7 @@
 /// Supports solid, dashed, and gradient lines with optional center label,
 /// rounded caps, and custom thickness — for both horizontal and vertical orientations.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

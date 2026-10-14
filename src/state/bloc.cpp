@@ -5,7 +5,7 @@
 /// This file provides compilation verification and any future
 /// non-template utilities.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/bloc.hpp"
 

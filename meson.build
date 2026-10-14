@@ -148,7 +148,7 @@ elif is_wasm
   wayland_scanner  = find_program('wayland-scanner', required : false)
   wayland_client_dep = dependency('', required : false)
 else
-  # Native Linux Dependencies (Zero SDL)
+  # Native Linux Dependencies  
   x11_dep    = dependency('x11',     required : true)
   xrandr_dep = dependency('xrandr',  required : false)
   egl_dep    = dependency('egl',     required : true)
@@ -590,6 +590,7 @@ enki_sources = files(
   'src/widgets/notification.cpp',
   'src/widgets/loading_overlay.cpp',
   'src/widgets/popup.cpp',
+  'src/widgets/flyout.cpp',
   'src/widgets/menu.cpp',
   'src/widgets/clip.cpp',
   'src/widgets/paint_effects.cpp',

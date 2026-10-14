@@ -2,7 +2,7 @@
 /// @file icon_button.hpp
 /// @brief IconButton widget
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/button.hpp"
 #include "enki/widgets/icon.hpp"

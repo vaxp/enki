@@ -1,7 +1,7 @@
 #pragma once
 /// @file video_types.hpp
 /// @brief Core types, states, and frame descriptors for the ENKI Video Subsystem.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <string>
 #include <cstdint>

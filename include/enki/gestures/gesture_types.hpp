@@ -5,7 +5,7 @@
 /// Provides detailed event metadata for taps, double-taps, long-presses,
 /// drags/pans, scaling, scrolling, and hover events across ENKI widgets.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/platform/input.hpp"

@@ -1,6 +1,6 @@
 /// @file overflow_box.cpp
 /// @brief Implementation of OverflowBox widget and RenderOverflowBox.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/overflow_box.hpp"
 #include "enki/tree/render_object.hpp"

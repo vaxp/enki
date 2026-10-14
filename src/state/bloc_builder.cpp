@@ -5,7 +5,7 @@
 /// fully implemented in bloc_builder.hpp. This file ensures the header
 /// compiles correctly.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/bloc_builder.hpp"
 

@@ -11,7 +11,7 @@
 ///   - Stereo separation and RMS volume metering
 ///   - Beat / Bass energy tracking for pulsing radial and ambient effects
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <vector>
 #include <cmath>

@@ -1,6 +1,6 @@
 /// @file video_decoder_win.cpp
 /// @brief Windows Direct3D 11 / DXVA2 Hardware Zero-Copy Video Decoding and WASAPI Master Clock Implementation.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #if defined(_WIN32)
 

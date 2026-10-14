@@ -5,7 +5,7 @@
 /// A Tween maps an animation progress t ∈ [0,1] to a typed value
 /// between `begin` and `end`. Works with floats, colors, sizes, etc.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/animation/curves.hpp"
 #include "enki/core/types.hpp"

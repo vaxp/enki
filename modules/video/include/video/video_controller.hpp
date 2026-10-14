@@ -1,7 +1,7 @@
 #pragma once
 /// @file video_controller.hpp
 /// @brief Thread-safe Playback Controller for the ENKI Video Subsystem.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "video/video_decoder.hpp"
 #include <memory>

@@ -3,7 +3,7 @@
 /// @brief Ultra high-performance Draggable, DragTarget, and DragOverlay widget system for ENKI Framework (Category 9. Gestures / Interaction).
 /// Supports zero-rebuild  direct Skia overlay rendering, drag-and-drop payloads, and drop target hit testing.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

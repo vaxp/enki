@@ -10,7 +10,7 @@
 ///   6. ScrollingLive: Right-to-left scrolling audio history tape
 ///   7. LiveOscilloscope: Real-time vibration oscilloscope
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/app/app.hpp"
 #include "enki/widgets/audio_waveform.hpp"

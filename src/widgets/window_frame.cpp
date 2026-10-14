@@ -1,7 +1,7 @@
 /// @file window_frame.cpp
 /// @brief Modern Client-Side Decoration (CSD) WindowFrame container implementation.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/window_frame.hpp"
 #include "enki/widgets/gesture_detector.hpp"

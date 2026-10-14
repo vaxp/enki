@@ -5,7 +5,7 @@
 /// with AnimationController, Ticker, auto-dismiss timers, countdown progress bar,
 /// pause-on-hover, 6-way multi-placement, and Positioned stack layout.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

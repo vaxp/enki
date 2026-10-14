@@ -1,5 +1,5 @@
 /// @file JSBridge.cpp
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "JSBridge.hpp"
 #include <include/cef_frame.h>

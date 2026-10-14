@@ -15,13 +15,19 @@
 
 // Undefine X11 macros that pollute global namespace and clash with our enums
 #ifdef None
+#  pragma push_macro("None")
 #  undef None
+#  define ENKI_RESTORE_X11_NONE 1
 #endif
 #ifdef Above
+#  pragma push_macro("Above")
 #  undef Above
+#  define ENKI_RESTORE_X11_ABOVE 1
 #endif
 #ifdef Below
+#  pragma push_macro("Below")
 #  undef Below
+#  define ENKI_RESTORE_X11_BELOW 1
 #endif
 
 namespace enki {
@@ -128,3 +134,16 @@ protected:
 };
 
 } // namespace enki
+
+#ifdef ENKI_RESTORE_X11_NONE
+#  pragma pop_macro("None")
+#  undef ENKI_RESTORE_X11_NONE
+#endif
+#ifdef ENKI_RESTORE_X11_ABOVE
+#  pragma pop_macro("Above")
+#  undef ENKI_RESTORE_X11_ABOVE
+#endif
+#ifdef ENKI_RESTORE_X11_BELOW
+#  pragma pop_macro("Below")
+#  undef ENKI_RESTORE_X11_BELOW
+#endif

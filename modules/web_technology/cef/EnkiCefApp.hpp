@@ -7,7 +7,7 @@
 ///   - Configures CEF command-line switches (WebGL, GPU, etc.)
 ///   - Provides the BrowserProcessHandler for OnContextInitialized
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <include/cef_app.h>
 #include <include/cef_browser_process_handler.h>

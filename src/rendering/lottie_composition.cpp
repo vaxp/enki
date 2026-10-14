@@ -1,6 +1,6 @@
 /// @file lottie_composition.cpp
 /// @brief Implementation of LottieComposition and LottieCache using Skia Skottie.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/rendering/lottie_composition.hpp"
 #include "enki/rendering/canvas.hpp"

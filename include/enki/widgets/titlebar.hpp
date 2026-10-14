@@ -10,7 +10,7 @@
 ///   - Automatic state synchronization with window focus and maximize events
 ///   - Slots for leading icon/menu, custom title widget, and trailing actions
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

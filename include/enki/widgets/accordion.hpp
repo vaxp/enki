@@ -4,7 +4,7 @@
 /// Supports Single/Multiple expansion modes, 3 visual variants (Bordered, Separated, Flush),
 /// rotating chevron indicators, header badges, disabled states, and AccordionController.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

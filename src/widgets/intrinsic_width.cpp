@@ -1,6 +1,6 @@
 /// @file intrinsic_width.cpp
 /// @brief Implementation of IntrinsicWidth widget and RenderIntrinsicWidth.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/intrinsic_width.hpp"
 #include "enki/tree/render_object.hpp"

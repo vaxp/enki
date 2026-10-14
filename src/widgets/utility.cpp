@@ -5,7 +5,7 @@
 ///   1. Visibility
 ///   2. IgnorePointer
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/utility.hpp"
 #include "enki/widgets/container.hpp"

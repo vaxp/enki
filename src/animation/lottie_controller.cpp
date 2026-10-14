@@ -1,6 +1,6 @@
 /// @file lottie_controller.cpp
 /// @brief Implementation of LottieController playback and timing.
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/animation/lottie_controller.hpp"
 #include <cmath>

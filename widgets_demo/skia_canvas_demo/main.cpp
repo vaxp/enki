@@ -7,7 +7,7 @@
 ///   3. Composite Child + Background & Foreground Painting (Cyber HUD Card)
 ///   4. Interactive Click / Hit-testing Canvas (Touch Ripples & Particle Rings)
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/app/app.hpp"
 #include "enki/widgets/skia_canvas.hpp"

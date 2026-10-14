@@ -5,7 +5,7 @@
 /// This file provides explicit instantiations for common types and
 /// ensures the translation unit compiles cleanly.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/state/cubit.hpp"
 

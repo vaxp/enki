@@ -17,7 +17,7 @@
 ///   - RenderFlex:           Flexbox container (Row, Column).
 ///   - RenderDecoratedBox:   Renders decorations (background, border, shadow).
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/platform/input.hpp"

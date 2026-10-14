@@ -4,7 +4,7 @@
 /// Supports Digital Stepper & Columns, Clock Dial, 12h/24h formats, Seconds support,
 /// Quick Presets, Input Dropdown and Inline modes, and TimePickerController.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

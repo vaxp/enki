@@ -10,7 +10,7 @@
 ///   - AnimatedSwitcher
 ///   - SlideTransition
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/widgets/motion.hpp"
 #include "enki/widgets/stack.hpp"

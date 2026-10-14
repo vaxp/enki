@@ -13,7 +13,7 @@
 ///   - Hover alpha feedback, press micro-bounce animations, tooltips, and disabled items.
 ///   - Full Desktop Header support with leading brand/logo and trailing actions/search.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

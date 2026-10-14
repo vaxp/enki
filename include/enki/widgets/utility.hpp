@@ -6,7 +6,7 @@
 ///   1. Visibility — Toggles child visibility (show/hide) with maintain options
 ///   2. IgnorePointer — Controls whether child widgets receive pointer/mouse events
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

@@ -21,7 +21,7 @@
 ///   - All mutable state lives in Element (lifecycle) or State (user state).
 ///   - Widgets describe WHAT to render, not HOW to render.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/key.hpp"

@@ -9,7 +9,7 @@
 ///   - Uniformly sizing all buttons in a vertical Column to match the widest button.
 ///   - Preventing a child from stretching to full container width when natural width is desired.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

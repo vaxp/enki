@@ -1,7 +1,7 @@
 /// @file web_host_demo.cpp
 /// @brief Enki Web Host Demo — runs an HTML/CSS/JS application hosted inside Enki.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <web_technology/EnkiWebHost.hpp>
 #include <iostream>

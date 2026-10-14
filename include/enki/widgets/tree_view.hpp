@@ -18,7 +18,7 @@
 ///   - All layout delegated to Anu — the tree is a Column of padded rows.
 ///   - Integrated in a ScrollView for overflow content.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

@@ -14,7 +14,7 @@
 ///   - Comprehensive calculation history tape.
 ///   - Graceful error detection (e.g. division by zero, domain errors).
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include <string>
 #include <vector>

@@ -5,7 +5,7 @@
 /// Enables choreographing complex, multi-element parallel and staggered animations
 /// over a unified timeline. Supports keyframes, scrubbing, looping, and reverse.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/animation/ticker.hpp"

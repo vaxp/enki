@@ -5,7 +5,7 @@
 /// Automatically manages Ticker lifecycle — runs at 60+ FPS while particles
 /// are alive, and sleeps immediately when settled for 0% idle CPU.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/animation/particle_system.hpp"

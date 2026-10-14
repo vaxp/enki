@@ -5,7 +5,7 @@
 /// with AnimationController, Ticker, scale-and-fade animations, scrim backdrops,
 /// Escape-key dismissal, and Positioned stack layout.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

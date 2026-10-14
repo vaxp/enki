@@ -14,7 +14,7 @@
 ///   ShellAPI         → window.enki.shell.*
 ///   SystemAPI        → window.enki.system.*
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "EnkiWebHost.hpp"
 #include <string>

@@ -23,7 +23,7 @@
 ///   }
 /// @endcode
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/core/result.hpp"
@@ -168,6 +168,9 @@ public:
 
     /// Create and manage a new popup surface (xdg_popup / native popup window).
     SurfaceHost* addPopup(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget);
+
+    /// Create and manage a new flyout surface (Control Center, Notification drawer, System Tray).
+    SurfaceHost* addFlyout(SurfaceHost* parent, WindowConfig config, WidgetPtr root_widget);
 
     /// Add an additional window surface to this application.
     SurfaceHost* addWindow(WindowConfig config, WidgetPtr root_widget);

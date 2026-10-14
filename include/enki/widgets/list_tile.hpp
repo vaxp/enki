@@ -13,7 +13,7 @@
 ///   - Enabled/disabled state
 ///   - Full Anu-driven layout — zero manual size calculations
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/tree/widget.hpp"

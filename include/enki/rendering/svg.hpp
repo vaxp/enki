@@ -7,7 +7,7 @@
 ///   - SvgSlice: 9-Slice scaling configuration for decorative borders.
 ///   - SvgDocument: In-memory parsed SVG vector graphic supporting paths, fills, strokes, and viewBox.
 ///
-/// @copyright ENKI Framework — MIT License
+/// @copyright ENKI Framework — Apache 2.0 License
 
 #include "enki/core/types.hpp"
 #include "enki/rendering/color.hpp"
