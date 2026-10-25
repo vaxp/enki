@@ -131,7 +131,7 @@ void RenderTabBar::paint(PaintContext& ctx) {
         float content_y = y + (h - content_h) * 0.5f;
 
         // ── Icon ──────────────────────────────────────────────
-        if (show_icon && i < icon_renderers.size()) {
+        if (show_icon && static_cast<size_t>(i) < icon_renderers.size()) {
             auto& ri = icon_renderers[i];
             ri->setColor(col);
             

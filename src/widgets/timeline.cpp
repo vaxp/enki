@@ -12,12 +12,8 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/app/app.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkPathEffect.h>
-#include <include/effects/SkDashPathEffect.h>
-#include <include/core/SkRRect.h>
+#include "enki/rendering/paint.hpp"
+#include "enki/rendering/path.hpp"
 #include <include/core/SkFontMgr.h>
 #if defined(__ANDROID__)
 #include <include/ports/SkFontMgr_android.h>
@@ -302,8 +298,8 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk_canvas || size_.width <= 0 || size_.height <= 0) return;
+        auto& canvas = ctx.canvas;
+        if (size_.width <= 0 || size_.height <= 0) return;
 
         auto fc = getTimelineFontCollection();
         if (!fc) return;
@@ -316,34 +312,23 @@ public:
         }
 
         if (options.orientation == TimelineOrientation::Horizontal) {
-            paintHorizontal(sk_canvas, ctx.offset, fc);
+            paintHorizontal(canvas, ctx.offset, fc);
         } else if (options.alignment == TimelineAlignment::Alternate) {
-            paintVerticalAlternate(sk_canvas, ctx.offset, fc);
+            paintVerticalAlternate(canvas, ctx.offset, fc);
         } else {
-            paintVerticalStandard(sk_canvas, ctx.offset, fc);
+            paintVerticalStandard(canvas, ctx.offset, fc);
         }
     }
 
-    sk_sp<SkPathEffect> getDashEffect() const {
-        static auto effect = [](){
-            const SkScalar intervals[] = {6.0f, 4.0f};
-            return SkDashPathEffect::Make(intervals, 2, 0.0f);
-        }();
-        return effect;
-    }
-
-    void paintHorizontal(SkCanvas* sk_canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
+    void paintHorizontal(Canvas& canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
         const auto& items = controller->getItems();
         size_t n = items.size();
         float step_x = size_.width / static_cast<float>(n);
         float line_y = offset.y + options.node_size * 0.8f + 10.0f;
 
-        SkPaint line_paint;
+        Paint line_paint;
         line_paint.setAntiAlias(true);
         line_paint.setStrokeWidth(options.line_thickness);
-        if (options.line_style == TimelineLineStyle::Dashed) {
-            line_paint.setPathEffect(getDashEffect());
-        }
 
         // 1. Connecting Track Lines
         for (size_t i = 0; i + 1 < n; ++i) {
@@ -351,7 +336,11 @@ public:
             float x2 = offset.x + (static_cast<float>(i + 1) + 0.5f) * step_x - options.node_size * 0.5f;
 
             line_paint.setColor(items[i].status == TimelineItemStatus::Completed ? options.completed_color : options.line_color);
-            sk_canvas->drawLine(x1, line_y, x2, line_y, line_paint);
+            if (options.line_style == TimelineLineStyle::Dashed) {
+                canvas.drawDashedLine(Point{x1, line_y}, Point{x2, line_y}, line_paint, 6.0f, 4.0f);
+            } else {
+                canvas.drawLine(Point{x1, line_y}, Point{x2, line_y}, line_paint);
+            }
         }
 
         // 2. Nodes & Cards
@@ -362,7 +351,7 @@ public:
 
             layout_cache_[i].node_center = Point{cx, cy};
 
-            paintNode(sk_canvas, cx, cy, item, i, fc);
+            paintNode(canvas, cx, cy, item, i, fc);
 
             // Content Card Below Node
             float card_w = std::min(step_x - 12.0f, options.card_width);
@@ -371,11 +360,11 @@ public:
             float card_h = computeItemHeight(item, card_w, i);
 
             layout_cache_[i].card_rect = Rect{card_x, card_y, card_w, card_h};
-            paintCard(sk_canvas, card_x, card_y, card_w, card_h, item, (hovered_item_index == static_cast<int>(i)), fc, i);
+            paintCard(canvas, card_x, card_y, card_w, card_h, item, (hovered_item_index == static_cast<int>(i)), fc, i);
         }
     }
 
-    void paintVerticalStandard(SkCanvas* sk_canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
+    void paintVerticalStandard(Canvas& canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
         const auto& items = controller->getItems();
         size_t n = items.size();
 
@@ -395,12 +384,9 @@ public:
             cur_y += card_h + options.item_spacing;
         }
 
-        SkPaint line_paint;
+        Paint line_paint;
         line_paint.setAntiAlias(true);
         line_paint.setStrokeWidth(options.line_thickness);
-        if (options.line_style == TimelineLineStyle::Dashed) {
-            line_paint.setPathEffect(getDashEffect());
-        }
 
         // 1. Draw Connecting Track Lines
         for (size_t i = 0; i + 1 < n; ++i) {
@@ -408,7 +394,11 @@ public:
             float y2 = layout_cache_[i + 1].node_center.y - options.node_size * 0.5f;
 
             line_paint.setColor(items[i].status == TimelineItemStatus::Completed ? options.completed_color : options.line_color);
-            sk_canvas->drawLine(node_x, y1, node_x, y2, line_paint);
+            if (options.line_style == TimelineLineStyle::Dashed) {
+                canvas.drawDashedLine(Point{node_x, y1}, Point{node_x, y2}, line_paint, 6.0f, 4.0f);
+            } else {
+                canvas.drawLine(Point{node_x, y1}, Point{node_x, y2}, line_paint);
+            }
         }
 
         // 2. Draw Nodes & Cards
@@ -416,13 +406,13 @@ public:
             const auto& item = items[i];
             const auto& cache = layout_cache_[i];
 
-            paintNode(sk_canvas, cache.node_center.x, cache.node_center.y, item, i, fc);
-            paintCard(sk_canvas, cache.card_rect.x, cache.card_rect.y, cache.card_rect.width, cache.card_rect.height,
+            paintNode(canvas, cache.node_center.x, cache.node_center.y, item, i, fc);
+            paintCard(canvas, cache.card_rect.x, cache.card_rect.y, cache.card_rect.width, cache.card_rect.height,
                       item, (hovered_item_index == static_cast<int>(i)), fc, i);
         }
     }
 
-    void paintVerticalAlternate(SkCanvas* sk_canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
+    void paintVerticalAlternate(Canvas& canvas, Point offset, sk_sp<skia::textlayout::FontCollection> fc) {
         const auto& items = controller->getItems();
         size_t n = items.size();
 
@@ -444,12 +434,9 @@ public:
             cur_y += card_h + options.item_spacing;
         }
 
-        SkPaint line_paint;
+        Paint line_paint;
         line_paint.setAntiAlias(true);
         line_paint.setStrokeWidth(options.line_thickness);
-        if (options.line_style == TimelineLineStyle::Dashed) {
-            line_paint.setPathEffect(getDashEffect());
-        }
 
         // 1. Track line
         for (size_t i = 0; i + 1 < n; ++i) {
@@ -457,7 +444,11 @@ public:
             float y2 = layout_cache_[i + 1].node_center.y - options.node_size * 0.5f;
 
             line_paint.setColor(items[i].status == TimelineItemStatus::Completed ? options.completed_color : options.line_color);
-            sk_canvas->drawLine(center_x, y1, center_x, y2, line_paint);
+            if (options.line_style == TimelineLineStyle::Dashed) {
+                canvas.drawDashedLine(Point{center_x, y1}, Point{center_x, y2}, line_paint, 6.0f, 4.0f);
+            } else {
+                canvas.drawLine(Point{center_x, y1}, Point{center_x, y2}, line_paint);
+            }
         }
 
         // 2. Nodes & Cards
@@ -465,94 +456,92 @@ public:
             const auto& item = items[i];
             const auto& cache = layout_cache_[i];
 
-            paintNode(sk_canvas, cache.node_center.x, cache.node_center.y, item, i, fc);
-            paintCard(sk_canvas, cache.card_rect.x, cache.card_rect.y, cache.card_rect.width, cache.card_rect.height,
+            paintNode(canvas, cache.node_center.x, cache.node_center.y, item, i, fc);
+            paintCard(canvas, cache.card_rect.x, cache.card_rect.y, cache.card_rect.width, cache.card_rect.height,
                       item, (hovered_item_index == static_cast<int>(i)), fc, i);
         }
     }
 
-    void paintNode(SkCanvas* sk_canvas, float cx, float cy, const TimelineItem& item, size_t index,
+    void paintNode(Canvas& canvas, float cx, float cy, const TimelineItem& item, size_t index,
                    sk_sp<skia::textlayout::FontCollection> fc) {
         float r = options.node_size * 0.5f;
         Color node_col = getStatusColor(item.status, item.custom_node_color);
 
         // Active Glowing Outer Ring
         if (item.status == TimelineItemStatus::Active) {
-            SkPaint glow_paint;
+            Paint glow_paint;
             glow_paint.setAntiAlias(true);
             glow_paint.setColor(0x3338BDF8);
-            sk_canvas->drawCircle(cx, cy, r + 5.0f, glow_paint);
+            canvas.drawCircle(Point{cx, cy}, r + 5.0f, glow_paint);
         }
 
         // Base Circle / Square
-        SkPaint node_paint;
+        Paint node_paint;
         node_paint.setAntiAlias(true);
         node_paint.setColor(node_col);
 
         if (item.node_shape == TimelineNodeShape::Square) {
-            SkRRect sq;
-            sq.setRectXY(SkRect::MakeXYWH(cx - r, cy - r, options.node_size, options.node_size), 4.0f, 4.0f);
-            sk_canvas->drawRRect(sq, node_paint);
+            canvas.drawRRect(Rect{cx - r, cy - r, options.node_size, options.node_size}, BorderRadius::all(4.0f), node_paint);
         } else {
             if (item.status == TimelineItemStatus::Pending) {
-                node_paint.setStyle(SkPaint::kStroke_Style);
+                node_paint.setStyle(PaintStyle::Stroke);
                 node_paint.setStrokeWidth(2.0f);
-                sk_canvas->drawCircle(cx, cy, r - 1.0f, node_paint);
+                canvas.drawCircle(Point{cx, cy}, r - 1.0f, node_paint);
             } else {
-                sk_canvas->drawCircle(cx, cy, r, node_paint);
+                canvas.drawCircle(Point{cx, cy}, r, node_paint);
             }
         }
 
         // Glyphs & Content inside Node
         if (item.status == TimelineItemStatus::Completed) {
             // Emerald checkmark ✓
-            SkPaint chk_paint;
+            Paint chk_paint;
             chk_paint.setAntiAlias(true);
             chk_paint.setColor(0xFFFFFFFF);
-            chk_paint.setStyle(SkPaint::kStroke_Style);
+            chk_paint.setStyle(PaintStyle::Stroke);
             chk_paint.setStrokeWidth(2.0f);
-            SkPath p;
+            Path p;
             p.moveTo(cx - 4.5f, cy);
             p.lineTo(cx - 1.0f, cy + 3.5f);
             p.lineTo(cx + 4.5f, cy - 3.0f);
-            sk_canvas->drawPath(p, chk_paint);
+            canvas.drawPath(p, chk_paint);
         } else if (item.status == TimelineItemStatus::Failed) {
             // Red cross ✕
-            SkPaint x_paint;
+            Paint x_paint;
             x_paint.setAntiAlias(true);
             x_paint.setColor(0xFFFFFFFF);
             x_paint.setStrokeWidth(2.0f);
             float sz = 3.5f;
-            sk_canvas->drawLine(cx - sz, cy - sz, cx + sz, cy + sz, x_paint);
-            sk_canvas->drawLine(cx + sz, cy - sz, cx - sz, cy + sz, x_paint);
+            canvas.drawLine(Point{cx - sz, cy - sz}, Point{cx + sz, cy + sz}, x_paint);
+            canvas.drawLine(Point{cx + sz, cy - sz}, Point{cx - sz, cy + sz}, x_paint);
         } else {
             const auto& cache = layout_cache_[index];
             if (!item.icon.empty() && cache.p_icon) {
-                cache.p_icon->paint(sk_canvas, cx - options.node_size * 0.5f, cy - cache.p_icon->getHeight() * 0.5f);
+                canvas.drawParagraph(cache.p_icon.get(), cx - options.node_size * 0.5f, cy - cache.p_icon->getHeight() * 0.5f);
             } else if (cache.p_num) {
-                cache.p_num->paint(sk_canvas, cx - options.node_size * 0.5f, cy - cache.p_num->getHeight() * 0.5f);
+                canvas.drawParagraph(cache.p_num.get(), cx - options.node_size * 0.5f, cy - cache.p_num->getHeight() * 0.5f);
             }
         }
     }
 
-    void paintCard(SkCanvas* sk_canvas, float x, float y, float w, float h, const TimelineItem& item,
+    void paintCard(Canvas& canvas, float x, float y, float w, float h, const TimelineItem& item,
                    bool is_hov, sk_sp<skia::textlayout::FontCollection> fc, size_t index) {
-        SkRRect rrect;
-        rrect.setRectXY(SkRect::MakeXYWH(x, y, w, h), options.card_border_radius, options.card_border_radius);
+        Rect rrect{x, y, w, h};
+        BorderRadius rad = BorderRadius::all(options.card_border_radius);
 
         // Card Background
-        SkPaint bg_paint;
+        Paint bg_paint;
         bg_paint.setAntiAlias(true);
         bg_paint.setColor(is_hov ? 0xFF24324D : options.card_bg_color);
-        sk_canvas->drawRRect(rrect, bg_paint);
+        canvas.drawRRect(rrect, rad, bg_paint);
 
         // Card Border
-        SkPaint b_paint;
+        Paint b_paint;
         b_paint.setAntiAlias(true);
-        b_paint.setStyle(SkPaint::kStroke_Style);
+        b_paint.setStyle(PaintStyle::Stroke);
         b_paint.setStrokeWidth(1.0f);
         b_paint.setColor(is_hov ? 0xFF475569 : options.card_border_color);
-        sk_canvas->drawRRect(rrect, b_paint);
+        canvas.drawRRect(rrect, rad, b_paint);
 
         float cur_y = y + 12.0f;
         float pad_x = x + 12.0f;
@@ -560,7 +549,7 @@ public:
 
         // 1. Title Row
         if (cache.p_title) {
-            cache.p_title->paint(sk_canvas, pad_x, cur_y);
+            canvas.drawParagraph(cache.p_title.get(), pad_x, cur_y);
             
             // Paint Badge on the right
             if (cache.p_badge) {
@@ -569,12 +558,11 @@ public:
                 float bx = x + w - 12.0f - bw;
                 float by = cur_y;
 
-                SkRRect bd_rect;
-                bd_rect.setRectXY(SkRect::MakeXYWH(bx, by, bw, bh), 3.0f, 3.0f);
-                SkPaint bd_paint;
+                Rect bd_rect{bx, by, bw, bh};
+                Paint bd_paint;
                 bd_paint.setColor(item.badge_bg != 0 ? item.badge_bg : 0x2E38BDF8);
-                sk_canvas->drawRRect(bd_rect, bd_paint);
-                cache.p_badge->paint(sk_canvas, bx + 5.0f, by + 1.0f);
+                canvas.drawRRect(bd_rect, BorderRadius::all(3.0f), bd_paint);
+                canvas.drawParagraph(cache.p_badge.get(), bx + 5.0f, by + 1.0f);
             }
 
             cur_y += cache.p_title->getHeight() + 4.0f;
@@ -582,13 +570,13 @@ public:
 
         // 2. Timestamp
         if (cache.p_time) {
-            cache.p_time->paint(sk_canvas, pad_x, cur_y);
+            canvas.drawParagraph(cache.p_time.get(), pad_x, cur_y);
             cur_y += cache.p_time->getHeight() + 4.0f;
         }
 
         // 3. Description
         if (cache.p_desc) {
-            cache.p_desc->paint(sk_canvas, pad_x, cur_y);
+            canvas.drawParagraph(cache.p_desc.get(), pad_x, cur_y);
             cur_y += cache.p_desc->getHeight() + 6.0f;
         }
 
@@ -596,13 +584,12 @@ public:
         if (cache.p_det) {
             float det_h = cache.p_det->getHeight() + 12.0f;
             float avail_w = w - 24.0f;
-            SkRRect det_box;
-            det_box.setRectXY(SkRect::MakeXYWH(pad_x, cur_y, avail_w, det_h), 4.0f, 4.0f);
-            SkPaint det_bg;
+            Rect det_box{pad_x, cur_y, avail_w, det_h};
+            Paint det_bg;
             det_bg.setColor(options.details_bg_color);
-            sk_canvas->drawRRect(det_box, det_bg);
+            canvas.drawRRect(det_box, BorderRadius::all(4.0f), det_bg);
 
-            cache.p_det->paint(sk_canvas, pad_x + 8.0f, cur_y + 6.0f);
+            canvas.drawParagraph(cache.p_det.get(), pad_x + 8.0f, cur_y + 6.0f);
         }
     }
 

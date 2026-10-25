@@ -42,8 +42,8 @@ WidgetPtr ToggleButtonWidget::build(BuildContext&) {
         }
     }
 
-    Color bg_color;
-    Color hover_color;
+    Color bg_color = props.inactive_background;
+    Color hover_color = props.inactive_background + 0x1A1A1A;
     Color border_color = 0x00000000;
     float border_w = 0.0f;
     Color shadow_col = 0x00000000;

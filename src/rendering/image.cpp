@@ -6,6 +6,7 @@
 #include <include/core/SkImage.h>
 #include <include/core/SkData.h>
 #include <include/core/SkStream.h>
+#include <include/core/SkPixmap.h>
 
 namespace enki {
 
@@ -47,6 +48,20 @@ Result<std::shared_ptr<Image>> Image::loadFromMemory(const std::vector<uint8_t>&
     auto img = std::shared_ptr<Image>(new Image());
     img->impl_->image = std::move(sk_img);
     return Result<std::shared_ptr<Image>>::ok(img);
+}
+
+std::shared_ptr<Image> Image::createFromPixels(const uint8_t* rgba, int width, int height, size_t rowBytes) {
+    if (!rgba || width <= 0 || height <= 0) return nullptr;
+    if (rowBytes == 0) rowBytes = static_cast<size_t>(width) * 4;
+
+    SkImageInfo info = SkImageInfo::Make(width, height, kRGBA_8888_SkColorType, kPremul_SkAlphaType);
+    SkPixmap pixmap(info, rgba, rowBytes);
+    auto sk_img = SkImage::MakeRasterCopy(pixmap);
+    if (!sk_img) return nullptr;
+
+    auto img = std::shared_ptr<Image>(new Image());
+    img->impl_->image = std::move(sk_img);
+    return img;
 }
 
 int Image::getWidth() const {

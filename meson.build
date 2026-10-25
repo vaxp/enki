@@ -31,6 +31,7 @@ else
   add_project_arguments(
     '-Wno-unused-parameter',
     '-Wno-missing-field-initializers',
+    '-Wno-pedantic',
     '-D_USE_MATH_DEFINES',
     language : 'cpp',
   )
@@ -772,7 +773,7 @@ pkg.generate(enki_lib,
 # Tests
 # ============================================================
 if get_option('build_tests') and not is_android and not is_wasm
-#  subdir('tests')
+  subdir('tests')
 endif
 
 # ============================================================

@@ -15,7 +15,7 @@
 
 using namespace enki;
 
-static bool approxEqual(float a, float b, float epsilon = 1.0f) {
+[[maybe_unused]] static bool approxEqual(float a, float b, float epsilon = 1.0f) {
     return std::fabs(a - b) <= epsilon;
 }
 

@@ -8,14 +8,6 @@
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkBlurTypes.h>
-#include <include/effects/SkRuntimeEffect.h>
-
 #include <iostream>
 #include <cmath>
 
@@ -34,75 +26,51 @@ public:
         : options(std::move(opt)), direction(dir) {}
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
 
+        auto& canvas = ctx.canvas;
         float arrow = options.show_arrow ? options.arrow_size : 0.0f;
         float w = size_.width;
         float h = size_.height;
 
         // Calculate body rect excluding arrow tail
-        SkRect body_rect;
+        Rect body_rect;
         switch (direction) {
             case PopoverDirection::Top:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, w, h - arrow);
+                body_rect = Rect{ctx.offset.x, ctx.offset.y, w, h - arrow};
                 break;
             case PopoverDirection::Bottom:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y + arrow, w, h - arrow);
+                body_rect = Rect{ctx.offset.x, ctx.offset.y + arrow, w, h - arrow};
                 break;
             case PopoverDirection::Left:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, w - arrow, h);
+                body_rect = Rect{ctx.offset.x, ctx.offset.y, w - arrow, h};
                 break;
             case PopoverDirection::Right:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x + arrow, ctx.offset.y, w - arrow, h);
+                body_rect = Rect{ctx.offset.x + arrow, ctx.offset.y, w - arrow, h};
                 break;
             default:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, w, h);
+                body_rect = Rect{ctx.offset.x, ctx.offset.y, w, h};
                 break;
         }
 
-        SkRRect rrect;
-        rrect.setRectXY(body_rect, options.border_radius, options.border_radius);
+        BorderRadius radius = BorderRadius::circular(options.border_radius);
 
         // 1. Draw Drop Shadow
         if (options.elevation > 0.0f) {
-            SkPaint shadow_paint;
-            shadow_paint.setAntiAlias(true);
-            shadow_paint.setColor(options.shadow_color);
-            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.elevation * 0.5f));
-
-            canvas->save();
-            canvas->translate(0, options.elevation * 0.3f);
-            canvas->drawRRect(rrect, shadow_paint);
-            canvas->restore();
+            canvas.drawRRectShadow(body_rect, radius, options.shadow_color,
+                                  options.elevation, Point{0.0f, options.elevation * 0.3f});
         }
 
         // 2. Draw Background
-        SkPaint bg_paint;
+        Paint bg_paint;
+        bg_paint.setStyle(PaintStyle::Fill);
         bg_paint.setAntiAlias(true);
-
-        if (!options.custom_shader.empty()) {
-            auto [effect, err] = SkRuntimeEffect::MakeForShader(SkString(options.custom_shader.c_str()));
-            if (effect) {
-                struct Uniforms {
-                    float time;
-                    float resolution[2];
-                } uniforms = { 0.0f, {w, h} };
-                sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
-                bg_paint.setShader(effect->makeShader(uniform_data, nullptr, 0));
-            } else {
-                bg_paint.setColor(options.background_color);
-            }
-        } else {
-            bg_paint.setColor(options.background_color);
-        }
-
-        canvas->drawRRect(rrect, bg_paint);
+        bg_paint.setColor(options.background_color);
+        canvas.drawRRect(body_rect, radius, bg_paint);
 
         // 3. Draw Pointer Arrow
         if (options.show_arrow && arrow > 0.0f) {
-            SkPath arrow_path;
+            Path arrow_path;
             float mid_x = ctx.offset.x + w / 2.0f;
             float mid_y = ctx.offset.y + h / 2.0f;
 
@@ -125,27 +93,26 @@ public:
             }
             arrow_path.close();
 
-            canvas->drawPath(arrow_path, bg_paint);
+            canvas.drawPath(arrow_path, bg_paint);
 
             if (options.border_width > 0.0f) {
-                SkPaint arrow_border_paint;
+                Paint arrow_border_paint;
                 arrow_border_paint.setAntiAlias(true);
-                arrow_border_paint.setStyle(SkPaint::kStroke_Style);
+                arrow_border_paint.setStyle(PaintStyle::Stroke);
                 arrow_border_paint.setStrokeWidth(options.border_width);
                 arrow_border_paint.setColor(options.border_color);
-                canvas->drawPath(arrow_path, arrow_border_paint);
+                canvas.drawPath(arrow_path, arrow_border_paint);
             }
         }
 
         // 4. Draw Border Stroke
         if (options.border_width > 0.0f) {
-            SkPaint border_paint;
+            Paint border_paint;
             border_paint.setAntiAlias(true);
-            border_paint.setStyle(SkPaint::kStroke_Style);
+            border_paint.setStyle(PaintStyle::Stroke);
             border_paint.setStrokeWidth(options.border_width);
             border_paint.setColor(options.border_color);
-
-            canvas->drawRRect(rrect, border_paint);
+            canvas.drawRRect(body_rect, radius, border_paint);
         }
 
         // 5. Paint Child Content

@@ -29,10 +29,10 @@ public:
     virtual void translate(float dx, float dy) = 0;
     virtual void scale(float sx, float sy) = 0;
     virtual void rotate(float degrees) = 0;
-    virtual void clipRect(const Rect& rect) = 0;
-    virtual void clipRRect(const Rect& rect, const BorderRadius& radius) = 0;
-    virtual void clipOval(const Rect& rect) = 0;
-    virtual void clipPath(const Path& path) = 0;
+    virtual void clipRect(const Rect& rect, bool anti_alias = true) = 0;
+    virtual void clipRRect(const Rect& rect, const BorderRadius& radius, bool anti_alias = true) = 0;
+    virtual void clipOval(const Rect& rect, bool anti_alias = true) = 0;
+    virtual void clipPath(const Path& path, bool anti_alias = true) = 0;
     virtual void concat(const float matrix[9]) = 0;
     virtual void skew(float sx, float sy) = 0;
 
@@ -43,6 +43,21 @@ public:
     virtual void drawRRect(const Rect& rect, const BorderRadius& radius, const Paint& paint) = 0;
     virtual void drawCircle(Point center, float radius, const Paint& paint) = 0;
     virtual void drawPath(const Path& path, const Paint& paint) = 0;
+
+    // Shadows & Elevation
+    virtual void drawRRectShadow(const Rect& rect, const BorderRadius& radius, Color shadow_color, float blur, Point offset = {0.0f, 0.0f}) = 0;
+    virtual void drawRectShadow(const Rect& rect, Color shadow_color, float blur, Point offset = {0.0f, 0.0f}) = 0;
+    virtual void drawCircleShadow(Point center, float radius, Color shadow_color, float blur, Point offset = {0.0f, 0.0f}) = 0;
+
+    // Glassmorphism, Blur & Glow
+    virtual void drawGlassPanel(const Rect& rect, const BorderRadius& radius, float blur_sigma, Color tint_color, Color border_highlight = 0x33FFFFFF) = 0;
+    virtual void drawBackdropBlur(const Rect& rect, const BorderRadius& radius, float sigma_x, float sigma_y = 0.0f) = 0;
+    virtual void drawGlow(const Rect& rect, const BorderRadius& radius, Color glow_color, float radius_extent) = 0;
+
+    // Dashed Primitives
+    virtual void drawDashedLine(Point p1, Point p2, const Paint& paint, float dash_len, float gap_len, float phase = 0.0f) = 0;
+    virtual void drawDashedRRect(const Rect& rect, const BorderRadius& radius, const Paint& paint, float dash_len, float gap_len, float phase = 0.0f) = 0;
+    virtual void drawDashedPath(const Path& path, const Paint& paint, float dash_len, float gap_len, float phase = 0.0f) = 0;
     
     /// Draw an arc within the given rectangle.
     virtual void drawArc(const Rect& rect, float startAngle, float sweepAngle,

@@ -5,16 +5,11 @@
 #include "enki/state/state.hpp"
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
+#include "enki/rendering/paint.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkFont.h>
-#include <include/core/SkTypeface.h>
-#include <include/effects/SkGradientShader.h>
 #include <include/effects/SkRuntimeEffect.h>
+#include <include/core/SkShader.h>
+#include <include/core/SkMatrix.h>
 #include <layout_engine/Anu.h>
 
 #include <chrono>
@@ -24,6 +19,14 @@
 #include <cmath>
 
 namespace enki {
+
+class ProgressBarShaderWrapper : public Shader {
+public:
+    explicit ProgressBarShaderWrapper(sk_sp<SkShader> shader) : shader_(std::move(shader)) {}
+    void* getNativeHandle() const override { return shader_.get(); }
+private:
+    sk_sp<SkShader> shader_;
+};
 
 inline double getSteadyTimeSeconds() {
     auto now = std::chrono::steady_clock::now();
@@ -104,24 +107,22 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-        
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
 
-        // 1. Background Track
-        SkRect track_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect track_rrect;
-        track_rrect.setRectXY(track_rect, border_radius_, border_radius_);
+        auto& canvas = ctx.canvas;
 
-        SkPaint track_paint;
+        // 1. Background Track
+        Rect track_rect{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius track_radius = BorderRadius::all(border_radius_);
+
+        Paint track_paint;
         track_paint.setAntiAlias(true);
         track_paint.setColor(background_color_);
-        canvas->drawRRect(track_rrect, track_paint);
+        canvas.drawRRect(track_rect, track_radius, track_paint);
 
         // Clip subsequent progress rendering to the rounded track
-        canvas->save();
-        canvas->clipRRect(track_rrect, true);
+        canvas.save();
+        canvas.clipRRect(track_rect, track_radius, true);
 
         // 2. Active Progress Fill
         if (indeterminate_) {
@@ -130,9 +131,9 @@ public:
             float cycle = fmod(anim_time * 1.2f, 1.0f);
             float start_x = -shimmer_width + (size_.width + shimmer_width * 2.0f) * cycle;
 
-            SkRect shimmer_rect = SkRect::MakeXYWH(ctx.offset.x + start_x, ctx.offset.y, shimmer_width, size_.height);
+            Rect shimmer_rect{ctx.offset.x + start_x, ctx.offset.y, shimmer_width, size_.height};
 
-            SkPaint fill_paint;
+            Paint fill_paint;
             fill_paint.setAntiAlias(true);
 
             if (effect) {
@@ -147,41 +148,32 @@ public:
                     0.5f
                 };
                 sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
-                fill_paint.setShader(effect->makeShader(uniform_data, nullptr, 0));
+                fill_paint.setShader(std::make_shared<ProgressBarShaderWrapper>(effect->makeShader(uniform_data, nullptr, 0)));
             } else {
-                // Gradient shimmer sweep
-                SkPoint pts[2] = {
-                    {ctx.offset.x + start_x, ctx.offset.y},
-                    {ctx.offset.x + start_x + shimmer_width, ctx.offset.y}
-                };
-                SkColor colors[3] = {
-                    background_color_,
-                    progress_color_,
-                    background_color_
-                };
-                fill_paint.setShader(SkGradientShader::MakeLinear(pts, colors, nullptr, 3, SkTileMode::kClamp));
+                fill_paint.setShader(Gradient::linear(
+                    Point{ctx.offset.x + start_x, ctx.offset.y},
+                    Point{ctx.offset.x + start_x + shimmer_width, ctx.offset.y},
+                    {background_color_, progress_color_, background_color_},
+                    {0.0f, 0.5f, 1.0f}
+                ));
             }
 
-            canvas->drawRect(shimmer_rect, fill_paint);
+            canvas.drawRect(shimmer_rect, fill_paint);
         } else {
             // Determinate Progress
             float clamped_val = std::clamp(value, 0.0f, 1.0f);
             float fill_width = clamped_val * size_.width;
 
             if (fill_width > 0.0f) {
-                SkRect fill_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, fill_width, size_.height);
-                SkRRect fill_rrect;
-                fill_rrect.setRectXY(fill_rect, border_radius_, border_radius_);
+                Rect fill_rect{ctx.offset.x, ctx.offset.y, fill_width, size_.height};
+                BorderRadius fill_radius = BorderRadius::all(border_radius_);
 
                 // Glow Effect
                 if (glow_blur_ > 0.0f && glow_color_ != 0) {
-                    SkPaint glow_paint;
-                    glow_paint.setColor(glow_color_);
-                    glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
-                    canvas->drawRRect(fill_rrect, glow_paint);
+                    canvas.drawGlow(fill_rect, fill_radius, glow_color_, glow_blur_ * 0.5f);
                 }
 
-                SkPaint fill_paint;
+                Paint fill_paint;
                 fill_paint.setAntiAlias(true);
 
                 if (effect) {
@@ -197,26 +189,23 @@ public:
                     };
                     sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
                     SkMatrix local_matrix = SkMatrix::Translate(-ctx.offset.x, -ctx.offset.y);
-                fill_paint.setShader(effect->makeShader(uniform_data, nullptr, 0)->makeWithLocalMatrix(local_matrix));
+                    fill_paint.setShader(std::make_shared<ProgressBarShaderWrapper>(
+                        effect->makeShader(uniform_data, nullptr, 0)->makeWithLocalMatrix(local_matrix)));
                 } else if (gradient_colors_.size() >= 2) {
-                    std::vector<SkColor> sk_colors;
-                    for (auto c : gradient_colors_) sk_colors.push_back(c);
-
-                    SkPoint pts[2] = {
-                        {ctx.offset.x, ctx.offset.y},
-                        {ctx.offset.x + fill_width, ctx.offset.y}
-                    };
-                    fill_paint.setShader(SkGradientShader::MakeLinear(
-                        pts, sk_colors.data(), nullptr, static_cast<int>(sk_colors.size()), SkTileMode::kClamp));
+                    fill_paint.setShader(Gradient::linear(
+                        Point{ctx.offset.x, ctx.offset.y},
+                        Point{ctx.offset.x + fill_width, ctx.offset.y},
+                        gradient_colors_
+                    ));
                 } else {
                     fill_paint.setColor(progress_color_);
                 }
 
-                canvas->drawRRect(fill_rrect, fill_paint);
+                canvas.drawRRect(fill_rect, fill_radius, fill_paint);
             }
         }
 
-        canvas->restore(); // Restore track clip
+        canvas.restore(); // Restore track clip
 
         // 3. Optional Percentage / Text Label
         if (show_label_ && size_.height >= 12.0f) {
@@ -228,20 +217,14 @@ public:
                 label_str = std::to_string(pct) + "%";
             }
 
-            SkPaint text_paint;
-            text_paint.setAntiAlias(true);
+            float font_size = std::min(size_.height * 0.75f, 12.0f);
+            Paint text_paint;
             text_paint.setColor(0xFFFFFFFF);
+            float estimated_width = font_size * 0.6f * label_str.length();
+            float cx = ctx.offset.x + (size_.width - estimated_width) / 2.0f;
+            float cy = ctx.offset.y + (size_.height + font_size * 0.75f) / 2.0f;
 
-            SkFont font;
-            font.setSize(std::min(size_.height * 0.75f, 12.0f));
-
-            SkRect bounds;
-            font.measureText(label_str.c_str(), label_str.length(), SkTextEncoding::kUTF8, &bounds);
-
-            float cx = ctx.offset.x + (size_.width - bounds.width()) / 2.0f;
-            float cy = ctx.offset.y + (size_.height + bounds.height()) / 2.0f - bounds.fBottom;
-
-            canvas->drawSimpleText(label_str.c_str(), label_str.length(), SkTextEncoding::kUTF8, cx, cy, font, text_paint);
+            canvas.drawText(label_str, Point{cx, cy}, text_paint, font_size);
         }
     }
 };

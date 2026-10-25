@@ -9,8 +9,7 @@
 #include "enki/app/app.hpp"
 #include <modules/skparagraph/include/Paragraph.h>
 #include <modules/skparagraph/include/DartTypes.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
+#include "enki/rendering/paint.hpp"
 #include <algorithm>
 #include <iostream>
 #include <cmath>
@@ -39,7 +38,6 @@ public:
         if (!p) return;
 
         layoutParagraph(size_.width);
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
 
         // 1. Draw Selection
         if (controller->hasSelection()) {
@@ -47,17 +45,16 @@ public:
             size_t end = std::max(controller->selection_start, controller->selection_end);
             
             auto rects = p->getRectsForRange(start, end, skia::textlayout::RectHeightStyle::kTight, skia::textlayout::RectWidthStyle::kTight);
-            std::cout << "[Selection] start=" << start << " end=" << end << " rects=" << rects.size() << std::endl;
             
-            SkPaint sel_paint;
-            sel_paint.setColor(static_cast<SkColor>(options.selection_color));
+            Paint sel_paint;
+            sel_paint.setColor(options.selection_color);
             
-            sk_canvas->save();
-            sk_canvas->translate(ctx.offset.x, ctx.offset.y);
+            ctx.canvas.save();
+            ctx.canvas.translate(ctx.offset.x, ctx.offset.y);
             for (const auto& tb : rects) {
-                sk_canvas->drawRect(tb.rect, sel_paint);
+                ctx.canvas.drawRect(Rect{tb.rect.fLeft, tb.rect.fTop, tb.rect.width(), tb.rect.height()}, sel_paint);
             }
-            sk_canvas->restore();
+            ctx.canvas.restore();
         }
 
         // 2. Draw Text (via base class)
@@ -85,13 +82,13 @@ public:
                 }
             }
 
-            SkPaint cursor_paint;
-            cursor_paint.setColor(static_cast<SkColor>(options.cursor_color));
+            Paint cursor_paint;
+            cursor_paint.setColor(options.cursor_color);
             
-            sk_canvas->save();
-            sk_canvas->translate(ctx.offset.x, ctx.offset.y);
-            sk_canvas->drawRect(SkRect::MakeXYWH(cursor_x, cursor_y, 2.0f, cursor_h), cursor_paint);
-            sk_canvas->restore();
+            ctx.canvas.save();
+            ctx.canvas.translate(ctx.offset.x, ctx.offset.y);
+            ctx.canvas.drawRect(Rect{cursor_x, cursor_y, 2.0f, cursor_h}, cursor_paint);
+            ctx.canvas.restore();
         }
     }
 

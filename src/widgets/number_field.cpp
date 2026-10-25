@@ -12,10 +12,8 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/app/app.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkRRect.h>
+#include "enki/rendering/paint.hpp"
+#include "enki/rendering/path.hpp"
 #include <include/core/SkFontMgr.h>
 #if defined(__ANDROID__)
 #include <include/ports/SkFontMgr_android.h>
@@ -314,24 +312,22 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk_canvas || size_.width <= 0 || size_.height <= 0) return;
+        auto& canvas = ctx.canvas;
+        if (size_.width <= 0 || size_.height <= 0) return;
 
         layoutParagraphs();
 
-        SkRect bounds = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(bounds, options.border_radius, options.border_radius);
+        Rect bounds(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
+        auto border_radius = BorderRadius::circular(options.border_radius);
 
         // 1. Draw Field Background
-        SkPaint bg_paint;
-        bg_paint.setAntiAlias(true);
-        bg_paint.setColor(options.background_color);
-        sk_canvas->drawRRect(rrect, bg_paint);
+        Paint bg_paint;
+        bg_paint.setColor(Color(options.background_color));
+        canvas.drawRRect(bounds, border_radius, bg_paint);
 
         // Clip Content to rounded rect
-        sk_canvas->save();
-        sk_canvas->clipRRect(rrect, true);
+        canvas.save();
+        canvas.clipRRect(bounds, border_radius, true);
 
         // Compute Stepper Buttons Geometry
         float btn_w = 28.0f;
@@ -344,37 +340,36 @@ public:
         // 2. Draw Side Steppers or Right Steppers
         if (options.stepper_position == NumberFieldStepperPosition::Sides && !options.read_only && !options.disabled) {
             // Left Decrement Button [ − ]
-            SkRect left_btn = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, btn_w, size_.height);
-            SkPaint btn_bg;
-            btn_bg.setColor(hovered_button == 2 ? options.button_hover_color : options.button_color);
-            sk_canvas->drawRect(left_btn, btn_bg);
+            Rect left_btn(ctx.offset.x, ctx.offset.y, btn_w, size_.height);
+            Paint btn_bg;
+            btn_bg.setColor(Color(hovered_button == 2 ? options.button_hover_color : options.button_color));
+            canvas.drawRect(left_btn, btn_bg);
 
             // Minus icon
-            SkPaint icon_paint;
-            icon_paint.setAntiAlias(true);
-            icon_paint.setColor(options.button_icon_color);
+            Paint icon_paint;
+            icon_paint.setColor(Color(options.button_icon_color));
             icon_paint.setStrokeWidth(2.0f);
             float cy = ctx.offset.y + size_.height * 0.5f;
             float cx = ctx.offset.x + btn_w * 0.5f;
-            sk_canvas->drawLine(cx - 5.0f, cy, cx + 5.0f, cy, icon_paint);
+            canvas.drawLine(Point(cx - 5.0f, cy), Point(cx + 5.0f, cy), icon_paint);
 
             // Left divider line
-            SkPaint div_paint;
-            div_paint.setColor(options.border_color);
-            sk_canvas->drawLine(ctx.offset.x + btn_w, ctx.offset.y, ctx.offset.x + btn_w, ctx.offset.y + size_.height, div_paint);
+            Paint div_paint;
+            div_paint.setColor(Color(options.border_color));
+            canvas.drawLine(Point(ctx.offset.x + btn_w, ctx.offset.y), Point(ctx.offset.x + btn_w, ctx.offset.y + size_.height), div_paint);
 
             // Right Increment Button [ + ]
-            SkRect right_btn = SkRect::MakeXYWH(ctx.offset.x + size_.width - btn_w, ctx.offset.y, btn_w, size_.height);
-            btn_bg.setColor(hovered_button == 1 ? options.button_hover_color : options.button_color);
-            sk_canvas->drawRect(right_btn, btn_bg);
+            Rect right_btn(ctx.offset.x + size_.width - btn_w, ctx.offset.y, btn_w, size_.height);
+            btn_bg.setColor(Color(hovered_button == 1 ? options.button_hover_color : options.button_color));
+            canvas.drawRect(right_btn, btn_bg);
 
             // Plus icon
             cx = ctx.offset.x + size_.width - btn_w * 0.5f;
-            sk_canvas->drawLine(cx - 5.0f, cy, cx + 5.0f, cy, icon_paint);
-            sk_canvas->drawLine(cx, cy - 5.0f, cx, cy + 5.0f, icon_paint);
+            canvas.drawLine(Point(cx - 5.0f, cy), Point(cx + 5.0f, cy), icon_paint);
+            canvas.drawLine(Point(cx, cy - 5.0f), Point(cx, cy + 5.0f), icon_paint);
 
             // Right divider line
-            sk_canvas->drawLine(ctx.offset.x + size_.width - btn_w, ctx.offset.y, ctx.offset.x + size_.width - btn_w, ctx.offset.y + size_.height, div_paint);
+            canvas.drawLine(Point(ctx.offset.x + size_.width - btn_w, ctx.offset.y), Point(ctx.offset.x + size_.width - btn_w, ctx.offset.y + size_.height), div_paint);
 
             content_x += btn_w;
             avail_w -= btn_w * 2.0f;
@@ -383,44 +378,43 @@ public:
             float half_h = size_.height * 0.5f;
 
             // Top Button [ ▲ ]
-            SkRect top_btn = SkRect::MakeXYWH(sb_x, ctx.offset.y, btn_w, half_h);
-            SkPaint btn_bg;
-            btn_bg.setColor(hovered_button == 1 ? options.button_hover_color : options.button_color);
-            sk_canvas->drawRect(top_btn, btn_bg);
+            Rect top_btn(sb_x, ctx.offset.y, btn_w, half_h);
+            Paint btn_bg;
+            btn_bg.setColor(Color(hovered_button == 1 ? options.button_hover_color : options.button_color));
+            canvas.drawRect(top_btn, btn_bg);
 
             // Up triangle
-            SkPaint icon_paint;
-            icon_paint.setAntiAlias(true);
-            icon_paint.setColor(options.button_icon_color);
-            icon_paint.setStyle(SkPaint::kFill_Style);
-            SkPath up_path;
+            Paint icon_paint;
+            icon_paint.setColor(Color(options.button_icon_color));
+            icon_paint.setStyle(PaintStyle::Fill);
+            Path up_path;
             float t_cx = sb_x + btn_w * 0.5f;
             float t_cy = ctx.offset.y + half_h * 0.5f;
             up_path.moveTo(t_cx, t_cy - 3.5f);
             up_path.lineTo(t_cx - 4.5f, t_cy + 3.0f);
             up_path.lineTo(t_cx + 4.5f, t_cy + 3.0f);
             up_path.close();
-            sk_canvas->drawPath(up_path, icon_paint);
+            canvas.drawPath(up_path, icon_paint);
 
             // Bottom Button [ ▼ ]
-            SkRect bot_btn = SkRect::MakeXYWH(sb_x, ctx.offset.y + half_h, btn_w, half_h);
-            btn_bg.setColor(hovered_button == 2 ? options.button_hover_color : options.button_color);
-            sk_canvas->drawRect(bot_btn, btn_bg);
+            Rect bot_btn(sb_x, ctx.offset.y + half_h, btn_w, half_h);
+            btn_bg.setColor(Color(hovered_button == 2 ? options.button_hover_color : options.button_color));
+            canvas.drawRect(bot_btn, btn_bg);
 
             // Down triangle
-            SkPath dn_path;
+            Path dn_path;
             float b_cy = ctx.offset.y + half_h + half_h * 0.5f;
             dn_path.moveTo(t_cx, b_cy + 3.5f);
             dn_path.lineTo(t_cx - 4.5f, b_cy - 3.0f);
             dn_path.lineTo(t_cx + 4.5f, b_cy - 3.0f);
             dn_path.close();
-            sk_canvas->drawPath(dn_path, icon_paint);
+            canvas.drawPath(dn_path, icon_paint);
 
             // Divider lines
-            SkPaint div_paint;
-            div_paint.setColor(options.border_color);
-            sk_canvas->drawLine(sb_x, ctx.offset.y, sb_x, ctx.offset.y + size_.height, div_paint);
-            sk_canvas->drawLine(sb_x, ctx.offset.y + half_h, sb_x + btn_w, ctx.offset.y + half_h, div_paint);
+            Paint div_paint;
+            div_paint.setColor(Color(options.border_color));
+            canvas.drawLine(Point(sb_x, ctx.offset.y), Point(sb_x, ctx.offset.y + size_.height), div_paint);
+            canvas.drawLine(Point(sb_x, ctx.offset.y + half_h), Point(sb_x + btn_w, ctx.offset.y + half_h), div_paint);
 
             avail_w -= btn_w;
         } else if (options.stepper_position == NumberFieldStepperPosition::RightHorizontal && !options.read_only && !options.disabled) {
@@ -428,33 +422,32 @@ public:
             float sb_x = ctx.offset.x + size_.width - pair_w;
 
             // Minus [ − ]
-            SkRect minus_btn = SkRect::MakeXYWH(sb_x, ctx.offset.y, btn_w, size_.height);
-            SkPaint btn_bg;
-            btn_bg.setColor(hovered_button == 2 ? options.button_hover_color : options.button_color);
-            sk_canvas->drawRect(minus_btn, btn_bg);
+            Rect minus_btn(sb_x, ctx.offset.y, btn_w, size_.height);
+            Paint btn_bg;
+            btn_bg.setColor(Color(hovered_button == 2 ? options.button_hover_color : options.button_color));
+            canvas.drawRect(minus_btn, btn_bg);
 
-            SkPaint icon_paint;
-            icon_paint.setAntiAlias(true);
-            icon_paint.setColor(options.button_icon_color);
+            Paint icon_paint;
+            icon_paint.setColor(Color(options.button_icon_color));
             icon_paint.setStrokeWidth(2.0f);
             float cy = ctx.offset.y + size_.height * 0.5f;
             float cx = sb_x + btn_w * 0.5f;
-            sk_canvas->drawLine(cx - 4.0f, cy, cx + 4.0f, cy, icon_paint);
+            canvas.drawLine(Point(cx - 4.0f, cy), Point(cx + 4.0f, cy), icon_paint);
 
             // Plus [ + ]
-            SkRect plus_btn = SkRect::MakeXYWH(sb_x + btn_w, ctx.offset.y, btn_w, size_.height);
-            btn_bg.setColor(hovered_button == 1 ? options.button_hover_color : options.button_color);
-            sk_canvas->drawRect(plus_btn, btn_bg);
+            Rect plus_btn(sb_x + btn_w, ctx.offset.y, btn_w, size_.height);
+            btn_bg.setColor(Color(hovered_button == 1 ? options.button_hover_color : options.button_color));
+            canvas.drawRect(plus_btn, btn_bg);
 
             cx = sb_x + btn_w + btn_w * 0.5f;
-            sk_canvas->drawLine(cx - 4.0f, cy, cx + 4.0f, cy, icon_paint);
-            sk_canvas->drawLine(cx, cy - 4.0f, cx, cy + 4.0f, icon_paint);
+            canvas.drawLine(Point(cx - 4.0f, cy), Point(cx + 4.0f, cy), icon_paint);
+            canvas.drawLine(Point(cx, cy - 4.0f), Point(cx, cy + 4.0f), icon_paint);
 
             // Dividers
-            SkPaint div_paint;
-            div_paint.setColor(options.border_color);
-            sk_canvas->drawLine(sb_x, ctx.offset.y, sb_x, ctx.offset.y + size_.height, div_paint);
-            sk_canvas->drawLine(sb_x + btn_w, ctx.offset.y, sb_x + btn_w, ctx.offset.y + size_.height, div_paint);
+            Paint div_paint;
+            div_paint.setColor(Color(options.border_color));
+            canvas.drawLine(Point(sb_x, ctx.offset.y), Point(sb_x, ctx.offset.y + size_.height), div_paint);
+            canvas.drawLine(Point(sb_x + btn_w, ctx.offset.y), Point(sb_x + btn_w, ctx.offset.y + size_.height), div_paint);
 
             avail_w -= pair_w;
         }
@@ -464,7 +457,7 @@ public:
         float text_y = ctx.offset.y + (size_.height - (text_paragraph_ ? text_paragraph_->getHeight() : 16.0f)) * 0.5f;
 
         if (prefix_paragraph_) {
-            prefix_paragraph_->paint(sk_canvas, text_x, text_y);
+            canvas.drawParagraph(prefix_paragraph_.get(), text_x, text_y);
             text_x += prefix_paragraph_->getMaxIntrinsicWidth() + 3.0f;
         }
 
@@ -477,17 +470,14 @@ public:
                     skia::textlayout::RectHeightStyle::kTight,
                     skia::textlayout::RectWidthStyle::kTight);
 
-                SkPaint sel_paint;
-                sel_paint.setColor(static_cast<SkColor>(options.selection_color));
-                sk_canvas->save();
-                sk_canvas->translate(text_x, text_y);
+                Paint sel_paint;
+                sel_paint.setColor(Color(options.selection_color));
                 for (const auto& r : rects) {
-                    sk_canvas->drawRect(r.rect, sel_paint);
+                    canvas.drawRect(Rect(text_x + r.rect.fLeft, text_y + r.rect.fTop, r.rect.width(), r.rect.height()), sel_paint);
                 }
-                sk_canvas->restore();
             }
 
-            text_paragraph_->paint(sk_canvas, text_x, text_y);
+            canvas.drawParagraph(text_paragraph_.get(), text_x, text_y);
 
             // 5. Draw Blinking Cursor
             if (is_focused && show_cursor && !options.read_only && selection_start == selection_end) {
@@ -500,9 +490,9 @@ public:
                         c_x = prev_rects.back().rect.fRight;
                     }
                 }
-                SkPaint cur_paint;
-                cur_paint.setColor(static_cast<SkColor>(options.cursor_color));
-                sk_canvas->drawRect(SkRect::MakeXYWH(text_x + c_x, text_y, 2.0f, c_h), cur_paint);
+                Paint cur_paint;
+                cur_paint.setColor(Color(options.cursor_color));
+                canvas.drawRect(Rect(text_x + c_x, text_y, 2.0f, c_h), cur_paint);
             }
 
             text_x += text_paragraph_->getMaxIntrinsicWidth() + 4.0f;
@@ -510,18 +500,17 @@ public:
 
         // 6. Draw Suffix
         if (suffix_paragraph_) {
-            suffix_paragraph_->paint(sk_canvas, text_x, text_y);
+            canvas.drawParagraph(suffix_paragraph_.get(), text_x, text_y);
         }
 
-        sk_canvas->restore();
+        canvas.restore();
 
         // 7. Draw Outer Rounded Border (Normal / Hover / Focused Glow)
-        SkPaint border_paint;
-        border_paint.setAntiAlias(true);
-        border_paint.setStyle(SkPaint::kStroke_Style);
+        Paint border_paint;
+        border_paint.setStyle(PaintStyle::Stroke);
         border_paint.setStrokeWidth(is_focused ? 1.5f : 1.0f);
-        border_paint.setColor(is_focused ? options.focus_border_color : (is_hovered ? 0xFF475569 : options.border_color));
-        sk_canvas->drawRRect(rrect, border_paint);
+        border_paint.setColor(Color(is_focused ? options.focus_border_color : (is_hovered ? 0xFF475569 : options.border_color)));
+        canvas.drawRRect(bounds, border_radius, border_paint);
     }
 
     [[nodiscard]] bool hitTestSelf(Point localPoint) const override {

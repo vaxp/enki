@@ -181,17 +181,6 @@ public:
         }
 
         // ── Drawer panel ───────────────────────────────────────
-        // Offset: t=0 → fully off-screen, t=1 → fully on-screen
-        float offset_x;
-        if (opts.side == DrawerSide::Left) {
-            // slides from left: starts at -drawer_width, ends at 0
-            offset_x = drawer_width * (t - 1.0f);
-        } else {
-            // slides from right; Positioned via right=0, so we use left = (1-t)*width
-            // We'll use absolute left positioning
-            offset_x = 0.0f; // handled by Positioned
-        }
-
         // Build drawer content
         std::vector<WidgetPtr> drawer_kids;
         if (w->drawer_content) {

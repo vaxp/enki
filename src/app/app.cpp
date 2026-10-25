@@ -805,7 +805,6 @@ struct App::Impl {
         stats.swap_time_ms  = swap_ms;
         stats.gpu_time_ms   = gpu_flush_ms + swap_ms;
 
-        auto frame_end = cpu_end; // frame ends when CPU work is done (swap included above)
         stats.frame_time_ms = std::chrono::duration<double, std::milli>(cpu_end - frame_start).count();
         stats.total_frames++;
         frames_in_sample++;

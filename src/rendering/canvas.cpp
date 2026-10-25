@@ -20,6 +20,8 @@
 #endif
 #include <include/core/SkTextBlob.h>
 #include <include/effects/SkImageFilters.h>
+#include <include/effects/SkDashPathEffect.h>
+#include <include/core/SkMaskFilter.h>
 #include <include/core/SkBlendMode.h>
 #include <include/core/SkShader.h>
 #include <include/core/SkColorFilter.h>
@@ -242,11 +244,11 @@ public:
         canvas_->skew(sx, sy);
     }
 
-    void clipRect(const Rect& rect) override {
-        canvas_->clipRect(SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height), true);
+    void clipRect(const Rect& rect, bool anti_alias = true) override {
+        canvas_->clipRect(SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height), anti_alias);
     }
 
-    void clipRRect(const Rect& rect, const BorderRadius& radius) override {
+    void clipRRect(const Rect& rect, const BorderRadius& radius, bool anti_alias = true) override {
         SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
         SkVector radii[4] = {
             {radius.top_left, radius.top_left},
@@ -256,19 +258,19 @@ public:
         };
         SkRRect rrect;
         rrect.setRectRadii(sk_rect, radii);
-        canvas_->clipRRect(rrect, true);
+        canvas_->clipRRect(rrect, anti_alias);
     }
 
-    void clipOval(const Rect& rect) override {
+    void clipOval(const Rect& rect, bool anti_alias = true) override {
         SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
         SkRRect rrect;
         rrect.setOval(sk_rect);
-        canvas_->clipRRect(rrect, true);
+        canvas_->clipRRect(rrect, anti_alias);
     }
 
-    void clipPath(const Path& path) override {
+    void clipPath(const Path& path, bool anti_alias = true) override {
         if (auto* sk_path = static_cast<const SkPath*>(path.getNativeHandle())) {
-            canvas_->clipPath(*sk_path, true);
+            canvas_->clipPath(*sk_path, anti_alias);
         }
     }
 
@@ -305,6 +307,151 @@ public:
         SkPath* sk_path = static_cast<SkPath*>(path.getNativeHandle());
         if (sk_path) {
             canvas_->drawPath(*sk_path, toSkPaint(paint));
+        }
+    }
+
+    void drawRRectShadow(const Rect& rect, const BorderRadius& radius, Color shadow_color, float blur, Point offset) override {
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x + offset.x, rect.y + offset.y, rect.width, rect.height);
+        SkVector radii[4] = {
+            {radius.top_left, radius.top_left},
+            {radius.top_right, radius.top_right},
+            {radius.bottom_right, radius.bottom_right},
+            {radius.bottom_left, radius.bottom_left}
+        };
+        SkRRect rrect;
+        rrect.setRectRadii(sk_rect, radii);
+        SkPaint shadow_paint;
+        shadow_paint.setColor(shadow_color);
+        shadow_paint.setAntiAlias(true);
+        if (blur > 0.0f) {
+            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, blur * 0.5f));
+        }
+        canvas_->drawRRect(rrect, shadow_paint);
+    }
+
+    void drawRectShadow(const Rect& rect, Color shadow_color, float blur, Point offset) override {
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x + offset.x, rect.y + offset.y, rect.width, rect.height);
+        SkPaint shadow_paint;
+        shadow_paint.setColor(shadow_color);
+        shadow_paint.setAntiAlias(true);
+        if (blur > 0.0f) {
+            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, blur * 0.5f));
+        }
+        canvas_->drawRect(sk_rect, shadow_paint);
+    }
+
+    void drawCircleShadow(Point center, float radius, Color shadow_color, float blur, Point offset) override {
+        SkPaint shadow_paint;
+        shadow_paint.setColor(shadow_color);
+        shadow_paint.setAntiAlias(true);
+        if (blur > 0.0f) {
+            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, blur * 0.5f));
+        }
+        canvas_->drawCircle(center.x + offset.x, center.y + offset.y, radius, shadow_paint);
+    }
+
+    void drawGlassPanel(const Rect& rect, const BorderRadius& radius, float blur_sigma, Color tint_color, Color border_highlight) override {
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
+        SkVector radii[4] = {
+            {radius.top_left, radius.top_left}, {radius.top_right, radius.top_right},
+            {radius.bottom_right, radius.bottom_right}, {radius.bottom_left, radius.bottom_left}
+        };
+        SkRRect rrect;
+        rrect.setRectRadii(sk_rect, radii);
+
+        if (blur_sigma > 0.0f) {
+            sk_sp<SkImageFilter> blurFilter = SkImageFilters::Blur(blur_sigma, blur_sigma, nullptr);
+            SkCanvas::SaveLayerRec rec(&sk_rect, nullptr, blurFilter.get(), 0);
+            canvas_->save();
+            canvas_->clipRRect(rrect, true);
+            canvas_->saveLayer(rec);
+            canvas_->restore();
+            canvas_->restore();
+        }
+
+        if (tint_color != 0) {
+            SkPaint tint_paint;
+            tint_paint.setColor(tint_color);
+            tint_paint.setAntiAlias(true);
+            tint_paint.setStyle(SkPaint::kFill_Style);
+            canvas_->drawRRect(rrect, tint_paint);
+        }
+
+        if (border_highlight != 0) {
+            SkPaint border_paint;
+            border_paint.setColor(border_highlight);
+            border_paint.setAntiAlias(true);
+            border_paint.setStyle(SkPaint::kStroke_Style);
+            border_paint.setStrokeWidth(1.0f);
+            canvas_->drawRRect(rrect, border_paint);
+        }
+    }
+
+    void drawBackdropBlur(const Rect& rect, const BorderRadius& radius, float sigma_x, float sigma_y) override {
+        if (sigma_x <= 0.0f && sigma_y <= 0.0f) return;
+        float sy = (sigma_y > 0.0f) ? sigma_y : sigma_x;
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
+        SkVector radii[4] = {
+            {radius.top_left, radius.top_left}, {radius.top_right, radius.top_right},
+            {radius.bottom_right, radius.bottom_right}, {radius.bottom_left, radius.bottom_left}
+        };
+        SkRRect rrect;
+        rrect.setRectRadii(sk_rect, radii);
+
+        sk_sp<SkImageFilter> blurFilter = SkImageFilters::Blur(sigma_x, sy, nullptr);
+        SkCanvas::SaveLayerRec rec(&sk_rect, nullptr, blurFilter.get(), 0);
+        canvas_->save();
+        canvas_->clipRRect(rrect, true);
+        canvas_->saveLayer(rec);
+        canvas_->restore();
+        canvas_->restore();
+    }
+
+    void drawGlow(const Rect& rect, const BorderRadius& radius, Color glow_color, float radius_extent) override {
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
+        SkVector radii[4] = {
+            {radius.top_left, radius.top_left}, {radius.top_right, radius.top_right},
+            {radius.bottom_right, radius.bottom_right}, {radius.bottom_left, radius.bottom_left}
+        };
+        SkRRect rrect;
+        rrect.setRectRadii(sk_rect, radii);
+        SkPaint glow_paint;
+        glow_paint.setColor(glow_color);
+        glow_paint.setAntiAlias(true);
+        glow_paint.setStyle(SkPaint::kStroke_Style);
+        glow_paint.setStrokeWidth(radius_extent * 2.0f);
+        glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, radius_extent));
+        canvas_->drawRRect(rrect, glow_paint);
+    }
+
+    void drawDashedLine(Point p1, Point p2, const Paint& paint, float dash_len, float gap_len, float phase) override {
+        SkPaint sk_paint = toSkPaint(paint);
+        SkScalar intervals[2] = {dash_len, gap_len};
+        sk_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, phase));
+        canvas_->drawLine(p1.x, p1.y, p2.x, p2.y, sk_paint);
+    }
+
+    void drawDashedRRect(const Rect& rect, const BorderRadius& radius, const Paint& paint, float dash_len, float gap_len, float phase) override {
+        SkPaint sk_paint = toSkPaint(paint);
+        SkScalar intervals[2] = {dash_len, gap_len};
+        sk_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, phase));
+        SkRect sk_rect = SkRect::MakeXYWH(rect.x, rect.y, rect.width, rect.height);
+        SkVector radii[4] = {
+            {radius.top_left, radius.top_left}, {radius.top_right, radius.top_right},
+            {radius.bottom_right, radius.bottom_right}, {radius.bottom_left, radius.bottom_left}
+        };
+        SkRRect rrect;
+        rrect.setRectRadii(sk_rect, radii);
+        canvas_->drawRRect(rrect, sk_paint);
+    }
+
+    void drawDashedPath(const Path& path, const Paint& paint, float dash_len, float gap_len, float phase) override {
+        SkPath* sk_path = static_cast<SkPath*>(path.getNativeHandle());
+        if (sk_path) {
+            SkPaint sk_paint = toSkPaint(paint);
+            SkScalar intervals[2] = {dash_len, gap_len};
+            sk_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, phase));
+            canvas_->drawPath(*sk_path, sk_paint);
         }
     }
     

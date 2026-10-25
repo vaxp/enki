@@ -220,14 +220,9 @@ int main() {
     SkFont label_font(typeface, 13.0f);
     SkFont mono_font(typeface, 11.5f);
 
-    auto start_time = std::chrono::steady_clock::now();
-
     while (running) {
         platform->pollEvents();
         window->makeCurrent();
-
-        auto now = std::chrono::steady_clock::now();
-        float t = std::chrono::duration<float>(now - start_time).count();
 
         SkCanvas* canvas = surface->getCanvas();
         canvas->clear(SK_ColorTRANSPARENT);

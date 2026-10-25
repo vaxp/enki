@@ -3,10 +3,6 @@
 #include "enki/gestures/recognizer.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/effects/SkImageFilters.h>
 #include <layout_engine/Anu.h>
 #include <algorithm>
 #include <cmath>
@@ -197,11 +193,9 @@ public:
     }
 
     void paint(PaintContext& context) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(context.canvas.getNativeHandle());
-        if (!sk_canvas) return;
-
-        sk_canvas->save();
-        sk_canvas->translate(context.offset.x, context.offset.y);
+        auto& canvas = context.canvas;
+        canvas.save();
+        canvas.translate(context.offset.x, context.offset.y);
 
         float w = size_.width;
         float h = size_.height;
@@ -214,47 +208,38 @@ public:
         float track_y = (h - options_.track_height) / 2.0f;
         
         // 1. Inactive Track
-        SkPaint inactive_paint;
-        inactive_paint.setAntiAlias(true);
-        inactive_paint.setColor(options_.inactive_color);
-        
-        SkRect inactive_rect = SkRect::MakeXYWH(options_.thumb_radius, track_y, usable_w, options_.track_height);
-        sk_canvas->drawRoundRect(inactive_rect, options_.track_height / 2.0f, options_.track_height / 2.0f, inactive_paint);
+        Paint inactive_paint;
+        inactive_paint.color(options_.inactive_color);
+        canvas.drawRRect(Rect{options_.thumb_radius, track_y, usable_w, options_.track_height},
+                         BorderRadius::all(options_.track_height / 2.0f), inactive_paint);
         
         // 2. Active Track (Between start and end)
         if (end_x > start_x) {
-            SkPaint active_paint;
-            active_paint.setAntiAlias(true);
-            active_paint.setColor(options_.active_color);
-            
-            SkRect active_rect = SkRect::MakeXYWH(start_x, track_y, end_x - start_x, options_.track_height);
-            sk_canvas->drawRoundRect(active_rect, options_.track_height / 2.0f, options_.track_height / 2.0f, active_paint);
+            Paint active_paint;
+            active_paint.color(options_.active_color);
+            canvas.drawRRect(Rect{start_x, track_y, end_x - start_x, options_.track_height},
+                             BorderRadius::all(options_.track_height / 2.0f), active_paint);
         }
         
         auto drawThumb = [&](float x, Thumb type) {
             // Hover Ring
             if (hovered_thumb_ == type || dragging_thumb_ == type) {
-                SkPaint hover_paint;
-                hover_paint.setAntiAlias(true);
-                SkColor base_active = options_.active_color;
-                hover_paint.setColor(SkColorSetA(base_active, 51));
-                sk_canvas->drawCircle(x, thumb_y, options_.thumb_radius * 1.5f, hover_paint);
+                Paint hover_paint;
+                Color hover_color = (options_.active_color & 0x00FFFFFF) | 0x33000000;
+                hover_paint.color(hover_color);
+                canvas.drawCircle(Point{x, thumb_y}, options_.thumb_radius * 1.5f, hover_paint);
             }
             
             // Thumb Shadow
-            SkPaint thumb_paint;
-            thumb_paint.setAntiAlias(true);
-            thumb_paint.setColor(options_.thumb_color);
-            
             if (options_.shadow_blur > 0.0f) {
-                thumb_paint.setImageFilter(SkImageFilters::DropShadow(
-                    0.0f, options_.shadow_offset_dy,
-                    options_.shadow_blur, options_.shadow_blur,
-                    options_.shadow_color,
-                    nullptr
-                ));
+                canvas.drawCircleShadow(Point{x, thumb_y}, options_.thumb_radius,
+                                        options_.shadow_color, options_.shadow_blur,
+                                        Point{0.0f, options_.shadow_offset_dy});
             }
-            sk_canvas->drawCircle(x, thumb_y, options_.thumb_radius, thumb_paint);
+
+            Paint thumb_paint;
+            thumb_paint.color(options_.thumb_color);
+            canvas.drawCircle(Point{x, thumb_y}, options_.thumb_radius, thumb_paint);
         };
         
         // Draw inactive thumb first, active one on top
@@ -266,7 +251,7 @@ public:
             drawThumb(end_x, Thumb::End);
         }
 
-        sk_canvas->restore();
+        canvas.restore();
     }
 };
 

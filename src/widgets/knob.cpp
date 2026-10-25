@@ -1,9 +1,6 @@
 #include "enki/widgets/knob.hpp"
 #include "enki/rendering/canvas.hpp"
 #include <layout_engine/Anu.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRect.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -84,11 +81,8 @@ public:
 
     void paint(PaintContext& ctx) override {
         auto& canvas = ctx.canvas;
-        auto* sk = static_cast<SkCanvas*>(canvas.getNativeHandle());
-        if (!sk) return;
-
-        sk->save();
-        sk->translate(ctx.offset.x, ctx.offset.y);
+        canvas.save();
+        canvas.translate(ctx.offset.x, ctx.offset.y);
 
         float d = props_.size;
         float cx = d * 0.5f;
@@ -100,34 +94,34 @@ public:
 
         // 1. Background Arc Track (270 degrees from 135 deg)
         float arc_margin = 6.0f;
-        SkRect oval = SkRect::MakeXYWH(arc_margin, arc_margin, d - arc_margin * 2.0f, d - arc_margin * 2.0f);
+        Rect oval{arc_margin, arc_margin, d - arc_margin * 2.0f, d - arc_margin * 2.0f};
 
-        SkPaint track_paint;
-        track_paint.setStyle(SkPaint::kStroke_Style);
+        Paint track_paint;
+        track_paint.setStyle(PaintStyle::Stroke);
         track_paint.setStrokeWidth(3.5f);
-        track_paint.setStrokeCap(SkPaint::kRound_Cap);
+        track_paint.setStrokeCap(StrokeCap::Round);
         track_paint.setAntiAlias(true);
         track_paint.setColor(props_.track_color);
-        sk->drawArc(oval, 135.0f, 270.0f, false, track_paint);
+        canvas.drawArc(oval, 135.0f, 270.0f, false, track_paint);
 
         // 2. Active Progress Arc
-        SkPaint active_arc_paint;
-        active_arc_paint.setStyle(SkPaint::kStroke_Style);
+        Paint active_arc_paint;
+        active_arc_paint.setStyle(PaintStyle::Stroke);
         active_arc_paint.setStrokeWidth(3.5f);
-        active_arc_paint.setStrokeCap(SkPaint::kRound_Cap);
+        active_arc_paint.setStrokeCap(StrokeCap::Round);
         active_arc_paint.setAntiAlias(true);
         active_arc_paint.setColor(props_.active_color);
 
         if (!props_.is_bipolar) {
             float active_sweep = frac * 270.0f;
             if (active_sweep > 0.5f) {
-                sk->drawArc(oval, 135.0f, active_sweep, false, active_arc_paint);
+                canvas.drawArc(oval, 135.0f, active_sweep, false, active_arc_paint);
             }
         } else {
             // Bipolar: sweeps left/right from top center (270 deg)
             float start_deg = 270.0f;
             float sweep_deg = (frac - 0.5f) * 270.0f;
-            sk->drawArc(oval, start_deg, sweep_deg, false, active_arc_paint);
+            canvas.drawArc(oval, start_deg, sweep_deg, false, active_arc_paint);
         }
 
         // 3. Dial Body (Inner Circle)
@@ -194,7 +188,7 @@ public:
             canvas.drawText(props_.label, Point(cx - approx_w * 0.5f, cur_y), label_paint, 10.5f, nullptr, false);
         }
 
-        sk->restore();
+        canvas.restore();
     }
 };
 

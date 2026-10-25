@@ -1,8 +1,6 @@
 #include "enki/widgets/rating_bar.hpp"
 #include "enki/rendering/canvas.hpp"
 #include <layout_engine/Anu.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkCanvas.h>
 #include <algorithm>
 #include <cmath>
 
@@ -89,8 +87,8 @@ public:
         markNeedsPaint();
     }
 
-    static SkPath makeStarPath(float cx, float cy, float R) {
-        SkPath path;
+    static Path makeStarPath(float cx, float cy, float R) {
+        Path path;
         float r = R * 0.40f;
         constexpr float kPi = 3.14159265358979323846f;
         for (int i = 0; i < 10; ++i) {
@@ -107,49 +105,45 @@ public:
 
     void paint(PaintContext& ctx) override {
         auto& canvas = ctx.canvas;
-        auto* sk_canvas = static_cast<SkCanvas*>(canvas.getNativeHandle());
-        if (!sk_canvas) return;
-
-        sk_canvas->save();
-        sk_canvas->translate(ctx.offset.x, ctx.offset.y);
+        canvas.save();
+        canvas.translate(ctx.offset.x, ctx.offset.y);
 
         float effective_rating = (hover_rating_ >= 0.0f) ? hover_rating_ : props_.rating;
         float stride = props_.item_size + props_.item_spacing;
         float radius = props_.item_size * 0.5f;
 
-        SkPaint inactive_sk;
-        inactive_sk.setStyle(SkPaint::kFill_Style);
-        inactive_sk.setAntiAlias(true);
-        inactive_sk.setColor(props_.inactive_color);
+        Paint inactive_paint;
+        inactive_paint.setStyle(PaintStyle::Fill);
+        inactive_paint.setAntiAlias(true);
+        inactive_paint.setColor(props_.inactive_color);
 
-        SkPaint active_sk;
-        active_sk.setStyle(SkPaint::kFill_Style);
-        active_sk.setAntiAlias(true);
-        active_sk.setColor(props_.active_color);
+        Paint active_paint;
+        active_paint.setStyle(PaintStyle::Fill);
+        active_paint.setAntiAlias(true);
+        active_paint.setColor(props_.active_color);
 
         for (int i = 0; i < props_.max_rating; ++i) {
             float star_x = static_cast<float>(i) * stride;
             float cx = star_x + radius;
             float cy = radius;
 
-            SkPath star_path = makeStarPath(cx, cy, radius * 0.95f);
+            Path star_path = makeStarPath(cx, cy, radius * 0.95f);
 
             // Always draw inactive background star
-            sk_canvas->drawPath(star_path, inactive_sk);
+            canvas.drawPath(star_path, inactive_paint);
 
             float star_value = effective_rating - static_cast<float>(i);
             if (star_value > 0.0f) {
                 float fill_fraction = std::clamp(star_value, 0.0f, 1.0f);
 
-                sk_canvas->save();
-                SkRect clip_rect = SkRect::MakeXYWH(star_x, 0.0f, props_.item_size * fill_fraction, props_.item_size);
-                sk_canvas->clipRect(clip_rect, true);
-                sk_canvas->drawPath(star_path, active_sk);
-                sk_canvas->restore();
+                canvas.save();
+                canvas.clipRect(Rect{star_x, 0.0f, props_.item_size * fill_fraction, props_.item_size});
+                canvas.drawPath(star_path, active_paint);
+                canvas.restore();
             }
         }
 
-        sk_canvas->restore();
+        canvas.restore();
     }
 };
 

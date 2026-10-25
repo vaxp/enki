@@ -104,6 +104,7 @@ void test_pool_recycle() {
     TestObj* b = pool.acquire();
     TestObj* c = pool.acquire();
     TestObj* d = pool.acquire();
+    assert(a != nullptr && d != nullptr);
 
     // Release 2
     pool.release(b);

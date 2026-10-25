@@ -4,11 +4,6 @@
 #include "enki/platform/platform.hpp"
 #include "enki/platform/dnd.hpp"
 #include <layout_engine/Anu.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPathEffect.h>
-#include <include/effects/SkDashPathEffect.h>
-#include <include/core/SkRRect.h>
 #include <cctype>
 #include <iostream>
 #include <sstream>
@@ -168,11 +163,8 @@ public:
 
     void paint(PaintContext& ctx) override {
         auto& canvas = ctx.canvas;
-        auto* sk = static_cast<SkCanvas*>(canvas.getNativeHandle());
-        if (!sk) return;
-
-        sk->save();
-        sk->translate(ctx.offset.x, ctx.offset.y);
+        canvas.save();
+        canvas.translate(ctx.offset.x, ctx.offset.y);
 
         Rect bounds{0.0f, 0.0f, size_.width, size_.height};
 
@@ -184,18 +176,15 @@ public:
         canvas.drawRRect(bounds, BorderRadius::circular(props_.border_radius), bg_paint);
 
         // 2. Dashed Border
-        SkPaint border_paint;
-        border_paint.setStyle(SkPaint::kStroke_Style);
+        Paint border_paint;
+        border_paint.setStyle(PaintStyle::Stroke);
         border_paint.setStrokeWidth(is_drag_over_ ? 2.0f : 1.5f);
         border_paint.setAntiAlias(true);
         border_paint.setColor(is_drag_over_ ? props_.hover_border_color : props_.idle_border_color);
 
-        const SkScalar intervals[] = {8.0f, 6.0f};
-        border_paint.setPathEffect(SkDashPathEffect::Make(intervals, 2, dash_phase_));
-
-        SkRect sk_r = SkRect::MakeXYWH(1.0f, 1.0f, size_.width - 2.0f, size_.height - 2.0f);
-        SkRRect sk_rr = SkRRect::MakeRectXY(sk_r, props_.border_radius, props_.border_radius);
-        sk->drawRRect(sk_rr, border_paint);
+        canvas.drawDashedRRect(Rect{1.0f, 1.0f, size_.width - 2.0f, size_.height - 2.0f},
+                              BorderRadius::circular(props_.border_radius),
+                              border_paint, 8.0f, 6.0f, dash_phase_);
 
         // 3. Center Icon & Texts
         float cx = size_.width * 0.5f;
@@ -231,7 +220,7 @@ public:
         float approx_sw = static_cast<float>(sub.length()) * 5.8f;
         canvas.drawText(sub, Point(cx - approx_sw * 0.5f, cy + 48.0f), sub_paint, 11.0f, nullptr, false);
 
-        sk->restore();
+        canvas.restore();
     }
 };
 

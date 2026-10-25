@@ -3,13 +3,11 @@
 #include "enki/state/state.hpp"
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
+#include "enki/rendering/paint.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/effects/SkGradientShader.h>
 #include <include/effects/SkRuntimeEffect.h>
+#include <include/core/SkShader.h>
+#include <include/core/SkMatrix.h>
 #include <layout_engine/Anu.h>
 
 #include <chrono>
@@ -19,6 +17,14 @@
 #include <cmath>
 
 namespace enki {
+
+class ProgressRingShaderWrapper : public Shader {
+public:
+    explicit ProgressRingShaderWrapper(sk_sp<SkShader> shader) : shader_(std::move(shader)) {}
+    void* getNativeHandle() const override { return shader_.get(); }
+private:
+    sk_sp<SkShader> shader_;
+};
 
 inline double getSteadyTimeSecs() {
     auto now = std::chrono::steady_clock::now();
@@ -97,10 +103,9 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-        
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
+
+        auto& canvas = ctx.canvas;
 
         float diameter = std::min(size_.width, size_.height);
         float stroke = std::clamp(stroke_width_, 1.0f, diameter / 2.0f);
@@ -109,23 +114,23 @@ public:
         float cx = ctx.offset.x + size_.width / 2.0f;
         float cy = ctx.offset.y + size_.height / 2.0f;
 
-        SkRect arc_rect = SkRect::MakeLTRB(cx - radius, cy - radius, cx + radius, cy + radius);
+        Rect arc_rect{cx - radius, cy - radius, radius * 2.0f, radius * 2.0f};
 
         // 1. Background Ring Track
-        SkPaint bg_paint;
+        Paint bg_paint;
         bg_paint.setAntiAlias(true);
-        bg_paint.setStyle(SkPaint::kStroke_Style);
+        bg_paint.setStyle(PaintStyle::Stroke);
         bg_paint.setStrokeWidth(stroke);
         bg_paint.setColor(background_color_);
-        canvas->drawOval(arc_rect, bg_paint);
+        canvas.drawOval(arc_rect, bg_paint);
 
         // 2. Active Progress Arc
-        SkPaint fill_paint;
+        Paint fill_paint;
         fill_paint.setAntiAlias(true);
-        fill_paint.setStyle(SkPaint::kStroke_Style);
+        fill_paint.setStyle(PaintStyle::Stroke);
         fill_paint.setStrokeWidth(stroke);
         if (round_cap_) {
-            fill_paint.setStrokeCap(SkPaint::kRound_Cap);
+            fill_paint.setStrokeCap(StrokeCap::Round);
         }
 
         // Apply SkSL Shader or Sweep Gradient or Solid Color
@@ -144,13 +149,10 @@ public:
             float top_left_x = cx - radius;
             float top_left_y = cy - radius;
             SkMatrix local_matrix = SkMatrix::Translate(-top_left_x, -top_left_y);
-            fill_paint.setShader(effect->makeShader(uniform_data, nullptr, 0)->makeWithLocalMatrix(local_matrix));
+            fill_paint.setShader(std::make_shared<ProgressRingShaderWrapper>(
+                effect->makeShader(uniform_data, nullptr, 0)->makeWithLocalMatrix(local_matrix)));
         } else if (gradient_colors_.size() >= 2) {
-            std::vector<SkColor> sk_colors;
-            for (auto c : gradient_colors_) sk_colors.push_back(c);
-
-            fill_paint.setShader(SkGradientShader::MakeSweep(
-                cx, cy, sk_colors.data(), nullptr, static_cast<int>(sk_colors.size())));
+            fill_paint.setShader(Gradient::sweep(Point{cx, cy}, gradient_colors_));
         } else {
             fill_paint.setColor(progress_color_);
         }
@@ -161,26 +163,26 @@ public:
             float sweep_deg = 60.0f + 120.0f * (0.5f + 0.5f * sin(anim_time * 3.0f));
 
             if (glow_blur_ > 0.0f && glow_color_ != 0) {
-                SkPaint glow_paint = fill_paint;
+                Paint glow_paint = fill_paint;
                 glow_paint.setColor(glow_color_);
-                glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
-                canvas->drawArc(arc_rect, start_deg, sweep_deg, false, glow_paint);
+                glow_paint.setImageFilter(ImageFilter::blur(glow_blur_ * 0.5f, glow_blur_ * 0.5f));
+                canvas.drawArc(arc_rect, start_deg, sweep_deg, false, glow_paint);
             }
 
-            canvas->drawArc(arc_rect, start_deg, sweep_deg, false, fill_paint);
+            canvas.drawArc(arc_rect, start_deg, sweep_deg, false, fill_paint);
         } else {
             float clamped_val = std::clamp(value, 0.0f, 1.0f);
             float sweep_deg = clamped_val * 360.0f;
 
             if (sweep_deg > 0.0f) {
                 if (glow_blur_ > 0.0f && glow_color_ != 0) {
-                    SkPaint glow_paint = fill_paint;
+                    Paint glow_paint = fill_paint;
                     glow_paint.setColor(glow_color_);
-                    glow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
-                    canvas->drawArc(arc_rect, start_angle_, sweep_deg, false, glow_paint);
+                    glow_paint.setImageFilter(ImageFilter::blur(glow_blur_ * 0.5f, glow_blur_ * 0.5f));
+                    canvas.drawArc(arc_rect, start_angle_, sweep_deg, false, glow_paint);
                 }
 
-                canvas->drawArc(arc_rect, start_angle_, sweep_deg, false, fill_paint);
+                canvas.drawArc(arc_rect, start_angle_, sweep_deg, false, fill_paint);
             }
         }
 

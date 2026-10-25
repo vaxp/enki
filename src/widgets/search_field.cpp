@@ -14,10 +14,8 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/app/app.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkRRect.h>
+#include "enki/rendering/paint.hpp"
+#include "enki/rendering/path.hpp"
 #include <include/core/SkFontMgr.h>
 #if defined(__ANDROID__)
 #include <include/ports/SkFontMgr_android.h>
@@ -74,7 +72,7 @@ static sk_sp<skia::textlayout::FontCollection> getSearchFieldFontCollection() {
 }
 
 // Case-insensitive substring finder for highlighting matches
-static std::vector<std::pair<size_t, size_t>> findMatchRanges(std::string_view text, std::string_view query) {
+[[maybe_unused]] static std::vector<std::pair<size_t, size_t>> findMatchRanges(std::string_view text, std::string_view query) {
     std::vector<std::pair<size_t, size_t>> ranges;
     if (text.empty() || query.empty()) return ranges;
 
@@ -188,8 +186,8 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk_canvas || size_.width <= 0 || size_.height <= 0) return;
+        auto& canvas = ctx.canvas;
+        if (size_.width <= 0 || size_.height <= 0) return;
 
         layoutParagraphs();
 
@@ -198,23 +196,21 @@ public:
             radius = size_.height * 0.5f;
         }
 
-        SkRect bounds = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(bounds, radius, radius);
+        Rect bounds(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
+        auto border_radius = BorderRadius::circular(radius);
 
         // 1. Draw Field Background
-        SkPaint bg_paint;
-        bg_paint.setAntiAlias(true);
+        Paint bg_paint;
         if (props.variant == SearchFieldVariant::Outlined) {
-            bg_paint.setColor(0x00000000);
+            bg_paint.setColor(Color(0x00000000));
         } else {
-            bg_paint.setColor(props.background_color);
+            bg_paint.setColor(Color(props.background_color));
         }
-        sk_canvas->drawRRect(rrect, bg_paint);
+        canvas.drawRRect(bounds, border_radius, bg_paint);
 
         // Clip Content
-        sk_canvas->save();
-        sk_canvas->clipRRect(rrect, true);
+        canvas.save();
+        canvas.clipRRect(bounds, border_radius, true);
 
         // 2. Draw Search Icon
         float content_x = ctx.offset.x + props.padding.left;
@@ -222,7 +218,7 @@ public:
 
         if (icon_paragraph_) {
             float icon_y = cy - icon_paragraph_->getHeight() * 0.5f;
-            icon_paragraph_->paint(sk_canvas, content_x, icon_y);
+            canvas.drawParagraph(icon_paragraph_.get(), content_x, icon_y);
             content_x += icon_paragraph_->getMaxIntrinsicWidth() + 8.0f;
         }
 
@@ -239,17 +235,14 @@ public:
                     skia::textlayout::RectHeightStyle::kTight,
                     skia::textlayout::RectWidthStyle::kTight);
 
-                SkPaint sel_paint;
-                sel_paint.setColor(static_cast<SkColor>(props.selection_color));
-                sk_canvas->save();
-                sk_canvas->translate(content_x, text_y);
+                Paint sel_paint;
+                sel_paint.setColor(Color(props.selection_color));
                 for (const auto& r : rects) {
-                    sk_canvas->drawRect(r.rect, sel_paint);
+                    canvas.drawRect(Rect(content_x + r.rect.fLeft, text_y + r.rect.fTop, r.rect.width(), r.rect.height()), sel_paint);
                 }
-                sk_canvas->restore();
             }
 
-            text_paragraph_->paint(sk_canvas, content_x, text_y);
+            canvas.drawParagraph(text_paragraph_.get(), content_x, text_y);
 
             // Draw Blinking Caret
             if (is_focused && show_cursor && !props.read_only && selection_start == selection_end) {
@@ -262,9 +255,9 @@ public:
                         c_x = prev_rects.back().rect.fRight;
                     }
                 }
-                SkPaint cur_paint;
-                cur_paint.setColor(static_cast<SkColor>(props.cursor_color));
-                sk_canvas->drawRect(SkRect::MakeXYWH(content_x + c_x, text_y, 2.0f, c_h), cur_paint);
+                Paint cur_paint;
+                cur_paint.setColor(Color(props.cursor_color));
+                canvas.drawRect(Rect(content_x + c_x, text_y, 2.0f, c_h), cur_paint);
             }
         }
 
@@ -278,19 +271,17 @@ public:
             float btn_cy = cy;
 
             if (hovered_clear) {
-                SkPaint hov_paint;
-                hov_paint.setAntiAlias(true);
-                hov_paint.setColor(0x3394A3B8);
-                sk_canvas->drawCircle(btn_cx, btn_cy, btn_r + 2.0f, hov_paint);
+                Paint hov_paint;
+                hov_paint.setColor(Color(0x3394A3B8));
+                canvas.drawCircle(Point(btn_cx, btn_cy), btn_r + 2.0f, hov_paint);
             }
 
-            SkPaint x_paint;
-            x_paint.setAntiAlias(true);
-            x_paint.setColor(hovered_clear ? 0xFFFFFFFF : 0xFF94A3B8);
+            Paint x_paint;
+            x_paint.setColor(Color(hovered_clear ? 0xFFFFFFFF : 0xFF94A3B8));
             x_paint.setStrokeWidth(1.6f);
             float sz = 4.0f;
-            sk_canvas->drawLine(btn_cx - sz, btn_cy - sz, btn_cx + sz, btn_cy + sz, x_paint);
-            sk_canvas->drawLine(btn_cx + sz, btn_cy - sz, btn_cx - sz, btn_cy + sz, x_paint);
+            canvas.drawLine(Point(btn_cx - sz, btn_cy - sz), Point(btn_cx + sz, btn_cy + sz), x_paint);
+            canvas.drawLine(Point(btn_cx + sz, btn_cy - sz), Point(btn_cx - sz, btn_cy + sz), x_paint);
 
             trail_right -= (btn_r * 2.0f + 8.0f);
         }
@@ -301,14 +292,13 @@ public:
             float sp_cx = trail_right - sp_r;
             float sp_cy = cy;
 
-            SkPaint sp_paint;
-            sp_paint.setAntiAlias(true);
-            sp_paint.setStyle(SkPaint::kStroke_Style);
+            Paint sp_paint;
+            sp_paint.setStyle(PaintStyle::Stroke);
             sp_paint.setStrokeWidth(2.0f);
-            sp_paint.setColor(props.focus_border_color);
+            sp_paint.setColor(Color(props.focus_border_color));
 
-            SkRect sp_rect = SkRect::MakeXYWH(sp_cx - sp_r, sp_cy - sp_r, sp_r * 2.0f, sp_r * 2.0f);
-            sk_canvas->drawArc(sp_rect, spinner_angle, 270.0f, false, sp_paint);
+            Rect sp_rect(sp_cx - sp_r, sp_cy - sp_r, sp_r * 2.0f, sp_r * 2.0f);
+            canvas.drawArc(sp_rect, spinner_angle, 270.0f, false, sp_paint);
 
             trail_right -= (sp_r * 2.0f + 8.0f);
         }
@@ -320,25 +310,22 @@ public:
             float b_x = trail_right - b_w;
             float b_y = cy - b_h * 0.5f;
 
-            SkRRect b_rrect;
-            b_rrect.setRectXY(SkRect::MakeXYWH(b_x, b_y, b_w, b_h), 4.0f, 4.0f);
-            SkPaint b_bg;
-            b_bg.setAntiAlias(true);
-            b_bg.setColor(props.badge_bg_color);
-            sk_canvas->drawRRect(b_rrect, b_bg);
+            Rect b_rect(b_x, b_y, b_w, b_h);
+            Paint b_bg;
+            b_bg.setColor(Color(props.badge_bg_color));
+            canvas.drawRRect(b_rect, BorderRadius::circular(4.0f), b_bg);
 
-            badge_paragraph_->paint(sk_canvas, b_x + 5.0f, b_y + 2.0f);
+            canvas.drawParagraph(badge_paragraph_.get(), b_x + 5.0f, b_y + 2.0f);
         }
 
-        sk_canvas->restore();
+        canvas.restore();
 
         // 5. Outer Border (Focus Glow / Hover / Normal)
-        SkPaint border_paint;
-        border_paint.setAntiAlias(true);
-        border_paint.setStyle(SkPaint::kStroke_Style);
+        Paint border_paint;
+        border_paint.setStyle(PaintStyle::Stroke);
         border_paint.setStrokeWidth(is_focused ? 1.5f : 1.0f);
-        border_paint.setColor(is_focused ? props.focus_border_color : (is_hovered ? 0xFF475569 : props.border_color));
-        sk_canvas->drawRRect(rrect, border_paint);
+        border_paint.setColor(Color(is_focused ? props.focus_border_color : (is_hovered ? 0xFF475569 : props.border_color)));
+        canvas.drawRRect(bounds, border_radius, border_paint);
     }
 
     [[nodiscard]] bool hitTestSelf(Point localPoint) const override {

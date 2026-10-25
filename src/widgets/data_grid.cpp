@@ -14,11 +14,8 @@
 #include "enki/tree/build_context.hpp"
 #include "enki/rendering/canvas.hpp"
 #include "enki/app/app.hpp"
-
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkRRect.h>
+#include "enki/rendering/paint.hpp"
+#include "enki/rendering/path.hpp"
 #include <include/core/SkFontMgr.h>
 #if defined(__ANDROID__)
 #include <include/ports/SkFontMgr_android.h>
@@ -326,24 +323,23 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk_canvas || size_.width <= 0 || size_.height <= 0) return;
+        auto& canvas = ctx.canvas;
+        if (size_.width <= 0 || size_.height <= 0) return;
 
         auto fc = getDataGridFontCollection();
         if (!fc) return;
 
-        SkRect grid_bounds = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect grid_rrect;
-        grid_rrect.setRectXY(grid_bounds, options.border_radius, options.border_radius);
+        Rect grid_bounds{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius grid_rad = BorderRadius::all(options.border_radius);
 
         // 1. Grid Background
-        SkPaint bg_paint;
+        Paint bg_paint;
         bg_paint.setAntiAlias(true);
         bg_paint.setColor(options.background_color);
-        sk_canvas->drawRRect(grid_rrect, bg_paint);
+        canvas.drawRRect(grid_bounds, grid_rad, bg_paint);
 
-        sk_canvas->save();
-        sk_canvas->clipRRect(grid_rrect, true);
+        canvas.save();
+        canvas.clipRRect(grid_bounds, grid_rad, true);
 
         const auto& columns = controller->getColumns();
         const auto& raw_rows = controller->getRawRows();
@@ -353,10 +349,10 @@ public:
         // 2. Paint Header Row
         float cur_y = ctx.offset.y;
         if (options.show_header) {
-            SkRect hdr_rect = SkRect::MakeXYWH(ctx.offset.x, cur_y, size_.width, options.header_height);
-            SkPaint hdr_bg;
+            Rect hdr_rect{ctx.offset.x, cur_y, size_.width, options.header_height};
+            Paint hdr_bg;
             hdr_bg.setColor(options.header_bg_color);
-            sk_canvas->drawRect(hdr_rect, hdr_bg);
+            canvas.drawRect(hdr_rect, hdr_bg);
 
             float col_x = ctx.offset.x;
 
@@ -365,34 +361,33 @@ public:
                 float cb_cx = col_x + cb_w * 0.5f;
                 float cb_cy = cur_y + options.header_height * 0.5f;
                 float cb_sz = 14.0f;
-                SkRRect cb_box;
-                cb_box.setRectXY(SkRect::MakeXYWH(cb_cx - cb_sz * 0.5f, cb_cy - cb_sz * 0.5f, cb_sz, cb_sz), 3.0f, 3.0f);
+                Rect cb_box{cb_cx - cb_sz * 0.5f, cb_cy - cb_sz * 0.5f, cb_sz, cb_sz};
 
                 bool all_sel = controller->isAllSelected();
                 bool part_sel = controller->isPartiallySelected();
 
-                SkPaint cb_paint;
+                Paint cb_paint;
                 cb_paint.setAntiAlias(true);
                 cb_paint.setColor(all_sel || part_sel ? 0xFF38BDF8 : 0xFF334155);
-                sk_canvas->drawRRect(cb_box, cb_paint);
+                canvas.drawRRect(cb_box, BorderRadius::all(3.0f), cb_paint);
 
                 if (all_sel) {
-                    SkPaint chk_paint;
+                    Paint chk_paint;
                     chk_paint.setAntiAlias(true);
                     chk_paint.setColor(0xFF0F172A);
-                    chk_paint.setStyle(SkPaint::kStroke_Style);
+                    chk_paint.setStyle(PaintStyle::Stroke);
                     chk_paint.setStrokeWidth(1.8f);
-                    SkPath p;
+                    Path p;
                     p.moveTo(cb_cx - 3.5f, cb_cy);
                     p.lineTo(cb_cx - 1.0f, cb_cy + 3.0f);
                     p.lineTo(cb_cx + 4.0f, cb_cy - 2.5f);
-                    sk_canvas->drawPath(p, chk_paint);
+                    canvas.drawPath(p, chk_paint);
                 } else if (part_sel) {
-                    SkPaint dash_paint;
+                    Paint dash_paint;
                     dash_paint.setAntiAlias(true);
                     dash_paint.setColor(0xFF0F172A);
                     dash_paint.setStrokeWidth(2.0f);
-                    sk_canvas->drawLine(cb_cx - 3.5f, cb_cy, cb_cx + 3.5f, cb_cy, dash_paint);
+                    canvas.drawLine(Point{cb_cx - 3.5f, cb_cy}, Point{cb_cx + 3.5f, cb_cy}, dash_paint);
                 }
 
                 col_x += cb_w;
@@ -423,20 +418,20 @@ public:
                 p_hdr->layout(col.width - 16.0f);
 
                 float p_y = cur_y + (options.header_height - p_hdr->getHeight()) * 0.5f;
-                p_hdr->paint(sk_canvas, col_x + 8.0f, p_y);
+                canvas.drawParagraph(p_hdr.get(), col_x + 8.0f, p_y);
 
                 // Divider Line
-                SkPaint div_paint;
+                Paint div_paint;
                 div_paint.setColor(options.border_color);
-                sk_canvas->drawLine(col_x + col.width, cur_y, col_x + col.width, cur_y + options.header_height, div_paint);
+                canvas.drawLine(Point{col_x + col.width, cur_y}, Point{col_x + col.width, cur_y + options.header_height}, div_paint);
 
                 col_x += col.width;
             }
 
             // Header Bottom Divider
-            SkPaint h_div;
+            Paint h_div;
             h_div.setColor(options.border_color);
-            sk_canvas->drawLine(ctx.offset.x, cur_y + options.header_height, ctx.offset.x + size_.width, cur_y + options.header_height, h_div);
+            canvas.drawLine(Point{ctx.offset.x, cur_y + options.header_height}, Point{ctx.offset.x + size_.width, cur_y + options.header_height}, h_div);
 
             cur_y += options.header_height;
         }
@@ -458,7 +453,7 @@ public:
             b_empty->addText("No matching records found", 25);
             auto p_empty = b_empty->Build();
             p_empty->layout(size_.width);
-            p_empty->paint(sk_canvas, ctx.offset.x, cur_y + options.row_height * 0.7f);
+            canvas.drawParagraph(p_empty.get(), ctx.offset.x, cur_y + options.row_height * 0.7f);
             cur_y += options.row_height * 2.5f;
         }
 
@@ -469,8 +464,8 @@ public:
             bool is_hov = (hovered_row_index == static_cast<int>(r));
 
             // Row Background
-            SkRect r_rect = SkRect::MakeXYWH(ctx.offset.x, cur_y, size_.width, options.row_height);
-            SkPaint r_bg;
+            Rect r_rect{ctx.offset.x, cur_y, size_.width, options.row_height};
+            Paint r_bg;
             if (is_sel) {
                 r_bg.setColor(options.row_selected_color);
             } else if (is_hov) {
@@ -480,7 +475,7 @@ public:
             } else {
                 r_bg.setColor(options.row_bg_color);
             }
-            sk_canvas->drawRect(r_rect, r_bg);
+            canvas.drawRect(r_rect, r_bg);
 
             float col_x = ctx.offset.x;
 
@@ -489,25 +484,24 @@ public:
                 float cb_cx = col_x + cb_w * 0.5f;
                 float cb_cy = cur_y + options.row_height * 0.5f;
                 float cb_sz = 14.0f;
-                SkRRect cb_box;
-                cb_box.setRectXY(SkRect::MakeXYWH(cb_cx - cb_sz * 0.5f, cb_cy - cb_sz * 0.5f, cb_sz, cb_sz), 3.0f, 3.0f);
+                Rect cb_box{cb_cx - cb_sz * 0.5f, cb_cy - cb_sz * 0.5f, cb_sz, cb_sz};
 
-                SkPaint cb_paint;
+                Paint cb_paint;
                 cb_paint.setAntiAlias(true);
                 cb_paint.setColor(is_sel ? 0xFF38BDF8 : 0xFF334155);
-                sk_canvas->drawRRect(cb_box, cb_paint);
+                canvas.drawRRect(cb_box, BorderRadius::all(3.0f), cb_paint);
 
                 if (is_sel) {
-                    SkPaint chk_paint;
+                    Paint chk_paint;
                     chk_paint.setAntiAlias(true);
                     chk_paint.setColor(0xFF0F172A);
-                    chk_paint.setStyle(SkPaint::kStroke_Style);
+                    chk_paint.setStyle(PaintStyle::Stroke);
                     chk_paint.setStrokeWidth(1.8f);
-                    SkPath p;
+                    Path p;
                     p.moveTo(cb_cx - 3.5f, cb_cy);
                     p.lineTo(cb_cx - 1.0f, cb_cy + 3.0f);
                     p.lineTo(cb_cx + 4.0f, cb_cy - 2.5f);
-                    sk_canvas->drawPath(p, chk_paint);
+                    canvas.drawPath(p, chk_paint);
                 }
 
                 col_x += cb_w;
@@ -540,14 +534,13 @@ public:
                         float bx = col_x + 8.0f;
                         float by = cur_y + (options.row_height - bh) * 0.5f;
 
-                        SkRRect badge_rrect;
-                        badge_rrect.setRectXY(SkRect::MakeXYWH(bx, by, bw, bh), 4.0f, 4.0f);
-                        SkPaint badge_paint;
+                        Rect badge_rrect{bx, by, bw, bh};
+                        Paint badge_paint;
                         badge_paint.setAntiAlias(true);
                         badge_paint.setColor(cell.badge_bg);
-                        sk_canvas->drawRRect(badge_rrect, badge_paint);
+                        canvas.drawRRect(badge_rrect, BorderRadius::all(4.0f), badge_paint);
 
-                        p_badge->paint(sk_canvas, bx + 6.0f, by + 2.0f);
+                        canvas.drawParagraph(p_badge.get(), bx + 6.0f, by + 2.0f);
                     } else if (col.cell_type == DataGridCellType::Progress) {
                         // Progress Bar Render
                         float pb_x = col_x + 8.0f;
@@ -555,19 +548,17 @@ public:
                         float pb_h = 6.0f;
                         float pb_y = cur_y + (options.row_height - pb_h) * 0.5f;
 
-                        SkRRect track;
-                        track.setRectXY(SkRect::MakeXYWH(pb_x, pb_y, pb_w, pb_h), 3.0f, 3.0f);
-                        SkPaint track_paint;
+                        Rect track{pb_x, pb_y, pb_w, pb_h};
+                        Paint track_paint;
                         track_paint.setColor(0xFF334155);
-                        sk_canvas->drawRRect(track, track_paint);
+                        canvas.drawRRect(track, BorderRadius::all(3.0f), track_paint);
 
                         float fill_w = pb_w * std::clamp(cell.progress, 0.0f, 1.0f);
                         if (fill_w > 0) {
-                            SkRRect fill_r;
-                            fill_r.setRectXY(SkRect::MakeXYWH(pb_x, pb_y, fill_w, pb_h), 3.0f, 3.0f);
-                            SkPaint fill_paint;
+                            Rect fill_r{pb_x, pb_y, fill_w, pb_h};
+                            Paint fill_paint;
                             fill_paint.setColor(0xFF38BDF8);
-                            sk_canvas->drawRRect(fill_r, fill_paint);
+                            canvas.drawRRect(fill_r, BorderRadius::all(3.0f), fill_paint);
                         }
 
                         // Progress label
@@ -580,7 +571,7 @@ public:
                         b_plab->addText(cell.display_text.c_str(), cell.display_text.length());
                         auto p_plab = b_plab->Build();
                         p_plab->layout(40.0f);
-                        p_plab->paint(sk_canvas, pb_x + pb_w + 6.0f, cur_y + (options.row_height - p_plab->getHeight()) * 0.5f);
+                        canvas.drawParagraph(p_plab.get(), pb_x + pb_w + 6.0f, cur_y + (options.row_height - p_plab->getHeight()) * 0.5f);
                     } else {
                         // Standard Text Render
                         skia::textlayout::ParagraphStyle p_style;
@@ -597,32 +588,32 @@ public:
                         p_cell->layout(col.width - 16.0f);
 
                         float p_y = cur_y + (options.row_height - p_cell->getHeight()) * 0.5f;
-                        p_cell->paint(sk_canvas, col_x + 8.0f, p_y);
+                        canvas.drawParagraph(p_cell.get(), col_x + 8.0f, p_y);
                     }
                 }
 
                 // Vertical Column Divider
-                SkPaint div_paint;
+                Paint div_paint;
                 div_paint.setColor(0x33334155);
-                sk_canvas->drawLine(col_x + col.width, cur_y, col_x + col.width, cur_y + options.row_height, div_paint);
+                canvas.drawLine(Point{col_x + col.width, cur_y}, Point{col_x + col.width, cur_y + options.row_height}, div_paint);
 
                 col_x += col.width;
             }
 
             // Horizontal Row Divider
-            SkPaint r_div;
+            Paint r_div;
             r_div.setColor(0x2B334155);
-            sk_canvas->drawLine(ctx.offset.x, cur_y + options.row_height, ctx.offset.x + size_.width, cur_y + options.row_height, r_div);
+            canvas.drawLine(Point{ctx.offset.x, cur_y + options.row_height}, Point{ctx.offset.x + size_.width, cur_y + options.row_height}, r_div);
 
             cur_y += options.row_height;
         }
 
         // 4. Summary Footer (if enabled)
         if (options.show_summary_footer && options.summary_calculator) {
-            SkRect foot_rect = SkRect::MakeXYWH(ctx.offset.x, cur_y, size_.width, options.footer_height);
-            SkPaint foot_bg;
+            Rect foot_rect{ctx.offset.x, cur_y, size_.width, options.footer_height};
+            Paint foot_bg;
             foot_bg.setColor(options.footer_bg_color);
-            sk_canvas->drawRect(foot_rect, foot_bg);
+            canvas.drawRect(foot_rect, foot_bg);
 
             float col_x = ctx.offset.x + cb_w;
             for (const auto& col : columns) {
@@ -644,26 +635,26 @@ public:
                     p_sum->layout(col.width - 16.0f);
 
                     float p_y = cur_y + (options.footer_height - p_sum->getHeight()) * 0.5f;
-                    p_sum->paint(sk_canvas, col_x + 8.0f, p_y);
+                    canvas.drawParagraph(p_sum.get(), col_x + 8.0f, p_y);
                 }
                 col_x += col.width;
             }
 
-            SkPaint f_div;
+            Paint f_div;
             f_div.setColor(options.border_color);
-            sk_canvas->drawLine(ctx.offset.x, cur_y, ctx.offset.x + size_.width, cur_y, f_div);
+            canvas.drawLine(Point{ctx.offset.x, cur_y}, Point{ctx.offset.x + size_.width, cur_y}, f_div);
         }
 
-        sk_canvas->restore();
+        canvas.restore();
 
         // 5. Outer Border
         if (options.show_borders) {
-            SkPaint border_paint;
+            Paint border_paint;
             border_paint.setAntiAlias(true);
-            border_paint.setStyle(SkPaint::kStroke_Style);
+            border_paint.setStyle(PaintStyle::Stroke);
             border_paint.setStrokeWidth(1.0f);
             border_paint.setColor(options.border_color);
-            sk_canvas->drawRRect(grid_rrect, border_paint);
+            canvas.drawRRect(grid_bounds, grid_rad, border_paint);
         }
     }
 

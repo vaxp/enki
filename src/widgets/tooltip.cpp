@@ -10,14 +10,6 @@
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkBlurTypes.h>
-#include <include/effects/SkRuntimeEffect.h>
-
 #include <chrono>
 #include <iostream>
 #include <cmath>
@@ -37,122 +29,93 @@ public:
         : options(std::move(opt)), position(pos) {}
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
 
+        auto& canvas = ctx.canvas;
         float arrow = options.arrow_size;
         float w = size_.width;
         float h = size_.height;
 
         // Calculate body bounding box excluding arrow tail
-        SkRect body_rect;
+        Rect body_rect;
         switch (position) {
             case TooltipPosition::Top:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, w, std::max(0.0f, h - arrow));
+                body_rect = Rect{ctx.offset.x, ctx.offset.y, w, std::max(0.0f, h - arrow)};
                 break;
             case TooltipPosition::Bottom:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y + arrow, w, std::max(0.0f, h - arrow));
+                body_rect = Rect{ctx.offset.x, ctx.offset.y + arrow, w, std::max(0.0f, h - arrow)};
                 break;
             case TooltipPosition::Left:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, std::max(0.0f, w - arrow), h);
+                body_rect = Rect{ctx.offset.x, ctx.offset.y, std::max(0.0f, w - arrow), h};
                 break;
             case TooltipPosition::Right:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x + arrow, ctx.offset.y, std::max(0.0f, w - arrow), h);
+                body_rect = Rect{ctx.offset.x + arrow, ctx.offset.y, std::max(0.0f, w - arrow), h};
                 break;
             default:
-                body_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, w, h);
+                body_rect = Rect{ctx.offset.x, ctx.offset.y, w, h};
                 break;
         }
 
-        SkRRect rrect;
-        rrect.setRectXY(body_rect, options.border_radius, options.border_radius);
+        BorderRadius radius = BorderRadius::circular(options.border_radius);
 
         // 1. Draw Shadow
         if (options.elevation > 0.0f) {
-            SkPaint shadow_paint;
-            shadow_paint.setAntiAlias(true);
-            shadow_paint.setColor(options.shadow_color);
-            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.elevation * 0.5f));
-
-            canvas->save();
-            canvas->translate(0, options.elevation * 0.3f);
-            canvas->drawRRect(rrect, shadow_paint);
-            canvas->restore();
+            canvas.drawRRectShadow(body_rect, radius, options.shadow_color,
+                                  options.elevation, Point{0.0f, options.elevation * 0.3f});
         }
 
         // 2. Build Path for Tooltip Body + Arrow Pointer
-        SkPath tooltip_path;
-        tooltip_path.addRRect(rrect);
+        Path tooltip_path;
+        tooltip_path.addRRect(body_rect, radius);
 
         if (arrow > 0.0f) {
-            SkPath arrow_path;
-            float cx = body_rect.centerX();
-            float cy = body_rect.centerY();
+            float cx = body_rect.x + body_rect.width * 0.5f;
+            float cy = body_rect.y + body_rect.height * 0.5f;
+            float bottom = body_rect.y + body_rect.height;
+            float right = body_rect.x + body_rect.width;
 
             if (position == TooltipPosition::Top) {
                 // Arrow pointing down at bottom edge
-                arrow_path.moveTo(cx - arrow, body_rect.fBottom);
-                arrow_path.lineTo(cx + arrow, body_rect.fBottom);
-                arrow_path.lineTo(cx, body_rect.fBottom + arrow);
-                arrow_path.close();
+                tooltip_path.moveTo(cx - arrow, bottom);
+                tooltip_path.lineTo(cx + arrow, bottom);
+                tooltip_path.lineTo(cx, bottom + arrow);
+                tooltip_path.close();
             } else if (position == TooltipPosition::Bottom) {
                 // Arrow pointing up at top edge
-                arrow_path.moveTo(cx - arrow, body_rect.fTop);
-                arrow_path.lineTo(cx + arrow, body_rect.fTop);
-                arrow_path.lineTo(cx, body_rect.fTop - arrow);
-                arrow_path.close();
+                tooltip_path.moveTo(cx - arrow, body_rect.y);
+                tooltip_path.lineTo(cx + arrow, body_rect.y);
+                tooltip_path.lineTo(cx, body_rect.y - arrow);
+                tooltip_path.close();
             } else if (position == TooltipPosition::Left) {
                 // Arrow pointing right at right edge
-                arrow_path.moveTo(body_rect.fRight, cy - arrow);
-                arrow_path.lineTo(body_rect.fRight, cy + arrow);
-                arrow_path.lineTo(body_rect.fRight + arrow, cy);
-                arrow_path.close();
+                tooltip_path.moveTo(right, cy - arrow);
+                tooltip_path.lineTo(right, cy + arrow);
+                tooltip_path.lineTo(right + arrow, cy);
+                tooltip_path.close();
             } else if (position == TooltipPosition::Right) {
                 // Arrow pointing left at left edge
-                arrow_path.moveTo(body_rect.fLeft, cy - arrow);
-                arrow_path.lineTo(body_rect.fLeft, cy + arrow);
-                arrow_path.lineTo(body_rect.fLeft - arrow, cy);
-                arrow_path.close();
+                tooltip_path.moveTo(body_rect.x, cy - arrow);
+                tooltip_path.lineTo(body_rect.x, cy + arrow);
+                tooltip_path.lineTo(body_rect.x - arrow, cy);
+                tooltip_path.close();
             }
-
-            tooltip_path.addPath(arrow_path);
         }
 
-        // 3. Paint Background (Color or SkSL Shader)
-        SkPaint bg_paint;
+        // 3. Paint Background
+        Paint bg_paint;
+        bg_paint.setStyle(PaintStyle::Fill);
         bg_paint.setAntiAlias(true);
-
-        if (!options.custom_shader.empty()) {
-            auto [effect, err] = SkRuntimeEffect::MakeForShader(SkString(options.custom_shader.c_str()));
-            if (effect) {
-                struct Uniforms {
-                    float time;
-                    float resolution[2];
-                } uniforms = {
-                    0.0f,
-                    {w, h}
-                };
-                sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
-                bg_paint.setShader(effect->makeShader(uniform_data, nullptr, 0));
-            } else {
-                bg_paint.setColor(options.background_color);
-            }
-        } else {
-            bg_paint.setColor(options.background_color);
-        }
-
-        canvas->drawPath(tooltip_path, bg_paint);
+        bg_paint.setColor(options.background_color);
+        canvas.drawPath(tooltip_path, bg_paint);
 
         // 4. Paint Border Stroke
         if (options.border_width > 0.0f) {
-            SkPaint border_paint;
+            Paint border_paint;
             border_paint.setAntiAlias(true);
-            border_paint.setStyle(SkPaint::kStroke_Style);
+            border_paint.setStyle(PaintStyle::Stroke);
             border_paint.setStrokeWidth(options.border_width);
             border_paint.setColor(options.border_color);
-
-            canvas->drawPath(tooltip_path, border_paint);
+            canvas.drawPath(tooltip_path, border_paint);
         }
 
         // 5. Paint Child Content

@@ -7,14 +7,9 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/animation/ticker.hpp"
 #include "enki/platform/input.hpp"
-
-#include <include/core/SkCanvas.h>
-#include <include/core/SkImage.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPixmap.h>
-#include <include/core/SkSamplingOptions.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkFont.h>
+#include "enki/rendering/image.hpp"
+#include "enki/rendering/paint.hpp"
+#include "enki/rendering/path.hpp"
 
 #include <cmath>
 #include <chrono>
@@ -47,7 +42,7 @@ public:
     VideoPlayerProps props_;
     std::shared_ptr<video::VideoController> controller_;
     std::unique_ptr<Ticker> ticker_;
-    sk_sp<SkImage>          cached_sk_image_;
+    std::shared_ptr<Image>  cached_image_;
     double                  cached_frame_pts_{-1.0};
     bool                    owns_controller_{false};
 
@@ -210,36 +205,23 @@ public:
         if (controller_) {
             auto frame = controller_->getNextRenderFrame();
             if (frame && !frame->rgba_data.empty() && frame->pts_sec != cached_frame_pts_) {
-                SkImageInfo info = SkImageInfo::Make(
-                    frame->width, frame->height,
-                    kRGBA_8888_SkColorType, kPremul_SkAlphaType
-                );
-                SkPixmap pixmap(info, frame->rgba_data.data(), frame->width * 4);
-                cached_sk_image_ = SkImage::MakeRasterCopy(pixmap);
+                cached_image_ = Image::createFromPixels(frame->rgba_data.data(), frame->width, frame->height);
                 cached_frame_pts_ = frame->pts_sec;
             }
         }
 
-        // Render current video frame via Skia GPU
-        if (cached_sk_image_) {
-            SkCanvas* sk_canvas = static_cast<SkCanvas*>(context.canvas.getNativeHandle());
-            if (sk_canvas) {
-                float img_w = float(cached_sk_image_->width());
-                float img_h = float(cached_sk_image_->height());
+        // Render current video frame
+        if (cached_image_) {
+            float img_w = float(cached_image_->getWidth());
+            float img_h = float(cached_image_->getHeight());
 
-                Rect dst = calculateDestRect(img_w, img_h, bounds);
-                SkRect src_sk = SkRect::MakeWH(img_w, img_h);
-                SkRect dst_sk = SkRect::MakeXYWH(dst.x, dst.y, dst.width, dst.height);
+            Rect dst = calculateDestRect(img_w, img_h, bounds);
+            Rect src{0.0f, 0.0f, img_w, img_h};
 
-                SkPaint paint;
-                paint.setAntiAlias(true);
+            Paint paint;
+            paint.setAntiAlias(true);
 
-                sk_canvas->drawImageRect(
-                    cached_sk_image_.get(), src_sk, dst_sk,
-                    SkSamplingOptions(SkFilterMode::kLinear),
-                    &paint, SkCanvas::kFast_SrcRectConstraint
-                );
-            }
+            context.canvas.drawImageRect(cached_image_, src, dst, &paint);
         }
 
         // Render Futuristic Glassmorphic HUD overlay

@@ -21,6 +21,9 @@ public:
     /// Load an image from memory (encoded bytes like PNG/JPEG).
     static Result<std::shared_ptr<Image>> loadFromMemory(const std::vector<uint8_t>& data);
 
+    /// Create an image from raw 32-bit RGBA pixels in memory.
+    static std::shared_ptr<Image> createFromPixels(const uint8_t* rgba, int width, int height, size_t rowBytes = 0);
+
     ~Image();
 
     Image(const Image&) = delete;

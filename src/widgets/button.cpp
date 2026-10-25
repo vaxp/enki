@@ -6,20 +6,24 @@
 #include "enki/state/state.hpp"
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
+#include "enki/rendering/paint.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkBlurTypes.h>
 #include <include/effects/SkRuntimeEffect.h>
+#include <include/core/SkShader.h>
 
 #include <chrono>
 #include <vector>
 #include <iostream>
 
 namespace enki {
+
+class ButtonShaderWrapper : public Shader {
+public:
+    explicit ButtonShaderWrapper(sk_sp<SkShader> shader) : shader_(std::move(shader)) {}
+    void* getNativeHandle() const override { return shader_.get(); }
+private:
+    sk_sp<SkShader> shader_;
+};
 
 inline double getCurrentTimeSeconds() {
     auto now = std::chrono::steady_clock::now();
@@ -95,40 +99,32 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-        
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
+
+        auto& canvas = ctx.canvas;
 
         // Apply scale transform for press animation
         float scale = 1.0f - (0.02f * press_progress);
         
         if (scale < 1.0f) {
-            canvas->save();
+            canvas.save();
             float cx = ctx.offset.x + size_.width / 2.0f;
             float cy = ctx.offset.y + size_.height / 2.0f;
-            canvas->translate(cx, cy);
-            canvas->scale(scale, scale);
-            canvas->translate(-cx, -cy);
+            canvas.translate(cx, cy);
+            canvas.scale(scale, scale);
+            canvas.translate(-cx, -cy);
         }
 
-        SkRect rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(rect, options.border_radius, options.border_radius);
+        Rect rect{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius radius = BorderRadius::all(options.border_radius);
 
         // 1. Shadow
         if (options.shadow_blur > 0.0f && !disabled) {
-            SkPaint shadow_paint;
-            shadow_paint.setColor(options.shadow_color);
-            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.shadow_blur * 0.5f));
-            canvas->save();
-            canvas->translate(0, options.shadow_offset_dy);
-            canvas->drawRRect(rrect, shadow_paint);
-            canvas->restore();
+            canvas.drawRRectShadow(rect, radius, options.shadow_color, options.shadow_blur * 0.5f, Point{0.0f, options.shadow_offset_dy});
         }
 
         // 2. Background (Shader or Color)
-        SkPaint bg_paint;
+        Paint bg_paint;
         bg_paint.setAntiAlias(true);
         
         if (effect && !disabled) {
@@ -142,8 +138,8 @@ public:
             };
             
             sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
-            bg_paint.setShader(effect->makeShader(uniform_data, nullptr, 0));
-            canvas->drawRRect(rrect, bg_paint);
+            bg_paint.setShader(std::make_shared<ButtonShaderWrapper>(effect->makeShader(uniform_data, nullptr, 0)));
+            canvas.drawRRect(rect, radius, bg_paint);
         } else {
             Color current_bg;
             if (disabled) {
@@ -155,14 +151,14 @@ public:
                 current_bg = interpolateColor(options.normal_color, options.hover_color, hover_progress);
             }
             bg_paint.setColor(current_bg);
-            canvas->drawRRect(rrect, bg_paint);
+            canvas.drawRRect(rect, radius, bg_paint);
         }
 
         // 3. Ripples
         if (!ripples.empty()) {
-            canvas->save();
-            canvas->clipRRect(rrect, true);
-            SkPaint ripple_paint;
+            canvas.save();
+            canvas.clipRRect(rect, radius, true);
+            Paint ripple_paint;
             ripple_paint.setAntiAlias(true);
             for (const auto& rip : ripples) {
                 uint32_t base_color = options.ripple_color;
@@ -171,9 +167,9 @@ public:
                 ripple_paint.setColor(final_color);
                 
                 // Point is in widget local space, convert to global space for canvas
-                canvas->drawCircle(ctx.offset.x + rip.center.x, ctx.offset.y + rip.center.y, rip.radius, ripple_paint);
+                canvas.drawCircle(Point{ctx.offset.x + rip.center.x, ctx.offset.y + rip.center.y}, rip.radius, ripple_paint);
             }
-            canvas->restore();
+            canvas.restore();
         }
 
         // 4. Paint Children
@@ -184,7 +180,7 @@ public:
         }
 
         if (scale < 1.0f) {
-            canvas->restore();
+            canvas.restore();
         }
     }
 

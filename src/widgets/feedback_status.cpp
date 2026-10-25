@@ -18,11 +18,7 @@
 #include "enki/state/state.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkPath.h>
-#include <include/effects/SkGradientShader.h>
+#include "enki/rendering/paint.hpp"
 
 #include <cmath>
 #include <algorithm>
@@ -84,9 +80,6 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-
         float w = size_.width;
         float h = size_.height;
         if (w <= 0.0f && width_ && !width_->isPercent() && !width_->isAuto()) w = width_->value;
@@ -101,38 +94,21 @@ public:
         float start_x = -shimmer_width + (w + shimmer_width * 2.0f) * progress_ - shimmer_width * 0.5f;
         float end_x = start_x + shimmer_width;
 
-        SkPoint pts[2] = { SkPoint::Make(start_x, 0), SkPoint::Make(end_x, h) };
-        SkColor colors[3] = {
-            static_cast<SkColor>(base_color_),
-            static_cast<SkColor>(highlight_color_),
-            static_cast<SkColor>(base_color_)
-        };
-        SkScalar pos[3] = { 0.0f, 0.5f, 1.0f };
-
-        sk_sp<SkShader> shader = SkGradientShader::MakeLinear(
-            pts, colors, pos, 3, SkTileMode::kClamp
-        );
-
-        SkPaint paint;
+        Paint paint;
         paint.setAntiAlias(true);
-        paint.setShader(shader);
+        paint.setShader(Gradient::linear(
+            Point{start_x, 0.0f}, Point{end_x, h},
+            {base_color_, highlight_color_, base_color_},
+            {0.0f, 0.5f, 1.0f}
+        ));
 
         if (shape_ == SkeletonShape::Circle) {
             float cx = w * 0.5f;
             float cy = h * 0.5f;
             float radius = std::min(w, h) * 0.5f;
-            canvas->drawCircle(cx, cy, radius, paint);
+            ctx.canvas.drawCircle(Point{cx, cy}, radius, paint);
         } else {
-            SkRect rect = SkRect::MakeWH(w, h);
-            SkVector radii[4] = {
-                { border_radius_.top_left, border_radius_.top_left },
-                { border_radius_.top_right, border_radius_.top_right },
-                { border_radius_.bottom_right, border_radius_.bottom_right },
-                { border_radius_.bottom_left, border_radius_.bottom_left }
-            };
-            SkRRect rrect;
-            rrect.setRectRadii(rect, radii);
-            canvas->drawRRect(rrect, paint);
+            ctx.canvas.drawRRect(Rect{0, 0, w, h}, border_radius_, paint);
         }
 
         ctx.canvas.restore();
@@ -286,9 +262,6 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-
         // Paint child first
         for (auto* child : children_) {
             if (child) {
@@ -303,16 +276,7 @@ public:
         ctx.canvas.translate(ctx.offset.x, ctx.offset.y);
 
         if (clip_ripple_ && size_.width > 0.0f && size_.height > 0.0f) {
-            SkRect rect = SkRect::MakeWH(size_.width, size_.height);
-            SkVector radii[4] = {
-                { border_radius_.top_left, border_radius_.top_left },
-                { border_radius_.top_right, border_radius_.top_right },
-                { border_radius_.bottom_right, border_radius_.bottom_right },
-                { border_radius_.bottom_left, border_radius_.bottom_left }
-            };
-            SkRRect rrect;
-            rrect.setRectRadii(rect, radii);
-            canvas->clipRRect(rrect, true);
+            ctx.canvas.clipRRect(Rect{0, 0, size_.width, size_.height}, border_radius_, true);
         }
 
         uint8_t baseA = (ripple_color_ >> 24) & 0xFF;
@@ -324,14 +288,17 @@ public:
             if (rip.current_radius <= 0.0f || rip.alpha <= 0.0f) continue;
 
             uint8_t finalA = static_cast<uint8_t>(baseA * std::clamp(rip.alpha, 0.0f, 1.0f));
-            SkColor c = SkColorSetARGB(finalA, baseR, baseG, baseB);
+            Color c = (static_cast<uint32_t>(finalA) << 24) |
+                      (static_cast<uint32_t>(baseR) << 16) |
+                      (static_cast<uint32_t>(baseG) << 8) |
+                      static_cast<uint32_t>(baseB);
 
-            SkPaint paint;
+            Paint paint;
             paint.setAntiAlias(true);
             paint.setColor(c);
-            paint.setStyle(SkPaint::kFill_Style);
+            paint.setStyle(PaintStyle::Fill);
 
-            canvas->drawCircle(rip.center.x, rip.center.y, rip.current_radius, paint);
+            ctx.canvas.drawCircle(Point{rip.center.x, rip.center.y}, rip.current_radius, paint);
         }
 
         ctx.canvas.restore();
@@ -477,9 +444,6 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-
         ctx.canvas.save();
         ctx.canvas.translate(ctx.offset.x, ctx.offset.y);
 
@@ -500,23 +464,27 @@ public:
                 float r = dot_radius_ + (max_radius_ - dot_radius_) * curved_phase;
                 float ring_alpha = (1.0f - phase) * 0.7f;
                 uint8_t curA = static_cast<uint8_t>(baseA * ring_alpha);
+                Color ring_col = (static_cast<uint32_t>(curA) << 24) |
+                                 (static_cast<uint32_t>(baseR) << 16) |
+                                 (static_cast<uint32_t>(baseG) << 8) |
+                                 static_cast<uint32_t>(baseB);
 
-                SkPaint ring_paint;
+                Paint ring_paint;
                 ring_paint.setAntiAlias(true);
-                ring_paint.setColor(SkColorSetARGB(curA, baseR, baseG, baseB));
-                ring_paint.setStyle(SkPaint::kFill_Style);
+                ring_paint.setColor(ring_col);
+                ring_paint.setStyle(PaintStyle::Fill);
 
-                canvas->drawCircle(cx, cy, r, ring_paint);
+                ctx.canvas.drawCircle(Point{cx, cy}, r, ring_paint);
             }
         }
 
         // Render solid center dot
         if (center_dot_ && dot_radius_ > 0.0f) {
-            SkPaint dot_paint;
+            Paint dot_paint;
             dot_paint.setAntiAlias(true);
-            dot_paint.setColor(static_cast<SkColor>(color_));
-            dot_paint.setStyle(SkPaint::kFill_Style);
-            canvas->drawCircle(cx, cy, dot_radius_, dot_paint);
+            dot_paint.setColor(color_);
+            dot_paint.setStyle(PaintStyle::Fill);
+            ctx.canvas.drawCircle(Point{cx, cy}, dot_radius_, dot_paint);
         }
 
         ctx.canvas.restore();

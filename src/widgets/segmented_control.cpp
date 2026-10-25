@@ -1,7 +1,6 @@
 #include "enki/widgets/segmented_control.hpp"
 #include "enki/animation/ticker.hpp"
 #include "enki/rendering/canvas.hpp"
-#include <include/core/SkCanvas.h>
 #include <layout_engine/Anu.h>
 #include <algorithm>
 #include <cmath>
@@ -131,13 +130,9 @@ public:
             anim_thumb_w_ = target_thumb_w_;
         }
 
-        auto* sk = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk) return;
-
-        sk->save();
-        sk->translate(ctx.offset.x, ctx.offset.y);
-
         auto& canvas = ctx.canvas;
+        canvas.save();
+        canvas.translate(ctx.offset.x, ctx.offset.y);
         Rect bounds{0.0f, 0.0f, size_.width, size_.height};
 
         // 1. Background Track
@@ -208,7 +203,7 @@ public:
             canvas.drawText(display, Point(tx, ty), p, 12.5f, nullptr, false);
         }
 
-        sk->restore();
+        canvas.restore();
     }
 };
 

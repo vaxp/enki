@@ -10,12 +10,6 @@
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkBlurTypes.h>
-
 #include <iostream>
 #include <cmath>
 
@@ -33,41 +27,33 @@ public:
         : options(std::move(opt)) {}
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
 
-        SkRect rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(rect, options.border_radius, options.border_radius);
+        auto& canvas = ctx.canvas;
+        Rect bounds{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius radius = BorderRadius::circular(options.border_radius);
 
         // 1. Drop Shadow
         if (options.elevation > 0.0f) {
-            SkPaint shadow_paint;
-            shadow_paint.setAntiAlias(true);
-            shadow_paint.setColor(0x70000000);
-            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, options.elevation * 0.5f));
-
-            canvas->save();
-            canvas->translate(0, options.elevation * 0.3f);
-            canvas->drawRRect(rrect, shadow_paint);
-            canvas->restore();
+            canvas.drawRRectShadow(bounds, radius, 0x70000000, options.elevation,
+                                  Point{0.0f, options.elevation * 0.3f});
         }
 
         // 2. Background Fill
-        SkPaint bg_paint;
+        Paint bg_paint;
+        bg_paint.setStyle(PaintStyle::Fill);
         bg_paint.setAntiAlias(true);
         bg_paint.setColor(options.background_color);
-        canvas->drawRRect(rrect, bg_paint);
+        canvas.drawRRect(bounds, radius, bg_paint);
 
         // 3. Border Stroke
         if (options.border_width > 0.0f) {
-            SkPaint border_paint;
+            Paint border_paint;
             border_paint.setAntiAlias(true);
-            border_paint.setStyle(SkPaint::kStroke_Style);
+            border_paint.setStyle(PaintStyle::Stroke);
             border_paint.setStrokeWidth(options.border_width);
             border_paint.setColor(options.border_color);
-            canvas->drawRRect(rrect, border_paint);
+            canvas.drawRRect(bounds, radius, border_paint);
         }
 
         // 4. Paint Children

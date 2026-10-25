@@ -77,6 +77,12 @@ struct Gradient {
         const std::vector<Color>& colors,
         const std::vector<float>& positions = {}
     );
+
+    static std::shared_ptr<Shader> sweep(
+        Point center,
+        const std::vector<Color>& colors,
+        const std::vector<float>& positions = {}
+    );
 };
 
 /// Paint encapsulates styling information for drawing operations.
@@ -86,6 +92,7 @@ public:
     ~Paint() = default;
 
     void setColor(Color color) { color_ = color; }
+    Paint& color(Color c) { color_ = c; return *this; }
     [[nodiscard]] Color getColor() const { return color_; }
 
     void setStyle(PaintStyle style) { style_ = style; }

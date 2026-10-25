@@ -3,15 +3,11 @@
 #include "enki/state/state.hpp"
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
+#include "enki/rendering/paint.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkMatrix.h>
-#include <include/effects/SkGradientShader.h>
 #include <include/effects/SkRuntimeEffect.h>
+#include <include/core/SkShader.h>
+#include <include/core/SkMatrix.h>
 #include <layout_engine/Anu.h>
 
 #include <chrono>
@@ -21,6 +17,14 @@
 #include <cmath>
 
 namespace enki {
+
+class SpinnerShaderWrapper : public Shader {
+public:
+    explicit SpinnerShaderWrapper(sk_sp<SkShader> shader) : shader_(std::move(shader)) {}
+    void* getNativeHandle() const override { return shader_.get(); }
+private:
+    sk_sp<SkShader> shader_;
+};
 
 inline double getSteadyTimeSecs() {
     auto now = std::chrono::steady_clock::now();
@@ -103,10 +107,9 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-        
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
+
+        auto& canvas = ctx.canvas;
 
         float diameter = std::min(size_.width, size_.height);
         float radius = diameter / 2.0f;
@@ -128,20 +131,19 @@ public:
                 (float)(current_time * rotation_speed_)
             };
 
-            SkPaint shader_paint;
+            Paint shader_paint;
             shader_paint.setAntiAlias(true);
 
             sk_sp<SkData> uniform_data = SkData::MakeWithCopy(&uniforms, sizeof(Uniforms));
             
-            // Translate local matrix so fragCoord is local (0,0) to (diameter, diameter)
             SkMatrix local_matrix = SkMatrix::Translate(top_left_x, top_left_y);
             auto shader_base = effect->makeShader(uniform_data, nullptr, 0);
             if (shader_base) {
                 auto shader = shader_base->makeWithLocalMatrix(local_matrix);
-                shader_paint.setShader(shader);
+                shader_paint.setShader(std::make_shared<SpinnerShaderWrapper>(std::move(shader)));
 
-                SkRect rect = SkRect::MakeXYWH(top_left_x, top_left_y, diameter, diameter);
-                canvas->drawRect(rect, shader_paint);
+                Rect rect{top_left_x, top_left_y, diameter, diameter};
+                canvas.drawRect(rect, shader_paint);
             }
         }
         else if (style_ == SpinnerStyle::Spokes) {
@@ -154,13 +156,13 @@ public:
             float inner_r = radius * 0.45f;
             float outer_r = radius * 0.85f;
 
-            SkPaint spoke_paint;
+            Paint spoke_paint;
             spoke_paint.setAntiAlias(true);
-            spoke_paint.setStrokeCap(SkPaint::kRound_Cap);
+            spoke_paint.setStrokeCap(StrokeCap::Round);
             spoke_paint.setStrokeWidth(spoke_width_);
 
             if (glow_blur_ > 0.0f && glow_color_ != 0) {
-                spoke_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
+                spoke_paint.setImageFilter(ImageFilter::blur(glow_blur_ * 0.5f, glow_blur_ * 0.5f));
             }
 
             for (int i = 0; i < count; ++i) {
@@ -183,7 +185,7 @@ public:
                 float x2 = cx + outer_r * cos(angle_rad);
                 float y2 = cy + outer_r * sin(angle_rad);
 
-                canvas->drawLine(x1, y1, x2, y2, spoke_paint);
+                canvas.drawLine(Point{x1, y1}, Point{x2, y2}, spoke_paint);
             }
         }
         else if (style_ == SpinnerStyle::OrbitDots) {
@@ -192,12 +194,12 @@ public:
             float base_rot = anim_time * rotation_speed_ * 200.0f;
             float orbit_r = radius - dot_size_;
 
-            SkPaint dot_paint;
+            Paint dot_paint;
             dot_paint.setAntiAlias(true);
-            dot_paint.setStyle(SkPaint::kFill_Style);
+            dot_paint.setStyle(PaintStyle::Fill);
 
             if (glow_blur_ > 0.0f && glow_color_ != 0) {
-                dot_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
+                dot_paint.setImageFilter(ImageFilter::blur(glow_blur_ * 0.5f, glow_blur_ * 0.5f));
             }
 
             for (int i = 0; i < count; ++i) {
@@ -216,7 +218,7 @@ public:
                     dot_paint.setColor(color_);
                 }
 
-                canvas->drawCircle(dx, dy, dot_r, dot_paint);
+                canvas.drawCircle(Point{dx, dy}, dot_r, dot_paint);
             }
         }
         else if (style_ == SpinnerStyle::DualArc) {
@@ -224,30 +226,30 @@ public:
             float rot1 = fmod(anim_time * rotation_speed_ * 180.0f, 360.0f);
             float rot2 = fmod(-anim_time * rotation_speed_ * 260.0f, 360.0f);
 
-            SkPaint arc_paint;
+            Paint arc_paint;
             arc_paint.setAntiAlias(true);
-            arc_paint.setStyle(SkPaint::kStroke_Style);
-            arc_paint.setStrokeCap(SkPaint::kRound_Cap);
+            arc_paint.setStyle(PaintStyle::Stroke);
+            arc_paint.setStrokeCap(StrokeCap::Round);
 
             if (glow_blur_ > 0.0f && glow_color_ != 0) {
-                arc_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow_blur_ * 0.5f));
+                arc_paint.setImageFilter(ImageFilter::blur(glow_blur_ * 0.5f, glow_blur_ * 0.5f));
             }
 
             // Outer Arc
             float r1 = radius - 3.0f;
-            SkRect rect1 = SkRect::MakeLTRB(cx - r1, cy - r1, cx + r1, cy + r1);
+            Rect rect1{cx - r1, cy - r1, r1 * 2.0f, r1 * 2.0f};
             arc_paint.setStrokeWidth(3.0f);
             arc_paint.setColor(color_);
-            canvas->drawArc(rect1, rot1, 270.0f, false, arc_paint);
+            canvas.drawArc(rect1, rot1, 270.0f, false, arc_paint);
 
             // Inner Arc
             float r2 = radius - 9.0f;
-            SkRect rect2 = SkRect::MakeLTRB(cx - r2, cy - r2, cx + r2, cy + r2);
+            Rect rect2{cx - r2, cy - r2, r2 * 2.0f, r2 * 2.0f};
             arc_paint.setStrokeWidth(2.5f);
 
             Color inner_c = gradient_colors_.empty() ? 0xFFEC4899 : gradient_colors_[0];
             arc_paint.setColor(inner_c);
-            canvas->drawArc(rect2, rot2, 180.0f, false, arc_paint);
+            canvas.drawArc(rect2, rot2, 180.0f, false, arc_paint);
         }
 
         // Paint Center Child Widget if provided

@@ -7,9 +7,7 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/animation/ticker.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
+
 
 #include <algorithm>
 #include <cmath>

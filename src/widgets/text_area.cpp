@@ -14,9 +14,7 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/app/app.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
+#include "enki/rendering/paint.hpp"
 #include <include/core/SkFontMgr.h>
 #if defined(__ANDROID__)
 #include <include/ports/SkFontMgr_android.h>
@@ -207,8 +205,8 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk_canvas || size_.width <= 0 || size_.height <= 0) return;
+        auto& canvas = ctx.canvas;
+        if (size_.width <= 0 || size_.height <= 0) return;
 
         float gutter_w = options.show_line_numbers ? 42.0f : 0.0f;
         float text_area_w = size_.width - gutter_w - options.padding.horizontal();
@@ -220,33 +218,32 @@ public:
         float max_scroll = std::max(0.0f, total_content_height - visible_h);
         scroll_y = std::clamp(scroll_y, 0.0f, max_scroll);
 
-        SkRect bounds_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(bounds_rect, options.border_radius, options.border_radius);
+        Rect bounds_rect{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius rad = BorderRadius::all(options.border_radius);
 
         // 1. Draw Background
-        SkPaint bg_paint;
+        Paint bg_paint;
         bg_paint.setAntiAlias(true);
         bg_paint.setColor(options.background_color);
-        sk_canvas->drawRRect(rrect, bg_paint);
+        canvas.drawRRect(bounds_rect, rad, bg_paint);
 
         // 2. Draw Line Numbers Gutter
         if (options.show_line_numbers) {
-            SkPaint gutter_paint;
+            Paint gutter_paint;
             gutter_paint.setColor(options.line_number_bg);
-            SkRect gutter_rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, gutter_w, size_.height);
-            sk_canvas->drawRect(gutter_rect, gutter_paint);
+            Rect gutter_rect{ctx.offset.x, ctx.offset.y, gutter_w, size_.height};
+            canvas.drawRect(gutter_rect, gutter_paint);
 
             // Gutter Divider Line
-            SkPaint div_paint;
+            Paint div_paint;
             div_paint.setColor(options.border_color);
-            sk_canvas->drawLine(ctx.offset.x + gutter_w, ctx.offset.y,
-                                ctx.offset.x + gutter_w, ctx.offset.y + size_.height, div_paint);
+            canvas.drawLine(Point{ctx.offset.x + gutter_w, ctx.offset.y},
+                            Point{ctx.offset.x + gutter_w, ctx.offset.y + size_.height}, div_paint);
         }
 
         // Clip Content to Inner Box
-        sk_canvas->save();
-        sk_canvas->clipRRect(rrect, true);
+        canvas.save();
+        canvas.clipRRect(bounds_rect, rad, true);
 
         // 3. Draw Line Numbers Text
         if (options.show_line_numbers && paragraph_) {
@@ -270,7 +267,7 @@ public:
                 num_builder->addText(num_str.c_str(), num_str.length());
                 auto num_para = num_builder->Build();
                 num_para->layout(gutter_w - 10.0f);
-                num_para->paint(sk_canvas, ctx.offset.x, y_pos);
+                canvas.drawParagraph(num_para.get(), ctx.offset.x, y_pos);
             }
         }
 
@@ -288,19 +285,19 @@ public:
                     skia::textlayout::RectHeightStyle::kTight,
                     skia::textlayout::RectWidthStyle::kTight);
 
-                SkPaint sel_paint;
-                sel_paint.setColor(static_cast<SkColor>(options.selection_color));
+                Paint sel_paint;
+                sel_paint.setColor(options.selection_color);
 
-                sk_canvas->save();
-                sk_canvas->translate(text_origin_x, text_origin_y);
+                canvas.save();
+                canvas.translate(text_origin_x, text_origin_y);
                 for (const auto& tb : rects) {
-                    sk_canvas->drawRect(tb.rect, sel_paint);
+                    canvas.drawRect(Rect{tb.rect.fLeft, tb.rect.fTop, tb.rect.width(), tb.rect.height()}, sel_paint);
                 }
-                sk_canvas->restore();
+                canvas.restore();
             }
 
             // Draw Paragraph Content
-            paragraph_->paint(sk_canvas, text_origin_x, text_origin_y);
+            canvas.drawParagraph(paragraph_.get(), text_origin_x, text_origin_y);
 
             // 5. Draw Blinking Cursor
             if (is_focused && show_cursor && !controller->hasSelection() && !options.read_only) {
@@ -325,9 +322,9 @@ public:
                     }
                 }
 
-                SkPaint cursor_paint;
-                cursor_paint.setColor(static_cast<SkColor>(options.cursor_color));
-                sk_canvas->drawRect(SkRect::MakeXYWH(text_origin_x + cursor_x, text_origin_y + cursor_y, 2.0f, cursor_h), cursor_paint);
+                Paint cursor_paint;
+                cursor_paint.setColor(options.cursor_color);
+                canvas.drawRect(Rect{text_origin_x + cursor_x, text_origin_y + cursor_y, 2.0f, cursor_h}, cursor_paint);
             }
         }
 
@@ -338,21 +335,21 @@ public:
             float thumb_h = std::max(24.0f, (visible_h / total_content_height) * visible_h);
             float thumb_y = ctx.offset.y + options.padding.top + (max_scroll > 0 ? (scroll_y / max_scroll) * (visible_h - thumb_h) : 0);
 
-            SkPaint sb_paint;
+            Paint sb_paint;
             sb_paint.setAntiAlias(true);
             sb_paint.setColor(0x8094A3B8);
-            sk_canvas->drawRoundRect(SkRect::MakeXYWH(sb_x, thumb_y, sb_w, thumb_h), 2.5f, 2.5f, sb_paint);
+            canvas.drawRRect(Rect{sb_x, thumb_y, sb_w, thumb_h}, BorderRadius::all(2.5f), sb_paint);
         }
 
-        sk_canvas->restore();
+        canvas.restore();
 
         // 7. Draw Outer Border (Focused / Normal)
-        SkPaint border_paint;
+        Paint border_paint;
         border_paint.setAntiAlias(true);
-        border_paint.setStyle(SkPaint::kStroke_Style);
+        border_paint.setStyle(PaintStyle::Stroke);
         border_paint.setStrokeWidth(is_focused ? 1.5f : 1.0f);
         border_paint.setColor(is_focused ? options.focus_border_color : options.border_color);
-        sk_canvas->drawRRect(rrect, border_paint);
+        canvas.drawRRect(bounds_rect, rad, border_paint);
     }
 
     [[nodiscard]] bool hitTestSelf(Point localPoint) const override {

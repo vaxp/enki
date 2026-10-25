@@ -11,12 +11,6 @@
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkBlurTypes.h>
-#include <include/effects/SkRuntimeEffect.h>
 
 #include <iostream>
 #include <cmath>

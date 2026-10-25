@@ -27,6 +27,7 @@ public:
     void addRect(const Rect& rect);
     void addCircle(float x, float y, float radius);
     void addRoundRect(const Rect& rect, const BorderRadius& radius);
+    inline void addRRect(const Rect& rect, const BorderRadius& radius) { addRoundRect(rect, radius); }
 
     [[nodiscard]] Rect getBounds() const;
 

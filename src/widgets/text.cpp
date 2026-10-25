@@ -571,11 +571,8 @@ struct RenderParagraph::Impl {
     float getHeight() const { return calculated_height; }
 
     void paint(PaintContext& ctx) {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
-
-        SkPaint paint;
-        paint.setColor(toSkColor(style.color));
+        Paint paint;
+        paint.setColor(style.color);
         paint.setAntiAlias(true);
 
         for (const auto& line : lines) {
@@ -585,31 +582,25 @@ struct RenderParagraph::Impl {
 
             // Shadows
             for (const auto& shadow : style.shadows) {
-                SkPaint shadowPaint = paint;
-                shadowPaint.setColor(toSkColor(shadow.color));
-                auto sBlob = SkTextBlob::MakeFromText(line.text.data(), line.text.size(), font, SkTextEncoding::kUTF8);
-                if (sBlob) {
-                    canvas->drawTextBlob(sBlob.get(), x + shadow.offset.x, y + shadow.offset.y, shadowPaint);
-                }
+                Paint shadowPaint = paint;
+                shadowPaint.setColor(shadow.color);
+                ctx.canvas.drawText(line.text, Point{x + shadow.offset.x, y + shadow.offset.y}, shadowPaint, style.font_size, style.font_family.c_str());
             }
 
-            auto blob = SkTextBlob::MakeFromText(line.text.data(), line.text.size(), font, SkTextEncoding::kUTF8);
-            if (blob) {
-                canvas->drawTextBlob(blob.get(), x, y, paint);
-            }
+            ctx.canvas.drawText(line.text, Point{x, y}, paint, style.font_size, style.font_family.c_str());
 
             // Decoration
             if (style.decoration != TextDecoration::None) {
-                SkPaint decPaint = paint;
-                decPaint.setColor(toSkColor(style.decoration_color != 0 ? style.decoration_color : style.color));
+                Paint decPaint = paint;
+                decPaint.setColor(style.decoration_color != 0 ? style.decoration_color : style.color);
                 decPaint.setStrokeWidth(style.decoration_thickness > 0.0f ? style.decoration_thickness : 1.0f);
                 if (style.decoration & TextDecoration::Underline) {
                     float ulY = y + 2.0f;
-                    canvas->drawLine(x, ulY, x + line.width, ulY, decPaint);
+                    ctx.canvas.drawLine(Point{x, ulY}, Point{x + line.width, ulY}, decPaint);
                 }
                 if (style.decoration & TextDecoration::LineThrough) {
-                    float ltY = y - (font.getSize() * 0.35f);
-                    canvas->drawLine(x, ltY, x + line.width, ltY, decPaint);
+                    float ltY = y - (style.font_size * 0.35f);
+                    ctx.canvas.drawLine(Point{x, ltY}, Point{x + line.width, ltY}, decPaint);
                 }
             }
         }

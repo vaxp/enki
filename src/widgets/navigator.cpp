@@ -146,9 +146,6 @@ void NavigatorState::dispose() {
 }
 
 void NavigatorState::push(RouteConfig route) {
-    auto* w = static_cast<const NavigatorWidget*>(widget());
-    int dur = w->options.transition_duration_ms;
-
     // Mark any entering/exiting as done
     for (auto& r : stack_) {
         r.entering = false;

@@ -13,12 +13,6 @@
 #include "enki/tree/render_object.hpp"
 #include "enki/rendering/canvas.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkMaskFilter.h>
-#include <include/core/SkBlurTypes.h>
-
 #include <filesystem>
 #include <algorithm>
 #include <iostream>
@@ -41,40 +35,32 @@ public:
         : props(std::move(opt)) {}
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!canvas) return;
         if (size_.width <= 0.0f || size_.height <= 0.0f) return;
 
-        SkRect rect = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(rect, props.border_radius, props.border_radius);
+        auto& canvas = ctx.canvas;
+        Rect bounds{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius radius = BorderRadius::circular(props.border_radius);
 
         // 1. Draw Drop Shadow
         if (props.elevation > 0.0f) {
-            SkPaint shadow_paint;
-            shadow_paint.setAntiAlias(true);
-            shadow_paint.setColor(props.shadow_color);
-            shadow_paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, props.elevation * 0.5f));
-
-            canvas->save();
-            canvas->translate(0, props.elevation * 0.3f);
-            canvas->drawRRect(rrect, shadow_paint);
-            canvas->restore();
+            canvas.drawRRectShadow(bounds, radius, props.shadow_color,
+                                  props.elevation, Point{0.0f, props.elevation * 0.3f});
         }
 
         // 2. Draw Main Dialog Background
-        SkPaint bg_paint;
+        Paint bg_paint;
+        bg_paint.setStyle(PaintStyle::Fill);
         bg_paint.setAntiAlias(true);
         bg_paint.setColor(props.background_color);
-        canvas->drawRRect(rrect, bg_paint);
+        canvas.drawRRect(bounds, radius, bg_paint);
 
         // 3. Draw Outer Border Stroke
-        SkPaint border_paint;
+        Paint border_paint;
         border_paint.setAntiAlias(true);
-        border_paint.setStyle(SkPaint::kStroke_Style);
+        border_paint.setStyle(PaintStyle::Stroke);
         border_paint.setStrokeWidth(1.0f);
         border_paint.setColor(props.border_color);
-        canvas->drawRRect(rrect, border_paint);
+        canvas.drawRRect(bounds, radius, border_paint);
 
         // 4. Paint Child Content
         if (!children().empty()) {

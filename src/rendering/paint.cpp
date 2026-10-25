@@ -89,6 +89,24 @@ std::shared_ptr<Shader> Gradient::radial(
     return std::make_shared<SkiaShaderWrapper>(std::move(sk_shader));
 }
 
+std::shared_ptr<Shader> Gradient::sweep(
+    Point center,
+    const std::vector<Color>& colors,
+    const std::vector<float>& stops
+) {
+    if (colors.empty()) return nullptr;
+
+    const float* pos_ptr = stops.empty() ? nullptr : stops.data();
+
+    auto sk_shader = SkGradientShader::MakeSweep(
+        center.x, center.y,
+        reinterpret_cast<const SkColor*>(colors.data()),
+        pos_ptr,
+        static_cast<int>(colors.size())
+    );
+    return std::make_shared<SkiaShaderWrapper>(std::move(sk_shader));
+}
+
 std::shared_ptr<ImageFilter> ImageFilter::blur(float sigmaX, float sigmaY) {
     struct BlurKey {
         float x, y;

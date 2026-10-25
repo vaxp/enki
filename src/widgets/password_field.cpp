@@ -14,10 +14,8 @@
 #include "enki/rendering/canvas.hpp"
 #include "enki/app/app.hpp"
 
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
-#include <include/core/SkRRect.h>
+#include "enki/rendering/paint.hpp"
+#include "enki/rendering/path.hpp"
 #include <include/core/SkFontMgr.h>
 #if defined(__ANDROID__)
 #include <include/ports/SkFontMgr_android.h>
@@ -265,23 +263,22 @@ public:
     }
 
     void paint(PaintContext& ctx) override {
-        SkCanvas* sk_canvas = static_cast<SkCanvas*>(ctx.canvas.getNativeHandle());
-        if (!sk_canvas || size_.width <= 0 || size_.height <= 0) return;
+        auto& canvas = ctx.canvas;
+        if (size_.width <= 0 || size_.height <= 0) return;
 
         layoutParagraphs();
 
-        SkRect bounds = SkRect::MakeXYWH(ctx.offset.x, ctx.offset.y, size_.width, size_.height);
-        SkRRect rrect;
-        rrect.setRectXY(bounds, options.border_radius, options.border_radius);
+        Rect bounds{ctx.offset.x, ctx.offset.y, size_.width, size_.height};
+        BorderRadius rad = BorderRadius::all(options.border_radius);
 
         // 1. Background
-        SkPaint bg_paint;
+        Paint bg_paint;
         bg_paint.setAntiAlias(true);
         bg_paint.setColor(options.background_color);
-        sk_canvas->drawRRect(rrect, bg_paint);
+        canvas.drawRRect(bounds, rad, bg_paint);
 
-        sk_canvas->save();
-        sk_canvas->clipRRect(rrect, true);
+        canvas.save();
+        canvas.clipRRect(bounds, rad, true);
 
         // 2. Lock Icon
         float content_x = ctx.offset.x + options.padding.left;
@@ -289,7 +286,7 @@ public:
 
         if (lock_paragraph_) {
             float lock_y = cy - lock_paragraph_->getHeight() * 0.5f;
-            lock_paragraph_->paint(sk_canvas, content_x, lock_y);
+            canvas.drawParagraph(lock_paragraph_.get(), content_x, lock_y);
             content_x += lock_paragraph_->getMaxIntrinsicWidth() + 8.0f;
         }
 
@@ -304,17 +301,17 @@ public:
                     skia::textlayout::RectHeightStyle::kTight,
                     skia::textlayout::RectWidthStyle::kTight);
 
-                SkPaint sel_paint;
-                sel_paint.setColor(static_cast<SkColor>(options.selection_color));
-                sk_canvas->save();
-                sk_canvas->translate(content_x, text_y);
+                Paint sel_paint;
+                sel_paint.setColor(options.selection_color);
+                canvas.save();
+                canvas.translate(content_x, text_y);
                 for (const auto& r : rects) {
-                    sk_canvas->drawRect(r.rect, sel_paint);
+                    canvas.drawRect(Rect{r.rect.fLeft, r.rect.fTop, r.rect.width(), r.rect.height()}, sel_paint);
                 }
-                sk_canvas->restore();
+                canvas.restore();
             }
 
-            text_paragraph_->paint(sk_canvas, content_x, text_y);
+            canvas.drawParagraph(text_paragraph_.get(), content_x, text_y);
 
             // Blinking Caret
             if (is_focused && show_cursor && !options.read_only && selection_start == selection_end) {
@@ -327,9 +324,9 @@ public:
                         c_x = prev_rects.back().rect.fRight;
                     }
                 }
-                SkPaint cur_paint;
-                cur_paint.setColor(static_cast<SkColor>(options.cursor_color));
-                sk_canvas->drawRect(SkRect::MakeXYWH(content_x + c_x, text_y, 2.0f, c_h), cur_paint);
+                Paint cur_paint;
+                cur_paint.setColor(options.cursor_color);
+                canvas.drawRect(Rect{content_x + c_x, text_y, 2.0f, c_h}, cur_paint);
             }
         }
 
@@ -342,10 +339,10 @@ public:
             float eye_cy = cy;
 
             if (hovered_btn == 1) {
-                SkPaint hov_paint;
+                Paint hov_paint;
                 hov_paint.setAntiAlias(true);
                 hov_paint.setColor(0x3394A3B8);
-                sk_canvas->drawCircle(eye_cx, eye_cy, 12.0f, hov_paint);
+                canvas.drawCircle(Point{eye_cx, eye_cy}, 12.0f, hov_paint);
             }
 
             auto fc = getPasswordFieldFontCollection();
@@ -358,7 +355,7 @@ public:
             b_eye->addText(controller->isObscured() ? "👁" : "🙈", 4);
             auto eye_p = b_eye->Build();
             eye_p->layout(24.0f);
-            eye_p->paint(sk_canvas, eye_cx - 7.0f, eye_cy - eye_p->getHeight() * 0.5f);
+            canvas.drawParagraph(eye_p.get(), eye_cx - 7.0f, eye_cy - eye_p->getHeight() * 0.5f);
 
             trail_right -= 28.0f;
         }
@@ -369,19 +366,19 @@ public:
             float btn_cy = cy;
 
             if (hovered_btn == 3) {
-                SkPaint hov_paint;
+                Paint hov_paint;
                 hov_paint.setAntiAlias(true);
                 hov_paint.setColor(0x3394A3B8);
-                sk_canvas->drawCircle(btn_cx, btn_cy, 10.0f, hov_paint);
+                canvas.drawCircle(Point{btn_cx, btn_cy}, 10.0f, hov_paint);
             }
 
-            SkPaint x_paint;
+            Paint x_paint;
             x_paint.setAntiAlias(true);
             x_paint.setColor(hovered_btn == 3 ? 0xFFFFFFFF : 0xFF94A3B8);
             x_paint.setStrokeWidth(1.6f);
             float sz = 4.0f;
-            sk_canvas->drawLine(btn_cx - sz, btn_cy - sz, btn_cx + sz, btn_cy + sz, x_paint);
-            sk_canvas->drawLine(btn_cx + sz, btn_cy - sz, btn_cx - sz, btn_cy + sz, x_paint);
+            canvas.drawLine(Point{btn_cx - sz, btn_cy - sz}, Point{btn_cx + sz, btn_cy + sz}, x_paint);
+            canvas.drawLine(Point{btn_cx + sz, btn_cy - sz}, Point{btn_cx - sz, btn_cy + sz}, x_paint);
 
             trail_right -= 24.0f;
         }
@@ -392,10 +389,10 @@ public:
             float gen_cy = cy;
 
             if (hovered_btn == 2) {
-                SkPaint hov_paint;
+                Paint hov_paint;
                 hov_paint.setAntiAlias(true);
                 hov_paint.setColor(0x3394A3B8);
-                sk_canvas->drawCircle(gen_cx, gen_cy, 12.0f, hov_paint);
+                canvas.drawCircle(Point{gen_cx, gen_cy}, 12.0f, hov_paint);
             }
 
             auto fc = getPasswordFieldFontCollection();
@@ -408,7 +405,7 @@ public:
             b_gen->addText("🎲", 4);
             auto gen_p = b_gen->Build();
             gen_p->layout(24.0f);
-            gen_p->paint(sk_canvas, gen_cx - 7.0f, gen_cy - gen_p->getHeight() * 0.5f);
+            canvas.drawParagraph(gen_p.get(), gen_cx - 7.0f, gen_cy - gen_p->getHeight() * 0.5f);
 
             trail_right -= 28.0f;
         }
@@ -420,25 +417,24 @@ public:
             float bx = trail_right - w;
             float by = cy - h * 0.5f;
 
-            SkRRect cb_rrect;
-            cb_rrect.setRectXY(SkRect::MakeXYWH(bx, by, w, h), 4.0f, 4.0f);
-            SkPaint cb_bg;
+            Rect cb_rrect{bx, by, w, h};
+            Paint cb_bg;
             cb_bg.setAntiAlias(true);
             cb_bg.setColor(0x2BF59E0B);
-            sk_canvas->drawRRect(cb_rrect, cb_bg);
+            canvas.drawRRect(cb_rrect, BorderRadius::all(4.0f), cb_bg);
 
-            capslock_paragraph_->paint(sk_canvas, bx + 5.0f, by + 2.0f);
+            canvas.drawParagraph(capslock_paragraph_.get(), bx + 5.0f, by + 2.0f);
         }
 
-        sk_canvas->restore();
+        canvas.restore();
 
         // 5. Border
-        SkPaint border_paint;
+        Paint border_paint;
         border_paint.setAntiAlias(true);
-        border_paint.setStyle(SkPaint::kStroke_Style);
+        border_paint.setStyle(PaintStyle::Stroke);
         border_paint.setStrokeWidth(is_focused ? 1.5f : 1.0f);
         border_paint.setColor(is_focused ? options.focus_border_color : (is_hovered ? 0xFF475569 : options.border_color));
-        sk_canvas->drawRRect(rrect, border_paint);
+        canvas.drawRRect(bounds, rad, border_paint);
     }
 
     [[nodiscard]] bool hitTestSelf(Point localPoint) const override {
