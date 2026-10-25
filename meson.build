@@ -753,6 +753,20 @@ enki_dep = declare_dependency(
 # Install headers
 # ============================================================
 install_subdir('include/enki', install_dir : get_option('includedir'))
+install_subdir('core/layout_engine', install_dir : get_option('includedir'))
+install_subdir(is_windows ? 'core/Skia-Windows/include' : 'core/skia/include', install_dir : get_option('includedir') / 'enki' / 'skia')
+
+# ============================================================
+# Generate pkg-config file
+# ============================================================
+pkg = import('pkgconfig')
+pkg.generate(enki_lib,
+  name : 'enki',
+  filebase : 'enki',
+  description : 'ENKI Reactive UI Framework for Modern Linux Desktops',
+  version : meson.project_version(),
+  subdirs : ['', 'enki', 'enki/skia', 'enki/skia/include'],
+)
 
 # ============================================================
 # Tests
@@ -778,5 +792,7 @@ endif
 # ============================================================
 # Real Applications
 # ============================================================
-subdir('real_app')
+if get_option('build_real_apps') and not is_android and not is_wasm
+  subdir('real_app')
+endif
 

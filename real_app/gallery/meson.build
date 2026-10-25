@@ -25,7 +25,7 @@ if is_android
     dependencies: [enki_dep],
     name_prefix: 'lib',
     link_args: ['-u', 'ANativeActivity_onCreate'],
-    install: true,
+    install: false,
   )
 elif is_wasm
   executable('enki_gallery',
@@ -47,13 +47,13 @@ elif is_wasm
       '--embed-file', meson.project_source_root() / 'assets/fonts@/assets/fonts',
     ],
     name_suffix: 'js',
-    install: true,
+    install: false,
   )
 else
   executable('enki_gallery',
     sources: gallery_sources,
     include_directories: [gallery_inc],
     dependencies: [enki_dep],
-    install: true,
+    install: false,
   )
 endif

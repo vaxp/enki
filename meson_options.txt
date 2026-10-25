@@ -1,6 +1,7 @@
-option('build_tests',        type : 'boolean', value : true,  description : 'Build unit tests')
+option('build_tests',        type : 'boolean', value : false,  description : 'Build unit tests')
 option('build_examples',     type : 'boolean', value : false, description : 'Build example applications')
-option('build_widgets_demo', type : 'boolean', value : true,  description : 'Build widgets demo applications')
+option('build_widgets_demo', type : 'boolean', value : false,  description : 'Build widgets demo applications')
+option('build_real_apps',    type : 'boolean', value : false,  description : 'Build real applications')
 
 # ── WebView / CEF subsystem ────────────────────────────────────────────────────
 option('enable_webview', type : 'boolean', value : false,
@@ -9,6 +10,6 @@ option('cef_root', type : 'string', value : '',
   description : 'Absolute path to the CEF prebuilt distribution root directory')
 
 # ── DRM/KMS Embedded Backend ──────────────────────────────────────────────────
-option('enable_drm', type : 'boolean', value : false,
+option('enable_drm', type : 'boolean', value : true,
   description : 'Enable Linux DRM/KMS + GBM embedded backend (direct rendering with libinput)')
 

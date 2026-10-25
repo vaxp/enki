@@ -1,5 +1,4 @@
 # ── Enki Framework .gitignore ────────────────────────────────
-
 # Build directories
 build/
 build_*/
@@ -60,3 +59,7 @@ cef_b/
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Temporary workspace for migrating external ecosystem apps
+ports/
+.agents

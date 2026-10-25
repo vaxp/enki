@@ -20,7 +20,7 @@ if is_android
     dependencies: [enki_dep],
     name_prefix: 'lib',
     link_args: ['-u', 'ANativeActivity_onCreate'],
-    install: true,
+    install: false,
   )
 elif is_wasm
   enki_counter_exe = executable('enki_counter',
@@ -41,13 +41,13 @@ elif is_wasm
       '--embed-file', meson.project_source_root() / 'assets/fonts@/assets/fonts',
     ],
     name_suffix: 'js',
-    install: true,
+    install: false,
   )
 else
   enki_counter_exe = executable('enki_counter',
     sources: counter_sources,
     dependencies: [enki_dep],
-    install: true,
+    install: false,
   )
 endif
 
